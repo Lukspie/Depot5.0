@@ -14,7 +14,7 @@
 
 import { addDays, HOUR, localDate, localHhmm, localParts, MINUTE, operatingDay, operatingDayStart, TIME_ZONE, zonedToUtc } from "../clock/time.js";
 import type { SimClock } from "../clock/clock.js";
-import type { AppApi, PlanWithLocal } from "../app-client.js";
+import type { AppApi, ManifestParcel, PlanWithLocal, ScanForward } from "../app-client.js";
 import type { DeviceRow, GateRow, GpsRow, HeartbeatRow, MetricRow, ScanRow, SensorRow, TelemetrySink } from "../db/telemetry.js";
 import type { Hub, WsEvent } from "../ws/hub.js";
 import { rngFor } from "./rng.js";
@@ -81,7 +81,7 @@ export interface ClockInfo {
 interface DayState {
   plan: PlanWithLocal;
   scenario: DayScenario;
-  manifests: Map<string, string[]>;
+  manifests: Map<string, ManifestParcel[]>;
   scans: ScanEvent[];
   scanIdx: number;
   gate: GateRow[];
@@ -125,6 +125,10 @@ const OFFLINE_AFTER_MS = 30_000;
 const ROLLING_MS = 30 * MINUTE;
 const MIN_ITEMS_FOR_RATE = 30;
 const SENSORS = ["LINE-SNS-01", "LINE-SNS-02", "LINE-SNS-03"] as const;
+/** night parcels reach the belt / the dock this long after their truck arrived */
+const BELT_AFTER_ARRIVAL = 10 * MINUTE;
+const DOCK_AFTER_ARRIVAL = 25 * MINUTE;
+const MAX_SCAN_QUEUE = 20_000;
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 
@@ -135,6 +139,8 @@ export class Engine {
   private readonly dayRetryAt = new Map<string, number>();
   private readonly reported = new Map<number, string>();
   private readonly pendingTrips = new Map<number, TripExecution>();
+  /** scans waiting to be sent to the app (loading check / sorting) */
+  private scanQueue: ScanForward[] = [];
   private readonly devices = new Map<string, DeviceRuntime>();
   private readonly vehicles = new Map<string, VehicleState>();
   private readonly metrics = new Map<string, MetricRow>();
@@ -230,9 +236,14 @@ export class Engine {
   async restartDay(): Promise<void> {
     const day = operatingDay(this.deps.clock.now());
     const start = operatingDayStart(day);
+    // the app keeps parcel/trip states: they must be reset too, or the replay would differ
+    await this.deps.app.resetDay(day);
+    this.pendingTrips.clear();
+    this.reported.clear();
     await this.deps.store.deleteSince(start);
     this.days.clear();
     this.metrics.clear();
+    this.scanQueue = [];
     for (const d of this.devices.values()) {
       d.recent = [];
       d.lastScanAt = null;
@@ -420,7 +431,7 @@ export class Engine {
         forceCascade: this.deps.config.forceCascade,
         routes: this.deps.routes,
       });
-      const manifests = new Map<string, string[]>();
+      const manifests = new Map<string, ManifestParcel[]>();
       const directions = new Set([
         ...plan.trips.filter((t) => t.kind === "outbound").map((t) => t.directionCode),
         ...plan.localDirections,
@@ -464,13 +475,26 @@ export class Engine {
     const model = this.readRateModel();
     const scans: ScanEvent[] = [];
     const outbound = plan.trips.filter((t) => t.kind === "outbound");
+    const barcodes = (dir: string): string[] => (manifests.get(dir) ?? []).map((p) => p.barcode);
+    // parcels on the night trucks can be scanned only after their truck arrived
+    const beltEarliest = new Map<string, number>();
+    const dockEarliest = new Map<string, number>();
+    for (const parcels of manifests.values()) {
+      for (const p of parcels) {
+        if (p.arrivesWithTripId === null) continue;
+        const arrive = scenario.schedules.get(p.arrivesWithTripId)?.arriveDepot;
+        if (arrive === undefined) continue;
+        beltEarliest.set(p.barcode, arrive + BELT_AFTER_ARRIVAL);
+        dockEarliest.set(p.barcode, arrive + DOCK_AFTER_ARRIVAL);
+      }
+    }
     for (const trip of outbound) {
       const s = scenario.schedules.get(trip.id);
       const device = this.dockDevice(trip.doorCode);
       if (!s || !device || s.loadStart === undefined || s.loadEnd === undefined) continue;
       const foreign = outbound
         .filter((o) => o.directionCode !== trip.directionCode)
-        .flatMap((o) => manifests.get(o.directionCode) ?? []);
+        .flatMap((o) => barcodes(o.directionCode));
       scans.push(
         ...loadingScans({
           seed: this.seedValue,
@@ -479,9 +503,10 @@ export class Engine {
           device,
           start: s.loadStart,
           end: s.loadEnd,
-          manifest: manifests.get(trip.directionCode) ?? [],
+          manifest: barcodes(trip.directionCode),
           foreign,
           model,
+          earliest: dockEarliest,
         }),
       );
     }
@@ -491,7 +516,7 @@ export class Engine {
       const morning = [
         ...outbound.filter((t) => t.directionType === "transit").map((t) => t.directionCode),
         ...plan.localDirections,
-      ].flatMap((dir) => manifests.get(dir) ?? []);
+      ].flatMap((dir) => barcodes(dir));
       scans.push(
         ...lineScans({
           seed: this.seedValue,
@@ -501,6 +526,7 @@ export class Engine {
           end: zonedToUtc(next, "05:30"),
           parcels: morning,
           model,
+          earliest: beltEarliest,
         }),
       );
     }
@@ -563,18 +589,33 @@ export class Engine {
     }
   }
 
+  /** Send trip states first (a scan needs the truck to be "loading"), then queued scans. */
   async flushTrips(): Promise<void> {
-    if (this.flushing || this.pendingTrips.size === 0) return;
+    if (this.flushing) return;
     this.flushing = true;
-    const batch = [...this.pendingTrips.values()];
     try {
-      await this.deps.app.postTripEvents(iso(this.deps.clock.now()), batch);
-      for (const exec of batch) {
-        this.reported.set(exec.tripId, JSON.stringify(exec));
-        if (this.pendingTrips.get(exec.tripId) === exec) this.pendingTrips.delete(exec.tripId);
+      if (this.pendingTrips.size > 0) {
+        const batch = [...this.pendingTrips.values()];
+        await this.deps.app.postTripEvents(iso(this.deps.clock.now()), batch);
+        for (const exec of batch) {
+          this.reported.set(exec.tripId, JSON.stringify(exec));
+          if (this.pendingTrips.get(exec.tripId) === exec) this.pendingTrips.delete(exec.tripId);
+        }
+      }
+      while (this.scanQueue.length > 0) {
+        const chunk = this.scanQueue.slice(0, 1000);
+        await this.deps.app.postScans(chunk);
+        this.scanQueue = this.scanQueue.slice(chunk.length);
       }
     } catch (err) {
-      this.deps.log.warn({ err: String(err), trips: batch.length }, "trip sync to app failed, will retry");
+      this.deps.log.warn(
+        { err: String(err), trips: this.pendingTrips.size, scans: this.scanQueue.length },
+        "sync to app failed, will retry",
+      );
+      if (this.scanQueue.length > MAX_SCAN_QUEUE) {
+        this.deps.log.warn({ dropped: this.scanQueue.length - MAX_SCAN_QUEUE }, "scan queue full, dropping oldest");
+        this.scanQueue = this.scanQueue.slice(-MAX_SCAN_QUEUE);
+      }
     } finally {
       this.flushing = false;
     }
@@ -683,6 +724,15 @@ export class Engine {
         itemCounted: ev.itemCounted,
       });
       d.recent.push({ at: ev.at, ok: ev.readOk });
+      if (d.row.kind === "dock_scanner" || d.row.kind === "line_scanner") {
+        this.scanQueue.push({
+          device: ev.device,
+          doorCode: d.row.kind === "dock_scanner" ? d.row.doorCode : null,
+          at: iso(ev.at),
+          barcode: ev.barcode,
+          readOk: ev.readOk,
+        });
+      }
       d.lastScanAt = ev.at;
       const minute = Math.floor(ev.at / MINUTE) * MINUTE;
       const mkey = `${String(d.row.id)}|${String(minute)}`;

@@ -92,6 +92,8 @@ export interface LoadingScanArgs {
   model: ReadRateModel;
   wrongDirectionP?: number;
   duplicateP?: number;
+  /** parcels that are not in the depot from the start (night trucks): not before this time */
+  earliest?: ReadonlyMap<string, number>;
 }
 
 /** Scans at one loading door while a truck is loaded. Deterministic per (seed, day, key). */
@@ -102,7 +104,9 @@ export function loadingScans(a: LoadingScanArgs): ScanEvent[] {
   const span = Math.max(a.end - a.start, MINUTE);
   const events: ScanEvent[] = [];
   for (const parcel of a.manifest) {
-    const at = a.start + Math.floor(rng.next() * span);
+    let at = a.start + Math.floor(rng.next() * span);
+    const notBefore = a.earliest?.get(parcel);
+    if (notBefore !== undefined && at < notBefore) at = notBefore + rng.int(3, 20) * MINUTE;
     events.push(scan(rng, a.model, a.device, at, parcel, "ok"));
     if (rng.chance(dupP)) {
       events.push(scan(rng, a.model, a.device, at + rng.int(2, 20) * 1000, parcel, "duplicate"));
@@ -123,6 +127,7 @@ export interface LineScanArgs {
   end: number;
   parcels: readonly string[];
   model: ReadRateModel;
+  earliest?: ReadonlyMap<string, number>;
 }
 
 /** Morning wave: parcels from the night trucks pass the line scanner (labels face up). */
@@ -130,6 +135,11 @@ export function lineScans(a: LineScanArgs): ScanEvent[] {
   const rng = rngFor(a.seed, a.day, "line-scans", a.device);
   const span = Math.max(a.end - a.start, MINUTE);
   return a.parcels
-    .map((parcel) => scan(rng, a.model, a.device, a.start + Math.floor(rng.next() * span), parcel, "ok"))
+    .map((parcel) => {
+      let at = a.start + Math.floor(rng.next() * span);
+      const notBefore = a.earliest?.get(parcel);
+      if (notBefore !== undefined && at < notBefore) at = notBefore + rng.int(1, 15) * MINUTE;
+      return scan(rng, a.model, a.device, at, parcel, "ok");
+    })
     .sort((x, y) => x.at - y.at);
 }

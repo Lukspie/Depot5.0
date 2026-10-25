@@ -1,5 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { Health, Hello } from "../api/system";
+import { Badge } from "./ui";
 
 interface Props {
   title: string;
@@ -11,10 +12,10 @@ interface Props {
 
 type Tone = "ok" | "error" | "loading";
 
-const TONE: Record<Tone, { badge: string; label: string }> = {
-  ok: { badge: "bg-mint-100 text-mint-600", label: "V poriadku" },
-  error: { badge: "bg-rose-100 text-rose-600", label: "Nedostupné" },
-  loading: { badge: "bg-sky-100 text-sky-600", label: "Načítavam…" },
+const TONE: Record<Tone, { tone: "ok" | "danger" | "info"; label: string }> = {
+  ok: { tone: "ok", label: "V poriadku" },
+  error: { tone: "danger", label: "Nedostupné" },
+  loading: { tone: "info", label: "Načítavam…" },
 };
 
 function toneOf(q: UseQueryResult<unknown>, ok: boolean): Tone {
@@ -34,9 +35,7 @@ export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Prop
           <h2 className="font-semibold">{title}</h2>
           <p className="text-ink-muted text-sm">{subtitle}</p>
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${TONE[serviceTone].badge}`}>
-          {waitingFor ?? TONE[serviceTone].label}
-        </span>
+        <Badge tone={TONE[serviceTone].tone}>{waitingFor ?? TONE[serviceTone].label}</Badge>
       </div>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -48,14 +47,14 @@ export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Prop
         <dd>{hello.data ? new Date(hello.data.time).toLocaleTimeString("sk-SK") : "—"}</dd>
         <dt className="text-ink-muted">Databáza</dt>
         <dd>
-          <span className={`rounded-full px-2 py-0.5 text-xs ${TONE[dbTone].badge}`}>
+          <Badge tone={TONE[dbTone].tone} size="sm">
             {TONE[dbTone].label}
-          </span>
+          </Badge>
         </dd>
       </dl>
 
       {hello.isError && (
-        <p className="mt-4 rounded-xl bg-rose-100 px-3 py-2 text-sm text-rose-600">
+        <p className="mt-4 rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-600">
           {hello.error.message}. Skúšam znova každých 10 s.
         </p>
       )}

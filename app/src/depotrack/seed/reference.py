@@ -137,6 +137,10 @@ TRANSIT = [
     ),
 ]
 
+# Regional directions too far for a same-day round trip get two trucks that alternate by
+# operating day: one leaves Košice in the morning while the other drives back (ADR-031).
+TRUCK_ROTATION: dict[str, int] = {"SE": 2}
+
 # Courier districts: 8 compass sectors around the Košice centre, clockwise from north.
 _SECTORS = [
     "sever",

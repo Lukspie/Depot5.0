@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from depotrack.core.clock import TZ
 from depotrack.models import Direction, Door, Trip, Vehicle
 from depotrack.models.enums import DirectionType, DoorKind, TripKind, TripStatus, VehicleKind
+from depotrack.seed.reference import TRUCK_ROTATION
 
 OPERATING_DAY_START = time(15, 0)
 
@@ -57,11 +58,19 @@ def build_trip_plan(db: Session, day: date) -> list[Trip]:
     }
     lh_trucks = _trucks(db, "LH")
     tr_trucks = _trucks(db, "TR")
-    if len(lh_trucks) < 2 * len(linehaul) or len(tr_trucks) < len(transit):
+    extra = sum(TRUCK_ROTATION.get(d.code, 1) - 1 for d in transit)
+    if len(lh_trucks) < 2 * len(linehaul) or len(tr_trucks) < len(transit) + extra:
         raise RuntimeError("not enough trucks for the trip plan")
 
     # linehaul trucks shuttle: the one that arrived at night leaves the next evening
     parity = day.toordinal() % 2
+
+    # one truck per regional direction; long ones (Senica) alternate two trucks by day (ADR-031)
+    spares = iter(tr_trucks[len(transit) :])
+    transit_truck: dict[int, Vehicle] = {}
+    for i, d in enumerate(transit):
+        rotation = [tr_trucks[i]] + [next(spares) for _ in range(TRUCK_ROTATION.get(d.code, 1) - 1)]
+        transit_truck[d.id] = rotation[day.toordinal() % len(rotation)]
     n = len(linehaul)
     next_day = day + timedelta(days=1)
     trips: list[Trip] = []
@@ -71,7 +80,7 @@ def build_trip_plan(db: Session, day: date) -> list[Trip]:
 
     for i, d in enumerate(transit):
         add(
-            vehicle_id=tr_trucks[i].id,
+            vehicle_id=transit_truck[d.id].id,
             direction_id=d.id,
             door_id=dock_of.get(d.id),
             kind=TripKind.INBOUND,
@@ -93,9 +102,9 @@ def build_trip_plan(db: Session, day: date) -> list[Trip]:
             kind=TripKind.INBOUND,
             planned_arrival=_at(next_day, NIGHT_ARRIVAL_FIRST, i * NIGHT_ARRIVAL_STEP),
         )
-    for i, d in enumerate(transit):
+    for d in transit:
         add(
-            vehicle_id=tr_trucks[i].id,
+            vehicle_id=transit_truck[d.id].id,
             direction_id=d.id,
             door_id=dock_of.get(d.id),
             kind=TripKind.OUTBOUND,

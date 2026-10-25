@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { useLogin, useMe } from "../api/auth";
 import { isApiError } from "../api/client";
+import { Logo } from "../components/ui";
 
 function loginErrorMessage(err: unknown): string {
   if (isApiError(err, 401)) return "Nesprávne používateľské meno alebo heslo.";
@@ -35,10 +36,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-brand-50 via-canvas to-sky-100 p-4">
+    <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-brand-50 via-canvas to-neutral-100 p-4">
       <div className="bg-surface shadow-card rounded-card w-full max-w-sm p-8">
         <div className="mb-6 flex items-center gap-3">
-          <img src="/favicon.svg" alt="" className="h-10 w-10" />
+          <Logo size={40} />
           <div>
             <h1 className="text-xl font-semibold">DepoTrack</h1>
             <p className="text-ink-muted text-sm">SPS depo Košice</p>
@@ -76,7 +77,7 @@ export function LoginPage() {
           </div>
 
           {login.isError && (
-            <p role="alert" className="rounded-xl bg-rose-100 px-3 py-2 text-sm text-rose-600">
+            <p role="alert" className="rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-600">
               {loginErrorMessage(login.error)}
             </p>
           )}
@@ -84,7 +85,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={login.isPending || !username || !password}
-            className="bg-brand-500 hover:bg-brand-700 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+            className="bg-brand-500 hover:bg-brand-600 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-on-brand transition-colors disabled:opacity-50"
           >
             {login.isPending ? "Prihlasujem…" : "Prihlásiť sa"}
           </button>

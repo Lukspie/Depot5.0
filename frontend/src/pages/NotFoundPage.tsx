@@ -7,7 +7,7 @@ export function NotFoundPage() {
       <p className="text-ink-muted mt-2 text-sm">Skontrolujte adresu alebo sa vráťte na úvod.</p>
       <Link
         to="/"
-        className="bg-brand-500 hover:bg-brand-700 mt-6 inline-block rounded-xl px-4 py-2 text-sm text-white"
+        className="bg-brand-500 hover:bg-brand-600 mt-6 inline-block rounded-xl px-4 py-2 text-sm text-on-brand"
       >
         Na úvod
       </Link>

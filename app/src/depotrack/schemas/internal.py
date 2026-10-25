@@ -49,6 +49,8 @@ class PlanOut(CamelModel):
 class ManifestParcel(CamelModel):
     barcode: str
     weight_kg: float
+    # night parcels: the inbound trip that brings them (scannable only after it arrived)
+    arrives_with_trip_id: int | None = None
 
 
 class ManifestOut(CamelModel):
@@ -76,6 +78,24 @@ class TripEventsOut(CamelModel):
     updated: int
     unknown: list[int]
     alerts_changed: int
+
+
+class ScanIn(CamelModel):
+    device: str = Field(max_length=32)
+    door_code: str | None = Field(default=None, max_length=16)
+    at: AwareDatetime
+    barcode: str | None = Field(default=None, max_length=64)
+    read_ok: bool
+
+
+class ScanEventsIn(CamelModel):
+    scans: list[ScanIn] = Field(max_length=2000)
+
+
+class ScanEventsOut(CamelModel):
+    processed: int
+    skipped: int
+    results: dict[str, int]
 
 
 class AlertIn(CamelModel):

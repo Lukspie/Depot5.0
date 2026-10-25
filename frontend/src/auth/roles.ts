@@ -1,6 +1,7 @@
 /** Role labels and which screens each role may open (mirrors the backend RBAC). */
 
 import type { Role } from "../api/auth";
+import type { Tone } from "../components/ui";
 
 export const ROLES: Role[] = ["admin", "dispatcher", "operator", "security", "courier"];
 
@@ -12,12 +13,12 @@ export const ROLE_LABEL: Record<Role, string> = {
   courier: "Kuriér",
 };
 
-export const ROLE_BADGE: Record<Role, string> = {
-  admin: "bg-brand-100 text-brand-700",
-  dispatcher: "bg-sky-100 text-sky-600",
-  operator: "bg-mint-100 text-mint-600",
-  security: "bg-peach-100 text-peach-600",
-  courier: "bg-canvas text-ink-muted",
+export const ROLE_TONE: Record<Role, Tone> = {
+  admin: "brand",
+  dispatcher: "info",
+  operator: "ok",
+  security: "warn",
+  courier: "neutral",
 };
 
 export interface NavItem {
@@ -36,11 +37,18 @@ export function canAccess(role: Role, roles: Role[]): boolean {
 }
 
 export const NAV: NavItem[] = [
-  { to: "/", label: "Stav systému", roles: ALL, ready: true },
+  { to: "/", label: "Dispečing", roles: ["dispatcher"], ready: true },
   { to: "/twin", label: "Digitálne dvojča", roles: ["dispatcher", "security"], ready: false },
-  { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: false },
-  { to: "/loading", label: "Nakládka", roles: ["operator"], ready: false },
+  { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: true },
+  { to: "/loading", label: "Nakládka", roles: ["operator"], ready: true },
   { to: "/gate", label: "Brána", roles: ["security"], ready: false },
   { to: "/courier", label: "Moje zastávky", roles: ["courier"], ready: false },
   { to: "/admin", label: "Administrácia", roles: [], ready: true },
+  { to: "/system", label: "Stav systému", roles: ALL, ready: true },
 ];
+
+/** Landing page of a role: "/" is the dispatcher dashboard, others start on their own screen. */
+export function homeOf(role: Role): string {
+  const first = NAV.find((n) => n.ready && canAccess(role, n.roles));
+  return first?.to ?? "/system";
+}

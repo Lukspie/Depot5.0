@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     ws_ticket_secret: str
     ws_ticket_ttl_seconds: int = 60
 
+    # key in the URL of the public ETA board (/board?key=…); empty = board disabled
+    board_key: str = ""
+
     # cascade warning: night truck ETA + sorting buffer > transit departure
     cascade_buffer_min: int = 30
 

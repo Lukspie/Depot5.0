@@ -71,11 +71,24 @@ def clean_tables() -> Iterator[None]:
     limiter.reset()
 
 
+FAKE_DEVICES: list[dict[str, object]] = [
+    {"code": "DOCK-SCN-01", "kind": "dock_scanner", "status": "online", "readRate": 0.95},
+    {"code": "DOCK-SCN-02", "kind": "dock_scanner", "status": "degraded", "readRate": 0.89},
+    {"code": "LINE-SCN-01", "kind": "line_scanner", "status": "online", "readRate": None},
+    {"code": "GATE-CAM-01", "kind": "gate_camera", "status": "offline", "readRate": None},
+]
+
+
 @pytest.fixture(autouse=True)
 def fake_telematics(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, dict[str, object]]]:
     """No network calls to telematics in tests: record broadcasts, fixed simulated time."""
     sent: list[tuple[str, dict[str, object]]] = []
-    monkeypatch.setattr(telematics, "broadcast", lambda ch, ev: sent.append((ch, ev)))
+
+    def broadcast_many(ch: str, type_: str, events: list[dict[str, object]]) -> None:
+        sent.extend((ch, ev) for ev in events)
+
+    monkeypatch.setattr(telematics, "broadcast_many", broadcast_many)
+    monkeypatch.setattr(telematics, "devices", lambda: FAKE_DEVICES)
     monkeypatch.setattr(telematics, "sim_now", lambda: datetime(2026, 10, 23, 13, 0, tzinfo=UTC))
     return sent
 

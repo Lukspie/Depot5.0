@@ -16,10 +16,28 @@ export interface PlanWithLocal extends Plan {
   localDirections: string[];
 }
 
+export interface ManifestParcel {
+  barcode: string;
+  /** night parcels: the inbound trip that brings them (null = already in the depot) */
+  arrivesWithTripId: number | null;
+}
+
+/** A scan forwarded to the app for the loading check (dock) or sorting (line, doorCode null). */
+export interface ScanForward {
+  device: string;
+  doorCode: string | null;
+  at: string;
+  barcode: string | null;
+  readOk: boolean;
+}
+
 export interface AppApi {
   getPlan(day: string): Promise<PlanWithLocal>;
-  getManifest(direction: string, day: string): Promise<string[]>;
+  getManifest(direction: string, day: string): Promise<ManifestParcel[]>;
   postTripEvents(simTime: string, trips: TripExecution[]): Promise<void>;
+  postScans(scans: ScanForward[]): Promise<void>;
+  /** undo the execution of an operating day in the app (replay from 15:00) */
+  resetDay(day: string): Promise<void>;
   postAlert(alert: AlertPayload): Promise<void>;
 }
 
@@ -44,11 +62,15 @@ export class HttpAppApi implements AppApi {
     return this.request<PlanWithLocal>(`/internal/plan?day=${day}`);
   }
 
-  async getManifest(direction: string, day: string): Promise<string[]> {
-    const body = await this.request<{ parcels: { barcode: string }[] }>(
+  async getManifest(direction: string, day: string): Promise<ManifestParcel[]> {
+    const body = await this.request<{ parcels: ManifestParcel[] }>(
       `/internal/manifest?direction=${encodeURIComponent(direction)}&day=${day}`,
     );
-    return body.parcels.map((p) => p.barcode);
+    return body.parcels.map((p) => ({ barcode: p.barcode, arrivesWithTripId: p.arrivesWithTripId }));
+  }
+
+  async postScans(scans: ScanForward[]): Promise<void> {
+    await this.request("/internal/events/scans", { method: "POST", body: JSON.stringify({ scans }) });
   }
 
   async postTripEvents(simTime: string, trips: TripExecution[]): Promise<void> {
@@ -56,6 +78,10 @@ export class HttpAppApi implements AppApi {
       method: "POST",
       body: JSON.stringify({ simTime, trips }),
     });
+  }
+
+  async resetDay(day: string): Promise<void> {
+    await this.request(`/internal/days/${day}/reset`, { method: "POST" });
   }
 
   async postAlert(alert: AlertPayload): Promise<void> {

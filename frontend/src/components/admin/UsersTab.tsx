@@ -1,7 +1,9 @@
+import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useMe, type User } from "../../api/auth";
 import { useUsers } from "../../api/users";
-import { ROLE_BADGE, ROLE_LABEL } from "../../auth/roles";
+import { ROLE_LABEL, ROLE_TONE } from "../../auth/roles";
+import { Badge, Button, Card, DataTable, EmptyState, StatusDot, type Column } from "../ui";
 import { UserDialog } from "./UserDialog";
 
 type DialogState = { mode: "create" } | { mode: "edit"; user: User } | null;
@@ -24,91 +26,115 @@ export function UsersTab() {
     );
   }, [users.data, query]);
 
-  return (
-    <section className="bg-surface shadow-card rounded-card">
-      <div className="border-line flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          type="search"
-          placeholder="Hľadať meno, používateľa alebo rolu…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="border-line focus:border-brand-500 focus:ring-brand-100 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-4 sm:max-w-xs"
-        />
-        <button
-          type="button"
-          onClick={() => setDialog({ mode: "create" })}
-          className="bg-brand-500 hover:bg-brand-700 rounded-xl px-4 py-2 text-sm font-medium text-white"
+  const columns: Column<User>[] = [
+    {
+      key: "name",
+      header: "Meno",
+      minWidth: "11rem",
+      title: (u) => u.full_name,
+      render: (u) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-medium">{u.full_name}</span>
+          {u.id === me.data?.id && (
+            <span className="text-ink-muted shrink-0 text-xs whitespace-nowrap">(vy)</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "username",
+      header: "Používateľ",
+      width: "9rem",
+      hideBelow: "md",
+      title: (u) => u.username,
+      render: (u) => <span className="text-ink-muted font-mono text-xs">{u.username}</span>,
+    },
+    {
+      key: "role",
+      header: "Rola",
+      width: "11.5rem",
+      render: (u) => <Badge tone={ROLE_TONE[u.role]}>{ROLE_LABEL[u.role]}</Badge>,
+    },
+    {
+      key: "active",
+      header: "Stav",
+      width: "9rem",
+      hideBelow: "sm",
+      render: (u) =>
+        u.active ? (
+          <StatusDot tone="ok" colored>
+            Aktívny
+          </StatusDot>
+        ) : (
+          <StatusDot tone="danger" colored>
+            Deaktivovaný
+          </StatusDot>
+        ),
+    },
+    {
+      key: "created",
+      header: "Vytvorený",
+      width: "7rem",
+      hideBelow: "lg",
+      render: (u) => <span className="text-ink-muted text-xs">{new Date(u.created_at).toLocaleDateString("sk-SK")}</span>,
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "7.5rem",
+      align: "right",
+      control: true,
+      render: (u) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDialog({ mode: "edit", user: u });
+          }}
         >
-          + Pridať používateľa
-        </button>
+          Upraviť
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <Card flush>
+      <div className="border-line flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+        <label className="relative w-full sm:max-w-xs">
+          <Search size={16} className="text-ink-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" />
+          <input
+            type="search"
+            placeholder="Hľadať meno, používateľa alebo rolu…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="border-line focus:border-brand-500 focus:ring-brand-100 w-full rounded-xl border py-2 pr-3 pl-9 text-sm outline-none focus:ring-4"
+          />
+        </label>
+        <Button icon={<Plus size={16} />} onClick={() => setDialog({ mode: "create" })}>
+          Pridať používateľa
+        </Button>
       </div>
 
-      {users.isPending && <p className="text-ink-muted p-8 text-center text-sm">Načítavam…</p>}
-      {users.isError && (
-        <p className="m-4 rounded-xl bg-rose-100 px-3 py-2 text-sm text-rose-600">
-          Zoznam používateľov sa nepodarilo načítať.{" "}
-          <button type="button" className="underline" onClick={() => void users.refetch()}>
-            Skúsiť znova
-          </button>
-        </p>
-      )}
-      {users.isSuccess && filtered.length === 0 && (
-        <p className="text-ink-muted p-8 text-center text-sm">Žiadny používateľ nezodpovedá hľadaniu.</p>
-      )}
-
-      {filtered.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-ink-muted text-xs tracking-wide uppercase">
-              <tr>
-                <th className="px-4 py-3 font-medium">Meno</th>
-                <th className="px-4 py-3 font-medium">Používateľ</th>
-                <th className="px-4 py-3 font-medium">Rola</th>
-                <th className="px-4 py-3 font-medium">Stav</th>
-                <th className="px-4 py-3 font-medium">Vytvorený</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id} className="border-line hover:bg-canvas/60 border-t">
-                  <td className="px-4 py-3 font-medium">
-                    {u.full_name}
-                    {u.id === me.data?.id && (
-                      <span className="text-ink-muted ml-2 text-xs font-normal">(vy)</span>
-                    )}
-                  </td>
-                  <td className="text-ink-muted px-4 py-3 font-mono text-xs">{u.username}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2.5 py-1 text-xs ${ROLE_BADGE[u.role]}`}>
-                      {ROLE_LABEL[u.role]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.active ? (
-                      <span className="text-mint-600 text-xs">● Aktívny</span>
-                    ) : (
-                      <span className="text-xs text-rose-600">● Deaktivovaný</span>
-                    )}
-                  </td>
-                  <td className="text-ink-muted px-4 py-3 text-xs">
-                    {new Date(u.created_at).toLocaleDateString("sk-SK")}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setDialog({ mode: "edit", user: u })}
-                      className="text-brand-700 hover:bg-brand-50 rounded-lg px-3 py-1 text-sm"
-                    >
-                      Upraviť
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={users.data ? filtered : undefined}
+        rowKey={(u) => u.id}
+        onRowClick={(u) => setDialog({ mode: "edit", user: u })}
+        loading={users.isPending}
+        error={
+          users.isError && (
+            <p className="bg-danger-100 text-danger-600 rounded-xl px-3 py-2 text-sm">
+              Zoznam používateľov sa nepodarilo načítať.{" "}
+              <button type="button" className="underline" onClick={() => void users.refetch()}>
+                Skúsiť znova
+              </button>
+            </p>
+          )
+        }
+        empty={<EmptyState title="Žiadny používateľ nezodpovedá hľadaniu" />}
+      />
 
       {dialog && (
         <UserDialog
@@ -117,6 +143,6 @@ export function UsersTab() {
           onClose={() => setDialog(null)}
         />
       )}
-    </section>
+    </Card>
   );
 }

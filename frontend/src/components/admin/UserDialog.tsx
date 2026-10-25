@@ -99,7 +99,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
                 className={inputCls}
                 aria-invalid={usernameInvalid}
               />
-              <p className={`mt-1 text-xs ${usernameInvalid ? "text-rose-600" : "text-ink-muted"}`}>
+              <p className={`mt-1 text-xs ${usernameInvalid ? "text-danger-600" : "text-ink-muted"}`}>
                 3–32 znakov: malé písmená bez diakritiky, číslice, bodka, podčiarkovník, pomlčka.
               </p>
             </div>
@@ -168,13 +168,13 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
               className={inputCls}
               aria-invalid={passwordInvalid}
             />
-            <p className={`mt-1 text-xs ${passwordInvalid ? "text-rose-600" : "text-ink-muted"}`}>
+            <p className={`mt-1 text-xs ${passwordInvalid ? "text-danger-600" : "text-ink-muted"}`}>
               Aspoň 8 znakov.{user ? " Zmena hesla odhlási používateľa zo všetkých zariadení." : ""}
             </p>
           </div>
 
           {mutation.isError && (
-            <p role="alert" className="rounded-xl bg-rose-100 px-3 py-2 text-sm text-rose-600">
+            <p role="alert" className="rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-600">
               {saveErrorMessage(mutation.error)}
             </p>
           )}
@@ -190,7 +190,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
             <button
               type="submit"
               disabled={!canSubmit || mutation.isPending}
-              className="bg-brand-500 hover:bg-brand-700 rounded-xl px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="bg-brand-500 hover:bg-brand-600 rounded-xl px-4 py-2 text-sm font-medium text-on-brand disabled:opacity-50"
             >
               {mutation.isPending ? "Ukladám…" : "Uložiť"}
             </button>

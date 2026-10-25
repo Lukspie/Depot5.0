@@ -40,10 +40,10 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Rozhodnutie:** `doors.direction_id` je len **predvolený** smer brány. Skutočné pridelenie pre konkrétnu jazdu je `trips.door_id`. Väzbu M:N nerobíme.
 - **Dôsledok:** Kontrola „zlý smer“ pri nakládke porovnáva smer balíka so smerom **jazdy** na bráne, nie s predvoleným smerom brány.
 
-## ADR-008 Zoznam prechodových smerov
+## ADR-008 Zoznam prechodových smerov *(upravené vo Fáze 3)*
 - **Kontext:** Zadanie uvádza Michalovce, Humenné, Stará Ľubovňa, Prešov, Poprad a Trebišov, no Trebišov nemá nakládkovú bránu. Tím zoznam upravil.
-- **Rozhodnutie:** Prechody (`transit`) sú zatiaľ **Michalovce, Trebišov, Humenné, Stará Ľubovňa, Senica**. Spolu s BB, BA a ZA to dáva presne 8 nakládkových brán. Zoznam je v seed dátach a dá sa meniť v `/admin`.
-- **Dôsledok:** Zoznam treba **overiť s doménovým expertom**. Najmä Senicu: leží na západnom Slovensku, takže prechod z Košíc je nezvyčajný a môže ísť skôr o linehaul cez BA.
+- **Rozhodnutie:** Prechody (`transit`) sú **Michalovce, Trebišov, Humenné, Stará Ľubovňa, Senica**. Spolu s BB, BA a ZA to dáva presne 8 nakládkových brán. Zoznam je v seed dátach a dá sa meniť v `/admin`. **Senica je potvrdená tímom.** Bola pridaná zámerne, nejde o chybu ani o dočasný príklad.
+- **Dôsledok:** Senica je ~6 h jazdy, takže jeden kamión nestihne odísť ráno a vrátiť sa v ten istý deň. Rieši to ADR-031.
 
 ## ADR-009 Tabuľka `alerts`
 - **Kontext:** Dátový model nemá miesto pre alarmy (zlý smer, kaskáda meškania, ML anomália skenera, offline zariadenie).
@@ -155,7 +155,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Kuriérske dodávky** sa zatiaľ nepohybujú. Ich trasy (zastávky, nearest neighbor) vzniknú v app vo Fáze 4 a vtedy ich simulátor rozhýbe.
   - Nočné kamióny **neprinášajú nové balíky**. Ranná vlna na linke a ranná nakládka pracujú s balíkmi odstavenými večer. Generovanie nočných balíkov pribudne vo Fáze 3 spolu s ich spracovaním.
   - Skeny sa zatiaľ **neposielajú do app**. Kontrola smeru, `loading_scans` a stavy balíkov sú jadro WMS vo Fáze 3. Telematika ich ukladá do db-telemetry a posiela na WebSocket.
-  - Trasy sú zjednodušené polylíny cez okresné mestá (`telematics/data/routes.json`) s priemernou rýchlosťou 72 km/h. **Senica** je vzdialená ~6 h, takže jej ranný odchod a večerný návrat sa časovo prekrývajú. Zobrazí sa novšia jazda (pozri ADR-008).
+  - Trasy sú zjednodušené polylíny cez okresné mestá (`telematics/data/routes.json`) s priemernou rýchlosťou 72 km/h. **Senica** je vzdialená ~6 h. Časové prekrytie jej jázd rieši od Fázy 3 striedanie dvoch kamiónov (ADR-031).
 - **Dôsledok:** Tieto body sú výslovne naplánované vo Fázach 3 a 4.
 
 ## ADR-029 Stav simulátora prežije reštart kontajnera
@@ -170,3 +170,64 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Závažnosť je `warning`, ak sa nestihne len triedenie, a `critical`, ak kamión príde až po odchode prechodu.
   - Keď predikcia klesne pod hranicu, alarm sa automaticky uzavrie (`acknowledged_at`, bez používateľa). Odídený prechod sa už nehodnotí.
 - **Dôsledok:** Dispečer nevidí duplicitné ani zastarané varovania. Každá zmena ide cez WebSocket kanál `alerts`.
+
+## ADR-031 Senica: dva kamióny v striedaní
+- **Kontext:** Jazda Košice – Senica trvá ~6 h. Kamión, ktorý ráno o 06:30 odíde z Košíc, je v Senici ~12:40. Večerný návrat do Košíc (16:45) by musel zo Senice vyraziť už ~10:45, takže jeden kamión nemôže robiť oboje v ten istý deň.
+- **Rozhodnutie:** Smer SE má **dva kamióny (KE-205TR a KE-206TR), ktoré sa striedajú podľa prevádzkového dňa**. Kamión, ktorý večer príde zo Senice, ráno odchádza späť, prespí v Senici a do Košíc sa vráti až o deň neskôr. V ten deň medzitým jazdí ten druhý. Počet kamiónov v striedaní je v `TRUCK_ROTATION` (`app/src/depotrack/seed/reference.py`). Ostatné prechody majú jeden kamión, lebo sa stihnú otočiť za deň.
+- **Dôsledok:** Žiadne vozidlo nemá prekrývajúce sa jazdy, čo overujú testy v app aj v telematike. Využije sa tým rezervný regionálny kamión KE-206TR.
+
+## ADR-032 Témy SPS a Modrá, design systém vo `components/ui`
+- **Kontext:** Tím chce farby, ako by systém používal prepravca SPS (oranžová, čierna, sivá), a zároveň vizuálny štýl referenčného dashboardu (ADR-021).
+- **Rozhodnutie:**
+  - Farby sú tokeny v `frontend/src/index.css` a prepínajú sa cez `<html data-theme>`. Predvolená je **`sps`**: primárna oranžová `#f39200`, čierna navigácia `#1d1d1b` a teplá sivá plocha. Druhá téma je **`modra`** podľa referencie. Prepínač je v hornej lište a voľba sa pamätá v prehliadači.
+  - Stavové farby (ok/info/warn/danger/neutral) sú v oboch témach rovnaké. „warn“ je v SPS téme jantárová, aby sa neplietla s oranžovou značkou.
+  - Text na oranžovom tlačidle je čierny (`on-brand`) kvôli kontrastu.
+  - Logo SPS nepoužívame, DepoTrack má vlastnú značku.
+  - Komponenty a pravidlá (nezalamovanie štítkov, pevné šírky stĺpcov, kontrola pri 1280/1440/390 px) sú opísané v `docs/design/komponenty.md`.
+  - Nové závislosti: `lucide-react` (ikony), `leaflet` + `react-leaflet` 4 (mapa Flotily podľa zadania; verzia 4 je posledná pre React 18).
+- **Dôsledok:** Všetky obrazovky používajú len tokeny a komponenty z `components/ui`, takže zmena farieb jednej témy sa prejaví všade.
+
+## ADR-033 Reset prevádzkového dňa aj v app
+- **Kontext:** Od Fázy 3 app drží stavy balíkov a skeny. Keď telematika prehrá deň znova (zmena seedu, `POST /sim/restart-day`), musí sa vrátiť aj stav v app, inak by sa „replay“ líšil od prvého behu.
+- **Rozhodnutie:** Telematika pri reštarte dňa zavolá `POST /internal/days/{deň}/reset`. App vtedy:
+  - vráti jazdy dňa do stavu `planned` a zmaže skutočné a predikované časy,
+  - vráti balíky dňa do stavu `collected` a zmaže ich udalosti okrem `collected`,
+  - zmaže `loading_scans` jázd dňa a alarmy od 15:00 toho dňa,
+  - umožní znova uzavrieť večernú vlnu.
+  Plán a samotné balíky zostanú. Ak app nie je dostupný, reštart zlyhá a admin dostane chybu.
+- **Dôsledok:** Rovnaký seed dá rovnaký deň aj v dátach app. Overuje to test `test_day_reset_undoes_execution_for_a_replay`.
+
+## ADR-034 Pravidlá nakládky, vĺn a nočných balíkov
+- **Kontext:** Jadro WMS: kontrola smeru pri nakládke, chýbajúce balíky a nočné kamióny s balíkmi pre východ (odložené z ADR-028).
+- **Rozhodnutie:**
+  - **Jazda pri bráne** je najskoršia ešte neodídená odchodová jazda s `trips.door_id` = brána (ADR-007).
+  - **Výsledok skenu:**
+    - `ok`: balík patrí do smeru jazdy, dostane stav `loaded` a udalosť s bránou, jazdou a zdrojom `iot` alebo `manual`.
+    - `wrong_direction`: kritický alarm „vyložiť“, jeden na balík.
+    - `duplicate`: balík je už v tomto kamióne.
+    - `unidentified`: štítok sa neprečítal alebo kód nepoznáme. Položka sa počíta, ale balík sa neurčí.
+  - **Ručný skener** (`POST /api/loading/doors/{brána}/scan`) ide rovnakou cestou so zdrojom `manual` a menom operátora.
+  - **Skener na linke** (ranná vlna) mení stav balíka na `on_belt` a hneď `sorted`.
+  - **Večerná vlna** sa uzatvára o 22:00: regionálne a košické balíky, ktoré ešte čakajú, prejdú do stavu `staged` (odstavené do rána). Diaľkové balíky, ktoré nestihli kamión, zostanú `collected` a sú vedené ako **chýbajúce**.
+  - **Nočné balíky:** pri vytvorení plánu dňa vznikne pre každý nočný diaľkový kamión 110–190 balíkov pre prechody, ktoré od neho závisia, a pre košické rajóny. Ich udalosť `collected` nesie `trip_id` kamióna, takže manifest pre telematiku obsahuje `arrivesWithTripId`. Simulátor ich na linke a pri bráne naskenuje až po príchode kamióna, takže pri poruche (ADR-024) prídu neskoro aj jeho balíky.
+  - **Balíky dňa D** sú tie s `created_at` v intervale ⟨D 00:00, D+1 07:00).
+- **Dôsledok:** Chýbajúce balíky pri bráne = balíky smeru a dňa, ktoré ešte nie sú naložené. Porovnanie s počtom neidentifikovaných položiek ukáže operátorovi, či ide o nečitateľné štítky alebo o balíky, ktoré naozaj chýbajú.
+
+## ADR-035 Čítanosť: deň v app, aktuálny stav zariadenia v telematike
+- **Kontext:** Telematika počíta čítanosť zariadenia len z posledných 30 simulovaných minút a až od 30 položiek, takže mimo vlny je prázdna.
+- **Rozhodnutie:** KPI „Čítanosť“ na dispečingu a na tabuli je **podiel prečítaných štítkov zo všetkých položiek pri nakládke za prevádzkový deň** a počíta ju app z `loading_scans`. Stav zariadenia (online/degradované/offline) a krátkodobá čítanosť pre admin a dvojča zostávajú v telematike.
+- **Dôsledok:** KPI je stabilné a vysvetliteľné („z 1 000 balíkov sa 104 nedalo prečítať“). Degradáciu konkrétneho skenera ukazuje telematika a vo Fáze 6 ML model.
+
+## ADR-036 Formát nových API: camelCase
+- **Kontext:** WebSocket udalosti a interné API sú v camelCase, kým API z Fázy 1 (`/api/auth`, `/api/admin/users`) je v snake_case.
+- **Rozhodnutie:** Nové API obrazoviek (dispečing, nakládka, tabuľa, flotila, balíky, smery) používa camelCase (`CamelModel` v `schemas/internal.py`). API z Fázy 1 sme nemenili, aby sa nerozbili hotové časti.
+- **Dôsledok:** Frontend typy v `api/wms.ts` zodpovedajú JSON-u jedna k jednej. Zjednotenie starého API je možné vo Fáze 7.
+
+## ADR-037 Verejná tabuľa ETA
+- **Kontext:** Tabuľa visí na obrazovkách v depe bez prihlásenia a bez ovládania.
+- **Rozhodnutie:**
+  - `/board?key=<BOARD_KEY>` číta `GET /api/board?key=…`. Kľúč sa porovnáva v konštantnom čase, prázdny `BOARD_KEY` tabuľu vypne a platí limit 120 požiadaviek za minútu.
+  - Tabuľa nemá WebSocket (bez prihlásenia nie je ticket), obnovuje sa každých 10 s.
+  - Ukazuje príchody a odchody dňa (a neukončené jazdy z predošlého dňa), meškania, kaskádové varovania a stav linky.
+  - Je vždy tmavá a s veľkým písmom bez ohľadu na tému, kvôli čitateľnosti z diaľky.
+- **Dôsledok:** Kľúč je zdieľané tajomstvo, nie identita používateľa. Pri úniku stačí zmeniť `BOARD_KEY`.

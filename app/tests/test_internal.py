@@ -13,7 +13,7 @@ from depotrack.core.clock import TZ
 from depotrack.core.config import get_settings
 from depotrack.models import Alert, Direction, Parcel
 from depotrack.models.enums import AlertSeverity, ParcelStatus
-from depotrack.seed import run_seed
+from depotrack.services.operating_day import run_seed
 
 DAY = date(2026, 10, 23)
 TOKEN = {"X-Service-Token": "test-service-token"}
@@ -74,10 +74,12 @@ def test_plan_is_idempotent_and_new_day_gets_parcels(client: TestClient, db: Ses
     first = [t["id"] for t in plan(client)]
     assert [t["id"] for t in plan(client)] == first
 
-    before = db.execute(select(Parcel)).all()
+    before = len(db.execute(select(Parcel)).all())
     next_day = plan(client, DAY + timedelta(days=1))
     assert len(next_day) == 16
-    assert len(db.execute(select(Parcel)).all()) == len(before) + 200
+    added = len(db.execute(select(Parcel)).all()) - before
+    # 200 collected during the day + parcels on the 3 night trucks (110-190 each)
+    assert 200 + 3 * 110 <= added <= 200 + 3 * 190
 
     # linehaul trucks shuttle: tonight's arrival leaves tomorrow evening
     today_night = find(plan(client), "BA", "inbound")["vehiclePlate"]

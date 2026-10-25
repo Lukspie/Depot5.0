@@ -4,7 +4,7 @@ import logging
 
 from depotrack.core.config import get_settings
 from depotrack.core.db import get_session_factory
-from depotrack.seed import run_seed
+from depotrack.services.operating_day import run_seed
 
 
 def main() -> None:

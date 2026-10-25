@@ -9,7 +9,16 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from depotrack import __version__
-from depotrack.api import admin_users, auth, internal, system
+from depotrack.api import (
+    admin_directions,
+    admin_users,
+    auth,
+    dashboard,
+    fleet,
+    internal,
+    loading,
+    system,
+)
 from depotrack.core.config import get_settings
 from depotrack.core.csrf import OriginCheckMiddleware
 from depotrack.core.ratelimit import limiter
@@ -46,6 +55,10 @@ def create_app() -> FastAPI:
     app.include_router(system.router)
     app.include_router(auth.router)
     app.include_router(admin_users.router)
+    app.include_router(admin_directions.router)
+    app.include_router(dashboard.router)
+    app.include_router(loading.router)
+    app.include_router(fleet.router)
     app.include_router(internal.router)
     # must be last: catch-all route for the single-page frontend
     mount_spa(app, settings.static_dir)

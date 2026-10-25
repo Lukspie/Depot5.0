@@ -20,15 +20,42 @@ def _headers() -> dict[str, str]:
     return {"X-Service-Token": get_settings().service_token}
 
 
-def broadcast(channel: str, event: dict[str, Any]) -> None:
-    """Push an event to WebSocket clients subscribed to `channel` (e.g. alerts)."""
+def broadcast_many(channel: str, type_: str, events: list[dict[str, Any]]) -> None:
+    """Push events to WebSocket clients subscribed to `channel` (alerts, loading scans…)."""
     url = f"{get_settings().telematics_internal_url}/internal/broadcast"
     try:
         httpx.post(
-            url, json={"channel": channel, "event": event}, headers=_headers(), timeout=_TIMEOUT
+            url,
+            json={"channel": channel, "type": type_, "events": events},
+            headers=_headers(),
+            timeout=_TIMEOUT,
         ).raise_for_status()
     except httpx.HTTPError as exc:
         log.warning("broadcast to telematics failed: %s", exc)
+
+
+_devices_cache: tuple[float, list[dict[str, Any]]] | None = None
+
+
+def devices() -> list[dict[str, Any]]:
+    """Device states from telematics (status, read rate); [] if unreachable. Cached 3 s."""
+    global _devices_cache
+    now = time.monotonic()
+    if _devices_cache and now - _devices_cache[0] < 3.0:
+        return _devices_cache[1]
+    try:
+        resp = httpx.get(
+            f"{get_settings().telematics_internal_url}/devices",
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data: list[dict[str, Any]] = resp.json()["devices"]
+    except (httpx.HTTPError, KeyError, ValueError) as exc:
+        log.warning("cannot read devices from telematics: %s", exc)
+        return []
+    _devices_cache = (now, data)
+    return data
 
 
 def sim_now() -> datetime:

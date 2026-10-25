@@ -52,6 +52,19 @@ Predvolené hodnoty v `.env.example` slúžia **len na vývoj a demo**.
 Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, alebo treba spustiť
 `docker compose down -v`, ktoré zmaže všetky dáta.
 
+## Obrazovky
+
+| Adresa | Kto | Čo |
+| --- | --- | --- |
+| http://localhost:8000/ | dispečer, admin | Dispečing |
+| http://localhost:8000/loading | operátor, admin | Nakládka pri bránach |
+| http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
+| http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
+| http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia |
+| http://localhost:8000/system | všetci | Stav systému a živý WebSocket |
+
+Téma (SPS oranžová / Modrá) sa prepína v hornej lište.
+
 ## Simulácia
 
 Telematika simuluje deň depa so zrýchleným časom (predvolene 60×, štart 15:00). Pri rovnakom
@@ -99,7 +112,7 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 0: kostra (4 kontajnery, healthchecky, hello endpointy, frontend z `app`)
 - [x] Fáza 1: dáta a auth (schémy, migrácie, seed, sessions, RBAC, správa používateľov)
 - [x] Fáza 2: telematika (hodiny, deterministický simulátor, WebSocket s ticketom, REST medzi backendmi, kaskáda)
-- [ ] Fáza 3: design systém + jadro WMS
+- [x] Fáza 3: design systém (témy SPS / Modrá) + jadro WMS (dispečing, nakládka, flotila, tabuľa ETA, detail balíka, admin simulácie)
 - [ ] Fáza 4: zákazník a kuriér
 - [ ] Fáza 5: digitálne dvojča
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)

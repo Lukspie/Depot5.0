@@ -7,11 +7,20 @@ import { isApiError } from "./api/client";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { TelematicsProvider } from "./hooks/telematics";
+import { applyTheme, loadTheme } from "./components/ui/theme";
 import "./index.css";
 import { AdminPage } from "./pages/AdminPage";
+import { BoardPage } from "./pages/BoardPage";
+import { FleetPage } from "./pages/FleetPage";
+import { LoadingPage } from "./pages/LoadingPage";
+import { ParcelPage } from "./pages/ParcelPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { HomePage } from "./pages/HomePage";
 import { StatusPage } from "./pages/StatusPage";
+
+// before the first render, so the page never flashes in the wrong colours
+applyTheme(loadTheme());
 
 const queryClient: QueryClient = new QueryClient({
   // any 401 means the session expired or was revoked: drop the user, RequireAuth redirects to /login
@@ -39,6 +48,8 @@ createRoot(root).render(
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          {/* public ETA board for depot screens: no login, key in the URL */}
+          <Route path="/board" element={<BoardPage />} />
           <Route
             element={
               <RequireAuth>
@@ -48,7 +59,32 @@ createRoot(root).render(
               </RequireAuth>
             }
           >
-            <Route index element={<StatusPage />} />
+            <Route index element={<HomePage />} />
+            <Route path="system" element={<StatusPage />} />
+            <Route
+              path="loading"
+              element={
+                <RequireAuth roles={["operator"]}>
+                  <LoadingPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="fleet"
+              element={
+                <RequireAuth roles={["dispatcher"]}>
+                  <FleetPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="parcels/:id"
+              element={
+                <RequireAuth roles={["dispatcher"]}>
+                  <ParcelPage />
+                </RequireAuth>
+              }
+            />
             <Route
               path="admin"
               element={

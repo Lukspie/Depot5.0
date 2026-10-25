@@ -103,6 +103,7 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:?nastav SERVICE_TOKEN v .env}
       WS_TICKET_SECRET: ${WS_TICKET_SECRET:?nastav WS_TICKET_SECRET v .env}
       CASCADE_BUFFER_MIN: ${CASCADE_BUFFER_MIN:-30}
+      BOARD_KEY: ${BOARD_KEY:-}
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:

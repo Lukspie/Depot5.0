@@ -1,60 +1,45 @@
-import { useState } from "react";
+import { type ReactNode } from "react";
+import { useSearchParams } from "react-router";
+import { DevicesTab, DirectionsTab, SimulationTab } from "../components/admin/SimulationTabs";
 import { UsersTab } from "../components/admin/UsersTab";
+import { Card, EmptyState, PageHeader, Tabs } from "../components/ui";
 
-interface Tab {
-  id: string;
-  label: string;
-  /** phase in which the tab gets its content; undefined = ready */
-  phase?: number;
-}
+type TabId = "users" | "directions" | "devices" | "simulation" | "notifications";
 
-const TABS: Tab[] = [
+const TABS: { id: TabId; label: string }[] = [
   { id: "users", label: "Používatelia" },
-  { id: "directions", label: "Smery", phase: 3 },
-  { id: "devices", label: "Zariadenia", phase: 3 },
-  { id: "simulation", label: "Simulácia", phase: 3 },
-  { id: "notifications", label: "Notifikácie zákazníkom", phase: 4 },
+  { id: "directions", label: "Smery" },
+  { id: "devices", label: "Zariadenia" },
+  { id: "simulation", label: "Simulácia" },
+  { id: "notifications", label: "Notifikácie" },
 ];
 
-export function AdminPage() {
-  const [active, setActive] = useState("users");
-  const tab = TABS.find((t) => t.id === active) ?? TABS[0]!;
+const CONTENT: Record<TabId, () => ReactNode> = {
+  users: () => <UsersTab />,
+  directions: () => <DirectionsTab />,
+  devices: () => <DevicesTab />,
+  simulation: () => <SimulationTab />,
+  notifications: () => <Later phase={4} />,
+};
 
+function Later({ phase }: { phase: number }) {
+  return (
+    <Card>
+      <EmptyState title="Pripravuje sa" description={`Táto časť pribudne vo fáze ${String(phase)}.`} />
+    </Card>
+  );
+}
+
+export function AdminPage() {
+  const [params, setParams] = useSearchParams();
+  const requested = params.get("tab");
+  const active: TabId = TABS.some((t) => t.id === requested) ? (requested as TabId) : "users";
+  const setActive = (id: TabId) => setParams(id === "users" ? {} : { tab: id }, { replace: true });
   return (
     <div className="mx-auto max-w-6xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Administrácia</h1>
-        <p className="text-ink-muted mt-1 text-sm">
-          Správa používateľov a rolí, smerov, zariadení a simulácie.
-        </p>
-      </header>
-
-      <div role="tablist" className="bg-surface shadow-card mb-6 flex gap-1 overflow-x-auto rounded-2xl p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            type="button"
-            aria-selected={t.id === active}
-            onClick={() => setActive(t.id)}
-            className={`rounded-xl px-4 py-2 text-sm whitespace-nowrap transition-colors ${
-              t.id === active
-                ? "bg-brand-100 text-brand-700 font-medium"
-                : "text-ink-muted hover:bg-brand-50"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab.phase === undefined ? (
-        <UsersTab />
-      ) : (
-        <div className="bg-surface shadow-card rounded-card text-ink-muted p-10 text-center text-sm">
-          Táto časť pribudne vo fáze {tab.phase}.
-        </div>
-      )}
+      <PageHeader title="Administrácia" subtitle="Používatelia a roly, smery, zariadenia, simulácia a notifikácie." />
+      <Tabs items={TABS} active={active} onChange={setActive} className="mb-5" />
+      {CONTENT[active]()}
     </div>
   );
 }

@@ -7,7 +7,7 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
 - V predvolenom seede je **zaručene** scenár degradácie skenera a aspoň jedno meškanie nočného kamióna, ktoré spôsobí kaskádové varovanie.
 - Ovládanie hodín (pauza, rýchlosť, skok na 15:30 / 01:00 / 06:00) je API v telematike. UI v admine môže prísť vo Fáze 3.
 
-## Fáza 3 – na začiatku: malý design systém
+## Fáza 3 – na začiatku: malý design systém *(hotové, pozri docs/design/komponenty.md)*
 - Komponenty vo `frontend/src/components/ui`: `Badge`, `StatusDot`, `DataTable`, `Card`, `KpiCard`, `SidePanel`, `PageHeader`, `EmptyState`, `Spinner`.
 - **Pravidlá:**
   - štítky a stavy sa nezalamujú (`whitespace-nowrap`), bodka a text stavu sú na jednom riadku,
@@ -18,6 +18,7 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
   - bodka a „Aktívny“ na dvoch riadkoch,
   - zalamujúce sa meno „(vy)“.
 - Komponenty zdokumentovať v `docs/design/komponenty.md`.
+- Témy: **SPS** (oranžová, čierna, sivá – predvolená) a **Modrá** podľa referencie (ADR-032).
 - Vizuálny cieľ je [docs/design/reference.png](design/reference.png) (popis v [docs/design/README.md](design/README.md)). Jeho štýl platí pre KPI karty, panely a celkovú paletu na všetkých obrazovkách, nielen v dvojčati.
 
 ## Fáza 5b – UX review (po Fáze 5)

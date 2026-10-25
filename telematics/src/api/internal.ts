@@ -11,7 +11,7 @@ export interface InternalRoutesDeps {
 }
 
 export const internalRoutes: FastifyPluginAsync<InternalRoutesDeps> = async (app, { hub, serviceToken }) => {
-  app.post<{ Body: { channel: Channel; type?: string; event: unknown } }>(
+  app.post<{ Body: { channel: Channel; type?: string; event?: unknown; events?: unknown[] } }>(
     "/internal/broadcast",
     {
       preHandler: serviceTokenGuard(serviceToken),
@@ -20,18 +20,21 @@ export const internalRoutes: FastifyPluginAsync<InternalRoutesDeps> = async (app
         summary: "Rozoslať udalosť klientom WebSocketu (volá app)",
         body: {
           type: "object",
-          required: ["channel", "event"],
+          required: ["channel"],
           properties: {
             channel: { type: "string", enum: [...CHANNELS] },
             type: { type: "string", maxLength: 32 },
             event: { type: "object" },
+            events: { type: "array", maxItems: 2000, items: { type: "object" } },
           },
         },
       },
     },
     (req) => {
-      hub.publish(req.body.channel, req.body.type ?? "event", req.body.event);
-      return { delivered: hub.size };
+      const type = req.body.type ?? "event";
+      const events = req.body.events ?? (req.body.event === undefined ? [] : [req.body.event]);
+      for (const ev of events) hub.publish(req.body.channel, type, ev);
+      return { events: events.length, clients: hub.size };
     },
   );
 

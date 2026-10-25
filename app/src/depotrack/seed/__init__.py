@@ -1,4 +1,6 @@
-"""Idempotent seed of db-wms, run on every container start (`python -m depotrack.seed`).
+"""Seed steps of db-wms, run on every container start (`python -m depotrack.seed`).
+
+The orchestration (run_seed, ensure_operating_day) is in depotrack.services.operating_day.
 
 Each step is recorded in `seed_meta`; a step that already ran is skipped, so restarting the
 container never duplicates data and never overwrites changes made in the admin UI.
@@ -18,12 +20,11 @@ from depotrack.models import Direction, Door, Parcel, ParcelEvent, SeedMeta, Use
 from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, UserRole, WaveKind
 from depotrack.seed.generator import generate_parcels
 from depotrack.seed.reference import DIRECTIONS, DOORS, USERS, VEHICLES
-from depotrack.services.trip_plan import build_trip_plan
 
 log = logging.getLogger(__name__)
 
 
-def _step(db: Session, key: str, fn: Callable[[], object]) -> bool:
+def step(db: Session, key: str, fn: Callable[[], object]) -> bool:
     """Run `fn` once per `key`, in a single transaction together with its seed_meta row."""
     if db.get(SeedMeta, key) is not None:
         log.info("seed step %s already applied, skipping", key)
@@ -159,21 +160,3 @@ def seed_parcels(db: Session, day: date, count: int, random_seed: int) -> None:
             for pid, spec in zip(ids, specs, strict=True)
         ],
     )
-
-
-def ensure_operating_day(db: Session, settings: Settings, day: date) -> None:
-    """Waves, parcels and the trip plan of one operating day (each step only once)."""
-    _step(db, f"waves:{day.isoformat()}", lambda: seed_waves(db, day))
-    _step(
-        db,
-        f"parcels:{day.isoformat()}",
-        lambda: seed_parcels(db, day, settings.seed_parcels_per_day, settings.seed_random_seed),
-    )
-    _step(db, f"trips:{day.isoformat()}", lambda: build_trip_plan(db, day))
-
-
-def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
-    day = day or settings.seed_date or datetime.now(TZ).date()
-    _step(db, "reference:v1", lambda: seed_reference(db))
-    _step(db, "users:v1", lambda: seed_users(db, settings))
-    ensure_operating_day(db, settings, day)

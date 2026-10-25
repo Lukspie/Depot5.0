@@ -1,7 +1,7 @@
 /** Test doubles: a plan like the app creates it, an in-memory telemetry store and app API. */
 
 import { SignJWT } from "jose";
-import type { AlertPayload, AppApi, PlanWithLocal } from "../src/app-client.js";
+import type { AlertPayload, AppApi, ManifestParcel, PlanWithLocal, ScanForward } from "../src/app-client.js";
 import { addDays, zonedToUtc } from "../src/clock/time.js";
 import type {
   DeviceRow,
@@ -33,9 +33,11 @@ export const LOCAL = ["KE-01", "KE-02", "KE-03", "KE-04", "KE-05", "KE-06", "KE-
 const at = (day: string, hhmm: string, plusMin = 0): string =>
   new Date(zonedToUtc(day, hhmm) + plusMin * 60_000).toISOString();
 
-/** Same structure as app/src/depotrack/services/trip_plan.py */
+/** Same structure as app/src/depotrack/services/trip_plan.py (incl. the Senica rotation). */
 export function makePlan(day: string, idBase = 1): PlanWithLocal {
   const next = addDays(day, 1);
+  const parity = Math.round(Date.parse(day) / 86_400_000) % 2;
+  const transitPlate = (i: number): string => (i === 4 && parity === 1 ? "KE-206TR" : `KE-20${String(i + 1)}TR`);
   const trips: PlanTrip[] = [];
   let id = idBase;
   const base = {
@@ -45,7 +47,7 @@ export function makePlan(day: string, idBase = 1): PlanWithLocal {
   };
   TRANSIT.forEach((t, i) => {
     trips.push({
-      ...base, id: id++, kind: "inbound", vehiclePlate: `KE-20${String(i + 1)}TR`, directionCode: t.code,
+      ...base, id: id++, kind: "inbound", vehiclePlate: transitPlate(i), directionCode: t.code,
       directionName: t.name, directionType: "transit", dependsOnLinehaul: t.deps, doorCode: t.door,
       plannedArrival: at(day, "15:45", 15 * i), plannedDeparture: null,
     });
@@ -64,7 +66,7 @@ export function makePlan(day: string, idBase = 1): PlanWithLocal {
   });
   TRANSIT.forEach((t, i) => {
     trips.push({
-      ...base, id: id++, kind: "outbound", vehiclePlate: `KE-20${String(i + 1)}TR`, directionCode: t.code,
+      ...base, id: id++, kind: "outbound", vehiclePlate: transitPlate(i), directionCode: t.code,
       directionName: t.name, directionType: "transit", dependsOnLinehaul: t.deps, doorCode: t.door,
       plannedArrival: at(next, "03:00"), plannedDeparture: at(next, t.dep),
     });
@@ -164,21 +166,55 @@ export function manifestFor(direction: string, day: string): string[] {
   return Array.from({ length: n }, (_, i) => `SPS${day.replaceAll("-", "").slice(2)}${direction}${String(i).padStart(4, "0")}`);
 }
 
+const DEPENDS: Record<string, string[]> = Object.fromEntries(TRANSIT.map((t) => [t.code, t.deps]));
+
 export class FakeApp implements AppApi {
   readonly tripEvents: { simTime: string; trips: TripExecution[] }[] = [];
+  readonly scans: ScanForward[] = [];
   readonly alerts: AlertPayload[] = [];
+  /** order of calls, to check that trips are sent before scans */
+  readonly calls: string[] = [];
   down = false;
+
+  planFor(day: string): PlanWithLocal {
+    const offset = (Date.parse(day) / 86_400_000) % 1000;
+    return makePlan(day, offset * 100);
+  }
 
   getPlan(day: string): Promise<PlanWithLocal> {
     if (this.down) return Promise.reject(new Error("app down"));
-    const offset = (Date.parse(day) / 86_400_000) % 1000;
-    return Promise.resolve(makePlan(day, offset * 100));
+    return Promise.resolve(this.planFor(day));
   }
-  getManifest(direction: string, day: string): Promise<string[]> {
-    return Promise.resolve(manifestFor(direction, day));
+
+  /** evening parcels + parcels arriving on the night trucks that feed the direction */
+  getManifest(direction: string, day: string): Promise<ManifestParcel[]> {
+    const parcels: ManifestParcel[] = manifestFor(direction, day).map((barcode) => ({ barcode, arrivesWithTripId: null }));
+    const feeders = direction.startsWith("KE-") ? ["BA"] : (DEPENDS[direction] ?? []);
+    for (const code of feeders) {
+      const night = this.planFor(day).trips.find((t) => t.directionCode === code && t.kind === "inbound");
+      if (!night) continue;
+      for (let i = 0; i < 20; i++) parcels.push({ barcode: `N-${direction}-${code}-${String(i)}`, arrivesWithTripId: night.id });
+    }
+    return Promise.resolve(parcels);
+  }
+
+  readonly resets: string[] = [];
+
+  resetDay(day: string): Promise<void> {
+    if (this.down) return Promise.reject(new Error("app down"));
+    this.resets.push(day);
+    return Promise.resolve();
+  }
+
+  postScans(scans: ScanForward[]): Promise<void> {
+    if (this.down) return Promise.reject(new Error("app down"));
+    this.calls.push("scans");
+    this.scans.push(...scans);
+    return Promise.resolve();
   }
   postTripEvents(simTime: string, trips: TripExecution[]): Promise<void> {
     if (this.down) return Promise.reject(new Error("app down"));
+    this.calls.push("trips");
     this.tripEvents.push({ simTime, trips });
     return Promise.resolve();
   }

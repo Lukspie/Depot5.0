@@ -11,8 +11,8 @@ from depotrack.core.config import get_settings
 from depotrack.core.security import verify_password
 from depotrack.models import Direction, Door, Parcel, ParcelEvent, User, Vehicle, Wave
 from depotrack.models.enums import DirectionType, DoorKind, UserRole
-from depotrack.seed import run_seed
 from depotrack.seed.generator import generate_parcels, kosice_rajon
+from depotrack.services.operating_day import run_seed
 
 DAY = date(2026, 10, 23)  # a Friday
 
@@ -33,7 +33,9 @@ def test_seed_is_idempotent_and_complete(db: Session) -> None:
     assert counts[Vehicle] == 12 + 8
     assert counts[User] == 4 + 8
     assert counts[Wave] == 2
-    assert counts[Parcel] == counts[ParcelEvent] == 200
+    # 200 collected parcels + parcels brought by the 3 night trucks; one event each
+    assert counts[Parcel] == counts[ParcelEvent]
+    assert 200 + 3 * 110 <= counts[Parcel] <= 200 + 3 * 190
 
 
 def test_seed_reference_data_matches_domain(db: Session) -> None:
@@ -58,8 +60,9 @@ def test_seed_reference_data_matches_domain(db: Session) -> None:
 def test_new_day_adds_parcels_but_not_reference_data(db: Session) -> None:
     settings = get_settings().model_copy(update={"seed_parcels_per_day": 20})
     run_seed(db, settings, DAY)
+    first = _count(db, Parcel)
     run_seed(db, settings, date(2026, 10, 24))
-    assert _count(db, Parcel) == 40
+    assert _count(db, Parcel) - first >= 20
     assert _count(db, Direction) == 16
 
 

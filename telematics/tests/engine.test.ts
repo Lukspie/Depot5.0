@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { SimClock } from "../src/clock/clock.js";
 import { HOUR, MINUTE, operatingDayStart, zonedToUtc } from "../src/clock/time.js";
 import { Engine } from "../src/simulator/engine.js";
+import { buildScenario } from "../src/simulator/scenario.js";
+import { activeWindow } from "../src/simulator/trips.js";
+import { addDays } from "../src/clock/time.js";
 import { loadRoutes } from "../src/simulator/routes.js";
 import { Hub } from "../src/ws/hub.js";
 import { FakeApp, MemoryStore, silentLog } from "./fixtures.js";
@@ -128,13 +131,14 @@ describe("simulation engine", () => {
   });
 
   it("a new seed restarts the operating day from 15:00 with a different scenario", async () => {
-    const { engine, clock, store, runUntil } = await makeEngine();
+    const { engine, clock, store, app, runUntil } = await makeEngine();
     await runUntil(zonedToUtc(DAY, "18:00"));
     expect(store.scans.length).toBeGreaterThan(0);
     await engine.setSeed(7);
     expect(clock.now()).toBe(START);
     expect(store.scans).toHaveLength(0);
     expect(engine.clockInfo().seed).toBe(7);
+    expect(app.resets).toEqual([DAY]); // the app undid the day as well
   });
 
   it("keeps retrying when the app is down and catches up afterwards", async () => {
@@ -151,11 +155,68 @@ describe("simulation engine", () => {
   });
 
   it("vehicles drive along their routes", async () => {
-    const { engine, store, runUntil } = await makeEngine();
+    const { engine, store, app, runUntil } = await makeEngine();
     await runUntil(START + 4 * HOUR);
-    const positions = store.gps.filter((g) => g.plate === "KE-205TR"); // Senica truck returning
+    // the Senica truck returning in the afternoon (which of the two depends on the day)
+    const plate = app.planFor(DAY).trips.find((t) => t.directionCode === "SE" && t.kind === "inbound")?.vehiclePlate;
+    const positions = store.gps.filter((g) => g.plate === plate);
     expect(positions.length).toBeGreaterThan(5);
     expect(new Set(positions.map((p) => p.lon.toFixed(2))).size).toBeGreaterThan(3);
     expect(engine.deviceList()).toHaveLength(13);
+  });
+
+  it("forwards dock and line scans to the app, trips first", async () => {
+    const { app, runUntil } = await makeEngine();
+    await runUntil(zonedToUtc(DAY, "19:00"));
+    const dock = app.scans.filter((s) => s.doorCode !== null);
+    expect(dock.length).toBeGreaterThan(100);
+    expect(dock.every((s) => s.doorCode?.startsWith("LD-"))).toBe(true);
+    expect(dock.some((s) => s.barcode === null && !s.readOk)).toBe(true); // counted, unread
+    expect(app.calls.indexOf("trips")).toBeLessThan(app.calls.indexOf("scans"));
+  });
+
+  it("keeps scans while the app is down and delivers them later", async () => {
+    const { app, engine, runUntil } = await makeEngine();
+    await runUntil(zonedToUtc(DAY, "17:30"));
+    const before = app.scans.length;
+    app.down = true;
+    await runUntil(zonedToUtc(DAY, "18:00"));
+    expect(app.scans.length).toBe(before);
+    app.down = false;
+    await engine.flushTrips();
+    expect(app.scans.length).toBeGreaterThan(before);
+  });
+
+  it("parcels of a night truck reach the belt only after the truck arrived", async () => {
+    const { engine, app, runUntil } = await makeEngine();
+    await runUntil(zonedToUtc("2026-10-24", "07:00"), 5 * MINUTE);
+    const [day] = engine.scenarioSummary() as { incident: { direction: string; arrival: string } }[];
+    const arrival = Date.parse(day?.incident.arrival ?? "");
+    const late = app.scans.filter((s) => s.doorCode === null && s.barcode?.includes(`-${day?.incident.direction ?? ""}-`));
+    expect(late.length).toBeGreaterThan(0);
+    expect(late.every((s) => Date.parse(s.at) >= arrival + 10 * MINUTE)).toBe(true);
+  });
+});
+
+describe("vehicle rotation", () => {
+  it("no truck is on two trips at the same time across consecutive days (Senica rotation)", () => {
+    const app = new FakeApp();
+    const routes = loadRoutes();
+    const windows = new Map<string, [number, number][]>();
+    for (const day of [DAY, addDays(DAY, 1), addDays(DAY, 2)]) {
+      const scenario = buildScenario(app.planFor(day), { seed: 42, forceCascade: true, routes });
+      for (const s of scenario.schedules.values()) {
+        const list = windows.get(s.trip.vehiclePlate) ?? [];
+        list.push(activeWindow(s));
+        windows.set(s.trip.vehiclePlate, list);
+      }
+    }
+    expect(windows.has("KE-206TR")).toBe(true);
+    for (const [plate, list] of windows) {
+      list.sort((a, b) => a[0] - b[0]);
+      for (let i = 1; i < list.length; i++) {
+        expect((list[i] as [number, number])[0], plate).toBeGreaterThanOrEqual((list[i - 1] as [number, number])[1]);
+      }
+    }
   });
 });
