@@ -1,4 +1,5 @@
 import { useAppStatus, usePublicConfig, useTelematicsStatus } from "../api/system";
+import { LiveSimulationCard } from "../components/LiveSimulationCard";
 import { ServiceCard } from "../components/ServiceCard";
 
 export function StatusPage() {
@@ -33,6 +34,7 @@ export function StatusPage() {
           health={telematics.health}
           waitingFor={config.isError ? "Chýba konfigurácia" : undefined}
         />
+        <LiveSimulationCard />
       </div>
     </div>
   );

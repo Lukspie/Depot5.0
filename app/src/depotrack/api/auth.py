@@ -11,7 +11,9 @@ from depotrack.core.ratelimit import limiter
 from depotrack.core.rbac import CurrentUser, DbSession
 from depotrack.core.security import verify_password
 from depotrack.core.sessions import create_session, delete_session
+from depotrack.core.tickets import issue_ws_ticket
 from depotrack.models import User
+from depotrack.schemas.internal import WsTicketOut
 from depotrack.schemas.users import LoginIn, UserOut
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -72,3 +74,15 @@ def logout(request: Request, response: Response, db: DbSession, settings: Settin
 @router.get("/me", response_model=UserOut)
 def me(user: CurrentUser) -> User:
     return user
+
+
+@router.post("/ws-ticket", response_model=WsTicketOut, response_model_by_alias=True)
+def ws_ticket(user: CurrentUser, settings: SettingsDep) -> WsTicketOut:
+    """Short-lived ticket for the WebSocket connection to telematics (ADR-004)."""
+    # http://host -> ws://host, https://host -> wss://host
+    ws_base = settings.telematics_public_url.rstrip("/").replace("http", "ws", 1)
+    return WsTicketOut(
+        ticket=issue_ws_ticket(user, settings),
+        expires_in=settings.ws_ticket_ttl_seconds,
+        ws_url=f"{ws_base}/ws",
+    )

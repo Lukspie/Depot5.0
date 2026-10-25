@@ -3,7 +3,6 @@
 from datetime import date, datetime, time
 
 from sqlalchemy import (
-    ARRAY,
     Date,
     DateTime,
     Float,
@@ -14,6 +13,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from depotrack.models.base import Base, pg_enum
@@ -96,3 +96,5 @@ class Trip(Base):
     status: Mapped[TripStatus] = mapped_column(
         pg_enum(TripStatus, "trip_status"), server_default=TripStatus.PLANNED.value
     )
+    # depot day the trip belongs to: from 15:00 of this date to 15:00 the next day (ADR-022)
+    operating_day: Mapped[date] = mapped_column(Date, index=True)

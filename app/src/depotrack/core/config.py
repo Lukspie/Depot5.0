@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     # browser -> telematics (frontend calls telematics directly)
     telematics_public_url: str = "http://localhost:8080"
 
+    # shared secret for app <-> telematics REST (header X-Service-Token)
+    service_token: str
+    # HS256 secret for short-lived WebSocket tickets (verified by telematics)
+    ws_ticket_secret: str
+    ws_ticket_ttl_seconds: int = 60
+
+    # cascade warning: night truck ETA + sorting buffer > transit departure
+    cascade_buffer_min: int = 30
+
     # browser origins allowed to send state-changing requests (CSRF check, ADR-014)
     app_allowed_origins: str = "http://localhost:8000,http://localhost:5173"
 

@@ -6,6 +6,7 @@ import { ME_KEY } from "./api/auth";
 import { isApiError } from "./api/client";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
+import { TelematicsProvider } from "./hooks/telematics";
 import "./index.css";
 import { AdminPage } from "./pages/AdminPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -41,7 +42,9 @@ createRoot(root).render(
           <Route
             element={
               <RequireAuth>
-                <Layout />
+                <TelematicsProvider>
+                  <Layout />
+                </TelematicsProvider>
               </RequireAuth>
             }
           >

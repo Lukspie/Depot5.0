@@ -1,13 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { useLogout, useMe } from "../api/auth";
-import { NAV, ROLE_LABEL } from "../auth/roles";
+import { canAccess, NAV, ROLE_LABEL } from "../auth/roles";
 
 export function Layout() {
   const me = useMe();
   const logout = useLogout();
   const navigate = useNavigate();
   const user = me.data;
-  const items = user ? NAV.filter((item) => item.roles.includes(user.role)) : [];
+  const items = user ? NAV.filter((item) => canAccess(user.role, item.roles)) : [];
 
   function onLogout() {
     logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) });

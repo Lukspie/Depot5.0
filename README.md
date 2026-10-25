@@ -6,6 +6,7 @@ Prototyp informačného systému (WMS) pre prekládkové depo SPS (Slovak Parcel
 - Zadanie: [docs/PROMPT.md](docs/PROMPT.md)
 - Rozhodnutia: [docs/decisions.md](docs/decisions.md)
 - Vysvetlenia po fázach: [docs/fazy/](docs/fazy/)
+- Doplnky k plánu: [docs/plan-doplnky.md](docs/plan-doplnky.md), vizuálny cieľ: [docs/design/](docs/design/)
 
 ## Architektúra (4 kontajnery)
 
@@ -51,6 +52,33 @@ Predvolené hodnoty v `.env.example` slúžia **len na vývoj a demo**.
 Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, alebo treba spustiť
 `docker compose down -v`, ktoré zmaže všetky dáta.
 
+## Simulácia
+
+Telematika simuluje deň depa so zrýchleným časom (predvolene 60×, štart 15:00). Pri rovnakom
+`SIM_RANDOM_SEED` sa deň odohrá rovnako. V predvolenom scenári je vždy porucha nočného kamióna,
+ktorá spustí kaskádové varovanie, a degradácia skenera `DOCK-SCN-02`.
+
+Ovládanie (admin): Swagger na http://localhost:8080/docs, autorizácia `Bearer <ticket>`. Ticket
+vydá `POST /api/auth/ws-ticket` po prihlásení a platí 60 s.
+
+| Akcia | Volanie |
+| --- | --- |
+| čas, rýchlosť, seed | `GET /sim/clock` (verejné) |
+| pauza / pokračovanie | `POST /sim/clock/pause`, `POST /sim/clock/resume` |
+| rýchlosť | `PUT /sim/clock/speed {"speed": 600}` |
+| skok (večerná vlna, nočné kamióny, ranné odchody) | `POST /sim/clock/jump {"to": "15:30" \| "01:00" \| "06:00"}` |
+| zmena seedu (deň znova od 15:00) | `PUT /sim/seed {"seed": 7}` |
+| deň znova od 15:00 | `POST /sim/restart-day` |
+| prehľad scenára (meškania, porucha) | `GET /sim/scenario` |
+| vypnúť / zapnúť / opraviť zariadenie | `PUT /sim/devices/DOCK-SCN-05 {"enabled": false}`, `{"repair": true}` |
+
+Príklad s curl je v [docs/fazy/faza-2-telematika.md](docs/fazy/faza-2-telematika.md#ako-to-overiť).
+
+História pre tréning ML (6 mesiacov jázd a metrík skenerov do `ml/data/`, mimo git):
+```bash
+cd telematics && npm ci && npm run gen:history -- --days 180 --out ../ml/data
+```
+
 ## Vývoj a testy
 
 ```bash
@@ -70,9 +98,10 @@ cd frontend && npm ci && npm run dev
 
 - [x] Fáza 0: kostra (4 kontajnery, healthchecky, hello endpointy, frontend z `app`)
 - [x] Fáza 1: dáta a auth (schémy, migrácie, seed, sessions, RBAC, správa používateľov)
-- [ ] Fáza 2: telematika
-- [ ] Fáza 3: jadro WMS
+- [x] Fáza 2: telematika (hodiny, deterministický simulátor, WebSocket s ticketom, REST medzi backendmi, kaskáda)
+- [ ] Fáza 3: design systém + jadro WMS
 - [ ] Fáza 4: zákazník a kuriér
 - [ ] Fáza 5: digitálne dvojča
+- [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML
 - [ ] Fáza 7: dokončenie

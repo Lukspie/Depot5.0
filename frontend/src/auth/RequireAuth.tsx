@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router";
 import { useMe, type Role } from "../api/auth";
 import { ForbiddenPage } from "../pages/ForbiddenPage";
 import { CenteredMessage } from "../components/CenteredMessage";
+import { canAccess } from "./roles";
 
 interface Props {
   children: ReactNode;
@@ -28,7 +29,7 @@ export function RequireAuth({ children, roles }: Props) {
   if (me.data === null) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-  if (roles && !roles.includes(me.data.role)) {
+  if (roles && !canAccess(me.data.role, roles)) {
     return <ForbiddenPage />;
   }
   return <>{children}</>;

@@ -30,12 +30,17 @@ export interface NavItem {
 
 const ALL: Role[] = ROLES;
 
+/** Admin may open every screen (ADR-017); `roles` lists the other roles. */
+export function canAccess(role: Role, roles: Role[]): boolean {
+  return role === "admin" || roles.includes(role);
+}
+
 export const NAV: NavItem[] = [
   { to: "/", label: "Stav systému", roles: ALL, ready: true },
-  { to: "/twin", label: "Digitálne dvojča", roles: ["dispatcher", "admin", "security"], ready: false },
+  { to: "/twin", label: "Digitálne dvojča", roles: ["dispatcher", "security"], ready: false },
   { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: false },
   { to: "/loading", label: "Nakládka", roles: ["operator"], ready: false },
   { to: "/gate", label: "Brána", roles: ["security"], ready: false },
   { to: "/courier", label: "Moje zastávky", roles: ["courier"], ready: false },
-  { to: "/admin", label: "Administrácia", roles: ["admin"], ready: true },
+  { to: "/admin", label: "Administrácia", roles: [], ready: true },
 ];

@@ -4,8 +4,8 @@ import math
 import random
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
 
+from depotrack.core.clock import TZ
 from depotrack.seed.reference import (
     FEMALE_FIRST,
     FIRST_NAMES,
@@ -22,7 +22,6 @@ from depotrack.seed.reference import (
     DirectionDef,
 )
 
-TZ = ZoneInfo("Europe/Bratislava")
 KM_PER_DEG_LAT = 111.32
 
 # share of the daily volume by direction type

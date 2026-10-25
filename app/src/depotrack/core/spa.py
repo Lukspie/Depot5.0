@@ -10,7 +10,8 @@ from fastapi.staticfiles import StaticFiles
 def mount_spa(app: FastAPI, static_dir: Path) -> None:
     """Serve hashed assets directly and fall back to index.html for client-side routes.
 
-    Paths under /api are never answered with index.html, so unknown API calls stay 404.
+    Paths under /api and /internal are never answered with index.html, so unknown API calls
+    stay 404.
     """
     index = static_dir / "index.html"
     if not index.is_file():
@@ -24,7 +25,7 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def spa(full_path: str) -> FileResponse:
-        if full_path == "api" or full_path.startswith("api/"):
+        if full_path.split("/", 1)[0] in ("api", "internal"):
             raise HTTPException(status_code=404, detail="Not Found")
         candidate = (root / full_path).resolve()
         if full_path and candidate.is_file() and root in candidate.parents:

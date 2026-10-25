@@ -11,10 +11,14 @@ _MAIN_DB = os.environ.get("WMS_DB_NAME", "postgres")
 os.environ["WMS_DB_NAME"] = os.environ.get("WMS_TEST_DB_NAME", "depotrack_test")
 os.environ["RUN_JOBS"] = "false"
 os.environ["LOGIN_RATE_LIMIT"] = "1000/minute"
+os.environ["SERVICE_TOKEN"] = "test-service-token"
+os.environ["WS_TICKET_SECRET"] = "test-ws-secret-0123456789abcdef0123456789"
+os.environ["SEED_PARCELS_PER_DAY"] = "200"
 for _role in ("ADMIN", "DISPATCHER", "OPERATOR", "SECURITY", "COURIER"):
     os.environ[f"SEED_{_role}_PASSWORD"] = f"{_role.lower()}-test-heslo"
 
 from collections.abc import Callable, Iterator  # noqa: E402
+from datetime import UTC, datetime  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 import pytest  # noqa: E402
@@ -31,6 +35,7 @@ from depotrack.core.security import hash_password  # noqa: E402
 from depotrack.main import create_app  # noqa: E402
 from depotrack.models import Base, User  # noqa: E402
 from depotrack.models.enums import UserRole  # noqa: E402
+from depotrack.services import telematics  # noqa: E402
 
 APP_DIR = Path(__file__).resolve().parents[1]
 TEST_PASSWORD = "spravne-heslo-123"
@@ -64,6 +69,15 @@ def clean_tables() -> Iterator[None]:
     with get_engine().begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     limiter.reset()
+
+
+@pytest.fixture(autouse=True)
+def fake_telematics(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, dict[str, object]]]:
+    """No network calls to telematics in tests: record broadcasts, fixed simulated time."""
+    sent: list[tuple[str, dict[str, object]]] = []
+    monkeypatch.setattr(telematics, "broadcast", lambda ch, ev: sent.append((ch, ev)))
+    monkeypatch.setattr(telematics, "sim_now", lambda: datetime(2026, 10, 23, 13, 0, tzinfo=UTC))
+    return sent
 
 
 @pytest.fixture

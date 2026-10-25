@@ -36,8 +36,11 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def require_role(*roles: UserRole) -> Callable[[User], User]:
-    """Dependency that allows only the listed roles (401 if not logged in, 403 otherwise)."""
-    allowed = frozenset(roles)
+    """Dependency that allows only the listed roles (401 if not logged in, 403 otherwise).
+
+    Admin is always allowed (ADR-017): demo and system administration need every screen.
+    """
+    allowed = frozenset(roles) | {UserRole.ADMIN}
 
     def check(user: CurrentUser) -> User:
         if user.role not in allowed:

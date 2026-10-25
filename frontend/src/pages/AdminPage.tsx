@@ -11,8 +11,8 @@ interface Tab {
 const TABS: Tab[] = [
   { id: "users", label: "Používatelia" },
   { id: "directions", label: "Smery", phase: 3 },
-  { id: "devices", label: "Zariadenia", phase: 2 },
-  { id: "simulation", label: "Simulácia", phase: 2 },
+  { id: "devices", label: "Zariadenia", phase: 3 },
+  { id: "simulation", label: "Simulácia", phase: 3 },
   { id: "notifications", label: "Notifikácie zákazníkom", phase: 4 },
 ];
 
