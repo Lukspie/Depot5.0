@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from depotrack.models import Direction, Door, LoadingScan, Parcel, ParcelEvent, Trip
+from depotrack.models import Depot, Direction, Door, LoadingScan, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import (
     AlertKind,
     AlertSeverity,
@@ -47,6 +47,17 @@ def loading_dock(db: Session, code: str) -> Door | None:
     return db.execute(
         select(Door).where(Door.code == code, Door.kind == DoorKind.LOADING_DOCK)
     ).scalar_one_or_none()
+
+
+def depot_docks(db: Session, depot_code: str = "BUD") -> list[Door]:
+    return list(
+        db.execute(
+            select(Door)
+            .join(Depot, Door.depot_id == Depot.id)
+            .where(Depot.code == depot_code, Door.kind == DoorKind.LOADING_DOCK)
+            .order_by(Door.code)
+        ).scalars()
+    )
 
 
 def active_trip_at(db: Session, door: Door) -> Trip | None:

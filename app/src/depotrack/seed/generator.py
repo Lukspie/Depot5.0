@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
 from depotrack.core.clock import TZ
+from depotrack.seed.geo import addresses
 from depotrack.seed.reference import (
     FEMALE_FIRST,
     FIRST_NAMES,
@@ -68,6 +69,19 @@ def kosice_rajon(lat: float, lon: float) -> str:
     return f"KE-{sector + 1:02d}"
 
 
+def pick_address(
+    rng: random.Random, town: str, lat: float, lon: float, radius_km: float
+) -> tuple[str, str, str, float, float]:
+    """A real address point of the town (OpenStreetMap, ADR-038), chosen by the seeded rng.
+    Falls back to a random point with a generic street when the address file is missing."""
+    points = addresses().get(town)
+    if points:
+        return rng.choice(points)
+    plat, plon = random_point(rng, lat, lon, radius_km)
+    streets = KOSICE_STREETS if town == "Košice" else TOWN_STREETS
+    return rng.choice(streets), str(rng.randint(1, 120)), "", plat, plon
+
+
 def parcel_weight(rng: random.Random) -> float:
     """Log-normal weight: median 1.8 kg, most parcels between 0.5 and 5 kg, clipped to 0.1-30 kg."""
     w = rng.lognormvariate(math.log(1.8), 0.8)
@@ -109,14 +123,18 @@ def generate_parcels(day: date, count: int, seed: int) -> list[ParcelSpec]:
     for i in range(1, count + 1):
         direction = _pick_direction(rng)
         if direction.type == "local":
-            lat, lon = random_point(rng, KOSICE_LAT, KOSICE_LON, KOSICE_RADIUS_KM)
+            street, number, postcode, lat, lon = pick_address(
+                rng, "Košice", KOSICE_LAT, KOSICE_LON, KOSICE_RADIUS_KM
+            )
             code = kosice_rajon(lat, lon)
-            street, town, postcode = rng.choice(KOSICE_STREETS), "Košice", "040 01"
+            town, postcode = "Košice", postcode or "040 01"
         else:
             radius = 15.0 if direction.type == "linehaul" else 8.0
-            lat, lon = random_point(rng, direction.lat, direction.lon, radius)
+            street, number, postcode, lat, lon = pick_address(
+                rng, direction.town, direction.lat, direction.lon, radius
+            )
             code = direction.code
-            street, town, postcode = rng.choice(TOWN_STREETS), direction.town, direction.postcode
+            town, postcode = direction.town, postcode or direction.postcode
 
         weight = parcel_weight(rng)
         length, width, height = parcel_dimensions(rng, weight)
@@ -129,7 +147,7 @@ def generate_parcels(day: date, count: int, seed: int) -> list[ParcelSpec]:
                 width_cm=width,
                 height_cm=height,
                 recipient_name=person_name(rng),
-                address=f"{street} {rng.randint(1, 120)}, {postcode} {town}",
+                address=f"{street} {number}, {postcode} {town}",
                 lat=round(lat, 6),
                 lon=round(lon, 6),
                 sender=rng.choice(SENDERS),

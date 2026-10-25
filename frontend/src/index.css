@@ -85,9 +85,49 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
-.leaflet-container {
-  font: inherit;
-  border-radius: inherit;
+/* map pins (reference style): rounded pin with the vehicle icon, colour by state / delay */
+.dt-pin {
+  cursor: pointer;
+  width: 34px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+  transition: transform 150ms ease;
+}
+.dt-pin-body {
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--pin);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dt-pin-body > svg {
+  transform: rotate(45deg);
+}
+.dt-pin-selected {
+  transform: scale(1.3);
+}
+.dt-pin-selected .dt-pin-body {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pin) 35%, transparent);
+}
+.dt-depot-label {
+  cursor: pointer;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-card);
+}
+.maplibregl-ctrl-attrib {
+  font-size: 11px;
 }
 
 /* horizontal scrollers (tabs, mobile navigation) without a visible scrollbar */

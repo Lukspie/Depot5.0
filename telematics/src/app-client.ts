@@ -12,8 +12,19 @@ export interface AlertPayload {
   resolved?: boolean;
 }
 
+export interface PlanDepot {
+  code: string;
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface PlanWithLocal extends Plan {
   localDirections: string[];
+  /** depot the plan belongs to (routes start here) */
+  depot?: PlanDepot;
+  /** destination point of every direction (hub for linehaul BA) */
+  destinations?: Record<string, [number, number]>;
 }
 
 export interface ManifestParcel {

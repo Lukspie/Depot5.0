@@ -231,3 +231,34 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Ukazuje príchody a odchody dňa (a neukončené jazdy z predošlého dňa), meškania, kaskádové varovania a stav linky.
   - Je vždy tmavá a s veľkým písmom bez ohľadu na tému, kvôli čitateľnosti z diaľky.
 - **Dôsledok:** Kľúč je zdieľané tajomstvo, nie identita používateľa. Pri úniku stačí zmeniť `BOARD_KEY`.
+
+## ADR-038 Offline cestná sieť a adresy z OpenStreetMap
+- **Kontext:** Vozidlá majú jazdiť po skutočných cestách a balíky mať reálne adresy. Zadanie zakazuje externé routing API a simulátor musí zostať deterministický, takže za behu nesmie volať internet.
+- **Rozhodnutie:**
+  - Jednorazový skript `tools/osm/build_osm_data.py` spracuje výrez Slovenska z Geofabriku (pyosmium v kontajneri, postup v `tools/osm/README.md`). Vyrobí **cestný graf** `telematics/data/roads.json.gz` (hlavné cesty SR a všetky ulice okolia Košíc a Budimíra, 52 tisíc uzlov, 1 MB) a **adresné body** `app/.../seed/data/addresses.json.gz` (25 tisíc v Košiciach a 3–6 tisíc v každom cieľovom meste). Oboje je v gite.
+  - Telematika hľadá trasy **A\*** s časom jazdy podľa triedy cesty (`simulator/roads.ts`) a výsledky si cachuje. Čas jazdy a rýchlosť na mape vychádzajú z trasy.
+  - Seed vyberá adresy balíkov z adresných bodov cez seedovaný generátor. Rajón KE-01 až KE-08 sa určí podľa polohy adresy.
+  - Overpass API bolo pri vývoji preťažené, preto sa používa stiahnutý výrez, čo je navyše reprodukovateľné.
+- **Dôsledok:** Trasa Budimír → Bratislava hub má 423 km a 5,1 h po D1. Žiadne volanie siete za behu, determinizmus z Fázy 2 platí naďalej (rovnaký graf = rovnaká trasa). Dáta sú © OpenStreetMap contributors (ODbL), atribúcia je v UI aj v README. Bez súboru s grafom (unit testy) sa použijú náhradné polylíny z `data/routes.json`.
+
+## ADR-039 Viac skladov: depo Budimír a hub Bratislava
+- **Kontext:** Depo nie je v Košiciach, ale v **Budimíri** pri Košiciach. Diaľkové kamióny končia v ďalšom sklade a dátový model má podporovať viac skladov.
+- **Rozhodnutie:**
+  - Nová tabuľka `depots` (id, code, name, kind `depot | hub`, lat, lon, layout JSONB).
+  - `depot_id` pribudol na `directions`, `doors`, `trips`, `waves` a `vehicles` (domovské depo). V db-telemetry pribudol `devices.depot_code`. Smer má cieľ (`dest_lat`, `dest_lon`) a pri BA aj `destination_depot_id` (hub).
+  - Migrácia vytvorí oba sklady a existujúce dáta priradí k BUD.
+  - **BUD (Budimír)** je plne simulovaný. Poloha je zatiaľ v priemyselnej zóne Budimíra (48.79256, 21.30710, sklad 138 m z OSM) a tím ju spresní úpravou `depots.lat/lon`.
+  - **BAH (Bratislava hub)** je cieľ diaľkových kamiónov BA. Má 6 rámp a na mape ukazuje kamióny na ceste, na mieste a pri odchode. Nakládka a IoT skenery sa simulujú len v BUD.
+  - `layout` popisuje halu (rozmery, natočenie, pás, vjazd). Rovnaké dáta používa 3D model na mape aj `/twin` (`GET /api/layout?depot=…`). Živý stav: `GET /api/depots/{code}/state`.
+- **Dôsledok:** Ďalší sklad pribudne ako riadok v `depots` s bránami a rozložením. Kamióny aj kuriéri (Fáza 4) vyrážajú z Budimíra. Kódy brán sú unikátne globálne (hub má `BA-R01…`).
+
+## ADR-040 Mapy: MapLibre GL + OpenFreeMap, 3D sklady cez Three.js
+- **Kontext:** Leaflet s rastrovými dlaždicami nevie 3D budovy, náklon ani vlastnú WebGL vrstvu. Tím chce mapu v štýle referencie s 3D halou depa.
+- **Rozhodnutie:**
+  - Mapový podklad je **MapLibre GL 6** so svetlým vektorovým štýlom **OpenFreeMap Positron** (bez API kľúča). Predvolený náklon je ~45° a 3D budovy sa kreslia z vrstvy `building`.
+  - Spoločný komponent `components/map/MapView` používa Flotila a neskôr aj `/track` a `/courier`.
+  - Vlastné piny podľa referencie: zaoblený pin s ikonou vozidla, farba podľa stavu a meškania. Trasa vybraného vozidla je farebná čiara po reálnej ceste. Klik na vozidlo spustí plynulý prelet kamery a otvorí bočný panel.
+  - Sklady sú **custom layer s Three.js** (`components/map/depot3d.ts`). Pri priblížení (zoom ≥ 15) sa zobrazí hala z rozloženia: pás, brány, kamióny pri obsadených bránach, kopy balíkov na plochách a IoT piny so stavom. Pri oddialení sa zobrazí výrazná 3D značka skladu. Klik na sklad otvorí `/twin?depot=…`.
+  - Atribúcia „OpenFreeMap © OpenMapTiles, © OpenStreetMap contributors“ je na mape aj v README.
+  - Mapové stránky sa načítavajú lenivo (MapLibre + Three.js ~1,6 MB), takže hlavný balík zostáva ~300 kB. Worker MapLibre zbundluje Vite.
+- **Dôsledok:** Podklad mapy potrebuje v prehliadači internet (dlaždice OpenFreeMap). Simulátor a backendy ho nepotrebujú. Pre obhajobu bez internetu je vo Fáze 7 naplánovaný offline výrez **PMTiles** servírovaný z app (počet kontajnerov sa nezmení). Bez WebGL zobrazí mapa zrozumiteľnú hlášku.

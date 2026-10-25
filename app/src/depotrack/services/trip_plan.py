@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from depotrack.core.clock import TZ
-from depotrack.models import Direction, Door, Trip, Vehicle
+from depotrack.models import Depot, Direction, Door, Trip, Vehicle
 from depotrack.models.enums import DirectionType, DoorKind, TripKind, TripStatus, VehicleKind
 from depotrack.seed.reference import TRUCK_ROTATION
 
@@ -49,12 +49,19 @@ def _trucks(db: Session, suffix: str) -> list[Vehicle]:
 
 def build_trip_plan(db: Session, day: date) -> list[Trip]:
     """Create the trips of operating day `day` (caller commits; idempotency via seed_meta)."""
-    directions = list(db.execute(select(Direction).order_by(Direction.id)).scalars())
+    depot_id = db.execute(select(Depot.id).where(Depot.code == "BUD")).scalar_one()
+    directions = list(
+        db.execute(
+            select(Direction).where(Direction.depot_id == depot_id).order_by(Direction.id)
+        ).scalars()
+    )
     linehaul = [d for d in directions if d.type == DirectionType.LINEHAUL]
     transit = [d for d in directions if d.type == DirectionType.TRANSIT]
     dock_of = {
         door.direction_id: door.id
-        for door in db.execute(select(Door).where(Door.kind == DoorKind.LOADING_DOCK)).scalars()
+        for door in db.execute(
+            select(Door).where(Door.kind == DoorKind.LOADING_DOCK, Door.depot_id == depot_id)
+        ).scalars()
     }
     lh_trucks = _trucks(db, "LH")
     tr_trucks = _trucks(db, "TR")
@@ -76,7 +83,7 @@ def build_trip_plan(db: Session, day: date) -> list[Trip]:
     trips: list[Trip] = []
 
     def add(**kw: object) -> None:
-        trips.append(Trip(operating_day=day, status=TripStatus.PLANNED, **kw))
+        trips.append(Trip(depot_id=depot_id, operating_day=day, status=TripStatus.PLANNED, **kw))
 
     for i, d in enumerate(transit):
         add(

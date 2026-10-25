@@ -46,7 +46,8 @@ export interface EngineDeps {
   store: TelemetrySink;
   app: AppApi;
   hub: Hub;
-  routes: RouteBook;
+  /** fixed book (tests) or a builder from the plan's depot and destinations (real roads) */
+  routes: RouteBook | ((plan: PlanWithLocal) => RouteBook);
   log: Logger;
   config: EngineConfig;
   realNow?: () => number;
@@ -56,6 +57,7 @@ export type DeviceStatus = "online" | "degraded" | "offline";
 
 export interface DeviceInfo {
   code: string;
+  depotCode: string;
   kind: DeviceRow["kind"];
   doorCode: string | null;
   enabled: boolean;
@@ -151,6 +153,8 @@ export class Engine {
   private readonly realNow: () => number;
   private seedValue: number;
   private degradationStartedAt: number | null;
+  /** routes of the most recently loaded day (depot + destinations rarely change) */
+  private book: RouteBook | null = null;
 
   constructor(private readonly deps: EngineDeps) {
     this.realNow = deps.realNow ?? Date.now;
@@ -262,6 +266,7 @@ export class Engine {
       const recent = d.recent.filter((r) => r.at > now - ROLLING_MS);
       return {
         code: d.row.code,
+        depotCode: d.row.depotCode,
         kind: d.row.kind,
         doorCode: d.row.doorCode,
         enabled: d.row.enabled,
@@ -365,6 +370,19 @@ export class Engine {
     });
   }
 
+  routeBook(): RouteBook {
+    if (this.book) return this.book;
+    if (typeof this.deps.routes !== "function") return this.deps.routes;
+    throw new Error("routes not loaded yet");
+  }
+
+  /** Routes for the map (GET /routes): depot and road geometry per direction. */
+  routesSummary(): { depot: readonly [number, number]; routes: Record<string, { points: (readonly [number, number])[]; minutes: number }> } | null {
+    const book = this.book ?? (typeof this.deps.routes === "function" ? null : this.deps.routes);
+    if (!book) return null;
+    return { depot: book.depot, routes: book.routes };
+  }
+
   // ------------------------------------------------------------------ tick
 
   async tick(): Promise<void> {
@@ -426,10 +444,12 @@ export class Engine {
     this.loadingDays.add(day);
     try {
       const plan = await this.deps.app.getPlan(day);
+      const book = typeof this.deps.routes === "function" ? this.deps.routes(plan) : this.deps.routes;
+      this.book = book;
       const scenario = buildScenario(plan, {
         seed: this.seedValue,
         forceCascade: this.deps.config.forceCascade,
-        routes: this.deps.routes,
+        routes: book,
       });
       const manifests = new Map<string, ManifestParcel[]>();
       const directions = new Set([
@@ -627,7 +647,7 @@ export class Engine {
     const own = this.schedules()
       .filter((s) => s.trip.vehiclePlate === plate)
       .sort((a, b) => activeWindow(a)[0] - activeWindow(b)[0]);
-    const book = this.deps.routes;
+    const book = this.routeBook();
     const active = own.filter((s) => {
       const [a, b] = activeWindow(s);
       return now >= a && now < b;

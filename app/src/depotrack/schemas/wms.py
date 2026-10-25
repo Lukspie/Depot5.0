@@ -5,7 +5,9 @@ from datetime import date, datetime, time
 from pydantic import Field
 
 from depotrack.models.enums import (
+    DepotKind,
     DirectionType,
+    DoorKind,
     EventSource,
     ParcelStatus,
     ScanResult,
@@ -223,3 +225,61 @@ class DirectionUpdate(CamelModel):
 
 class AlertListOut(CamelModel):
     alerts: list[AlertOut]
+
+
+# ------------------------------------------------------------------ depots (map, twin)
+
+
+class DepotOut(CamelModel):
+    code: str
+    name: str
+    kind: DepotKind
+    lat: float
+    lon: float
+
+
+class LayoutDoor(CamelModel):
+    code: str
+    kind: DoorKind
+    x: float
+    y: float
+    direction_code: str | None
+    direction_name: str | None
+
+
+class LayoutOut(CamelModel):
+    depot: DepotOut
+    layout: dict[str, object]
+    doors: list[LayoutDoor]
+
+
+class OccupiedDoor(CamelModel):
+    door_code: str
+    plate: str
+    trip_id: int
+    trip_kind: TripKind
+    status: TripStatus
+    direction_code: str
+    direction_type: DirectionType
+
+
+class StagedBay(CamelModel):
+    door_code: str
+    direction_code: str
+    parcels: int
+
+
+class HubTruck(CamelModel):
+    plate: str
+    trip_id: int
+    # arriving | at_hub | loading_at_hub | departed
+    state: str
+    at: datetime | None
+
+
+class DepotState(CamelModel):
+    depot: DepotOut
+    sim_time: datetime
+    occupied: list[OccupiedDoor]
+    staged: list[StagedBay]
+    trucks: list[HubTruck]

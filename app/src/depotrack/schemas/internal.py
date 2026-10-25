@@ -38,10 +38,20 @@ class PlanTripOut(CamelModel):
     predicted_arrival: datetime | None
 
 
+class PlanDepot(CamelModel):
+    code: str
+    name: str
+    lat: float
+    lon: float
+
+
 class PlanOut(CamelModel):
     day: date
     cascade_buffer_min: int
     trips: list[PlanTripOut]
+    # where trucks start (Budimír) and where each direction drives to (ADR-039)
+    depot: PlanDepot
+    destinations: dict[str, tuple[float, float]]
     # courier districts (KE-01..): their parcels pass the line scanner in the morning wave
     local_directions: list[str]
 

@@ -21,12 +21,21 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
 - Témy: **SPS** (oranžová, čierna, sivá – predvolená) a **Modrá** podľa referencie (ADR-032).
 - Vizuálny cieľ je [docs/design/reference.png](design/reference.png) (popis v [docs/design/README.md](design/README.md)). Jeho štýl platí pre KPI karty, panely a celkovú paletu na všetkých obrazovkách, nielen v dvojčati.
 
+## Fáza 3b – mapa a sklady *(hotové, ADR-038 až 040)*
+- MapLibre GL + OpenFreeMap (svetlý vektorový štýl, náklon ~45°, 3D budovy, vlastné piny, trasa vybraného vozidla, prelet kamery). Rovnaký komponent neskôr pre `/track` a `/courier`.
+- Depo v **Budimíri**, hub v **Bratislave** (tabuľka `depots`, `depot_id` v dátovom modeli).
+- 3D hala na mape (Three.js custom layer) z rovnakého rozloženia ako `/twin`, klik na sklad otvorí `/twin?depot=…`.
+- Offline cestná sieť a reálne adresy z OSM, routing A* v telematike bez internetu za behu.
+
 ## Fáza 5b – UX review (po Fáze 5)
 - Prejsť všetky obrazovky za každú rolu a urobiť screenshoty pri 3 šírkach. Spísať zoznam problémov a opraviť ich.
 - Osobitne skontrolovať:
   - `/board`: čitateľný na veľkom displeji z diaľky,
   - `/loading`: veľké prvky a výrazný alarm,
   - `/courier` a `/track`: plne použiteľné na mobile.
+
+## Fáza 7 – doplnky
+- **Offline PMTiles výrez SR** ako záloha mapového podkladu pre obhajobu bez internetu: súbor servíruje app, ostávajú 4 kontajnery (ADR-040).
 
 ## Pravidlá práce
 - `docker compose down -v` ani mazanie volumes sa nespúšťa bez výslovného súhlasu.

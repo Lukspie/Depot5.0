@@ -8,7 +8,8 @@ from datetime import time
 
 from depotrack.models.enums import DirectionType, UserRole, VehicleKind
 
-DEPOT_LAT, DEPOT_LON = 48.6950, 21.2390  # depot on the south-western edge of Košice
+# Budimír industrial zone, north-east of Košice (approximate, to be refined; ADR-039)
+DEPOT_LAT, DEPOT_LON = 48.79256, 21.30710
 KOSICE_LAT, KOSICE_LON = 48.7164, 21.2611
 KOSICE_RADIUS_KM = 5.5
 

@@ -12,7 +12,7 @@
 import { localParts, MINUTE, operatingDayStart, zonedToUtc, addDays, HOUR } from "../clock/time.js";
 import { arrivalDelay, departureDelay, weatherFor, type DelayContext, type Weather } from "./delays.js";
 import { rngFor } from "./rng.js";
-import { routeFor, type RouteBook } from "./routes.js";
+import { routeFor, travelMinutes, type RouteBook } from "./routes.js";
 import type { Plan, PlanTrip } from "./types.js";
 
 export const UNLOAD_MIN = 40;
@@ -84,7 +84,7 @@ export function buildScenario(plan: Plan, opts: ScenarioOptions): DayScenario {
     const planned = ms(trip.plannedArrival);
     if (planned === null) continue;
     const route = routeFor(routes, trip.directionCode);
-    const travelMin = Math.round((route.lengthKm / routes.averageSpeedKmh) * 60);
+    const travelMin = travelMinutes(routes, trip.directionCode);
     const rng = rngFor(seed, plan.day, "trip", trip.directionCode, trip.kind);
     const delayMin = arrivalDelay(context(trip, planned, weather, 0, route.lengthKm), rng);
     const arrive = planned + delayMin * MINUTE;
@@ -148,7 +148,7 @@ export function buildScenario(plan: Plan, opts: ScenarioOptions): DayScenario {
     const plannedAtDoor = ms(trip.plannedArrival) ?? (plannedDep ?? 0) - 4 * HOUR;
     if (plannedDep === null) continue;
     const route = routeFor(routes, trip.directionCode);
-    const travelMin = Math.round((route.lengthKm / routes.averageSpeedKmh) * 60);
+    const travelMin = travelMinutes(routes, trip.directionCode);
     const rng = rngFor(seed, plan.day, "trip", trip.directionCode, trip.kind);
     const prev = byKey(trip.directionCode, "inbound");
     const prevDelayMin = prev ? (schedules.get(prev.id)?.delayMin ?? 0) : 0;

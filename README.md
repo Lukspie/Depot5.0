@@ -65,6 +65,14 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 
 Téma (SPS oranžová / Modrá) sa prepína v hornej lište.
 
+Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, `/fleet?plate=KE-102LH` vybrané vozidlo.
+
+## Mapy a geodáta
+
+- Mapový podklad: [OpenFreeMap](https://openfreemap.org) (štýl Positron, © OpenMapTiles), dáta **© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)**. Podklad potrebuje v prehliadači internet.
+- Cestná sieť a adresy pre simuláciu sú odvodené z OpenStreetMap (ODbL 1.0) a sú uložené v repozitári. Postup výroby je v [tools/osm/README.md](tools/osm/README.md). Za behu systém nič zo siete nesťahuje.
+- Depo: **Budimír** (BUD), hub: **Bratislava** (BAH).
+
 ## Simulácia
 
 Telematika simuluje deň depa so zrýchleným časom (predvolene 60×, štart 15:00). Pri rovnakom
@@ -113,6 +121,7 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 1: dáta a auth (schémy, migrácie, seed, sessions, RBAC, správa používateľov)
 - [x] Fáza 2: telematika (hodiny, deterministický simulátor, WebSocket s ticketom, REST medzi backendmi, kaskáda)
 - [x] Fáza 3: design systém (témy SPS / Modrá) + jadro WMS (dispečing, nakládka, flotila, tabuľa ETA, detail balíka, admin simulácie)
+- [x] Fáza 3b: MapLibre mapa, 3D sklady, depo Budimír + hub Bratislava, offline routing po reálnych cestách
 - [ ] Fáza 4: zákazník a kuriér
 - [ ] Fáza 5: digitálne dvojča
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)

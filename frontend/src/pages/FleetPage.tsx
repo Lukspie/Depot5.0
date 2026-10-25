@@ -1,10 +1,12 @@
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { Maximize2, Truck } from "lucide-react";
+import { Building2, Maximize2, Truck, Warehouse } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { Link, useSearchParams } from "react-router";
+import { useDepots, useRoutes } from "../api/depots";
 import { useVehicle, useVehicles, type Vehicle } from "../api/wms";
+import { DepotsOnMap } from "../components/map/DepotsOnMap";
+import { MapView, SLOVAKIA, useMap } from "../components/map/MapView";
+import { RouteLine } from "../components/map/RouteLine";
+import { VehicleMarkers, type MapVehicle } from "../components/map/VehicleMarkers";
 import { Badge, Card, DataTable, EmptyState, KeyValue, PageHeader, Progress, SidePanel, Spinner, Tabs, type Column } from "../components/ui";
 import { DIRECTION_TYPE, PARCEL_STATUS, TRIP_STATUS, delayLabel, delayTone, hhmm } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
@@ -20,55 +22,40 @@ interface Position {
   directionCode: string | null;
 }
 
-const DEPOT: [number, number] = [48.695, 21.239];
-const SLOVAKIA: L.LatLngBoundsExpression = [
-  [47.75, 16.8],
-  [49.6, 22.6],
-];
-
-const COLORS: Record<string, string> = {
-  en_route: "#2f5be9",
-  departed: "#2f5be9",
-  loading: "#23874f",
-  at_door: "var(--color-brand-500)",
-  planned: "#8a8a86",
-};
-
-function icon(p: Position, selected: boolean, kind: string): L.DivIcon {
-  const color = (p.status && COLORS[p.status]) ?? "#8a8a86";
-  const size = selected ? 38 : 30;
-  const glyph =
-    kind === "van"
-      ? '<path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z" fill="white"/>'
-      : '<path d="M2 6h12v9H2zM14 9h4l3 3v3h-7z" fill="white"/><circle cx="6" cy="17" r="1.6" fill="white"/><circle cx="17" cy="17" r="1.6" fill="white"/>';
-  return L.divIcon({
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<div style="width:${String(size)}px;height:${String(size)}px;border-radius:999px;background:${color};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgb(0 0 0 / .25);border:${selected ? "3px solid #1d1d1b" : "2px solid white"}"><svg width="${String(size * 0.6)}" height="${String(size * 0.6)}" viewBox="0 0 22 22">${glyph}</svg></div>`,
-  });
-}
-
-function FlyTo({ target }: { target: [number, number] | null }) {
+/** Camera: smooth flight to the selected vehicle; buttons for Slovakia and the depots. */
+function Camera({ target, view }: { target: [number, number] | null; view: string | null }) {
   const map = useMap();
+  const depots = useDepots();
+  // /fleet?view=BUD: open zoomed in on a depot (links, demo)
+  const viewDepot = depots.data?.find((d) => d.code === view);
   useEffect(() => {
-    if (target) map.flyTo(target, Math.max(map.getZoom(), 9), { duration: 0.6 });
-  }, [map, target]);
-  return null;
-}
-
-function FitSlovakia() {
-  const map = useMap();
+    if (map && viewDepot) {
+      map.flyTo({ center: [viewDepot.lon, viewDepot.lat], zoom: 17.2, pitch: 60, bearing: -25, duration: 2000 });
+    }
+  }, [map, viewDepot]);
+  useEffect(() => {
+    if (map && target) map.flyTo({ center: [target[1], target[0]], zoom: Math.max(map.getZoom(), 11), pitch: 50, duration: 1600, essential: true });
+    // fly only when the selection changes, not on every position update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, target?.[0] === undefined, target === null]);
+  if (!map) return null;
+  const btn = "bg-surface shadow-card hover:bg-canvas flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap";
   return (
-    <button
-      type="button"
-      title="Celé Slovensko"
-      aria-label="Celé Slovensko"
-      onClick={() => map.fitBounds(SLOVAKIA)}
-      className="bg-surface shadow-card hover:bg-canvas absolute top-3 left-14 z-[500] rounded-xl p-2"
-    >
-      <Maximize2 size={16} />
-    </button>
+    <div className="absolute top-3 left-14 z-10 flex flex-wrap gap-2">
+      <button type="button" className={btn} onClick={() => map.fitBounds(SLOVAKIA, { padding: 30, pitch: 45, duration: 1200 })}>
+        <Maximize2 size={14} /> Celé Slovensko
+      </button>
+      {depots.data?.map((d) => (
+        <button
+          key={d.code}
+          type="button"
+          className={btn}
+          onClick={() => map.flyTo({ center: [d.lon, d.lat], zoom: 17.2, pitch: 60, bearing: -25, duration: 2000 })}
+        >
+          {d.kind === "hub" ? <Building2 size={14} /> : <Warehouse size={14} />} {d.name}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -159,6 +146,8 @@ function VehiclePanel({ plate, onClose }: { plate: string; onClose: () => void }
 
 export function FleetPage() {
   const vehicles = useVehicles();
+  const routes = useRoutes();
+  const depots = useDepots();
   const [params, setParams] = useSearchParams();
   const selected = params.get("plate");
   const [positions, setPositions] = useState<Record<string, Position>>({});
@@ -172,26 +161,39 @@ export function FleetPage() {
     setParams(plate ? { plate } : {}, { replace: true });
   };
 
-  const kindOf = useMemo(() => new Map((vehicles.data ?? []).map((v) => [v.plate, v.kind])), [vehicles.data]);
-  // vans are not simulated yet (phase 4): they stand at the depot. Vehicles at the depot share
-  // one point, so they are spread on a small ring to stay clickable.
-  const markers: Position[] = useMemo(() => {
-    const list = Object.values(positions);
-    for (const v of vehicles.data ?? []) {
-      if (!positions[v.plate]) {
-        list.push({ plate: v.plate, lat: DEPOT[0], lon: DEPOT[1], speedKmh: 0, heading: 0, moving: false, status: null, directionCode: null });
-      }
-    }
-    const atDepot = list.filter((p) => Math.abs(p.lat - DEPOT[0]) < 0.002 && Math.abs(p.lon - DEPOT[1]) < 0.002);
-    return list.map((p) => {
-      const i = atDepot.indexOf(p);
-      if (i < 0) return p;
-      const angle = (2 * Math.PI * i) / atDepot.length;
-      return { ...p, lat: DEPOT[0] + 0.012 * Math.sin(angle), lon: DEPOT[1] + 0.018 * Math.cos(angle) };
+  // vans are not simulated yet (phase 4): they stand at their home depot, spread on a small ring
+  const home = depots.data?.find((d) => d.kind === "depot");
+  const markers: MapVehicle[] = useMemo(() => {
+    const trips = new Map((vehicles.data ?? []).map((v) => [v.plate, v]));
+    const list: MapVehicle[] = Object.values(positions).map((p) => ({
+      plate: p.plate,
+      kind: trips.get(p.plate)?.kind ?? "truck",
+      lat: p.lat,
+      lon: p.lon,
+      status: p.status,
+      delayMin: trips.get(p.plate)?.trip?.delayMin ?? null,
+      label: `${p.plate}${p.directionCode ? ` · ${p.directionCode}` : ""}`,
+    }));
+    const missing = (vehicles.data ?? []).filter((v) => !positions[v.plate]);
+    missing.forEach((v, i) => {
+      if (!home) return;
+      const angle = (2 * Math.PI * i) / Math.max(missing.length, 1);
+      list.push({
+        plate: v.plate,
+        kind: v.kind,
+        lat: home.lat + 0.0035 * Math.sin(angle),
+        lon: home.lon + 0.0052 * Math.cos(angle),
+        status: null,
+        delayMin: null,
+        label: `${v.plate} · v depe`,
+      });
     });
-  }, [positions, vehicles.data]);
+    return list;
+  }, [positions, vehicles.data, home]);
 
-  const target = selected && positions[selected] ? ([positions[selected].lat, positions[selected].lon] as [number, number]) : null;
+  const selectedVehicle = vehicles.data?.find((v) => v.plate === selected);
+  const routePoints = selectedVehicle?.trip ? (routes.data?.routes[selectedVehicle.trip.directionCode]?.points ?? null) : null;
+  const target = selected ? markers.find((m) => m.plate === selected) : undefined;
 
   const columns: Column<Vehicle>[] = [
     { key: "plate", header: "Vozidlo", width: "8rem", render: (v) => <span className="font-mono font-medium">{v.plate}</span> },
@@ -245,29 +247,13 @@ export function FleetPage() {
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Flotila" subtitle="Kamióny na trasách a dodávky kuriérov – živé polohy" />
       <Card flush className="relative mb-6 overflow-hidden">
-        <div className="isolate h-[55vh] min-h-80">
-          <MapContainer center={DEPOT} zoom={8} className="h-full w-full" scrollWheelZoom>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {markers.map((p) => (
-              <Marker
-                key={p.plate}
-                position={[p.lat, p.lon]}
-                icon={icon(p, p.plate === selected, kindOf.get(p.plate) ?? "truck")}
-                eventHandlers={{ click: () => select(p.plate) }}
-                zIndexOffset={p.plate === selected ? 1000 : 0}
-              >
-                <Tooltip direction="top" offset={[0, -14]}>
-                  {p.plate}
-                  {p.directionCode ? ` · ${p.directionCode}` : ""}
-                </Tooltip>
-              </Marker>
-            ))}
-            <FlyTo target={target} />
-            <FitSlovakia />
-          </MapContainer>
+        <div className="h-[62vh] min-h-96">
+          <MapView>
+            <DepotsOnMap />
+            <RouteLine points={routePoints} />
+            <VehicleMarkers vehicles={markers} selected={selected} onSelect={select} />
+            <Camera target={target ? [target.lat, target.lon] : null} view={params.get("view")} />
+          </MapView>
         </div>
         {selected && <VehiclePanel plate={selected} onClose={() => select(null)} />}
       </Card>

@@ -49,6 +49,13 @@ def close_evening_wave(db: Session, day: date, now: datetime) -> int:
                 Parcel.status == ParcelStatus.COLLECTED,
                 in_day(day),
                 Parcel.created_at < end,
+                # parcels still travelling on a night truck are not in the depot yet
+                Parcel.id.not_in(
+                    select(ParcelEvent.parcel_id).where(
+                        ParcelEvent.status == ParcelStatus.COLLECTED,
+                        ParcelEvent.trip_id.is_not(None),
+                    )
+                ),
             )
         ).scalars()
     )

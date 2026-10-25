@@ -38,7 +38,7 @@ export function canAccess(role: Role, roles: Role[]): boolean {
 
 export const NAV: NavItem[] = [
   { to: "/", label: "Dispečing", roles: ["dispatcher"], ready: true },
-  { to: "/twin", label: "Digitálne dvojča", roles: ["dispatcher", "security"], ready: false },
+  { to: "/twin", label: "Digitálne dvojča", roles: ["dispatcher", "security"], ready: true },
   { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: true },
   { to: "/loading", label: "Nakládka", roles: ["operator"], ready: true },
   { to: "/gate", label: "Brána", roles: ["security"], ready: false },

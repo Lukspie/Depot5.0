@@ -1,6 +1,6 @@
 /** Telematics service entry point. */
 
-import { HttpAppApi } from "./app-client.js";
+import { HttpAppApi, type PlanWithLocal } from "./app-client.js";
 import { buildApp, registerSimulation } from "./app.js";
 import { SimClock } from "./clock/clock.js";
 import { MINUTE, operatingDay, operatingDayStart } from "./clock/time.js";
@@ -10,7 +10,8 @@ import { createDatabase } from "./db/pool.js";
 import { PgTelemetry } from "./db/telemetry.js";
 import { purgeGate } from "./jobs/retention.js";
 import { Engine, initialSimTime } from "./simulator/engine.js";
-import { loadRoutes } from "./simulator/routes.js";
+import { RoadRouter } from "./simulator/roads.js";
+import { buildRouteBook, loadRoutes, type RouteBook } from "./simulator/routes.js";
 import { Hub } from "./ws/hub.js";
 import { attachWebSocket } from "./ws/server.js";
 import { TicketVerifier } from "./ws/ticket.js";
@@ -46,6 +47,15 @@ if (saved) {
   degradationStartedAt = sim.degradedDevice ? operatingDayStart(operatingDay(simTime)) + 30 * MINUTE : null;
 }
 
+// real roads from the offline OSM graph (ADR-038); fallback polylines if the file is missing
+const router = RoadRouter.load();
+app.log.info({ roadNodes: router?.nodeCount ?? 0 }, router ? "road graph loaded" : "no road graph, using fallback routes");
+const fallbackRoutes = loadRoutes();
+const routesFor = (plan: PlanWithLocal): RouteBook =>
+  plan.depot && plan.destinations
+    ? buildRouteBook(router, [plan.depot.lat, plan.depot.lon], plan.destinations)
+    : fallbackRoutes;
+
 const clock = new SimClock(clockState);
 const hub = new Hub();
 const verifier = new TicketVerifier(config.wsTicketSecret);
@@ -54,7 +64,7 @@ const engine = new Engine({
   store,
   app: new HttpAppApi(config.appInternalUrl, config.serviceToken),
   hub,
-  routes: loadRoutes(),
+  routes: routesFor,
   log: app.log,
   config: {
     seed,

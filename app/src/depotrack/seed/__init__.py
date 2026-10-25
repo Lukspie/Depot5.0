@@ -16,7 +16,17 @@ from sqlalchemy.orm import Session
 from depotrack.core.clock import TZ
 from depotrack.core.config import Settings
 from depotrack.core.security import hash_password
-from depotrack.models import Direction, Door, Parcel, ParcelEvent, SeedMeta, User, Vehicle, Wave
+from depotrack.models import (
+    Depot,
+    Direction,
+    Door,
+    Parcel,
+    ParcelEvent,
+    SeedMeta,
+    User,
+    Vehicle,
+    Wave,
+)
 from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, UserRole, WaveKind
 from depotrack.seed.generator import generate_parcels
 from depotrack.seed.reference import DIRECTIONS, DOORS, USERS, VEHICLES
@@ -40,10 +50,16 @@ def step(db: Session, key: str, fn: Callable[[], object]) -> bool:
     return True
 
 
+def bud_id(db: Session) -> int:
+    return db.execute(select(Depot.id).where(Depot.code == "BUD")).scalar_one()
+
+
 def seed_reference(db: Session) -> None:
+    depot = bud_id(db)
     for d in DIRECTIONS:
         db.add(
             Direction(
+                depot_id=depot,
                 code=d.code,
                 name=d.name,
                 type=d.type,
@@ -57,6 +73,7 @@ def seed_reference(db: Session) -> None:
     for door in DOORS:
         db.add(
             Door(
+                depot_id=depot,
                 code=door.code,
                 kind=DoorKind(door.kind),
                 direction_id=by_code[door.direction_code] if door.direction_code else None,
@@ -67,6 +84,7 @@ def seed_reference(db: Session) -> None:
     for v in VEHICLES:
         db.add(
             Vehicle(
+                depot_id=depot,
                 plate=v.plate,
                 kind=v.kind,
                 capacity_kg=v.capacity_kg,
@@ -103,9 +121,11 @@ def seed_users(db: Session, settings: Settings) -> None:
 
 
 def seed_waves(db: Session, day: date) -> None:
+    depot = bud_id(db)
     next_day = day + timedelta(days=1)
     db.add(
         Wave(
+            depot_id=depot,
             date=day,
             kind=WaveKind.EVENING,
             starts_at=datetime.combine(day, time(15, 30), TZ),
@@ -114,6 +134,7 @@ def seed_waves(db: Session, day: date) -> None:
     )
     db.add(
         Wave(
+            depot_id=depot,
             date=next_day,
             kind=WaveKind.NIGHT,
             starts_at=datetime.combine(next_day, time(1, 0), TZ),

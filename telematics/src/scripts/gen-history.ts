@@ -12,7 +12,8 @@ import { join, resolve } from "node:path";
 import { addDays, localDate, localParts, MINUTE, zonedToUtc } from "../clock/time.js";
 import { arrivalDelay, departureDelay, weatherFor } from "../simulator/delays.js";
 import { rngFor } from "../simulator/rng.js";
-import { loadRoutes, routeFor } from "../simulator/routes.js";
+import { RoadRouter } from "../simulator/roads.js";
+import { buildRouteBook, routeFor, type LatLon } from "../simulator/routes.js";
 
 // mirrors the plan created by the app (app/src/depotrack/services/trip_plan.py + seed reference)
 const LINEHAUL = [
@@ -56,7 +57,13 @@ const outDir = resolve(arg("out", "../ml/data"));
 const end = arg("end", addDays(localDate(Date.now()), -1));
 const start = addDays(end, -(days - 1));
 mkdirSync(outDir, { recursive: true });
-const routes = loadRoutes();
+// same real-road distances as the live simulator (Budimír depot, ADR-039)
+const DEPOT: LatLon = [48.79256, 21.3071];
+const DESTINATIONS: Record<string, LatLon> = {
+  BA: [48.1645, 17.1795], BB: [48.7363, 19.1462], ZA: [49.2232, 18.7394], MI: [48.7543, 21.9195],
+  TV: [48.6286, 21.7178], HE: [48.9371, 21.9063], SL: [49.2986, 20.6866], SE: [48.6794, 17.3667],
+};
+const routes = buildRouteBook(RoadRouter.load(), DEPOT, DESTINATIONS);
 
 // ---------------------------------------------------------------- trips
 const trips = createWriteStream(join(outDir, "trips_history.csv"));

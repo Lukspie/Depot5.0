@@ -11,6 +11,11 @@ class UserRole(StrEnum):
     COURIER = "courier"
 
 
+class DepotKind(StrEnum):
+    DEPOT = "depot"  # fully simulated cross-dock (Budimír)
+    HUB = "hub"  # destination hub of linehaul trucks (Bratislava)
+
+
 class DirectionType(StrEnum):
     LINEHAUL = "linehaul"
     TRANSIT = "transit"

@@ -12,13 +12,14 @@ from sqlalchemy.orm import aliased
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.rbac import DbSession
 from depotrack.core.service_auth import require_service_token
-from depotrack.models import Alert, Direction, Door, Parcel, ParcelEvent, Trip, Vehicle
+from depotrack.models import Alert, Depot, Direction, Door, Parcel, ParcelEvent, Trip, Vehicle
 from depotrack.models.enums import DirectionType, EventSource, ParcelStatus
 from depotrack.schemas.internal import (
     AlertIn,
     AlertOut,
     ManifestOut,
     ManifestParcel,
+    PlanDepot,
     PlanOut,
     PlanTripOut,
     ScanEventsIn,
@@ -85,11 +86,19 @@ def get_plan(day: Annotated[date, Query()], db: DbSession, settings: SettingsDep
     local = db.execute(
         select(Direction.code).where(Direction.type == DirectionType.LOCAL).order_by(Direction.code)
     ).scalars()
+    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+    destinations = {
+        d.code: (d.dest_lat, d.dest_lon)
+        for d in db.execute(select(Direction).where(Direction.depot_id == depot.id)).scalars()
+        if d.dest_lat is not None and d.dest_lon is not None
+    }
     return PlanOut(
         day=day,
         cascade_buffer_min=settings.cascade_buffer_min,
         trips=trips,
         local_directions=list(local),
+        depot=PlanDepot(code=depot.code, name=depot.name, lat=depot.lat, lon=depot.lon),
+        destinations=destinations,
     )
 
 

@@ -65,7 +65,8 @@ def test_database() -> Iterator[None]:
 @pytest.fixture(autouse=True)
 def clean_tables() -> Iterator[None]:
     yield
-    tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
+    # depots are reference data inserted by the migration (ADR-039): keep them
+    tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables if t.name != "depots")
     with get_engine().begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     limiter.reset()

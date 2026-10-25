@@ -197,6 +197,17 @@ def test_evening_wave_stages_regional_and_local_parcels_once(
     assert types <= {"transit", "local"}
     # BA parcels were not loaded but stay for the missing list, not staged
     assert all(p.status == "collected" for p in parcels_of(db, "BA"))
+    # parcels still on a night truck are not staged either
+    on_trucks = (
+        db.execute(
+            select(Parcel)
+            .join(ParcelEvent)
+            .where(ParcelEvent.trip_id.is_not(None), ParcelEvent.status == "collected")
+        )
+        .scalars()
+        .all()
+    )
+    assert on_trucks and all(p.status == "collected" for p in on_trucks)
     send_trip(client, some_trip.id, "departed", local(22, 30))
     assert len(db.execute(select(Parcel).where(Parcel.status == "staged")).all()) == len(staged)
 

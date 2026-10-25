@@ -25,3 +25,6 @@ ml/runs/
 Thumbs.db
 .idea/
 .vscode/
+
+# raw OpenStreetMap extract (tools/osm/README.md)
+tools/osm/cache/

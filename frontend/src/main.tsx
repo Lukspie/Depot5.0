@@ -1,23 +1,27 @@
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ME_KEY } from "./api/auth";
 import { isApiError } from "./api/client";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
+import { Spinner } from "./components/ui";
 import { TelematicsProvider } from "./hooks/telematics";
 import { applyTheme, loadTheme } from "./components/ui/theme";
 import "./index.css";
 import { AdminPage } from "./pages/AdminPage";
 import { BoardPage } from "./pages/BoardPage";
-import { FleetPage } from "./pages/FleetPage";
 import { LoadingPage } from "./pages/LoadingPage";
 import { ParcelPage } from "./pages/ParcelPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { HomePage } from "./pages/HomePage";
 import { StatusPage } from "./pages/StatusPage";
+
+// map pages carry MapLibre + Three.js: loaded only when opened
+const FleetPage = lazy(() => import("./pages/FleetPage").then((m) => ({ default: m.FleetPage })));
+const TwinPage = lazy(() => import("./pages/TwinPage").then((m) => ({ default: m.TwinPage })));
 
 // before the first render, so the page never flashes in the wrong colours
 applyTheme(loadTheme());
@@ -73,7 +77,19 @@ createRoot(root).render(
               path="fleet"
               element={
                 <RequireAuth roles={["dispatcher"]}>
-                  <FleetPage />
+                  <Suspense fallback={<Spinner label="Načítavam mapu…" className="py-20" />}>
+                    <FleetPage />
+                  </Suspense>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="twin"
+              element={
+                <RequireAuth roles={["dispatcher", "security"]}>
+                  <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
+                    <TwinPage />
+                  </Suspense>
                 </RequireAuth>
               }
             />

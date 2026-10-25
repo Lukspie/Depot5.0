@@ -138,6 +138,15 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
   );
 
   app.get(
+    "/routes",
+    {
+      preHandler: roleGuard(verifier, serviceToken, "any"),
+      schema: { tags: ["simulation"], summary: "Trasy kamiónov po reálnych cestách (pre mapu)", ...secured },
+    },
+    (_req, reply) => engine.routesSummary() ?? reply.code(503).send({ error: "routes not loaded yet" }),
+  );
+
+  app.get(
     "/sim/scenario",
     { preHandler: staff, schema: { tags: ["simulation"], summary: "Prehľad scenára načítaných dní", ...secured } },
     () => ({ days: engine.scenarioSummary() }),

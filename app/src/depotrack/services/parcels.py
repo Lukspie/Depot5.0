@@ -14,15 +14,13 @@ from depotrack.seed.generator import (
     parcel_dimensions,
     parcel_weight,
     person_name,
-    random_point,
+    pick_address,
 )
 from depotrack.seed.reference import (
     KOSICE_LAT,
     KOSICE_LON,
     KOSICE_RADIUS_KM,
-    KOSICE_STREETS,
     SENDERS,
-    TOWN_STREETS,
     TRANSIT,
 )
 
@@ -75,16 +73,13 @@ def night_parcels_for(db: Session, day: date, random_seed: int) -> int:
         for i in range(1, rng.randint(110, 190) + 1):
             if rng.random() < 0.45 and targets:
                 d = rng.choices(targets, weights=[t.share for t in targets])[0]
-                lat, lon = random_point(rng, d.lat, d.lon, 8.0)
-                code, street, town, postcode = d.code, rng.choice(TOWN_STREETS), d.town, d.postcode
+                street, number, postcode, lat, lon = pick_address(rng, d.town, d.lat, d.lon, 8.0)
+                code, town, postcode = d.code, d.town, postcode or d.postcode
             else:
-                lat, lon = random_point(rng, KOSICE_LAT, KOSICE_LON, KOSICE_RADIUS_KM)
-                code, street, town, postcode = (
-                    kosice_rajon(lat, lon),
-                    rng.choice(KOSICE_STREETS),
-                    "Košice",
-                    "040 01",
+                street, number, postcode, lat, lon = pick_address(
+                    rng, "Košice", KOSICE_LAT, KOSICE_LON, KOSICE_RADIUS_KM
                 )
+                code, town, postcode = kosice_rajon(lat, lon), "Košice", postcode or "040 01"
             weight = parcel_weight(rng)
             length, width, height = parcel_dimensions(rng, weight)
             rows.append(
@@ -95,7 +90,7 @@ def night_parcels_for(db: Session, day: date, random_seed: int) -> int:
                     "width_cm": width,
                     "height_cm": height,
                     "recipient_name": person_name(rng),
-                    "address": f"{street} {rng.randint(1, 120)}, {postcode} {town}",
+                    "address": f"{street} {number}, {postcode} {town}",
                     "lat": round(lat, 6),
                     "lon": round(lon, 6),
                     "direction_id": directions[code].id,

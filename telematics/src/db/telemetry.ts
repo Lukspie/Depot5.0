@@ -11,6 +11,7 @@ export interface DeviceRow {
   kind: "dock_scanner" | "line_scanner" | "gate_camera" | "line_sensor";
   doorCode: string | null;
   enabled: boolean;
+  depotCode: string;
 }
 
 export interface ScanRow {
@@ -100,8 +101,16 @@ export class PgTelemetry implements TelemetrySink {
       kind: DeviceRow["kind"];
       door_code: string | null;
       enabled: boolean;
-    }>("SELECT id, code, kind, door_code, enabled FROM devices ORDER BY code");
-    return rows.map((r) => ({ id: r.id, code: r.code, kind: r.kind, doorCode: r.door_code, enabled: r.enabled }));
+      depot_code: string;
+    }>("SELECT id, code, kind, door_code, enabled, depot_code FROM devices ORDER BY code");
+    return rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      kind: r.kind,
+      doorCode: r.door_code,
+      enabled: r.enabled,
+      depotCode: r.depot_code,
+    }));
   }
 
   async setDeviceEnabled(code: string, enabled: boolean): Promise<void> {

@@ -1,7 +1,7 @@
 /** State of a scheduled trip at a given simulated time: status, position, ETA, gate events. */
 
 import { MINUTE } from "../clock/time.js";
-import { routeFor, type LatLon, type RouteBook } from "./routes.js";
+import { routeBack, routeFor, routeSpeedKmh, type LatLon, type RouteBook } from "./routes.js";
 import type { TripSchedule } from "./scenario.js";
 import type { Position, TripExecution, TripStatus } from "./types.js";
 
@@ -79,7 +79,7 @@ export function positionAt(s: TripSchedule, t: number, book: RouteBook): Positio
     const arrive = s.arriveDepot ?? 0;
     if (t <= depart) return parked(destination);
     if (t >= arrive) return parked(book.depot);
-    const back = route.reversed();
+    const back = routeBack(book, s.trip.directionCode);
     let movingElapsed = t - depart;
     const inc = s.incident;
     if (inc) {
@@ -92,7 +92,7 @@ export function positionAt(s: TripSchedule, t: number, book: RouteBook): Positio
       if (t >= stopEnd) movingElapsed -= inc.durationMin * MINUTE;
     }
     const { point, heading } = back.at(movingElapsed / travelMs);
-    return { lat: point[0], lon: point[1], speedKmh: book.averageSpeedKmh, heading, moving: true };
+    return { lat: point[0], lon: point[1], speedKmh: routeSpeedKmh(book, s.trip.directionCode), heading, moving: true };
   }
 
   const depart = s.departDepot ?? 0;
@@ -100,7 +100,7 @@ export function positionAt(s: TripSchedule, t: number, book: RouteBook): Positio
   if (t <= depart) return parked(book.depot);
   if (t >= arrive) return parked(destination);
   const { point, heading } = route.at((t - depart) / travelMs);
-  return { lat: point[0], lon: point[1], speedKmh: book.averageSpeedKmh, heading, moving: true };
+  return { lat: point[0], lon: point[1], speedKmh: routeSpeedKmh(book, s.trip.directionCode), heading, moving: true };
 }
 
 /** Where the vehicle is before / after the trip. */

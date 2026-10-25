@@ -14,6 +14,7 @@ from depotrack.api import (
     admin_users,
     auth,
     dashboard,
+    depots,
     fleet,
     internal,
     loading,
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_users.router)
     app.include_router(admin_directions.router)
     app.include_router(dashboard.router)
+    app.include_router(depots.router)
     app.include_router(loading.router)
     app.include_router(fleet.router)
     app.include_router(internal.router)

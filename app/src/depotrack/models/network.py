@@ -13,11 +13,12 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from depotrack.models.base import Base, pg_enum
 from depotrack.models.enums import (
+    DepotKind,
     DirectionType,
     DoorKind,
     TripKind,
@@ -27,10 +28,28 @@ from depotrack.models.enums import (
 )
 
 
+class Depot(Base):
+    """A depot or hub on the map (ADR-039). `layout` describes the hall for the 3D views:
+    {"hall": {"width", "depth", "height", "rotationDeg"}, "belt": [[x, y], …], "yardGate": [x, y]}
+    in metres relative to (lat, lon), x to the east, y to the south (same as door positions)."""
+
+    __tablename__ = "depots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(8), unique=True)
+    name: Mapped[str] = mapped_column(String(80))
+    kind: Mapped[DepotKind] = mapped_column(pg_enum(DepotKind, "depot_kind"))
+    lat: Mapped[float] = mapped_column(Float)
+    lon: Mapped[float] = mapped_column(Float)
+    layout: Mapped[dict[str, object]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+
+
 class Direction(Base):
     __tablename__ = "directions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # depot that serves the direction (trucks leave from / come back to it)
+    depot_id: Mapped[int] = mapped_column(ForeignKey("depots.id"), index=True)
     code: Mapped[str] = mapped_column(String(16), unique=True)
     name: Mapped[str] = mapped_column(String(80))
     type: Mapped[DirectionType] = mapped_column(pg_enum(DirectionType, "direction_type"))
@@ -40,13 +59,18 @@ class Direction(Base):
     depends_on_linehaul: Mapped[list[str]] = mapped_column(
         ARRAY(String(16)), server_default=text("'{}'")
     )
+    # where the trucks of the direction drive to (town centre, or the hub)
+    dest_lat: Mapped[float | None] = mapped_column(Float)
+    dest_lon: Mapped[float | None] = mapped_column(Float)
+    destination_depot_id: Mapped[int | None] = mapped_column(ForeignKey("depots.id"))
 
 
 class Wave(Base):
     __tablename__ = "waves"
-    __table_args__ = (UniqueConstraint("date", "kind"),)
+    __table_args__ = (UniqueConstraint("depot_id", "date", "kind"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    depot_id: Mapped[int] = mapped_column(ForeignKey("depots.id"))
     date: Mapped[date] = mapped_column(Date)
     kind: Mapped[WaveKind] = mapped_column(pg_enum(WaveKind, "wave_kind"))
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -63,6 +87,7 @@ class Door(Base):
     __tablename__ = "doors"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    depot_id: Mapped[int] = mapped_column(ForeignKey("depots.id"), index=True)
     code: Mapped[str] = mapped_column(String(16), unique=True)
     kind: Mapped[DoorKind] = mapped_column(pg_enum(DoorKind, "door_kind"))
     direction_id: Mapped[int | None] = mapped_column(ForeignKey("directions.id"))
@@ -74,6 +99,8 @@ class Vehicle(Base):
     __tablename__ = "vehicles"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # home depot
+    depot_id: Mapped[int | None] = mapped_column(ForeignKey("depots.id"))
     plate: Mapped[str] = mapped_column(String(16), unique=True)
     kind: Mapped[VehicleKind] = mapped_column(pg_enum(VehicleKind, "vehicle_kind"))
     capacity_kg: Mapped[int] = mapped_column(Integer)
@@ -84,6 +111,8 @@ class Trip(Base):
     __tablename__ = "trips"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # depot whose plan the trip belongs to
+    depot_id: Mapped[int] = mapped_column(ForeignKey("depots.id"), index=True)
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"), index=True)
     direction_id: Mapped[int] = mapped_column(ForeignKey("directions.id"), index=True)
     door_id: Mapped[int | None] = mapped_column(ForeignKey("doors.id"))

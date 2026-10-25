@@ -7,12 +7,13 @@ from sqlalchemy import select
 
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.models import Door, LoadingScan, User
-from depotrack.models.enums import DoorKind, EventSource, ScanResult, UserRole
+from depotrack.models.enums import EventSource, ScanResult, UserRole
 from depotrack.schemas.wms import DoorSummary, LoadingView, ManualScanIn, ManualScanOut, ScanOut
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
 from depotrack.services.loading import (
     active_trip_at,
+    depot_docks,
     loading_dock,
     missing_parcels,
     process_scan,
@@ -53,10 +54,7 @@ def _door_or_404(db: DbSession, code: str) -> Door:
 @router.get("/doors", response_model=list[DoorSummary], response_model_by_alias=True)
 def doors(_: Operator, db: DbSession) -> list[DoorSummary]:
     look = Lookup(db)
-    rows = db.execute(
-        select(Door).where(Door.kind == DoorKind.LOADING_DOCK).order_by(Door.code)
-    ).scalars()
-    return [_door_summary(db, d, look) for d in rows]
+    return [_door_summary(db, d, look) for d in depot_docks(db)]
 
 
 @router.get("/doors/{code}", response_model=LoadingView, response_model_by_alias=True)
