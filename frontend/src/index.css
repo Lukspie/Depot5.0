@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* DepoTrack theme: light, pastel, rounded cards, soft shadows. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-canvas: #f5f6fb;
+  --color-surface: #ffffff;
+  --color-ink: #1f2433;
+  --color-ink-muted: #6b7184;
+  --color-line: #e6e8f0;
+
+  /* brand */
+  --color-brand-50: #f3f1fd;
+  --color-brand-100: #e7e3fb;
+  --color-brand-500: #7c6fd6;
+  --color-brand-700: #5a4db5;
+
+  /* pastel status colours (bg / fg pairs) */
+  --color-mint-100: #dcf3e8;
+  --color-mint-600: #2f8a62;
+  --color-sky-100: #dcebfb;
+  --color-sky-600: #2f6fb8;
+  --color-peach-100: #fde8d7;
+  --color-peach-600: #b9622a;
+  --color-rose-100: #fbe1e4;
+  --color-rose-600: #c23b52;
+
+  --shadow-card: 0 1px 2px rgb(31 36 51 / 0.04), 0 4px 16px rgb(31 36 51 / 0.06);
+  --radius-card: 1rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans antialiased;
+}

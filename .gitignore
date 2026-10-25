@@ -1,0 +1,27 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# ml (large artifacts are added explicitly)
+ml/data/
+ml/runs/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

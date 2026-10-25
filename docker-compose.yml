@@ -1,0 +1,97 @@
+# DepoTrack – presne 4 kontajnery: 2× databáza, 2× backend (Python, Node.js).
+# Frontend je zostavený v multi-stage builde `app` a servíruje ho `app`.
+name: depotrack
+
+services:
+  db-wms:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${WMS_DB_NAME:?nastav WMS_DB_NAME v .env}
+      POSTGRES_USER: ${WMS_DB_USER:?nastav WMS_DB_USER v .env}
+      POSTGRES_PASSWORD: ${WMS_DB_PASSWORD:?nastav WMS_DB_PASSWORD v .env}
+    volumes:
+      - wms-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${WMS_DB_HOST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  db-telemetry:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${TELEMETRY_DB_NAME:?nastav TELEMETRY_DB_NAME v .env}
+      POSTGRES_USER: ${TELEMETRY_DB_USER:?nastav TELEMETRY_DB_USER v .env}
+      POSTGRES_PASSWORD: ${TELEMETRY_DB_PASSWORD:?nastav TELEMETRY_DB_PASSWORD v .env}
+    volumes:
+      - telemetry-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${TELEMETRY_DB_HOST_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  telematics:
+    build:
+      context: ./telematics
+    environment:
+      PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TELEMETRY_DB_HOST: db-telemetry
+      TELEMETRY_DB_PORT: 5432
+      TELEMETRY_DB_NAME: ${TELEMETRY_DB_NAME}
+      TELEMETRY_DB_USER: ${TELEMETRY_DB_USER}
+      TELEMETRY_DB_PASSWORD: ${TELEMETRY_DB_PASSWORD}
+      ALLOWED_ORIGINS: ${TELEMATICS_ALLOWED_ORIGINS:-http://localhost:8000}
+    ports:
+      - "${TELEMATICS_PORT:-8080}:8080"
+    depends_on:
+      db-telemetry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WMS_DB_HOST: db-wms
+      WMS_DB_PORT: 5432
+      WMS_DB_NAME: ${WMS_DB_NAME}
+      WMS_DB_USER: ${WMS_DB_USER}
+      WMS_DB_PASSWORD: ${WMS_DB_PASSWORD}
+      TELEMATICS_INTERNAL_URL: http://telematics:8080
+      TELEMATICS_PUBLIC_URL: ${TELEMATICS_PUBLIC_URL:-http://localhost:8080}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      db-wms:
+        condition: service_healthy
+      telematics:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  wms-data:
+  telemetry-data:
