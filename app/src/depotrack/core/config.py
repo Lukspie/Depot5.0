@@ -1,5 +1,6 @@
 """Application settings, read from environment variables (see .env.example)."""
 
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -23,6 +24,30 @@ class Settings(BaseSettings):
     # browser -> telematics (frontend calls telematics directly)
     telematics_public_url: str = "http://localhost:8080"
 
+    # browser origins allowed to send state-changing requests (CSRF check, ADR-014)
+    app_allowed_origins: str = "http://localhost:8000,http://localhost:5173"
+
+    # sessions
+    session_ttl_hours: int = 8
+    session_cookie_name: str = "depotrack_session"
+    # true only when served over HTTPS
+    session_cookie_secure: bool = False
+    login_rate_limit: str = "10/minute"
+
+    # background jobs (disabled in tests)
+    run_jobs: bool = True
+
+    # seed (run on startup, idempotent)
+    seed_admin_password: str | None = None
+    seed_dispatcher_password: str | None = None
+    seed_operator_password: str | None = None
+    seed_security_password: str | None = None
+    seed_courier_password: str | None = None
+    seed_parcels_per_day: int = 1500
+    seed_random_seed: int = 42
+    # day of the simulated parcels; defaults to today
+    seed_date: date | None = None
+
     # built frontend (copied in by the multi-stage Dockerfile)
     static_dir: Path = Path("/app/static")
 
@@ -36,6 +61,10 @@ class Settings(BaseSettings):
             port=self.wms_db_port,
             database=self.wms_db_name,
         )
+
+    @property
+    def allowed_origins(self) -> set[str]:
+        return {o.strip() for o in self.app_allowed_origins.split(",") if o.strip()}
 
 
 @lru_cache

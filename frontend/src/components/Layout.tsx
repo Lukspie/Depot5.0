@@ -1,25 +1,21 @@
-import { NavLink, Outlet } from "react-router";
-
-interface NavItem {
-  to: string;
-  label: string;
-  ready: boolean;
-}
-
-// Screens are enabled as the project phases deliver them.
-const NAV: NavItem[] = [
-  { to: "/", label: "Stav systému", ready: true },
-  { to: "/twin", label: "Digitálne dvojča", ready: false },
-  { to: "/fleet", label: "Flotila", ready: false },
-  { to: "/loading", label: "Nakládka", ready: false },
-  { to: "/gate", label: "Brána", ready: false },
-  { to: "/admin", label: "Administrácia", ready: false },
-];
+import { NavLink, Outlet, useNavigate } from "react-router";
+import { useLogout, useMe } from "../api/auth";
+import { NAV, ROLE_LABEL } from "../auth/roles";
 
 export function Layout() {
+  const me = useMe();
+  const logout = useLogout();
+  const navigate = useNavigate();
+  const user = me.data;
+  const items = user ? NAV.filter((item) => item.roles.includes(user.role)) : [];
+
+  function onLogout() {
+    logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) });
+  }
+
   return (
     <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="border-line bg-surface border-b px-4 py-4 md:w-60 md:shrink-0 md:border-r md:border-b-0 md:py-6">
+      <aside className="border-line bg-surface flex flex-col border-b px-4 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-r md:border-b-0 md:py-6">
         <div className="mb-6 flex items-center gap-2 px-2">
           <img src="/favicon.svg" alt="" className="h-8 w-8" />
           <div>
@@ -27,13 +23,14 @@ export function Layout() {
             <div className="text-ink-muted text-xs">SPS depo Košice</div>
           </div>
         </div>
+
         <nav className="flex gap-1 overflow-x-auto md:flex-col">
-          {NAV.map((item) =>
+          {items.map((item) =>
             item.ready ? (
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.to === "/"}
                 className={({ isActive }) =>
                   `rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors ${
                     isActive
@@ -56,8 +53,25 @@ export function Layout() {
             ),
           )}
         </nav>
+
+        {user && (
+          <div className="border-line mt-4 flex items-center justify-between gap-3 border-t pt-4 md:mt-auto">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{user.full_name}</div>
+              <div className="text-ink-muted text-xs">{ROLE_LABEL[user.role]}</div>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              disabled={logout.isPending}
+              className="text-ink-muted hover:bg-rose-100 hover:text-rose-600 rounded-xl px-3 py-1.5 text-sm transition-colors"
+            >
+              Odhlásiť
+            </button>
+          </div>
+        )}
       </aside>
-      <main className="flex-1 p-4 md:p-8">
+      <main className="min-w-0 flex-1 p-4 md:p-8">
         <Outlet />
       </main>
     </div>

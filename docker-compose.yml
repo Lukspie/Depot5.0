@@ -77,6 +77,16 @@ services:
       WMS_DB_PASSWORD: ${WMS_DB_PASSWORD}
       TELEMATICS_INTERNAL_URL: http://telematics:8080
       TELEMATICS_PUBLIC_URL: ${TELEMATICS_PUBLIC_URL:-http://localhost:8080}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:5173}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-8}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10/minute}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?nastav SEED_ADMIN_PASSWORD v .env}
+      SEED_DISPATCHER_PASSWORD: ${SEED_DISPATCHER_PASSWORD:?nastav SEED_DISPATCHER_PASSWORD v .env}
+      SEED_OPERATOR_PASSWORD: ${SEED_OPERATOR_PASSWORD:?nastav SEED_OPERATOR_PASSWORD v .env}
+      SEED_SECURITY_PASSWORD: ${SEED_SECURITY_PASSWORD:?nastav SEED_SECURITY_PASSWORD v .env}
+      SEED_COURIER_PASSWORD: ${SEED_COURIER_PASSWORD:?nastav SEED_COURIER_PASSWORD v .env}
+      SEED_PARCELS_PER_DAY: ${SEED_PARCELS_PER_DAY:-1500}
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
@@ -89,7 +99,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 15s
+      # first start runs migrations and the seed
+      start_period: 60s
+      start_interval: 2s
     restart: unless-stopped
 
 volumes:
