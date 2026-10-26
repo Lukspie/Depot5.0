@@ -20,6 +20,8 @@ from depotrack.models.base import Base, pg_enum
 from depotrack.models.enums import (
     DepotKind,
     DirectionType,
+    DockEquipment,
+    DoorDrive,
     DoorKind,
     TripKind,
     TripStatus,
@@ -93,6 +95,13 @@ class Door(Base):
     direction_id: Mapped[int | None] = mapped_column(ForeignKey("directions.id"))
     position_x: Mapped[float] = mapped_column(Float)
     position_y: Mapped[float] = mapped_column(Float)
+    # equipment of the door (ADR-050); data, so the real Budimír layout needs no code change
+    door_drive: Mapped[DoorDrive] = mapped_column(
+        pg_enum(DoorDrive, "door_drive"), server_default=DoorDrive.ELECTRIC.value
+    )
+    dock_equipment: Mapped[DockEquipment] = mapped_column(
+        pg_enum(DockEquipment, "dock_equipment"), server_default=DockEquipment.NONE.value
+    )
 
 
 class Vehicle(Base):

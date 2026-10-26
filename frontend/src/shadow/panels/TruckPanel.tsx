@@ -5,8 +5,14 @@ import { useDockDetail } from "../../api/shadow";
 import { Badge, EmptyState, KeyValue, Progress, SidePanel, Spinner } from "../../components/ui";
 import { DIRECTION_TYPE, TRIP_STATUS, delayLabel, delayTone, hhmm } from "../../domain/labels";
 import type { DepotLayout } from "../layout";
+import { useShadowStore } from "../store";
 import { useCanAct } from "../permissions";
 import { AlertList, MoveTrip } from "./Actions";
+
+const DOOR_LABEL: Record<string, string> = { open: "otvorená", closed: "zatvorená", fault: "senzor – porucha", unknown: "bez údajov" };
+const DOOR_TONE: Record<string, "ok" | "neutral" | "warn"> = { open: "ok", closed: "neutral", fault: "warn", unknown: "neutral" };
+const DRIVE: Record<string, string> = { electric: "elektrická", manual: "ručná (lanko)" };
+const EQUIPMENT: Record<string, string> = { dock_leveler: "vyrovnávací mostík", telescopic_conveyor: "teleskopický pás", none: "bez vybavenia" };
 
 /**
  * Truck at a loading door (zadanie §7): direction, fill in pieces and kg against the capacity,
@@ -20,6 +26,8 @@ export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; l
   const t = dock?.trip;
   const load = t?.load;
   const detail = q.data;
+  const reading = useShadowStore((s) => s.doors[code]);
+  const layoutDoor = layout.doors.find((d) => d.code === code);
   return (
     <SidePanel
       open
@@ -40,6 +48,8 @@ export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; l
           <KeyValue
             rows={[
               ["Stav", <Badge key="s" tone={TRIP_STATUS[t.status].tone}>{TRIP_STATUS[t.status].label}</Badge>],
+              ["Brána (senzor)", <Badge key="d" tone={DOOR_TONE[reading?.state ?? "unknown"]}>{DOOR_LABEL[reading?.state ?? "unknown"]}</Badge>],
+              ["Vybavenie", layoutDoor ? `${DRIVE[layoutDoor.doorDrive]} · ${EQUIPMENT[layoutDoor.dockEquipment]}` : "—"],
               ["Plánovaný odchod", hhmm(t.plannedDeparture)],
               ["Meškanie", <Badge key="d" tone={delayTone(t.delayMin)}>{delayLabel(t.delayMin)}</Badge>],
               ["Na naloženie", load ? `${String(load.expected)} ks` : "—"],

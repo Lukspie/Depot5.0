@@ -187,6 +187,18 @@ DOORS = (
 )
 
 
+# Temporary door equipment until the team delivers the real Budimír layout (plan-doplnky 5c):
+# 2 main truck doors with a dock leveler, 3 on the platform with a telescopic conveyor, 3 plain
+# electric doors; courier doors are manual (rope). Codes not listed: electric, no equipment.
+DOOR_EQUIPMENT: dict[str, tuple[str, str]] = {
+    **{f"LD-0{i}": ("electric", "dock_leveler") for i in (1, 2)},
+    **{f"LD-0{i}": ("electric", "telescopic_conveyor") for i in (3, 4, 5)},
+    **{f"LD-0{i}": ("electric", "none") for i in (6, 7, 8)},
+    **{f"SB-0{i}": ("manual", "none") for i in range(1, 9)},
+    **{f"BA-R0{i}": ("electric", "dock_leveler") for i in range(1, 7)},
+}
+
+
 @dataclass(frozen=True)
 class VehicleDef:
     plate: str

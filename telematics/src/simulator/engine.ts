@@ -68,6 +68,16 @@ export interface EngineDeps {
   realNow?: () => number;
 }
 
+/** Door contact sensor (ADR-050): the only source of the door state shown in the shadow. */
+export type DoorState = "open" | "closed" | "fault";
+
+export interface DoorEvent {
+  device: string;
+  doorCode: string;
+  state: DoorState;
+  at: string;
+}
+
 /** "maintenance": marked by a dispatcher in the WMS, no scans until the service is done */
 export type DeviceStatus = "online" | "degraded" | "offline" | "maintenance";
 
@@ -185,6 +195,8 @@ export class Engine {
   private readonly realNow: () => number;
   private seedValue: number;
   private degradationStartedAt: number | null;
+  /** last reported state of every door sensor */
+  private readonly doorStates = new Map<string, DoorEvent>();
   /** devices under maintenance: until when (simulated time) */
   private readonly maintenanceUntil = new Map<string, number>();
   /** routes of the most recently loaded day (depot + destinations rarely change) */
@@ -197,7 +209,11 @@ export class Engine {
     this.degradationStartedAt = deps.config.degradationStartedAt;
     deps.hub.setSnapshot("clock", () => [this.clockEvent()]);
     deps.hub.setSnapshot("vehicles", () => this.vehicleSnapshot());
-    deps.hub.setSnapshot("devices", () => this.devices.size ? this.deviceList().map((d) => this.deviceEvent(d)) : []);
+    deps.hub.setSnapshot("devices", () =>
+      this.devices.size
+        ? [...this.deviceList().map((d) => this.deviceEvent(d)), ...[...this.doorStates.values()].map((e) => ({ channel: "devices" as const, type: "door", data: e }))]
+        : [],
+    );
     deps.clock.onChange(() => {
       deps.hub.publish("clock", "tick", this.clockInfo(), "clock");
     });
@@ -395,6 +411,47 @@ export class Engine {
     }
   }
 
+  /**
+   * One door sensor per operating day fails for 30-75 min during the evening wave; its own random
+   * stream, so scans, trips and the cascade stay exactly as before (ADR-023, ADR-050).
+   */
+  private doorFault(day: string): { door: string; from: number; to: number } | null {
+    const doors = [...this.devices.values()].filter((d) => d.row.kind === "door_sensor" && d.row.doorCode).map((d) => d.row.doorCode as string).sort();
+    if (doors.length === 0) return null;
+    const rng = rngFor(this.seedValue, day, "door");
+    const door = rng.pick(doors);
+    const from = zonedToUtc(day, "17:30") + rng.int(0, 210) * MINUTE;
+    return { door, from, to: from + rng.int(30, 75) * MINUTE };
+  }
+
+  /** What the door sensor of `door` reads at `now`: open while a truck is at the door, or fault. */
+  doorState(door: string, now: number): DoorState {
+    const day = operatingDay(now);
+    const fault = this.doorFault(day);
+    if (fault && fault.door === door && now >= fault.from && now < fault.to) return "fault";
+    for (const state of this.days.values()) {
+      for (const s of state.scenario.schedules.values()) {
+        if (s.trip.doorCode !== door) continue;
+        const atDoor = s.trip.kind === "outbound" ? s.atDoor : s.arriveDepot;
+        const leaves = s.trip.kind === "outbound" ? s.departDepot : s.unloadedAt;
+        if (atDoor !== undefined && leaves !== undefined && now >= atDoor && now < leaves) return "open";
+      }
+    }
+    return "closed";
+  }
+
+  /** Publish door sensor changes on the "devices" channel (type "door"). */
+  private updateDoors(now: number): void {
+    for (const d of this.devices.values()) {
+      if (d.row.kind !== "door_sensor" || !d.row.doorCode || !this.simulated(d.row.code)) continue;
+      const state = this.doorState(d.row.doorCode, now);
+      if (this.doorStates.get(d.row.code)?.state === state) continue;
+      const ev: DoorEvent = { device: d.row.code, doorCode: d.row.doorCode, state, at: iso(now) };
+      this.doorStates.set(d.row.code, ev);
+      this.deps.hub.publish("devices", "door", ev, d.row.code);
+    }
+  }
+
   private inMaintenance(code: string, at: number): boolean {
     const until = this.maintenanceUntil.get(code);
     return until !== undefined && at < until;
@@ -558,6 +615,7 @@ export class Engine {
     await this.emitScans(scans.filter((s) => this.simulated(s.device) && !this.inMaintenance(s.device, s.at)));
     await this.finishMaintenance(now);
     await this.emitGate(gate);
+    this.updateDoors(now);
     this.updateCouriers(now);
     this.updateTrips(now);
     await this.updateVehicles(now);

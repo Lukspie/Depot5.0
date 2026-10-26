@@ -74,6 +74,8 @@ def layout(
                 direction_name=look.directions[door.direction_id].name
                 if door.direction_id
                 else None,
+                door_drive=door.door_drive,
+                dock_equipment=door.dock_equipment,
             )
             for door in doors
         ],

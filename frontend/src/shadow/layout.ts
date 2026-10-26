@@ -12,7 +12,12 @@ export interface LayoutDoor {
   y: number;
   directionCode: string | null;
   directionName: string | null;
+  doorDrive: "electric" | "manual";
+  dockEquipment: "dock_leveler" | "telescopic_conveyor" | "none";
 }
+
+/** State of a door from its contact sensor (ADR-050); undefined = no reading yet. */
+export type DoorState = "open" | "closed" | "fault";
 
 export interface DepotLayout {
   depot: { code: string; name: string; kind: "depot" | "hub"; lat: number; lon: number };

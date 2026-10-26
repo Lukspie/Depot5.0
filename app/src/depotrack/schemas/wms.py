@@ -7,6 +7,8 @@ from pydantic import Field
 from depotrack.models.enums import (
     DepotKind,
     DirectionType,
+    DockEquipment,
+    DoorDrive,
     DoorKind,
     EventSource,
     ParcelStatus,
@@ -251,6 +253,8 @@ class LayoutDoor(CamelModel):
     y: float
     direction_code: str | None
     direction_name: str | None
+    door_drive: DoorDrive
+    dock_equipment: DockEquipment
 
 
 class LayoutOut(CamelModel):

@@ -23,6 +23,13 @@ export interface FlowItem {
   readOk: boolean;
 }
 
+export interface DoorReading {
+  device: string;
+  doorCode: string;
+  state: "open" | "closed" | "fault";
+  at: string;
+}
+
 export interface YardCar {
   plate: string;
   since: string;
@@ -42,6 +49,9 @@ interface ShadowStore {
   flow: FlowItem[];
   /** unexpected cars on the yard (gate passages in, removed on the way out) */
   yard: YardCar[];
+  /** door contact sensors by door code (the only source of the door state in the scene) */
+  doors: Record<string, DoorReading>;
+  door(r: DoorReading): void;
   setDevices(list: DeviceInfo[]): void;
   device(info: DeviceInfo): void;
   scan(s: LiveScan): void;
@@ -59,6 +69,8 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
   pulses: {},
   flow: [],
   yard: [],
+  doors: {},
+  door: (r) => set((s) => ({ doors: { ...s.doors, [r.doorCode]: r } })),
   setDevices: (list) => set({ devices: Object.fromEntries(list.map((d) => [d.code, d])) }),
   device: (info) => set((s) => ({ devices: { ...s.devices, [info.code]: info } })),
   scan: (sc) =>
@@ -82,5 +94,5 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
     return items;
   },
   pushFlow: (items) => set((s) => ({ flow: [...s.flow, ...items].slice(-MAX_FLOW_QUEUE) })),
-  reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [] }),
+  reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [], doors: {} }),
 }));

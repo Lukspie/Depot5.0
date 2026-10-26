@@ -47,6 +47,13 @@ def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
     assert kinds.count("loading_dock") == 8 and kinds.count("staging_bay") == 8
     ld2 = next(d for d in bud["doors"] if d["code"] == "LD-02")
     assert ld2["directionCode"] == "BA"
+    # door equipment (plan-doplnky 5c): 2 levelers, 3 telescopic conveyors, manual courier doors
+    eq = {d["code"]: (d["doorDrive"], d["dockEquipment"]) for d in bud["doors"]}
+    assert [eq[f"LD-0{i}"][1] for i in range(1, 9)] == ["dock_leveler"] * 2 + [
+        "telescopic_conveyor"
+    ] * 3 + ["none"] * 3
+    assert {eq[f"SB-0{i}"] for i in range(1, 9)} == {("manual", "none")}
+    assert eq["LD-06"] == ("electric", "none")
     hub = user.get("/api/layout?depot=BAH").json()
     assert [d["code"] for d in hub["doors"]] == [f"BA-R0{i}" for i in range(1, 7)]
     assert user.get("/api/layout?depot=XXX").status_code == 404

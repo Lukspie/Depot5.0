@@ -100,6 +100,7 @@ function useDepartures(current: TruckSpot[]): TruckSpot[] {
 function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: Omit<Props, "onFps" | "onCamera">) {
   const brand = useBrand();
   const devices = useShadowStore((s) => s.devices);
+  const doorStates = useShadowStore((s) => s.doors);
   const doors = useMemo(() => new Map(layout.doors.map((d) => [d.code, d])), [layout]);
   const docks = useMemo(() => new Map((live?.docks ?? []).map((d) => [d.code, d])), [live]);
   const staged = useMemo(() => new Map((live?.staged ?? []).map((s) => [s.doorCode, s.parcels])), [live]);
@@ -150,7 +151,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
             layout={layout}
             brand={brand}
             label={docks.get(door.code)?.trip?.directionCode ?? door.directionCode}
-            open={["at_door", "loading"].includes(docks.get(door.code)?.trip?.status ?? "") || trucks.some((t) => t.door === door.code)}
+            state={doorStates[door.code]?.state}
             selected={selection?.kind === "dock" && selection.code === door.code}
             onSelect={selectDock}
           />

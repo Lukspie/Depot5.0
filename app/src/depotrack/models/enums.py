@@ -33,6 +33,21 @@ class DoorKind(StrEnum):
     YARD_GATE = "yard_gate"
 
 
+class DoorDrive(StrEnum):
+    """How the door opens (plan-doplnky 5c): electric (button) or manual (rope)."""
+
+    ELECTRIC = "electric"
+    MANUAL = "manual"
+
+
+class DockEquipment(StrEnum):
+    """What bridges the door and the truck: a dock leveler (ramp) or a telescopic conveyor."""
+
+    DOCK_LEVELER = "dock_leveler"
+    TELESCOPIC_CONVEYOR = "telescopic_conveyor"
+    NONE = "none"
+
+
 class VehicleKind(StrEnum):
     TRUCK = "truck"
     VAN = "van"

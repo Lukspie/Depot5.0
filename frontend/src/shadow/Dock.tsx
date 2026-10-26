@@ -3,18 +3,21 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import type * as THREE from "three";
 import { hallOf, type DepotLayout, type LayoutDoor } from "./layout";
-import { cardboardPile, disposeTree, dockFrame, doorLeaf, numberPlate, OPENING_H, stagingBay } from "./parts";
+import type { DoorState } from "./layout";
+import { cardboardPile, disposeTree, dockFrame, dockLeveler, doorLeaf, doorUnknown, numberPlate, OPENING_H, stagingBay, telescopicConveyor } from "./parts";
 
 /**
- * Loading door in the facade: frame, number plate above it, sectional door (open while a truck is
- * at the door, with parcels in the opening). The label shows only on hover or selection.
+ * Loading door in the facade: frame, number plate, sectional door and its equipment (dock leveler
+ * or telescopic conveyor, ADR-050). Open / closed comes only from the door contact sensor; with a
+ * sensor fault the door is drawn neutral with a "senzor – porucha" tag (no guessing from trucks).
+ * The label shows only on hover or selection.
  */
 export function Dock({
   door,
   layout,
   brand,
   label,
-  open,
+  state,
   selected,
   onSelect,
 }: {
@@ -22,15 +25,22 @@ export function Dock({
   layout: DepotLayout;
   brand: THREE.Color;
   label: string | null;
-  open: boolean;
+  state: DoorState | undefined;
   selected: boolean;
   onSelect: (code: string) => void;
 }) {
   const [hover, setHover] = useState(false);
   const frame = useMemo(() => dockFrame(brand), [brand]);
   const plate = useMemo(() => numberPlate(door.code.replace(/^\D+-?0?/, ""), brand), [door.code, brand]);
-  const leaf = useMemo(() => doorLeaf(open), [open]);
+  const open = state === "open";
+  const fault = state === "fault";
+  const leaf = useMemo(() => (fault ? doorUnknown() : doorLeaf(open)), [open, fault]);
   const pile = useMemo(() => (open ? cardboardPile(60) : null), [open]);
+  const equipment = useMemo(
+    () => (door.dockEquipment === "dock_leveler" ? dockLeveler(open) : door.dockEquipment === "telescopic_conveyor" ? telescopicConveyor(open) : null),
+    [door.dockEquipment, open],
+  );
+  useEffect(() => () => (equipment ? disposeTree(equipment) : undefined), [equipment]);
   useEffect(() => () => disposeTree(frame), [frame]);
   useEffect(() => () => disposeTree(plate), [plate]);
   useEffect(() => () => disposeTree(leaf), [leaf]);
@@ -47,6 +57,12 @@ export function Dock({
       <primitive object={leaf} />
       {/* parcels at the threshold, beside the trailer, so they are visible from the yard */}
       {pile && <primitive object={pile} position={[1.55, 0.3, -0.2]} scale={0.45} />}
+      {equipment && <primitive object={equipment} />}
+      {fault && (
+        <Html position={[0, OPENING_H / 2, -0.6]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+          <div className="bg-warn-100 text-warn-600 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shadow">senzor – porucha</div>
+        </Html>
+      )}
       <primitive object={plate} position={[0, OPENING_H + 1.4, -0.3]} />
       {/* invisible click target over the door and the truck in front of it */}
       <mesh

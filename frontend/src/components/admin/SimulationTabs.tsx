@@ -67,6 +67,7 @@ const DEVICE_KIND: Record<DeviceInfo["kind"], string> = {
   line_scanner: "Skener na linke",
   gate_camera: "Kamera brány",
   line_sensor: "Senzor linky",
+  door_sensor: "Senzor dverí brány",
 };
 const DEVICE_TONE: Record<DeviceInfo["status"], Tone> = { online: "ok", degraded: "warn", offline: "danger", maintenance: "info" };
 const DEVICE_STATUS: Record<DeviceInfo["status"], string> = { online: "online", degraded: "degradovaný", offline: "offline", maintenance: "údržba" };

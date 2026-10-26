@@ -162,7 +162,7 @@ describe("simulation engine", () => {
     const positions = store.gps.filter((g) => g.plate === plate);
     expect(positions.length).toBeGreaterThan(5);
     expect(new Set(positions.map((p) => p.lon.toFixed(2))).size).toBeGreaterThan(3);
-    expect(engine.deviceList()).toHaveLength(13);
+    expect(engine.deviceList()).toHaveLength(21);
   });
 
   it("forwards dock and line scans to the app, trips first", async () => {

@@ -97,6 +97,14 @@ export const DEVICES: DeviceRow[] = [
   { id: 11, code: "LINE-SNS-01", kind: "line_sensor", doorCode: null, enabled: true, depotCode: "BUD" },
   { id: 12, code: "LINE-SNS-02", kind: "line_sensor", doorCode: null, enabled: true, depotCode: "BUD" },
   { id: 13, code: "LINE-SNS-03", kind: "line_sensor", doorCode: null, enabled: true, depotCode: "BUD" },
+  ...Array.from({ length: 8 }, (_, i) => ({
+    id: 14 + i,
+    code: `DOOR-SNS-0${String(i + 1)}`,
+    kind: "door_sensor" as const,
+    doorCode: `LD-0${String(i + 1)}`,
+    enabled: true,
+    depotCode: "BUD",
+  })),
 ];
 
 export class MemoryStore implements TelemetrySink {

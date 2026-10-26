@@ -155,6 +155,31 @@ export function doorLeaf(open: boolean): THREE.Group {
   return g;
 }
 
+/** Dock leveler: the ramp plate between the door and the trailer bed (1 m gap). */
+export function dockLeveler(raised: boolean): THREE.Group {
+  const g = new THREE.Group();
+  const plate = box(2.4, 0.15, 1.2, mat(0x7a7f87), 0, raised ? 1.25 : 1.05, -0.7);
+  plate.rotation.x = raised ? -0.12 : 0;
+  g.add(plate, box(2.6, 1.0, 0.4, mat(0x3a3a37), 0, 0.5, -0.25)); // bumper under the door
+  return g;
+}
+
+/** Telescopic conveyor: extends from the door into the trailer while the door is open. */
+export function telescopicConveyor(extended: boolean): THREE.Group {
+  const g = new THREE.Group();
+  const len = extended ? 6 : 1.2;
+  g.add(box(1.0, 0.35, len, mat(0x4f4f4c), 0, 1.25, -len / 2 + 0.6));
+  g.add(box(0.9, 0.06, len, mat(0x8a8a86), 0, 1.45, -len / 2 + 0.6));
+  return g;
+}
+
+/** Neutral door with an unknown state (sensor fault): a half-transparent grey panel. */
+export function doorUnknown(): THREE.Group {
+  const g = new THREE.Group();
+  g.add(box(OPENING_W - 0.2, OPENING_H - 0.1, 0.15, mat(0xb8bcc2, { transparent: true, opacity: 0.55 }), 0, OPENING_H / 2, 0));
+  return g;
+}
+
 /** Yard markings: truck stalls in front of the doors and a dashed driving lane. */
 export function yardMarkings(l: DepotLayout): THREE.Group {
   const g = new THREE.Group();

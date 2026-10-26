@@ -20,6 +20,7 @@ const KIND: Record<string, string> = {
   line_scanner: "Skener linky",
   gate_camera: "Kamera vjazdu",
   line_sensor: "Senzor linky",
+  door_sensor: "Senzor dverí",
 };
 /** degradation threshold of the simulator (SIM_DEGRADED_THRESHOLD) */
 const THRESHOLD = 0.92;

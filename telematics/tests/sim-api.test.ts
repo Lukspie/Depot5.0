@@ -89,7 +89,7 @@ describe("simulation control API", () => {
 
   it("devices: list for any role, switching off for admin, ingestion with service token", async () => {
     const list = await app.inject({ method: "GET", url: "/devices", headers: await bearer("courier") });
-    expect(list.json<{ devices: unknown[] }>().devices).toHaveLength(13);
+    expect(list.json<{ devices: unknown[] }>().devices).toHaveLength(21);
     const off = await app.inject({
       method: "PUT",
       url: "/sim/devices/DOCK-SCN-05",

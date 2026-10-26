@@ -41,7 +41,7 @@ export async function telematics<T>(method: "GET" | "POST" | "PUT", path: string
 export interface DeviceInfo {
   code: string;
   depotCode: string;
-  kind: "dock_scanner" | "line_scanner" | "gate_camera" | "line_sensor";
+  kind: "dock_scanner" | "line_scanner" | "gate_camera" | "line_sensor" | "door_sensor";
   doorCode: string | null;
   enabled: boolean;
   external: boolean;

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from depotrack.models import Depot, Direction, Door, Vehicle
-from depotrack.models.enums import DoorKind
+from depotrack.models.enums import DockEquipment, DoorKind
 from depotrack.seed.reference import LINEHAUL, TRANSIT
 
 ADDRESSES_FILE = Path(__file__).with_name("data") / "addresses.json.gz"
@@ -65,6 +65,7 @@ def seed_geo(db: Session) -> None:
                 direction_id=ba.id if ba else None,
                 position_x=-25.0 + i * 10.0,
                 position_y=-15.0,
+                dock_equipment=DockEquipment.DOCK_LEVELER,
             )
         )
     for v in db.execute(select(Vehicle).where(Vehicle.depot_id.is_(None))).scalars():

@@ -27,9 +27,17 @@ from depotrack.models import (
     Vehicle,
     Wave,
 )
-from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, UserRole, WaveKind
+from depotrack.models.enums import (
+    DockEquipment,
+    DoorDrive,
+    DoorKind,
+    EventSource,
+    ParcelStatus,
+    UserRole,
+    WaveKind,
+)
 from depotrack.seed.generator import generate_parcels
-from depotrack.seed.reference import DIRECTIONS, DOORS, USERS, VEHICLES
+from depotrack.seed.reference import DIRECTIONS, DOOR_EQUIPMENT, DOORS, USERS, VEHICLES
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +87,10 @@ def seed_reference(db: Session) -> None:
                 direction_id=by_code[door.direction_code] if door.direction_code else None,
                 position_x=door.x,
                 position_y=door.y,
+                door_drive=DoorDrive(DOOR_EQUIPMENT.get(door.code, ("electric", "none"))[0]),
+                dock_equipment=DockEquipment(
+                    DOOR_EQUIPMENT.get(door.code, ("electric", "none"))[1]
+                ),
             )
         )
     for v in VEHICLES:

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { DeviceInfo } from "../api/telematicsApi";
 import { useChannel } from "../hooks/telematics";
-import { useShadowStore, type LiveScan } from "./store";
+import { useShadowStore, type DoorReading, type LiveScan } from "./store";
 
 interface GatePassage {
   direction: "in" | "out";
@@ -29,6 +29,9 @@ export function useShadowFeed(depotCode: string): void {
     } else if (ev.type === "scan") {
       const sc = ev.data as LiveScan;
       if (sc.device in s.devices) s.scan(sc);
+    } else if (ev.type === "door") {
+      const r = ev.data as DoorReading;
+      if (r.device in s.devices) s.door(r);
     } else if (ev.type === "gate_passage") {
       s.gate(ev.data as GatePassage);
     }
