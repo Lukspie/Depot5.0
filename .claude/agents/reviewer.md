@@ -31,6 +31,7 @@ Tvoja úloha je nájsť, čo by na obhajobe alebo v produkcii neobstálo. Súbor
 - Typy (mypy strict, strict TS), žiadne `any`/`# type: ignore` bez dôvodu.
 - UI texty po slovensky, kód a API chyby po anglicky, nové API v camelCase.
 - Prázdne stavy, načítavanie a výpadok WebSocketu sú v UI ošetrené. Použité sú komponenty z `components/ui`.
+- Pri vizuálnych zmenách otvor nové screenshoty a `docs/design/reference.png` a porovnaj **layout** (rozmiestnenie panelov, scéna cez celú plochu, uhol kamery), nielen jednotlivé komponenty.
 - Nič mimo rozsahu z PROMPT §11 (regálové skladovanie, fakturácia, reálne SMS…).
 - 3D pohľad sa v UI a dokumentácii volá „digitálny tieň“, nie „digitálne dvojča“.
 

@@ -108,6 +108,57 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
   - `frameloop="demand"` alebo nižšie fps, keď sa nič nehýbe alebo karta nie je viditeľná.
 - **Jedna zdieľaná knižnica 3D komponentov** pre `/shadow` aj 3D halu na mape (dnes `components/map/depot3d.ts` v čistom three.js).
 
+## Fáza 5c – Digitálny tieň v2: layout podľa referencie a reálne brány (pred Fázou 5b)
+Spätná väzba tímu na Fázu 5: scéna funguje, ale **layoutom sa nepodobá na referenciu** ([docs/design/reference.png](design/reference.png)).
+Dnes je `/shadow` stránka s kartami pod sebou a malou scénou v karte, takže sa scrolluje. Cieľom je, aby **layoutovo** zodpovedala referencii.
+Nemusí ísť o presnú kópiu. Podrobnejšie veci sa otvárajú v overlayi alebo na samostatnej obrazovke.
+
+**Layout (desktop 1280 / 1440 px, bez scrollu stránky):**
+- 3D scéna cez celú plochu pod hornou lištou aplikácie. Všetko ostatné sú **plávajúce panely nad scénou** (biele, zaoblené, tieň, ako v `docs/design/README.md`).
+- **Lišta tieňa hore:**
+  - prepínač skladu (Budimír / Bratislava) s kontextom, napr. „6/8 brán obsadených“, aby sa nemuselo chodiť cez Flotilu,
+  - vyhľadávanie (balík, ŠPZ, brána),
+  - živý simulovaný čas,
+  - tlačidlo „Scenár“.
+- **Vľavo hore:** 3–4 KPI karty.
+- **Vpravo:**
+  - zvislý stĺpec ovládania kamery: +, −, otočiť vľavo/vpravo, domov,
+  - **detailový panel** vybraného objektu (brána, kamión, zariadenie, balík), ktorý sa zatvára krížikom.
+- **Vľavo dole:** sledovanie balíka ako horizontálna časová os (kruhové kroky). Zobrazí sa po vyhľadaní alebo kliknutí na balík.
+- **Vpravo dole:**
+  - taby **Brány x/y · Kamióny · Zariadenia**,
+  - riadok = kód, stav, mini progress, „›“,
+  - klik zaostrí kameru na objekt a otvorí detail.
+- **Scenár (čo ak)** nie je natrvalo na stránke. Otvára sa ako bočný drawer alebo overlay cez scénu.
+- **Hlbší detail** (celá história balíka, nakládka, vozidlo na mape) je odkaz na existujúce obrazovky: `/parcels/:id`, `/loading?door=`, `/fleet?plate=`.
+- **Mobil 390 px:** scéna hore, panely ako bottom sheet.
+
+**Scéna:**
+- Kamera bližšie a viac zboku (izometria ~35–45°). Fasáda s bránami zaberá väčšinu pohľadu, ako v referencii, nie celý areál zhora.
+- **Hala:**
+  - plné steny a strecha,
+  - čísla brán nad bránami na fasáde, otvorené brány s balíkmi v otvore,
+  - pás vnútri vidno cez „odkrytie strechy“ (prepínač alebo automaticky pri výbere zariadenia vnútri).
+- **Dvor:**
+  - asfalt s vyznačenými státiami a prerušovanými jazdnými pruhmi,
+  - vjazdová brána so závorou,
+  - kamióny na dvore podľa prejazdov.
+- **Piny** v tvare kvapky nad objektmi, popisky len pri hoveri alebo výbere. Dnes sa popisky brán prekrývajú („LD-08 · SE“, „06 · HE“…).
+- Farby z témy (Oranžová / Modrá), nie natvrdo modrá z referencie.
+- Kvalita nad primitívami: GLTF z existujúceho mechanizmu je teraz vítaný, napr. CC0 balíky od Kenney (vozidlá, krabice, pás). Licenciu over a zapíš ju.
+- Výkon ostáva: 60 fps pri 1440 px počas večernej vlny.
+
+**Reálne typy brán v depe (podľa skúsenosti z depa SPS):**
+- **2 hlavné kamiónové brány:** elektrická sekcionálna brána na tlačidlo a **vyrovnávací mostík (rampa)**, ktorý sa zdvihne ku kamiónu.
+- **3 brány na plošine:** **vysúvací (teleskopický) pás** do kamióna, ovládaný tlačidlami.
+- **Kuriérske brány:** často **mechanické, na lanko** (ručné).
+- V dátach to bude vybavenie brány, napr. `doors.equipment`: `dock_leveler`, `telescopic_conveyor`, `manual`, a podľa neho iný 3D model. Ktorá brána má aké vybavenie, je v seede alebo rozložení a dá sa upraviť bez zmeny kódu.
+- **Stav brány** (otvorená / zatvorená / porucha) vidíme z lacného **dverového kontaktného senzora** (retrofit, sedí k príbehu Depot 5.0), v simulátore ako udalosti. Tieň stav **len zobrazuje**, bránu neovláda. Inak by to bolo dvojča (ADR-045).
+
+**Rozloženie skladov:**
+- **Budimír:** skutočné rozloženie (poradie brán, ich typy, plochy, pás) dodá tím (Lukspie). Dovtedy ostáva súčasné, ale všetko je dátami v `/api/layout`, nič natvrdo.
+- **Bratislava:** hub SPS v **Ivanke pri Dunaji**. Tvar a rozmery haly skús zistiť z budov v OSM extrakte (`tools/osm`). Ak tam nie sú, ostane schematická hala.
+
 ## Fáza 5b – UX review (po Fáze 5)
 - Prejsť všetky obrazovky za každú rolu a urobiť screenshoty pri 3 šírkach. Spísať zoznam problémov a opraviť ich.
 - Osobitne skontrolovať:
@@ -122,6 +173,7 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
 - **Deprecation warning v testoch app** (Starlette `TestClient` nad `httpx`): odsúhlasené vyriešiť až vo Fáze 7.
 
 ## Otvorené otázky (zatiaľ nerozhodnuté)
+- **Simulácia kuriérov na mape:** dodávky už jazdia po uliciach vo `/fleet` (Fáza 4). Upresniť s tímom, čo konkrétne chýba (napr. viditeľnejší pohyb, zastávky, prehrávanie dňa).
 - ~~Limit pre platný token na `/api/track`~~ → rozhodnuté pred Fázou 5: **60/min na token** (ADR-042), hodnota je v `.env`.
 - ~~„SPS“ mimo UI textov~~ → rozhodnuté pred Fázou 5 (ADR-044): prefix `DP` pre nové dni, SMS „Depot 5.0:“, kontext SPS ostáva v `docs/PROMPT.md` a v starších ADR ako história. Tím to môže zmeniť.
 - **3D stack pre Fázu 5:**

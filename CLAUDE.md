@@ -72,3 +72,4 @@ Formát: `- [oblasť] čo sa stalo → ako to robiť správne`. Keď sekcia nara
 - [docs] Pred commitom fázy over `ls docs/screenshots/faza-N/` proti odkazom v `docs/fazy/faza-N-*.md`. Screenshoty s celou cestou (`stats.html`) prezradia meno používateľa → `projectRoot` vo visualizeri.
 - [docs] Pri premenovaní (názov, terminológia) sa zabudli historické sekcie plánu a screenshoty → po premenovaní `grep -ri` cez celé `docs/` a skontroluj aj `docs/screenshots/`.
 - [docs] Časy v `toISOString()` sú v UTC. Pri odhade návratu kuriérov to dalo omyl o 1 h → lokálny čas (Europe/Bratislava) over cez `localHhmm`.
+- [frontend] Referenčný layout (docs/design/reference.png) bol vo Fáze 5 postavený ako karty pod sebou → v referencii je scéna cez celú plochu a panely plávajú nad ňou. Pri vizuálnej referencii porovnaj screenshot vedľa seba s referenciou, nielen komponenty.
