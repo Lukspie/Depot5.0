@@ -112,6 +112,7 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
 
 **Schválené s plánom 5c (kroky 5c-1 layout, 5c-2 scéna v2, 5c-3 reálne brány, 5c-4 GLTF a hub, každý vlastný commit):**
 - *5c-1 hotové:* plávajúce panely nad scénou, lišta tieňa, KPI „balíky v aktuálnej vlne“, ovládanie kamery, zoznam Brány/Kamióny/Zariadenia, sledovanie balíka, scenár v draweri, odkazy na `/parcels/:id`, `/fleet?plate=`, `/loading?door=`.
+- *5c-2 hotové:* kamera zo strany dvora (~38°), plné steny a strecha s odkrytím (tlačidlo, automaticky pri výbere zariadenia alebo nájdenom balíku), čísla brán na fasáde, sekcionálne brány (otvorené s balíkmi pri kamióne), státia a jazdný pruh na dvore, piny v tvare kvapky s popiskom len pri hoveri alebo výbere, kamióny vo farbách témy. Stále 60 fps (záťažový režim, 1440 px).
 - Brána má dve polia: `door_drive` (`electric` | `manual`) a `dock_equipment` (`dock_leveler` | `telescopic_conveyor` | `none`). Dočasný seed, kým tím nedodá reálne rozloženie Budimíra:
   - LD-01–02: `electric` + `dock_leveler` (2 hlavné s rampou),
   - LD-03–05: `electric` + `telescopic_conveyor` (plošina),

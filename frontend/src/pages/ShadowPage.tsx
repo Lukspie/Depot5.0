@@ -74,6 +74,7 @@ export function ShadowPage() {
   const parcel = useParcelLocate(barcode);
   const [fps, setFps] = useState<number | null>(null);
   const [scenario, setScenario] = useState(false);
+  const [roof, setRoof] = useState(false);
   const [affected, setAffected] = useState<string[] | null>(null);
   const camera = useRef<CameraApi | null>(null);
   const onCamera = useCallback((api: CameraApi) => {
@@ -128,6 +129,8 @@ export function ShadowPage() {
     else setBarcode(q);
   };
 
+  // the roof opens on request, or by itself when something inside the hall is selected or found
+  const roofOpen = roof || selection?.kind === "device" || found !== null;
   const panel = "z-10 px-3 md:absolute md:px-0";
   return (
     <div className="bg-canvas relative flex flex-col gap-3 pb-4 md:block md:h-full md:overflow-hidden md:rounded-2xl md:pb-0">
@@ -140,6 +143,7 @@ export function ShadowPage() {
           marks={{ found, affected: affected ?? [] }}
           onFps={measuring ? onFps : undefined}
           onCamera={onCamera}
+          roofOpen={roofOpen}
         />
       </div>
 
@@ -158,7 +162,7 @@ export function ShadowPage() {
       </div>
 
       <div className="absolute top-[76px] right-3 z-10 hidden md:block">
-        <CameraControls api={getCamera} />
+        <CameraControls api={getCamera} roofOpen={roofOpen} onRoof={() => setRoof(!roof)} />
       </div>
 
       {barcode && (

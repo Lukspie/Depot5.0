@@ -76,33 +76,103 @@ export function pinModel(status: DeviceStatus, height: number): THREE.Group {
 }
 
 /** Yard asphalt around the hall (trucks stand on it north of the doors). */
-export function yardGround(l: DepotLayout): THREE.Mesh {
+export function yardGround(l: DepotLayout): THREE.Object3D {
   const { width: w, depth: d } = hallOf(l);
-  const m = box(w * 1.6, 0.1, d * 3.2, mat(0xdfe2e6), 0, 0.05, -d * 0.55);
+  const g = new THREE.Group();
+  const m = box(w * 1.6, 0.1, d * 3.2, mat(0xd6d9de), 0, 0.05, -d * 0.55);
   m.castShadow = false;
-  return m;
+  g.add(m, yardMarkings(l));
+  return g;
 }
 
-/** Floor, low walls, pillars and the transparent roof. */
+/** Door openings in the facade (north wall), metres. */
+export const OPENING_W = 4.4;
+export const OPENING_H = 4.6;
+
+/** Floor and full-height walls; the north facade has an opening at every loading door. */
 export function hallShell(l: DepotLayout, brand: THREE.Color): THREE.Group {
   const g = new THREE.Group();
   const { width: w, depth: d, height: h } = hallOf(l);
-  const wallH = Math.min(6, h * 0.6);
-  const white = mat(0xffffff);
+  const wall = mat(0xf4f4f2);
   g.add(box(w + 2, 0.3, d + 2, mat(0xeceae5), 0, 0.2, 0)); // hall floor
-  g.add(box(w, wallH, 0.5, white, 0, wallH / 2, -d / 2));
-  g.add(box(w, wallH, 0.5, white, 0, wallH / 2, d / 2));
-  g.add(box(0.5, wallH, d, white, -w / 2, wallH / 2, 0));
-  g.add(box(0.5, wallH, d, white, w / 2, wallH / 2, 0));
-  // brand-coloured roof edge and a see-through roof
-  g.add(box(w + 0.6, 0.35, 0.7, mat(brand), 0, h, -d / 2));
-  g.add(box(w + 0.6, 0.35, 0.7, mat(brand), 0, h, d / 2));
-  const roof = box(w, 0.15, d, new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 }), 0, h, 0);
-  roof.castShadow = false;
-  g.add(roof);
-  for (const x of [-w / 2, -w / 4, 0, w / 4, w / 2]) {
-    for (const z of [-d / 2, d / 2]) g.add(box(0.5, h, 0.5, white, x, h / 2, z)); // pillars
+  g.add(box(w, h, 0.5, wall, 0, h / 2, d / 2));
+  g.add(box(0.5, h, d, wall, -w / 2, h / 2, 0));
+  g.add(box(0.5, h, d, wall, w / 2, h / 2, 0));
+  // facade: wall pieces between the openings and a lintel above each opening
+  const xs = l.doors.filter((x) => x.kind === "loading_dock").map((x) => x.x).sort((a, b) => a - b);
+  let from = -w / 2;
+  for (const x of [...xs, w / 2 + OPENING_W / 2]) {
+    const to = Math.min(x - OPENING_W / 2, w / 2);
+    if (to > from) g.add(box(to - from, h, 0.5, wall, (from + to) / 2, h / 2, -d / 2));
+    if (x <= w / 2) g.add(box(OPENING_W, h - OPENING_H, 0.5, wall, x, OPENING_H + (h - OPENING_H) / 2, -d / 2));
+    from = x + OPENING_W / 2;
   }
+  g.add(box(w + 0.6, 0.6, 0.7, mat(brand), 0, h - 0.3, -d / 2)); // brand band on the facade
+  return g;
+}
+
+/** Roof slab (hidden when the roof is "revealed" to look inside). */
+export function hallRoof(l: DepotLayout, brand: THREE.Color): THREE.Group {
+  const g = new THREE.Group();
+  const { width: w, depth: d, height: h } = hallOf(l);
+  g.add(box(w + 1, 0.4, d + 1, mat(0xe7e7e3), 0, h + 0.2, 0));
+  g.add(box(w + 1.2, 0.5, 0.6, mat(brand), 0, h + 0.45, -d / 2 - 0.3));
+  return g;
+}
+
+/** Door number plate above an opening (canvas texture, no font download at runtime). */
+export function numberPlate(text: string, brand: THREE.Color): THREE.Mesh {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = `#${brand.getHexString()}`;
+    ctx.fillRect(0, 0, 128, 64);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 44px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 64, 34);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), new THREE.MeshBasicMaterial({ map: tex }));
+  m.rotation.y = Math.PI; // faces north, to the yard
+  return m;
+}
+
+/** Sectional door: closed panel in the opening, or rolled up under the lintel when open. */
+export function doorLeaf(open: boolean): THREE.Group {
+  const g = new THREE.Group();
+  const panel = mat(0xc9ced6);
+  if (open) {
+    g.add(box(OPENING_W - 0.2, 0.5, 0.3, panel, 0, OPENING_H - 0.3, 0.1));
+    return g;
+  }
+  g.add(box(OPENING_W - 0.2, OPENING_H - 0.1, 0.15, panel, 0, OPENING_H / 2, 0));
+  for (let i = 1; i < 5; i++) g.add(box(OPENING_W - 0.2, 0.05, 0.17, mat(0x9aa1ab), 0, (OPENING_H / 5) * i, 0));
+  return g;
+}
+
+/** Yard markings: truck stalls in front of the doors and a dashed driving lane. */
+export function yardMarkings(l: DepotLayout): THREE.Group {
+  const g = new THREE.Group();
+  const { width: w, depth: d } = hallOf(l);
+  const paint = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const line = (len: number, x: number, z: number, along: "x" | "z") => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(along === "x" ? len : 0.18, 0.02, along === "z" ? len : 0.18), paint);
+    m.position.set(x, 0.12, z);
+    g.add(m);
+  };
+  const stallDepth = 18;
+  for (const door of l.doors.filter((x) => x.kind === "loading_dock")) {
+    line(stallDepth, door.x - 3, -d / 2 - stallDepth / 2, "z");
+    line(stallDepth, door.x + 3, -d / 2 - stallDepth / 2, "z");
+  }
+  const laneZ = -d / 2 - stallDepth - 6;
+  for (let x = -w * 0.75; x < w * 0.75; x += 6) line(3, x + 1.5, laneZ, "x");
+  line(w * 1.5, 0, laneZ - 6, "x");
   return g;
 }
 

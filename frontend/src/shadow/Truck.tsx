@@ -2,7 +2,7 @@ import { useFrame } from "@react-three/fiber";
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
 import { MODEL_URLS } from "./models";
-import { disposeTree, TRUCK_COLOR, truckModel } from "./parts";
+import { cssColor, disposeTree, truckModel } from "./parts";
 
 const GltfModel = lazy(() => import("./GltfModel"));
 
@@ -18,7 +18,11 @@ export const LEAVE_MS = ENTER_S * 1000;
  * (frameloop="demand").
  */
 export function Truck({ x, z, directionType, leaving = false, onSelect }: { x: number; z: number; directionType: string; leaving?: boolean; onSelect?: () => void }) {
-  const model = useMemo(() => truckModel(TRUCK_COLOR[directionType] ?? 0x8a8a86), [directionType]);
+  // cab colour from the theme tokens (linehaul = info, transit = ok, others neutral)
+  const model = useMemo(
+    () => truckModel(cssColor(directionType === "linehaul" ? "--color-info-600" : directionType === "transit" ? "--color-ok-600" : "--color-neutral-600", "#8a8a86")),
+    [directionType],
+  );
   useEffect(() => () => disposeTree(model), [model]);
   const group = useRef<THREE.Group>(null);
   const born = useRef<number | null>(null);

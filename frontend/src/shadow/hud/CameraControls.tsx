@@ -1,4 +1,4 @@
-import { House, Minus, Plus, RotateCcw, RotateCw } from "lucide-react";
+import { House, Layers, Minus, Plus, RotateCcw, RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "../../components/ui";
 import type { CameraApi } from "../CameraRig";
@@ -12,7 +12,7 @@ function Btn({ label, onClick, children }: { label: string; onClick: () => void;
 }
 
 /** Vertical camera column on the right (reference): zoom, rotate around the hall, home view. */
-export function CameraControls({ api }: { api: () => CameraApi | null }) {
+export function CameraControls({ api, roofOpen, onRoof }: { api: () => CameraApi | null; roofOpen: boolean; onRoof: () => void }) {
   const run = (fn: (a: CameraApi) => void) => () => {
     const a = api();
     if (a) fn(a);
@@ -33,6 +33,9 @@ export function CameraControls({ api }: { api: () => CameraApi | null }) {
       </Btn>
       <Btn label="Celý sklad" onClick={run((a) => a.home())}>
         <House size={16} />
+      </Btn>
+      <Btn label={roofOpen ? "Zakryť strechu" : "Odkryť strechu (pás vnútri)"} onClick={onRoof}>
+        <Layers size={16} className={roofOpen ? "text-brand-600" : ""} />
       </Btn>
     </div>
   );

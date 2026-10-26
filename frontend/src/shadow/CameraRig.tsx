@@ -3,8 +3,9 @@ import { useThree } from "@react-three/fiber";
 import { useEffect, type ReactNode } from "react";
 import * as THREE from "three";
 
-/** polar angle of an isometric view from [1, 1, -1] (doors and trucks face the viewer) */
-const ISO = Math.atan(Math.SQRT2);
+/** camera from the yard side (doors and trucks face the viewer), ~38° above the ground */
+const POSITION: [number, number, number] = [40, 85, -100];
+const POLAR = Math.atan2(Math.hypot(POSITION[0], POSITION[2]), POSITION[1]);
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 40;
 
@@ -23,7 +24,7 @@ interface Orbit {
 }
 
 /** Hands the camera controls to the page (inside <Bounds>, so "home" and "focus" can fit). */
-function CameraBridge({ onReady }: { onReady: (api: CameraApi) => void }) {
+function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void; homeBox?: THREE.Box3 }) {
   const bounds = useBounds();
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as unknown as Orbit | null;
@@ -42,13 +43,17 @@ function CameraBridge({ onReady }: { onReady: (api: CameraApi) => void }) {
         invalidate();
       },
       home() {
-        bounds.refresh().fit();
+        bounds.refresh(homeBox).fit();
       },
       focus(x, z) {
         bounds.refresh(new THREE.Box3(new THREE.Vector3(x - 16, 0, z - 22), new THREE.Vector3(x + 16, 8, z + 10))).fit();
       },
     });
-  }, [bounds, camera, controls, invalidate, onReady]);
+  }, [bounds, camera, controls, invalidate, onReady, homeBox]);
+  // the first view is the facade with the doors (reference), not the whole yard
+  useEffect(() => {
+    if (homeBox) bounds.refresh(homeBox).fit();
+  }, [bounds, homeBox]);
   return null;
 }
 
@@ -57,14 +62,14 @@ function CameraBridge({ onReady }: { onReady: (api: CameraApi) => void }) {
  * limits, no panning or flipping. drei <Bounds> fits the whole depot into the view on load and
  * on resize.
  */
-export function CameraRig({ children, onReady }: { children: ReactNode; onReady?: (api: CameraApi) => void }) {
+export function CameraRig({ children, onReady, homeBox }: { children: ReactNode; onReady?: (api: CameraApi) => void; homeBox?: THREE.Box3 }) {
   return (
     <>
-      <OrthographicCamera makeDefault position={[70, 80, -90]} zoom={5} near={-500} far={2000} />
-      <OrbitControls makeDefault enablePan={false} enableDamping={false} minPolarAngle={ISO} maxPolarAngle={ISO} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} />
-      <Bounds fit observe margin={1.2} maxDuration={0.6}>
+      <OrthographicCamera makeDefault position={POSITION} zoom={5} near={-500} far={2000} />
+      <OrbitControls makeDefault enablePan={false} enableDamping={false} minPolarAngle={POLAR} maxPolarAngle={POLAR} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} />
+      <Bounds fit observe margin={1.1} maxDuration={0.6}>
         {children}
-        {onReady && <CameraBridge onReady={onReady} />}
+        {onReady && <CameraBridge onReady={onReady} homeBox={homeBox} />}
       </Bounds>
     </>
   );

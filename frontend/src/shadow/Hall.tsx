@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { DepotLayout } from "./layout";
-import { disposeTree, hallShell, yardGate, yardGround } from "./parts";
+import { disposeTree, hallRoof, hallShell, yardGate, yardGround } from "./parts";
 
-/** Floor, walls, roof, pillars and the yard entrance (static). */
-export function Hall({ layout, brand }: { layout: DepotLayout; brand: THREE.Color }) {
+/** Floor, walls with the door openings, the roof (unless revealed) and the yard entrance. */
+export function Hall({ layout, brand, roofOpen }: { layout: DepotLayout; brand: THREE.Color; roofOpen: boolean }) {
   const object = useMemo(() => {
     const g = new THREE.Group();
     g.add(hallShell(layout, brand));
@@ -16,11 +16,18 @@ export function Hall({ layout, brand }: { layout: DepotLayout; brand: THREE.Colo
     }
     return g;
   }, [layout, brand]);
+  const roof = useMemo(() => hallRoof(layout, brand), [layout, brand]);
   useEffect(() => () => disposeTree(object), [object]);
-  return <primitive object={object} />;
+  useEffect(() => () => disposeTree(roof), [roof]);
+  return (
+    <>
+      <primitive object={object} />
+      <primitive object={roof} visible={!roofOpen} />
+    </>
+  );
 }
 
-/** Yard asphalt: drawn outside <Bounds>, so the camera fits the hall and not the whole yard. */
+/** Yard asphalt with stalls and lanes: drawn outside <Bounds>, so the camera fits the hall. */
 export function YardGround({ layout }: { layout: DepotLayout }) {
   const object = useMemo(() => yardGround(layout), [layout]);
   useEffect(() => () => disposeTree(object), [object]);

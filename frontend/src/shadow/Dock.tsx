@@ -1,24 +1,52 @@
 import { Html } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type * as THREE from "three";
-import type { LayoutDoor } from "./layout";
-import { cardboardPile, disposeTree, dockFrame, stagingBay } from "./parts";
+import { hallOf, type DepotLayout, type LayoutDoor } from "./layout";
+import { cardboardPile, disposeTree, dockFrame, doorLeaf, numberPlate, OPENING_H, stagingBay } from "./parts";
 
-function pointer(on: boolean) {
-  return (e: ThreeEvent<PointerEvent>) => {
+/**
+ * Loading door in the facade: frame, number plate above it, sectional door (open while a truck is
+ * at the door, with parcels in the opening). The label shows only on hover or selection.
+ */
+export function Dock({
+  door,
+  layout,
+  brand,
+  label,
+  open,
+  selected,
+  onSelect,
+}: {
+  door: LayoutDoor;
+  layout: DepotLayout;
+  brand: THREE.Color;
+  label: string | null;
+  open: boolean;
+  selected: boolean;
+  onSelect: (code: string) => void;
+}) {
+  const [hover, setHover] = useState(false);
+  const frame = useMemo(() => dockFrame(brand), [brand]);
+  const plate = useMemo(() => numberPlate(door.code.replace(/^\D+-?0?/, ""), brand), [door.code, brand]);
+  const leaf = useMemo(() => doorLeaf(open), [open]);
+  const pile = useMemo(() => (open ? cardboardPile(60) : null), [open]);
+  useEffect(() => () => disposeTree(frame), [frame]);
+  useEffect(() => () => disposeTree(plate), [plate]);
+  useEffect(() => () => disposeTree(leaf), [leaf]);
+  useEffect(() => () => (pile ? disposeTree(pile) : undefined), [pile]);
+  const facadeZ = -hallOf(layout).depth / 2;
+  const pointer = (on: boolean) => (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+    setHover(on);
     document.body.style.cursor = on ? "pointer" : "";
   };
-}
-
-/** Loading door: frame in the north wall, direction label, click opens the truck panel. */
-export function Dock({ door, brand, label, onSelect }: { door: LayoutDoor; brand: THREE.Color; label: string | null; onSelect: (code: string) => void }) {
-  const frame = useMemo(() => dockFrame(brand), [brand]);
-  useEffect(() => () => disposeTree(frame), [frame]);
   return (
-    <group position={[door.x, 0, door.y]}>
+    <group position={[door.x, 0, facadeZ]}>
       <primitive object={frame} />
+      <primitive object={leaf} />
+      {pile && <primitive object={pile} position={[0.6, 0, 1.4]} scale={0.7} />}
+      <primitive object={plate} position={[0, OPENING_H + 1.4, -0.3]} />
       {/* invisible click target over the door and the truck in front of it */}
       <mesh
         position={[0, 2.5, -7]}
@@ -32,12 +60,14 @@ export function Dock({ door, brand, label, onSelect }: { door: LayoutDoor; brand
         <boxGeometry args={[5, 5, 18]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      <Html position={[0, 5.6, -2.2]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }} className="hidden md:block">
-        <div className="bg-surface/90 shadow-card rounded-md px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap">
-          {door.code}
-          {label ? <span className="text-ink-muted font-normal"> · {label}</span> : null}
-        </div>
-      </Html>
+      {(hover || selected) && (
+        <Html position={[0, OPENING_H + 2.4, -0.5]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+          <div className="bg-surface shadow-card rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">
+            {door.code}
+            {label ? <span className="text-ink-muted font-normal"> · {label}</span> : null}
+          </div>
+        </Html>
+      )}
     </group>
   );
 }

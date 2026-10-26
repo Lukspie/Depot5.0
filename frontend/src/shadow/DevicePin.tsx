@@ -46,11 +46,20 @@ export function DevicePin({ code, x, z, height, selected, onSelect }: { code: st
           type="button"
           data-pin
           onClick={() => onSelect(code)}
-          title={`${code} · ${LABEL[status]}`}
           aria-label={`Zariadenie ${code}, ${LABEL[status]}`}
-          className={`relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-white shadow-md ${DOT[status]} ${selected ? "ring-ink ring-2 ring-offset-1" : ""}`}
+          className="group relative flex h-7 w-7 -translate-y-2 items-center justify-center"
         >
+          {/* drop: a rotated square with three round corners, the tip points down */}
+          <span
+            className={`absolute inset-0.5 -rotate-45 rounded-[50%_50%_50%_0] border-2 border-white shadow-md ${DOT[status]} ${selected ? "outline-ink outline-2" : ""}`}
+          />
+          <span className="relative h-2 w-2 rounded-full bg-white" />
           <span ref={ring} className={`pointer-events-none absolute inset-0 rounded-full opacity-0 ${DOT[status]}`} />
+          <span
+            className={`bg-surface shadow-card text-ink pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${selected ? "block" : "hidden group-hover:block"}`}
+          >
+            {code} · {LABEL[status]}
+          </span>
         </button>
       </Html>
     </group>

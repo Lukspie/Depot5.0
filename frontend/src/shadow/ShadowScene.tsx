@@ -1,7 +1,7 @@
 import { ContactShadows } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
 import type { Shadow } from "../api/shadow";
 import { CameraRig, type CameraApi } from "./CameraRig";
 import { Conveyor } from "./Conveyor";
@@ -10,7 +10,7 @@ import { Dock, StagingBay } from "./Dock";
 import { FpsProbe } from "./FpsProbe";
 import { Hall, YardGround } from "./Hall";
 import { Highlight } from "./Highlight";
-import { devicePosition, type DepotLayout } from "./layout";
+import { devicePosition, hallOf, type DepotLayout } from "./layout";
 import { ParcelFlow } from "./ParcelFlow";
 import { cssColor } from "./parts";
 import { useShadowStore } from "./store";
@@ -36,6 +36,8 @@ interface Props {
   onFps?: (fps: number) => void;
   /** camera buttons of the page */
   onCamera?: (api: CameraApi) => void;
+  /** roof hidden to see the belt and the staging bays inside */
+  roofOpen?: boolean;
 }
 
 /** Re-render on demand: whenever the live store changes and the tab is visible. */
@@ -95,7 +97,7 @@ function useDepartures(current: TruckSpot[]): TruckSpot[] {
   return leaving;
 }
 
-function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps" | "onCamera">) {
+function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: Omit<Props, "onFps" | "onCamera">) {
   const brand = useBrand();
   const devices = useShadowStore((s) => s.devices);
   const doors = useMemo(() => new Map(layout.doors.map((d) => [d.code, d])), [layout]);
@@ -137,11 +139,20 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
 
   return (
     <group>
-      <Hall layout={layout} brand={brand} />
+      <Hall layout={layout} brand={brand} roofOpen={roofOpen} />
       <Conveyor layout={layout} />
       {layout.doors.map((door) =>
         door.kind === "loading_dock" ? (
-          <Dock key={door.code} door={door} brand={brand} label={docks.get(door.code)?.trip?.directionCode ?? door.directionCode} onSelect={selectDock} />
+          <Dock
+            key={door.code}
+            door={door}
+            layout={layout}
+            brand={brand}
+            label={docks.get(door.code)?.trip?.directionCode ?? door.directionCode}
+            open={["at_door", "loading"].includes(docks.get(door.code)?.trip?.status ?? "") || trucks.some((t) => t.door === door.code)}
+            selected={selection?.kind === "dock" && selection.code === door.code}
+            onSelect={selectDock}
+          />
         ) : door.kind === "staging_bay" ? (
           <StagingBay key={door.code} door={door} brand={brand} parcels={staged.get(door.code) ?? 0} />
         ) : null,
@@ -184,6 +195,11 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
  * (frameloop="demand"); live updates, moving parcels and arriving trucks request frames themselves.
  */
 export function ShadowScene({ onFps, onCamera, ...props }: Props) {
+  // home view: the facade with the doors and the trucks in front of it
+  const homeBox = useMemo(() => {
+    const { width: w, depth: d, height: h } = hallOf(props.layout);
+    return new THREE.Box3(new THREE.Vector3(-w / 2 - 2, 0, -d / 2 - 20), new THREE.Vector3(w / 2 + 2, h, d / 2));
+  }, [props.layout]);
   return (
     <Canvas
       shadows="percentage"
@@ -209,7 +225,7 @@ export function ShadowScene({ onFps, onCamera, ...props }: Props) {
         shadow-camera-bottom={-110}
       />
       <YardGround layout={props.layout} />
-      <CameraRig onReady={onCamera}>
+      <CameraRig onReady={onCamera} homeBox={homeBox}>
         <Depot {...props} />
       </CameraRig>
       <ContactShadows position={[0, 0.12, -10]} scale={240} blur={2.4} opacity={0.3} far={18} resolution={1024} />
