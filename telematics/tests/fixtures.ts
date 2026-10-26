@@ -131,6 +131,10 @@ export class MemoryStore implements TelemetrySink {
     }
     return Promise.resolve();
   }
+  deviceMetrics(deviceId: number, from: number, to: number): Promise<MetricRow[]> {
+    const rows = [...this.metrics.values()].filter((m) => m.deviceId === deviceId && m.minute >= from && m.minute < to);
+    return Promise.resolve(rows.sort((a, b) => a.minute - b.minute).map((m) => ({ ...m })));
+  }
   insertHeartbeats(rows: HeartbeatRow[]): Promise<void> {
     this.heartbeats.push(...rows);
     return Promise.resolve();

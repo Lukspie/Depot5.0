@@ -103,6 +103,16 @@ describe("simulation control API", () => {
     expect((await app.inject({ method: "POST", url: "/devices/DOCK-SCN-01/scans", payload: scans })).statusCode).toBe(401);
     const ok = await app.inject({ method: "POST", url: "/devices/DOCK-SCN-01/scans", headers: { "x-service-token": SERVICE }, payload: scans });
     expect(ok.json()).toEqual({ accepted: 2 });
+
+    // the two ingested scans show up in the read-rate sparkline (1 of 2 read)
+    const metrics = await app.inject({ method: "GET", url: "/devices/DOCK-SCN-01/metrics?hours=2", headers: await bearer("security") });
+    expect(metrics.statusCode).toBe(200);
+    const buckets = metrics.json<{ buckets: { items: number; readRate: number | null }[] }>().buckets;
+    expect(buckets.reduce((n, b) => n + b.items, 0)).toBe(2);
+    expect(buckets.at(-1)?.readRate).toBe(0.5);
+    expect((await app.inject({ method: "GET", url: "/devices/DOCK-SCN-01/metrics" })).statusCode).toBe(401);
+    expect((await app.inject({ method: "GET", url: "/devices/NOPE/metrics", headers: await bearer("admin") })).statusCode).toBe(404);
+    expect((await app.inject({ method: "GET", url: "/devices/DOCK-SCN-01/metrics?hours=99", headers: await bearer("admin") })).statusCode).toBe(400);
   });
 
   it("internal broadcast requires the service token", async () => {

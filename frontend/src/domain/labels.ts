@@ -108,3 +108,9 @@ export const WAVE_LABEL: Record<string, string> = {
   evening: "Večerná vlna",
   night: "Nočná / ranná vlna",
 };
+
+/** Short wave names for narrow places (KPI cards). */
+export const WAVE_SHORT: Record<string, string> = {
+  evening: "večerná vlna",
+  night: "ranná vlna",
+};

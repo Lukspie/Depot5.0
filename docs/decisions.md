@@ -344,3 +344,14 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
     - frontend servíruje `app` ako statické súbory a Next.js server by bol 5. kontajner (povinná podmienka sú 4).
   - three.js a R3F sa načítajú len v lazy chunkoch (`React.lazy` pre `/shadow` a Flotilu). Overí to analýza bundlu.
 - **Dôsledok:** Odchýlka od zadania (React 18 → 19). Kontrola po upgrade prešla bez chýb na všetkých obrazovkách pri 1280, 1440 a 390 px (admin, kuriér, tabuľa, sledovanie).
+
+## ADR-049 Spoločné 3D diely pre digitálny tieň a mapu, scéna v React Three Fiber
+- **Kontext:** Zadanie chce jednu knižnicu 3D komponentov pre `/shadow` aj pre 3D halu na mape. Mapa je MapLibre custom layer v čistom three.js (ADR-040). Most R3F ↔ MapLibre (`react-three-map`) by vyžadoval prechod mapy na `react-map-gl`, alebo vlastný most cez R3F `createRoot`, ktorý zadanie nechce.
+- **Rozhodnutie:**
+  - **Spoločné diely sú v čistom three.js** v `frontend/src/shadow/parts.ts`: hala, dvor, pás s odbočkami, rám brány, odstavná plocha, kamión, auto, kopa balíkov, pin a značka skladu. Pozície berú len z `GET /api/layout` (`src/shadow/layout.ts`).
+  - Mapa (`components/map/depot3d.ts`) ich skladá do custom layera. Tieň ich obaľuje do malých R3F komponentov (`Hall`, `Conveyor`, `Dock`, `StagingBay`, `Truck`, `DevicePin`, `ParcelFlow`, `YardCars`, `CameraRig`, `Highlight`) cez `<primitive>`. Tvar sa tak mení na jednom mieste.
+  - Z drei používame `OrthographicCamera`, `OrbitControls` (len rotácia okolo zvislej osi, zoom s limitmi), `Bounds` (prispôsobenie výrezu), `Html` (piny a popisy brán), `Instances` (balíky na páse, pevný pool 300), `ContactShadows` a `Gltf` (voliteľné modely). `Detailed` (LOD) sa nepoužíva: pri ortografickej kamere sa vzdialenosť pri zoome nemení.
+  - Živé dáta: kanál `devices` z telematiky (stav, skeny, prejazdy bránou) ide do **zustand** store (`src/shadow/store.ts`). Scéna ho číta cez `getState()` v `useFrame`, takže sken nespôsobí re-render. Panely sa prihlásia na odber len svojho výseku. Kamióny pri bránach, kopy a KPI prichádzajú z `GET /api/shadow/{depot}` každých 5 s.
+  - **`frameloop="demand"`**: scéna sa prekreslí, len keď sa zmení store (a karta je viditeľná), pri pohybe kamery, alebo keď si snímku vyžiada animácia. `ParcelFlow` volá `invalidate()` každý frame, kým sa po páse hýbe aspoň jeden balík. Rovnako to robí prichádzajúci kamión a pulz pinu.
+  - Nové API v app: `GET /api/shadow/{depot}`, `/api/shadow/doors/{code}`, `/api/shadow/parcels/{barcode}` (dispečer, ochranka, admin; bez mien a adries). V telematike: `GET /devices/{code}/metrics?hours=` (čítanosť po 10 minútach pre sparkline).
+- **Dôsledok:** Mapa a tieň sa nemôžu tvarovo rozísť a mapa sa nemusela prepisovať. Interaktivita (klik, výber, zvýraznenie) je len v tieni, na mape ostáva klik na sklad.

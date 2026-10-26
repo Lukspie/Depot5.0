@@ -1,7 +1,7 @@
 /** Depots, hall layouts, live depot state (app) and truck routes / devices (telematics). */
 
 import { useQuery } from "@tanstack/react-query";
-import type { DepotLayout } from "../components/map/depot3d";
+import type { DepotLayout } from "../shadow/layout";
 import { getJson } from "./client";
 import { telematics, type DeviceInfo } from "./telematicsApi";
 

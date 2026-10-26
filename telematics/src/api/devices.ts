@@ -31,6 +31,27 @@ export const deviceRoutes: FastifyPluginAsync<DeviceRoutesDeps> = async (app, { 
     () => ({ devices: engine.deviceList() }),
   );
 
+  app.get<{ Params: { code: string }; Querystring: { hours?: number } }>(
+    "/devices/:code/metrics",
+    {
+      preHandler: anyRole,
+      schema: {
+        tags: ["devices"],
+        summary: "Čítanosť zariadenia po 10 minútach (sparkline)",
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: "object",
+          properties: { hours: { type: "integer", minimum: 1, maximum: 24, default: 6 } },
+          additionalProperties: false,
+        },
+      },
+    },
+    async (req, reply) => {
+      const buckets = await engine.deviceMetrics(req.params.code, req.query.hours ?? 6);
+      return buckets ? { code: req.params.code, buckets } : reply.code(404).send({ error: "unknown device" });
+    },
+  );
+
   app.post<{ Params: { code: string } }>(
     "/devices/:code/heartbeat",
     { preHandler: service, schema: { tags: ["devices"], summary: "Heartbeat reálneho zariadenia" } },

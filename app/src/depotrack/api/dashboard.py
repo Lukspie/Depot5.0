@@ -2,37 +2,32 @@
 
 import hmac
 from collections import Counter
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.ratelimit import limiter
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import Alert, LoadingScan, Parcel, Trip, User
+from depotrack.models import Alert, Trip, User
 from depotrack.models.enums import (
     AlertKind,
-    ParcelStatus,
-    ScanResult,
     TripKind,
-    TripStatus,
     UserRole,
 )
 from depotrack.schemas.internal import AlertOut
 from depotrack.schemas.wms import (
     AlertListOut,
     BoardOut,
-    DashboardKpis,
     DashboardOut,
     DeviceSummary,
-    DirectionRow,
     TripBrief,
 )
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
-from depotrack.services.parcels import LOADABLE, in_day
+from depotrack.services.kpis import day_overview, day_read_rate, open_alerts
 from depotrack.services.views import DONE, Lookup, clock, sort_key, trip_brief, trips_of
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
@@ -42,37 +37,6 @@ Staff = Annotated[
     User, Depends(require_role(UserRole.DISPATCHER, UserRole.OPERATOR, UserRole.SECURITY))
 ]
 
-WAITING = (ParcelStatus.COLLECTED, ParcelStatus.ON_BELT)
-
-
-def open_alerts(db: DbSession, limit: int = 50) -> list[Alert]:
-    return list(
-        db.execute(
-            select(Alert)
-            .where(Alert.acknowledged_at.is_(None))
-            .order_by(Alert.created_at.desc(), Alert.id.desc())
-            .limit(limit)
-        ).scalars()
-    )
-
-
-def day_read_rate(db: DbSession, day: date) -> float | None:
-    """Share of items at the loading doors whose label was read (operating day)."""
-    rows = dict(
-        db.execute(
-            select(LoadingScan.result, func.count())
-            .join(Trip, LoadingScan.trip_id == Trip.id)
-            .where(Trip.operating_day == day)
-            .group_by(LoadingScan.result)
-        )
-        .tuples()
-        .all()
-    )
-    counted = sum(rows.values())
-    if counted == 0:
-        return None
-    return round(1 - rows.get(ScanResult.UNIDENTIFIED, 0) / counted, 4)
-
 
 @router.get("/dashboard", response_model=DashboardOut, response_model_by_alias=True)
 def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
@@ -80,62 +44,8 @@ def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
     day = clk.operating_day
     look = Lookup(db)
     trips = sorted(trips_of(db, day), key=sort_key)
-    departed_dirs = {
-        t.direction_id for t in trips if t.kind == TripKind.OUTBOUND and t.status in DONE
-    }
-
-    counts = db.execute(
-        select(Parcel.direction_id, Parcel.status, func.count())
-        .where(in_day(day))
-        .group_by(Parcel.direction_id, Parcel.status)
-    ).all()
-    per_dir: dict[int, Counter[ParcelStatus]] = {}
-    for direction_id, st, n in counts:
-        per_dir.setdefault(direction_id, Counter())[st] += n
-
-    rows: list[DirectionRow] = []
-    for d in sorted(look.directions.values(), key=lambda d: (d.type.value, d.code)):
-        c = per_dir.get(d.id, Counter())
-        loadable = sum(c[s] for s in LOADABLE)
-        missing = loadable if d.id in departed_dirs else 0
-        rows.append(
-            DirectionRow(
-                code=d.code,
-                name=d.name,
-                type=d.type,
-                total=sum(c.values()),
-                loaded=c[ParcelStatus.LOADED],
-                staged=c[ParcelStatus.STAGED] + c[ParcelStatus.SORTED],
-                waiting=sum(c[s] for s in WAITING),
-                missing=missing,
-            )
-        )
-
-    totals: Counter[ParcelStatus] = Counter()
-    for c in per_dir.values():
-        totals.update(c)
-    unidentified = db.execute(
-        select(func.count())
-        .select_from(LoadingScan)
-        .join(Trip, LoadingScan.trip_id == Trip.id)
-        .where(Trip.operating_day == day, LoadingScan.result == ScanResult.UNIDENTIFIED)
-    ).scalar_one()
-    on_site = {t.vehicle_id for t in trips if t.status in (TripStatus.AT_DOOR, TripStatus.LOADING)}
+    kpis, rows = day_overview(db, day, trips, look)
     alerts = open_alerts(db)
-    kpis = DashboardKpis(
-        parcels_total=sum(totals.values()),
-        parcels_loaded=totals[ParcelStatus.LOADED],
-        parcels_staged=totals[ParcelStatus.STAGED],
-        parcels_sorted=totals[ParcelStatus.SORTED],
-        parcels_waiting=sum(totals[s] for s in WAITING),
-        parcels_missing=sum(r.missing for r in rows),
-        trucks_on_site=len(on_site),
-        read_rate=day_read_rate(db, day),
-        unidentified=unidentified,
-        open_alerts=db.execute(
-            select(func.count()).select_from(Alert).where(Alert.acknowledged_at.is_(None))
-        ).scalar_one(),
-    )
     return DashboardOut(
         clock=clk,
         kpis=kpis,

@@ -77,6 +77,8 @@ export interface TelemetrySink {
   setDeviceEnabled(code: string, enabled: boolean): Promise<void>;
   insertScans(rows: ScanRow[]): Promise<void>;
   upsertMetrics(rows: MetricRow[]): Promise<void>;
+  /** per-minute counters of one device in [from, to) */
+  deviceMetrics(deviceId: number, from: number, to: number): Promise<MetricRow[]>;
   insertHeartbeats(rows: HeartbeatRow[]): Promise<void>;
   insertGps(rows: GpsRow[]): Promise<void>;
   insertGatePassages(rows: GateRow[]): Promise<void>;
@@ -146,6 +148,15 @@ export class PgTelemetry implements TelemetrySink {
                      / NULLIF(device_metrics_minutely.items + EXCLUDED.items, 0)`,
       [rows.map((r) => r.deviceId), rows.map((r) => ts(r.minute)), rows.map((r) => r.items), rows.map((r) => r.readsOk)],
     );
+  }
+
+  async deviceMetrics(deviceId: number, from: number, to: number): Promise<MetricRow[]> {
+    const { rows } = await this.pool.query<{ minute: Date; items: number; reads_ok: number }>(
+      `SELECT minute, items, reads_ok FROM device_metrics_minutely
+       WHERE device_id = $1 AND minute >= $2 AND minute < $3 ORDER BY minute`,
+      [deviceId, ts(from), ts(to)],
+    );
+    return rows.map((r) => ({ deviceId, minute: r.minute.getTime(), items: r.items, readsOk: r.reads_ok }));
   }
 
   async insertHeartbeats(rows: HeartbeatRow[]): Promise<void> {

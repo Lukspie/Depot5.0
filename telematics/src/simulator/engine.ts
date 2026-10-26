@@ -68,6 +68,12 @@ export interface EngineDeps {
 
 export type DeviceStatus = "online" | "degraded" | "offline";
 
+export interface MetricBucket {
+  at: string;
+  items: number;
+  readRate: number | null;
+}
+
 export interface DeviceInfo {
   code: string;
   depotCode: string;
@@ -151,6 +157,7 @@ const SENSORS = ["LINE-SNS-01", "LINE-SNS-02", "LINE-SNS-03"] as const;
 const BELT_AFTER_ARRIVAL = 10 * MINUTE;
 const DOCK_AFTER_ARRIVAL = 25 * MINUTE;
 const MAX_SCAN_QUEUE = 20_000;
+const BUCKET_MS = 10 * MINUTE;
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 
@@ -303,6 +310,30 @@ export class Engine {
         lastHeartbeatAgoS: Math.round((real - d.lastHeartbeat) / 1000),
       };
     });
+  }
+
+  /**
+   * Read rate of a device in 10-minute buckets over the last `hours` (sparkline in /shadow).
+   * Flushed minutes come from db-telemetry, the current minute from memory.
+   */
+  async deviceMetrics(code: string, hours: number): Promise<MetricBucket[] | null> {
+    const d = this.devices.get(code);
+    if (!d) return null;
+    const now = this.deps.clock.now();
+    const from = Math.floor((now - hours * HOUR) / BUCKET_MS) * BUCKET_MS;
+    const stored = await this.deps.store.deviceMetrics(d.row.id, from, now + MINUTE);
+    const pending = [...this.metrics.values()].filter((m) => m.deviceId === d.row.id && m.minute >= from);
+    const buckets = new Map<number, { items: number; readsOk: number }>();
+    for (const m of [...stored, ...pending]) {
+      const at = Math.floor(m.minute / BUCKET_MS) * BUCKET_MS;
+      const b = buckets.get(at) ?? { items: 0, readsOk: 0 };
+      b.items += m.items;
+      b.readsOk += m.readsOk;
+      buckets.set(at, b);
+    }
+    return [...buckets.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([at, b]) => ({ at: iso(at), items: b.items, readRate: b.items > 0 ? Number((b.readsOk / b.items).toFixed(4)) : null }));
   }
 
   /** Admin: switch a device off/on (demo of an offline device) or repair the degraded scanner. */
