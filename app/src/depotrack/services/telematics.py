@@ -58,6 +58,34 @@ def devices() -> list[dict[str, Any]]:
     return data
 
 
+_positions: dict[str, tuple[float, dict[str, Any] | None]] = {}
+
+
+def vehicle_position(plate: str) -> dict[str, Any] | None:
+    """Current simulated position of a vehicle (lat, lon, heading, moving); None if unknown or
+    telematics is unreachable. Cached 2 s per plate: many customers poll the same van."""
+    now = time.monotonic()
+    hit = _positions.get(plate)
+    if hit and now - hit[0] < 2.0:
+        return hit[1]
+    try:
+        resp = httpx.get(
+            f"{get_settings().telematics_internal_url}/internal/vehicles/{plate}",
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        )
+        if resp.status_code == 404:
+            data = None
+        else:
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        log.warning("cannot read vehicle position from telematics: %s", exc)
+        return None
+    _positions[plate] = (now, data)
+    return data
+
+
 def sim_now() -> datetime:
     """Simulated time owned by telematics; falls back to wall-clock time if unreachable."""
     global _clock_cache

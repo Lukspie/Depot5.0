@@ -146,6 +146,24 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
     (_req, reply) => engine.routesSummary() ?? reply.code(503).send({ error: "routes not loaded yet" }),
   );
 
+  app.get<{ Params: { plate: string } }>(
+    "/routes/vehicle/:plate",
+    {
+      // the remaining stops of a courier are internal data: staff only, never the customer
+      preHandler: roleGuard(verifier, serviceToken, ["dispatcher", "courier"]),
+      schema: {
+        tags: ["simulation"],
+        summary: "Zvyšná trasa dodávky kuriéra po uliciach (pre mapu)",
+        params: { type: "object", properties: { plate: { type: "string", maxLength: 16 } } },
+        ...secured,
+      },
+    },
+    (req, reply) => {
+      const points = engine.vehiclePath(req.params.plate);
+      return points === null ? reply.code(404).send({ error: "no courier route for this vehicle" }) : { points };
+    },
+  );
+
   app.get(
     "/sim/scenario",
     { preHandler: staff, schema: { tags: ["simulation"], summary: "Prehľad scenára načítaných dní", ...secured } },

@@ -7,7 +7,8 @@ export interface MapVehicle {
   kind: "truck" | "van";
   lat: number;
   lon: number;
-  /** trip status (planned, en_route, at_door, loading, departed…) or null when parked */
+  /** trip status (planned, en_route, at_door, loading, departed…), courier van status
+   * (loading, en_route, at_stop, returning) or null when parked */
   status: string | null;
   delayMin: number | null;
   label?: string;
@@ -25,9 +26,11 @@ export function pinColor(v: Pick<MapVehicle, "status" | "delayMin">): string {
   switch (v.status) {
     case "en_route":
     case "departed":
+    case "returning":
       return "var(--color-info-600)";
     case "loading":
     case "at_door":
+    case "at_stop":
       return "var(--color-ok-600)";
     default:
       return "var(--color-neutral-600)";

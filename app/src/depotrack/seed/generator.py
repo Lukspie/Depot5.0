@@ -1,9 +1,11 @@
 """Deterministic generator of simulated parcels for one day."""
 
+import bisect
 import math
 import random
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+from functools import lru_cache
 
 from depotrack.core.clock import TZ
 from depotrack.seed.geo import addresses
@@ -60,13 +62,30 @@ def random_point(
     return km_offset(lat, lon, r * math.cos(theta), r * math.sin(theta))
 
 
-def kosice_rajon(lat: float, lon: float) -> str:
-    """Courier district KE-01..KE-08: compass sector (45°) around the Košice centre, from north."""
+def _bearing(lat: float, lon: float) -> float:
+    """Compass bearing from the Košice centre, shifted so that 0 = start of the north sector."""
     north = (lat - KOSICE_LAT) * KM_PER_DEG_LAT
     east = (lon - KOSICE_LON) * KM_PER_DEG_LAT * math.cos(math.radians(KOSICE_LAT))
-    bearing = math.degrees(math.atan2(east, north)) % 360
-    sector = int(((bearing + 22.5) % 360) // 45)
-    return f"KE-{sector + 1:02d}"
+    return (math.degrees(math.atan2(east, north)) + 22.5) % 360
+
+
+@lru_cache
+def _rajon_bounds() -> list[float]:
+    """Sector borders so that every district has the same number of address points (a dense
+    old town and a sparse outskirt sector would otherwise give one courier 3× more stops).
+    Without the address file: equal 45° sectors."""
+    points = addresses().get("Košice")
+    if not points:
+        return [45.0 * i for i in range(1, len(LOCAL))]
+    bearings = sorted(_bearing(p[3], p[4]) for p in points)
+    n = len(LOCAL)
+    return [bearings[len(bearings) * i // n] for i in range(1, n)]
+
+
+def kosice_rajon(lat: float, lon: float) -> str:
+    """Courier district KE-01..KE-08: compass sector around the Košice centre, clockwise from
+    north, with borders balanced by address density (ADR-041)."""
+    return f"KE-{bisect.bisect_right(_rajon_bounds(), _bearing(lat, lon)) + 1:02d}"
 
 
 def pick_address(

@@ -27,6 +27,14 @@ export const PARCEL_STATUS: Record<ParcelStatus, { label: string; tone: Tone }> 
   returned: { label: "Vrátený", tone: "danger" },
 };
 
+/** States of a courier van as reported by the simulator. */
+export const VAN_STATUS: Record<string, { label: string; tone: Tone }> = {
+  loading: { label: "Nakladá", tone: "ok" },
+  en_route: { label: "Na trase", tone: "info" },
+  at_stop: { label: "Na zastávke", tone: "ok" },
+  returning: { label: "Vracia sa", tone: "info" },
+};
+
 export const SCAN_RESULT: Record<ScanResult, { label: string; tone: Tone }> = {
   ok: { label: "Naložené", tone: "ok" },
   wrong_direction: { label: "Zlý smer", tone: "danger" },

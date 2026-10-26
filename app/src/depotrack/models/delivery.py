@@ -16,8 +16,11 @@ class CourierRoute(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     courier_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"))
-    date: Mapped[date] = mapped_column(Date)
+    date: Mapped[date] = mapped_column(Date, index=True)
     rajon_direction_id: Mapped[int] = mapped_column(ForeignKey("directions.id"))
+    # execution reported by the simulator (or the courier app)
+    departed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    returned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class RouteStop(Base):

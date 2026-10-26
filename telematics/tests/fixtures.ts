@@ -1,7 +1,15 @@
 /** Test doubles: a plan like the app creates it, an in-memory telemetry store and app API. */
 
 import { SignJWT } from "jose";
-import type { AlertPayload, AppApi, ManifestParcel, PlanWithLocal, ScanForward } from "../src/app-client.js";
+import type {
+  AlertPayload,
+  AppApi,
+  CourierEventOut,
+  ManifestParcel,
+  PlanWithLocal,
+  ScanForward,
+  StopEtaOut,
+} from "../src/app-client.js";
 import { addDays, zonedToUtc } from "../src/clock/time.js";
 import type {
   DeviceRow,
@@ -14,6 +22,7 @@ import type {
   SimStateRow,
   TelemetrySink,
 } from "../src/db/telemetry.js";
+import type { CourierPlan } from "../src/simulator/couriers.js";
 import type { PlanTrip, TripExecution } from "../src/simulator/types.js";
 
 const LINEHAUL = [
@@ -167,6 +176,29 @@ export function manifestFor(direction: string, day: string): string[] {
   return Array.from({ length: n }, (_, i) => `SPS${day.replaceAll("-", "").slice(2)}${direction}${String(i).padStart(4, "0")}`);
 }
 
+export const DEPOT = { code: "BUD", name: "Depo Budimír", lat: 48.79256, lon: 21.3071 };
+
+/** Two small courier rounds in Košice (delivered the morning after the operating day). */
+export function makeCourierPlan(day: string, idBase = 1): CourierPlan {
+  const date = addDays(day, 1);
+  const routes = [0, 1].map((r) => ({
+    routeId: idBase + r,
+    date,
+    vehiclePlate: `KE-30${String(r + 1)}KR`,
+    courierUsername: `kurier0${String(r + 1)}`,
+    districtCode: `KE-0${String(r + 1)}`,
+    stagingBay: `SB-0${String(r + 1)}`,
+    stops: Array.from({ length: 12 }, (_, i) => ({
+      stopId: (idBase + r) * 100 + i,
+      sequence: i + 1,
+      barcode: `SPS-KE0${String(r + 1)}-${String(i)}`,
+      lat: 48.72 + r * 0.03 + i * 0.002,
+      lon: 21.25 + i * 0.003,
+    })),
+  }));
+  return { day, depot: DEPOT, routes };
+}
+
 const DEPENDS: Record<string, string[]> = Object.fromEntries(TRANSIT.map((t) => [t.code, t.deps]));
 
 export class FakeApp implements AppApi {
@@ -221,6 +253,23 @@ export class FakeApp implements AppApi {
   }
   postAlert(alert: AlertPayload): Promise<void> {
     this.alerts.push(alert);
+    return Promise.resolve();
+  }
+
+  readonly courierEvents: CourierEventOut[] = [];
+  readonly etas: StopEtaOut[][] = [];
+
+  getCourierRoutes(day: string): Promise<CourierPlan> {
+    if (this.down) return Promise.reject(new Error("app down"));
+    const offset = (Date.parse(day) / 86_400_000) % 1000;
+    return Promise.resolve(makeCourierPlan(day, offset * 10));
+  }
+
+  postCourierEvents(_simTime: string, events: CourierEventOut[], etas: StopEtaOut[]): Promise<void> {
+    if (this.down) return Promise.reject(new Error("app down"));
+    this.calls.push("couriers");
+    this.courierEvents.push(...events);
+    if (etas.length) this.etas.push(etas);
     return Promise.resolve();
   }
   /** latest reported state per trip */

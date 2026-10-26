@@ -65,6 +65,7 @@ const engine = new Engine({
   app: new HttpAppApi(config.appInternalUrl, config.serviceToken),
   hub,
   routes: routesFor,
+  router,
   log: app.log,
   config: {
     seed,

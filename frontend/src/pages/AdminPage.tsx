@@ -1,8 +1,9 @@
 import { type ReactNode } from "react";
 import { useSearchParams } from "react-router";
+import { NotificationsTab } from "../components/admin/NotificationsTab";
 import { DevicesTab, DirectionsTab, SimulationTab } from "../components/admin/SimulationTabs";
 import { UsersTab } from "../components/admin/UsersTab";
-import { Card, EmptyState, PageHeader, Tabs } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
 
 type TabId = "users" | "directions" | "devices" | "simulation" | "notifications";
 
@@ -19,16 +20,8 @@ const CONTENT: Record<TabId, () => ReactNode> = {
   directions: () => <DirectionsTab />,
   devices: () => <DevicesTab />,
   simulation: () => <SimulationTab />,
-  notifications: () => <Later phase={4} />,
+  notifications: () => <NotificationsTab />,
 };
-
-function Later({ phase }: { phase: number }) {
-  return (
-    <Card>
-      <EmptyState title="Pripravuje sa" description={`Táto časť pribudne vo fáze ${String(phase)}.`} />
-    </Card>
-  );
-}
 
 export function AdminPage() {
   const [params, setParams] = useSearchParams();

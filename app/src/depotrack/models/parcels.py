@@ -87,4 +87,4 @@ class CustomerNotification(Base):
     recipient: Mapped[str] = mapped_column(String(120))
     message: Mapped[str] = mapped_column(Text)
     link: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = utcnow_column()
+    created_at: Mapped[datetime] = utcnow_column(index=True)

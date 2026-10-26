@@ -1,6 +1,7 @@
 import { Building2, Maximize2, Truck, Warehouse } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import { useVehiclePath } from "../api/delivery";
 import { useDepots, useRoutes } from "../api/depots";
 import { useVehicle, useVehicles, type Vehicle } from "../api/wms";
 import { DepotsOnMap } from "../components/map/DepotsOnMap";
@@ -8,7 +9,7 @@ import { MapView, SLOVAKIA, useMap } from "../components/map/MapView";
 import { RouteLine } from "../components/map/RouteLine";
 import { VehicleMarkers, type MapVehicle } from "../components/map/VehicleMarkers";
 import { Badge, Card, DataTable, EmptyState, KeyValue, PageHeader, Progress, SidePanel, Spinner, Tabs, type Column } from "../components/ui";
-import { DIRECTION_TYPE, PARCEL_STATUS, TRIP_STATUS, delayLabel, delayTone, hhmm } from "../domain/labels";
+import { DIRECTION_TYPE, PARCEL_STATUS, TRIP_STATUS, VAN_STATUS, delayLabel, delayTone, hhmm } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
 
 interface Position {
@@ -20,6 +21,8 @@ interface Position {
   moving: boolean;
   status: string | null;
   directionCode: string | null;
+  stopsDone?: number;
+  stopsTotal?: number;
 }
 
 /** Camera: smooth flight to the selected vehicle; buttons for Slovakia and the depots. */
@@ -59,16 +62,24 @@ function Camera({ target, view }: { target: [number, number] | null; view: strin
   );
 }
 
-function VehiclePanel({ plate, onClose }: { plate: string; onClose: () => void }) {
+function VehiclePanel({ plate, position, onClose }: { plate: string; position: Position | undefined; onClose: () => void }) {
   const v = useVehicle(plate);
   const d = v.data;
+  const van = d?.kind === "van";
+  const vanState = position?.status ? VAN_STATUS[position.status] : undefined;
   return (
     <SidePanel
       open
       onClose={onClose}
       eyebrow={d ? `${d.kind === "van" ? "Dodávka" : "Kamión"}${d.trip ? ` · ${DIRECTION_TYPE[d.trip.directionType]}` : ""}` : "Vozidlo"}
       title={plate}
-      subtitle={d?.trip ? `${d.trip.directionName}${d.trip.doorCode ? ` · brána ${d.trip.doorCode}` : ""}` : "bez jazdy"}
+      subtitle={
+        d?.trip
+          ? `${d.trip.directionName}${d.trip.doorCode ? ` · brána ${d.trip.doorCode}` : ""}`
+          : van && position?.directionCode
+            ? `rajón ${position.directionCode}`
+            : "bez jazdy"
+      }
       icon={<Truck size={22} />}
     >
       {v.isPending ? (
@@ -77,6 +88,27 @@ function VehiclePanel({ plate, onClose }: { plate: string; onClose: () => void }
         <EmptyState title="Vozidlo sa nepodarilo načítať" />
       ) : (
         <div className="space-y-5">
+          {van && (
+            <div className="space-y-3">
+              <Badge tone={vanState?.tone ?? "neutral"}>{vanState?.label ?? "Parkuje v depe"}</Badge>
+              <KeyValue
+                rows={[
+                  ["Rajón", position?.directionCode ?? "—"],
+                  ["Hotové zastávky", position?.stopsTotal ? `${String(position.stopsDone ?? 0)} / ${String(position.stopsTotal)}` : "—"],
+                  ["Zostávajúce zastávky", String(d.remainingStops.length)],
+                ]}
+              />
+              {d.remainingStops.length > 0 && (
+                <ol className="text-ink-muted space-y-1 text-sm">
+                  {d.remainingStops.slice(0, 5).map((s) => (
+                    <li key={s} className="truncate">
+                      {s}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
           {d.trip && (
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={TRIP_STATUS[d.trip.status].tone}>{TRIP_STATUS[d.trip.status].label}</Badge>
@@ -110,13 +142,12 @@ function VehiclePanel({ plate, onClose }: { plate: string; onClose: () => void }
                   d.trip.kind === "inbound" ? "Predikcia príchodu" : "Skutočný odchod",
                   hhmm(d.trip.kind === "inbound" ? (d.trip.actualArrival ?? d.trip.predictedArrival) : d.trip.actualDeparture),
                 ],
-                ["Zostávajúce zastávky", d.remainingStops.length ? String(d.remainingStops.length) : "— (kuriéri vo fáze 4)"],
               ]}
             />
           )}
           <div>
             <h3 className="mb-2 text-sm font-semibold">
-              Balíky {d.trip?.kind === "inbound" ? "na palube" : "v náklade"} ({d.parcelsCount})
+              Balíky {d.trip?.kind === "inbound" ? "na palube" : van ? "v dodávke" : "v náklade"} ({d.parcelsCount})
             </h3>
             {d.parcels.length === 0 ? (
               <p className="text-ink-muted text-sm">Zatiaľ žiadne.</p>
@@ -161,7 +192,7 @@ export function FleetPage() {
     setParams(plate ? { plate } : {}, { replace: true });
   };
 
-  // vans are not simulated yet (phase 4): they stand at their home depot, spread on a small ring
+  // vehicles without a position yet (no round/trip loaded) stand at the home depot on a small ring
   const home = depots.data?.find((d) => d.kind === "depot");
   const markers: MapVehicle[] = useMemo(() => {
     const trips = new Map((vehicles.data ?? []).map((v) => [v.plate, v]));
@@ -192,7 +223,14 @@ export function FleetPage() {
   }, [positions, vehicles.data, home]);
 
   const selectedVehicle = vehicles.data?.find((v) => v.plate === selected);
-  const routePoints = selectedVehicle?.trip ? (routes.data?.routes[selectedVehicle.trip.directionCode]?.points ?? null) : null;
+  // courier vans: the rest of the round on the streets; trucks: the route of their direction
+  const vanPath = useVehiclePath(selected, selectedVehicle?.kind === "van");
+  const routePoints =
+    selectedVehicle?.kind === "van"
+      ? (vanPath.data?.points ?? null)
+      : selectedVehicle?.trip
+        ? (routes.data?.routes[selectedVehicle.trip.directionCode]?.points ?? null)
+        : null;
   const target = selected ? markers.find((m) => m.plate === selected) : undefined;
 
   const columns: Column<Vehicle>[] = [
@@ -208,6 +246,10 @@ export function FleetPage() {
             {v.trip.kind === "inbound" ? "← " : "→ "}
             {v.trip.directionName}
           </span>
+        ) : v.kind === "van" && positions[v.plate]?.stopsTotal ? (
+          <span className="truncate">
+            rajón {positions[v.plate]?.directionCode} · {positions[v.plate]?.stopsDone}/{positions[v.plate]?.stopsTotal} zastávok
+          </span>
         ) : (
           <span className="text-ink-muted">v depe</span>
         ),
@@ -216,7 +258,12 @@ export function FleetPage() {
       key: "status",
       header: "Stav",
       width: "8.5rem",
-      render: (v) => (v.trip ? <Badge tone={TRIP_STATUS[v.trip.status].tone}>{TRIP_STATUS[v.trip.status].label}</Badge> : <Badge>Parkuje</Badge>),
+      render: (v) => {
+        if (v.trip) return <Badge tone={TRIP_STATUS[v.trip.status].tone}>{TRIP_STATUS[v.trip.status].label}</Badge>;
+        const s = positions[v.plate]?.status;
+        const vs = s ? VAN_STATUS[s] : undefined;
+        return vs ? <Badge tone={vs.tone}>{vs.label}</Badge> : <Badge>Parkuje</Badge>;
+      },
     },
     {
       key: "speed",
@@ -255,7 +302,7 @@ export function FleetPage() {
             <Camera target={target ? [target.lat, target.lon] : null} view={params.get("view")} />
           </MapView>
         </div>
-        {selected && <VehiclePanel plate={selected} onClose={() => select(null)} />}
+        {selected && <VehiclePanel plate={selected} position={positions[selected]} onClose={() => select(null)} />}
       </Card>
 
       <Card

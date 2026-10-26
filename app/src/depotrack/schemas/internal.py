@@ -1,6 +1,7 @@
 """Schemas of the internal app <-> telematics API (camelCase on the wire, like the WS events)."""
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -136,3 +137,55 @@ class WsTicketOut(CamelModel):
     ticket: str
     expires_in: int
     ws_url: str
+
+
+# ------------------------------------------------------------------ couriers (Phase 4)
+
+
+class CourierPlanStop(CamelModel):
+    stop_id: int
+    sequence: int
+    barcode: str
+    lat: float
+    lon: float
+
+
+class CourierPlanRoute(CamelModel):
+    route_id: int
+    date: date
+    vehicle_plate: str
+    courier_username: str
+    district_code: str
+    staging_bay: str | None
+    stops: list[CourierPlanStop]
+
+
+class CourierPlanOut(CamelModel):
+    day: date
+    depot: PlanDepot
+    routes: list[CourierPlanRoute]
+
+
+class CourierEvent(CamelModel):
+    route_id: int
+    kind: Literal["loaded", "departed", "delivered", "failed", "returned"]
+    stop_id: int | None = None
+    at: AwareDatetime
+
+
+class StopEta(CamelModel):
+    stop_id: int
+    eta: AwareDatetime
+
+
+class CourierEventsIn(CamelModel):
+    sim_time: AwareDatetime
+    # predictions first (the SMS of a just-loaded parcel already uses them)
+    etas: list[StopEta] = Field(default_factory=list, max_length=5000)
+    events: list[CourierEvent] = Field(default_factory=list, max_length=5000)
+
+
+class CourierEventsOut(CamelModel):
+    applied: int
+    ignored: int
+    notifications: int

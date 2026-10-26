@@ -1,5 +1,6 @@
 /** REST client telematics -> app (X-Service-Token). The app owns trips and parcels. */
 
+import type { CourierEventKind, CourierPlan } from "./simulator/couriers.js";
 import type { Plan, TripExecution } from "./simulator/types.js";
 
 export interface AlertPayload {
@@ -42,6 +43,19 @@ export interface ScanForward {
   readOk: boolean;
 }
 
+/** Courier execution reported to the app (POST /internal/events/couriers). */
+export interface CourierEventOut {
+  routeId: number;
+  kind: CourierEventKind;
+  stopId: number | null;
+  at: string;
+}
+
+export interface StopEtaOut {
+  stopId: number;
+  eta: string;
+}
+
 export interface AppApi {
   getPlan(day: string): Promise<PlanWithLocal>;
   getManifest(direction: string, day: string): Promise<ManifestParcel[]>;
@@ -50,6 +64,9 @@ export interface AppApi {
   /** undo the execution of an operating day in the app (replay from 15:00) */
   resetDay(day: string): Promise<void>;
   postAlert(alert: AlertPayload): Promise<void>;
+  /** courier routes for the parcels of an operating day (driven the next morning) */
+  getCourierRoutes(day: string): Promise<CourierPlan>;
+  postCourierEvents(simTime: string, events: CourierEventOut[], etas: StopEtaOut[]): Promise<void>;
 }
 
 export class HttpAppApi implements AppApi {
@@ -97,5 +114,16 @@ export class HttpAppApi implements AppApi {
 
   async postAlert(alert: AlertPayload): Promise<void> {
     await this.request("/internal/alerts", { method: "POST", body: JSON.stringify(alert) });
+  }
+
+  getCourierRoutes(day: string): Promise<CourierPlan> {
+    return this.request<CourierPlan>(`/internal/courier-routes?day=${day}`);
+  }
+
+  async postCourierEvents(simTime: string, events: CourierEventOut[], etas: StopEtaOut[]): Promise<void> {
+    await this.request("/internal/events/couriers", {
+      method: "POST",
+      body: JSON.stringify({ simTime, events, etas }),
+    });
   }
 }

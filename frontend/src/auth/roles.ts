@@ -42,7 +42,7 @@ export const NAV: NavItem[] = [
   { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: true },
   { to: "/loading", label: "Nakládka", roles: ["operator"], ready: true },
   { to: "/gate", label: "Brána", roles: ["security"], ready: false },
-  { to: "/courier", label: "Moje zastávky", roles: ["courier"], ready: false },
+  { to: "/courier", label: "Moje zastávky", roles: ["courier", "dispatcher"], ready: true },
   { to: "/admin", label: "Administrácia", roles: [], ready: true },
   { to: "/system", label: "Stav systému", roles: ALL, ready: true },
 ];

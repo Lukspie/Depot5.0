@@ -95,7 +95,7 @@ export function Layout() {
           <Logo size={36} />
           <div className="min-w-0">
             <div className="text-lg leading-tight font-bold">DepoTrack</div>
-            <div className="text-chrome-muted truncate text-xs">Prekládkové depo Košice</div>
+            <div className="text-chrome-muted truncate text-xs">Prekládkové depo Budimír</div>
           </div>
         </div>
 

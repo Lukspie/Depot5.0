@@ -60,12 +60,16 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/loading | operátor, admin | Nakládka pri bránach |
 | http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
-| http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia |
+| http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
+| http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
+| http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia, simulované SMS |
 | http://localhost:8000/system | všetci | Stav systému a živý WebSocket |
 
 Téma (SPS oranžová / Modrá) sa prepína v hornej lište.
 
 Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, `/fleet?plate=KE-102LH` vybrané vozidlo.
+
+Sledovanie zásielky: kuriéri nakladajú ráno od 7:00 (v admine *Simulácia → skok na 06:00*). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 
 ## Mapy a geodáta
 
@@ -122,7 +126,7 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 2: telematika (hodiny, deterministický simulátor, WebSocket s ticketom, REST medzi backendmi, kaskáda)
 - [x] Fáza 3: design systém (témy SPS / Modrá) + jadro WMS (dispečing, nakládka, flotila, tabuľa ETA, detail balíka, admin simulácie)
 - [x] Fáza 3b: MapLibre mapa, 3D sklady, depo Budimír + hub Bratislava, offline routing po reálnych cestách
-- [ ] Fáza 4: zákazník a kuriér
+- [x] Fáza 4: zákazník a kuriér (trasy kuriérov po uliciach, sledovanie zásielky so súkromím, `/courier`, simulované SMS)
 - [ ] Fáza 5: digitálne dvojča
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML

@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # key in the URL of the public ETA board (/board?key=…); empty = board disabled
     board_key: str = ""
 
+    # base of the customer tracking links in the simulated SMS (/track/<token>)
+    public_base_url: str = "http://localhost:8000"
+    # public tracking endpoint, per client IP
+    track_rate_limit: str = "30/minute"
+
     # cascade warning: night truck ETA + sorting buffer > transit departure
     cascade_buffer_min: int = 30
 

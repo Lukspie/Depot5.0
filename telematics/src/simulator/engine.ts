@@ -6,19 +6,30 @@
  *   - scans at loading doors / line  -> db-telemetry + WebSocket "devices"
  *   - gate passages, line sensors    -> db-telemetry (+ WebSocket)
  *   - vehicle positions              -> db-telemetry (1×/sim-minute) + WebSocket "vehicles"
+ *   - courier rounds (loaded, delivered…, ETAs) -> app (POST /internal/events/couriers)
  * A jump of the clock (> 15 sim-minutes in one tick) fast-forwards: states are updated, but the
- * skipped scans/passages are not generated.
+ * skipped scans/passages are not generated. Courier events are state changes and are always sent.
  *
  * Device heartbeats run in REAL time (every 10 s); a device without a heartbeat for 30 s is offline.
  */
 
 import { addDays, HOUR, localDate, localHhmm, localParts, MINUTE, operatingDay, operatingDayStart, TIME_ZONE, zonedToUtc } from "../clock/time.js";
 import type { SimClock } from "../clock/clock.js";
-import type { AppApi, ManifestParcel, PlanWithLocal, ScanForward } from "../app-client.js";
+import type { AppApi, CourierEventOut, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
 import type { DeviceRow, GateRow, GpsRow, HeartbeatRow, MetricRow, ScanRow, SensorRow, TelemetrySink } from "../db/telemetry.js";
 import type { Hub, WsEvent } from "../ws/hub.js";
+import {
+  buildCourierSchedules,
+  courierEvents,
+  courierStateAt,
+  predictedEtas,
+  remainingPath,
+  type CourierEvent,
+  type CourierSchedule,
+} from "./couriers.js";
 import { rngFor } from "./rng.js";
-import type { RouteBook } from "./routes.js";
+import type { RoadRouter } from "./roads.js";
+import type { LatLon, RouteBook } from "./routes.js";
 import { buildScenario, type DayScenario, type TripSchedule } from "./scenario.js";
 import { DEFAULT_READ_RATE, lineScans, loadingScans, type ReadRateModel, type ScanEvent } from "./scanners.js";
 import { activeWindow, endLocation, executionAt, gateEvents, positionAt, startLocation, statusAt } from "./trips.js";
@@ -48,6 +59,8 @@ export interface EngineDeps {
   hub: Hub;
   /** fixed book (tests) or a builder from the plan's depot and destinations (real roads) */
   routes: RouteBook | ((plan: PlanWithLocal) => RouteBook);
+  /** street graph for the courier vans (null = straight lines, unit tests) */
+  router?: RoadRouter | null;
   log: Logger;
   config: EngineConfig;
   realNow?: () => number;
@@ -88,6 +101,9 @@ interface DayState {
   scanIdx: number;
   gate: GateRow[];
   gateIdx: number;
+  couriers: CourierSchedule[];
+  courierEvents: CourierEvent[];
+  courierIdx: number;
 }
 
 interface DeviceRuntime {
@@ -118,6 +134,10 @@ export interface VehicleEventData {
   status: string | null;
   directionCode: string | null;
   doorCode: string | null;
+  /** courier vans: route in the app and progress */
+  routeId?: number | null;
+  stopsDone?: number;
+  stopsTotal?: number;
 }
 
 const TICK_MS = 250;
@@ -143,6 +163,9 @@ export class Engine {
   private readonly pendingTrips = new Map<number, TripExecution>();
   /** scans waiting to be sent to the app (loading check / sorting) */
   private scanQueue: ScanForward[] = [];
+  /** courier events and the latest ETA predictions per route, waiting for the app */
+  private courierQueue: CourierEventOut[] = [];
+  private readonly pendingEtas = new Map<number, StopEtaOut[]>();
   private readonly devices = new Map<string, DeviceRuntime>();
   private readonly vehicles = new Map<string, VehicleState>();
   private readonly metrics = new Map<string, MetricRow>();
@@ -248,6 +271,8 @@ export class Engine {
     this.days.clear();
     this.metrics.clear();
     this.scanQueue = [];
+    this.courierQueue = [];
+    this.pendingEtas.clear();
     for (const d of this.devices.values()) {
       d.recent = [];
       d.lastScanAt = null;
@@ -418,6 +443,7 @@ export class Engine {
     }
     await this.emitScans(scans.filter((s) => this.simulated(s.device)));
     await this.emitGate(gate);
+    this.updateCouriers(now);
     this.updateTrips(now);
     await this.updateVehicles(now);
     if (!fastForward) await this.emitSensors(from, now);
@@ -457,7 +483,22 @@ export class Engine {
         ...plan.localDirections,
       ]);
       for (const dir of [...directions].sort()) manifests.set(dir, await this.deps.app.getManifest(dir, day));
-      const state: DayState = { plan, scenario, manifests, scans: [], scanIdx: 0, gate: [], gateIdx: 0 };
+      const couriers = buildCourierSchedules(await this.deps.app.getCourierRoutes(day), {
+        seed: this.seedValue,
+        router: this.deps.router ?? null,
+      });
+      const state: DayState = {
+        plan,
+        scenario,
+        manifests,
+        scans: [],
+        scanIdx: 0,
+        gate: [],
+        gateIdx: 0,
+        couriers,
+        courierEvents: courierEvents(couriers),
+        courierIdx: 0,
+      };
       this.buildDayEvents(state);
       // skip what already happened before the engine got here (restart, prefetch)
       const now = this.lastT;
@@ -465,9 +506,19 @@ export class Engine {
       if (state.scanIdx < 0) state.scanIdx = state.scans.length;
       state.gateIdx = state.gate.findIndex((g) => g.at > now);
       if (state.gateIdx < 0) state.gateIdx = state.gate.length;
+      state.courierIdx = state.courierEvents.findIndex((e) => e.at > now);
+      if (state.courierIdx < 0) state.courierIdx = state.courierEvents.length;
       this.days.set(day, state);
       this.deps.log.info(
-        { day, trips: plan.trips.length, scans: state.scans.length, weather: scenario.weather, incidentTrip: scenario.incidentTripId },
+        {
+          day,
+          trips: plan.trips.length,
+          scans: state.scans.length,
+          weather: scenario.weather,
+          incidentTrip: scenario.incidentTripId,
+          courierRoutes: couriers.length,
+          couriersBack: couriers.length ? localHhmm(Math.max(...couriers.map((c) => c.returnAt))) : null,
+        },
         "operating day loaded",
       );
     } catch (err) {
@@ -627,6 +678,7 @@ export class Engine {
         await this.deps.app.postScans(chunk);
         this.scanQueue = this.scanQueue.slice(chunk.length);
       }
+      await this.flushCouriers();
     } catch (err) {
       this.deps.log.warn(
         { err: String(err), trips: this.pendingTrips.size, scans: this.scanQueue.length },
@@ -639,6 +691,92 @@ export class Engine {
     } finally {
       this.flushing = false;
     }
+  }
+
+  // ------------------------------------------------------------------ couriers -> app
+
+  private updateCouriers(now: number): void {
+    for (const state of this.days.values()) {
+      const touched = new Set<number>();
+      while (state.courierIdx < state.courierEvents.length && (state.courierEvents[state.courierIdx]?.at ?? Infinity) <= now) {
+        const ev = state.courierEvents[state.courierIdx++] as CourierEvent;
+        this.courierQueue.push({ routeId: ev.routeId, kind: ev.kind, stopId: ev.stopId, at: iso(ev.at) });
+        touched.add(ev.routeId);
+      }
+      for (const s of state.couriers) {
+        if (!touched.has(s.route.routeId)) continue;
+        this.pendingEtas.set(
+          s.route.routeId,
+          predictedEtas(s, now).map((e) => ({ stopId: e.stopId, eta: iso(e.eta) })),
+        );
+      }
+    }
+  }
+
+  /** Events in order; the newest ETA predictions of the touched routes go with the first batch. */
+  private async flushCouriers(): Promise<void> {
+    while (this.courierQueue.length > 0 || this.pendingEtas.size > 0) {
+      const events = this.courierQueue.slice(0, 2000);
+      const routes = [...this.pendingEtas.keys()];
+      const etas = [...this.pendingEtas.values()].flat();
+      await this.deps.app.postCourierEvents(iso(this.deps.clock.now()), events, etas);
+      this.courierQueue = this.courierQueue.slice(events.length);
+      for (const r of routes) this.pendingEtas.delete(r);
+    }
+  }
+
+  private courierSchedules(): CourierSchedule[] {
+    return [...this.days.values()].flatMap((d) => d.couriers);
+  }
+
+  /** The van's round that matters at `now`: running, else the last finished, else the next one. */
+  private courierOf(plate: string, now: number): CourierSchedule | null {
+    const own = this.courierSchedules()
+      .filter((s) => s.route.vehiclePlate === plate)
+      .sort((a, b) => a.loadStart - b.loadStart);
+    const running = own.find((s) => now >= s.loadStart && now < s.returnAt);
+    if (running) return running;
+    const past = own.filter((s) => s.returnAt <= now);
+    return past[past.length - 1] ?? own[0] ?? null;
+  }
+
+  private courierVehicleEvent(plate: string, s: CourierSchedule, now: number): { data: VehicleEventData; pos: Position } {
+    const st = courierStateAt(s, now);
+    const active = st.status !== null;
+    return {
+      pos: st.pos,
+      data: {
+        plate,
+        kind: "van",
+        lat: Number(st.pos.lat.toFixed(5)),
+        lon: Number(st.pos.lon.toFixed(5)),
+        speedKmh: st.pos.speedKmh,
+        heading: Math.round(st.pos.heading),
+        moving: st.pos.moving,
+        tripId: null,
+        tripKind: null,
+        status: st.status,
+        directionCode: s.route.districtCode,
+        doorCode: s.route.stagingBay,
+        routeId: active ? s.route.routeId : null,
+        stopsDone: active ? st.done : 0,
+        stopsTotal: active ? s.visits.length : 0,
+      },
+    };
+  }
+
+  /** Current position of one vehicle (app: customer tracking, courier screen). */
+  vehicleNow(plate: string): VehicleEventData | null {
+    const kind = this.plates().get(plate);
+    if (!kind) return null;
+    return this.vehicleEvent(plate, kind, this.deps.clock.now()).data;
+  }
+
+  /** Remaining road path of a courier van (dispatcher map); null for other vehicles. */
+  vehiclePath(plate: string): LatLon[] | null {
+    const now = this.deps.clock.now();
+    const s = this.courierOf(plate, now);
+    return s ? remainingPath(s, now) : null;
   }
 
   // ------------------------------------------------------------------ vehicles
@@ -662,6 +800,10 @@ export class Engine {
   }
 
   private vehicleEvent(plate: string, kind: string, now: number): { data: VehicleEventData; pos: Position } {
+    if (kind === "van") {
+      const courier = this.courierOf(plate, now);
+      if (courier) return this.courierVehicleEvent(plate, courier, now);
+    }
     const { pos, schedule } = this.vehiclePosition(plate, now);
     return {
       pos,
@@ -684,7 +826,10 @@ export class Engine {
 
   private plates(): Map<string, "truck" | "van"> {
     const plates = new Map<string, "truck" | "van">();
-    for (const d of this.days.values()) for (const t of d.plan.trips) plates.set(t.vehiclePlate, t.vehicleKind);
+    for (const d of this.days.values()) {
+      for (const t of d.plan.trips) plates.set(t.vehiclePlate, t.vehicleKind);
+      for (const c of d.couriers) plates.set(c.route.vehiclePlate, "van");
+    }
     return plates;
   }
 

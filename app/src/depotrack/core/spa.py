@@ -30,4 +30,9 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
         candidate = (root / full_path).resolve()
         if full_path and candidate.is_file() and root in candidate.parents:
             return FileResponse(candidate)
+        if full_path.startswith("track/"):
+            # the tracking token is in the URL: never send it on as a Referer, never cache it
+            return FileResponse(
+                index, headers={"Referrer-Policy": "no-referrer", "Cache-Control": "no-store"}
+            )
         return FileResponse(index)

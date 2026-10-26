@@ -12,11 +12,28 @@ from sqlalchemy.orm import aliased
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.rbac import DbSession
 from depotrack.core.service_auth import require_service_token
-from depotrack.models import Alert, Depot, Direction, Door, Parcel, ParcelEvent, Trip, Vehicle
-from depotrack.models.enums import DirectionType, EventSource, ParcelStatus
+from depotrack.models import (
+    Alert,
+    CourierRoute,
+    Depot,
+    Direction,
+    Door,
+    Parcel,
+    ParcelEvent,
+    RouteStop,
+    Trip,
+    User,
+    Vehicle,
+)
+from depotrack.models.enums import DirectionType, EventSource, ParcelStatus, StopOutcome
 from depotrack.schemas.internal import (
     AlertIn,
     AlertOut,
+    CourierEventsIn,
+    CourierEventsOut,
+    CourierPlanOut,
+    CourierPlanRoute,
+    CourierPlanStop,
     ManifestOut,
     ManifestParcel,
     PlanDepot,
@@ -30,6 +47,7 @@ from depotrack.schemas.internal import (
 from depotrack.services import telematics
 from depotrack.services.alerts import AlertChange, alert_event, resolve_alert, upsert_alert
 from depotrack.services.cascade import evaluate_cascade
+from depotrack.services.couriers import complete_stop, load_parcel, routes_of_day, staging_bay
 from depotrack.services.loading import line_scan, loading_dock, process_scan, scan_event
 from depotrack.services.operating_day import ensure_operating_day, reset_operating_day
 from depotrack.services.parcels import LOADABLE, in_day
@@ -200,6 +218,100 @@ def scan_events(body: ScanEventsIn, db: DbSession, background: BackgroundTasks) 
         background.add_task(telematics.broadcast_many, "devices", "loading_scan", events)
     _broadcast_alerts(background, alerts)
     return ScanEventsOut(processed=sum(results.values()), skipped=skipped, results=dict(results))
+
+
+@router.get("/courier-routes", response_model=CourierPlanOut, response_model_by_alias=True)
+def courier_plan(
+    day: Annotated[date, Query()], db: DbSession, settings: SettingsDep
+) -> CourierPlanOut:
+    """Courier routes for the parcels of operating day `day` (driven on the morning of day+1)."""
+    ensure_operating_day(db, settings, day)
+    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+    out: list[CourierPlanRoute] = []
+    for route in routes_of_day(db, day):
+        van = db.get(Vehicle, route.vehicle_id)
+        courier = db.get(User, route.courier_user_id)
+        district = db.get(Direction, route.rajon_direction_id)
+        bay = staging_bay(db, route.rajon_direction_id)
+        stops = db.execute(
+            select(RouteStop, Parcel)
+            .join(Parcel, RouteStop.parcel_id == Parcel.id)
+            .where(RouteStop.route_id == route.id)
+            .order_by(RouteStop.sequence)
+        ).all()
+        out.append(
+            CourierPlanRoute(
+                route_id=route.id,
+                date=route.date,
+                vehicle_plate=van.plate if van else "?",
+                courier_username=courier.username if courier else "?",
+                district_code=district.code if district else "?",
+                staging_bay=bay.code if bay else None,
+                stops=[
+                    CourierPlanStop(
+                        stop_id=st.id, sequence=st.sequence, barcode=p.barcode, lat=p.lat, lon=p.lon
+                    )
+                    for st, p in stops
+                ],
+            )
+        )
+    return CourierPlanOut(
+        day=day,
+        depot=PlanDepot(code=depot.code, name=depot.name, lat=depot.lat, lon=depot.lon),
+        routes=out,
+    )
+
+
+@router.post("/events/couriers", response_model=CourierEventsOut, response_model_by_alias=True)
+def courier_events(body: CourierEventsIn, db: DbSession, settings: SettingsDep) -> CourierEventsOut:
+    """Courier execution from the simulator: ETA predictions, parcels scanned into the van
+    (-> tracking link + SMS), departure, delivered / not reached, return to the depot."""
+    stop_ids = {e.stop_id for e in body.etas} | {e.stop_id for e in body.events if e.stop_id}
+    stops = {
+        s.id: s for s in db.execute(select(RouteStop).where(RouteStop.id.in_(stop_ids))).scalars()
+    }
+    for eta in body.etas:
+        stop = stops.get(eta.stop_id)
+        if stop is not None and stop.outcome is None:
+            stop.predicted_eta = eta.eta
+    routes: dict[int, CourierRoute | None] = {}
+    applied = ignored = notifications = 0
+    for ev in sorted(body.events, key=lambda e: e.at):
+        if ev.route_id not in routes:
+            routes[ev.route_id] = db.get(CourierRoute, ev.route_id)
+        route = routes[ev.route_id]
+        stop = stops.get(ev.stop_id) if ev.stop_id else None
+        if route is None or (
+            ev.stop_id is not None and (stop is None or stop.route_id != route.id)
+        ):
+            ignored += 1
+            continue
+        done = False
+        if ev.kind == "departed" and route.departed_at is None:
+            route.departed_at = ev.at
+            done = True
+        elif ev.kind == "returned" and route.returned_at is None:
+            route.returned_at = ev.at
+            done = True
+        elif ev.kind == "loaded" and stop is not None:
+            bay = staging_bay(db, route.rajon_direction_id)
+            note = load_parcel(db, settings, route=route, stop=stop, at=ev.at, door=bay)
+            done = note is not None
+            notifications += int(done)
+        elif ev.kind in ("delivered", "failed") and stop is not None:
+            done = complete_stop(
+                db,
+                stop=stop,
+                outcome=StopOutcome.DELIVERED if ev.kind == "delivered" else StopOutcome.FAILED,
+                at=ev.at,
+                source=EventSource.MANUAL,
+                user_id=route.courier_user_id,
+            )
+        applied += int(done)
+        ignored += int(not done)
+        db.flush()
+    db.commit()
+    return CourierEventsOut(applied=applied, ignored=ignored, notifications=notifications)
 
 
 @router.post("/days/{day}/reset")

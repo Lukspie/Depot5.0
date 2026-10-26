@@ -7,9 +7,26 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import aliased
 
+from depotrack.core.clock import TZ
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import LoadingScan, Parcel, ParcelEvent, Trip, User, Vehicle
-from depotrack.models.enums import ParcelStatus, ScanResult, TripKind, TripStatus, UserRole
+from depotrack.models import (
+    CourierRoute,
+    LoadingScan,
+    Parcel,
+    ParcelEvent,
+    RouteStop,
+    Trip,
+    User,
+    Vehicle,
+)
+from depotrack.models.enums import (
+    ParcelStatus,
+    ScanResult,
+    TripKind,
+    TripStatus,
+    UserRole,
+    VehicleKind,
+)
 from depotrack.schemas.wms import (
     ParcelBrief,
     ParcelDetail,
@@ -83,6 +100,25 @@ def trip_cargo(db: DbSession, trip: Trip) -> list[Parcel]:
     return list(db.execute(stmt.order_by(Parcel.barcode)).scalars())
 
 
+def van_cargo(db: DbSession, van: Vehicle, day: date) -> tuple[list[Parcel], list[str]]:
+    """Parcels in a courier van today and its open stops ("3. Hlavná 12, Košice")."""
+    rows = db.execute(
+        select(RouteStop, Parcel)
+        .join(CourierRoute, RouteStop.route_id == CourierRoute.id)
+        .join(Parcel, RouteStop.parcel_id == Parcel.id)
+        .where(CourierRoute.vehicle_id == van.id, CourierRoute.date == day)
+        .order_by(RouteStop.sequence)
+    ).tuples()
+    cargo: list[Parcel] = []
+    remaining: list[str] = []
+    for stop, parcel in rows:
+        if parcel.status == ParcelStatus.OUT_FOR_DELIVERY:
+            cargo.append(parcel)
+        if stop.outcome is None:
+            remaining.append(f"{stop.sequence}. {parcel.address}")
+    return cargo, remaining
+
+
 @router.get("/fleet/vehicles/{plate}", response_model=VehicleDetail, response_model_by_alias=True)
 def vehicle_detail(plate: str, _: Dispatcher, db: DbSession) -> VehicleDetail:
     v = db.execute(select(Vehicle).where(Vehicle.plate == plate)).scalar_one_or_none()
@@ -92,6 +128,9 @@ def vehicle_detail(plate: str, _: Dispatcher, db: DbSession) -> VehicleDetail:
     look = Lookup(db)
     trip = current_trip(db, v, clk.operating_day)
     cargo = trip_cargo(db, trip) if trip else []
+    remaining: list[str] = []
+    if v.kind == VehicleKind.VAN:
+        cargo, remaining = van_cargo(db, v, clk.sim_time.astimezone(TZ).date())
     return VehicleDetail(
         plate=v.plate,
         kind=v.kind,
@@ -101,8 +140,7 @@ def vehicle_detail(plate: str, _: Dispatcher, db: DbSession) -> VehicleDetail:
         parcels=[parcel_brief(p, look) for p in cargo[:300]],
         parcels_count=len(cargo),
         parcels_kg=round(sum(p.weight_kg for p in cargo), 1),
-        # courier stops arrive in phase 4 (ADR-028)
-        remaining_stops=[],
+        remaining_stops=remaining,
     )
 
 

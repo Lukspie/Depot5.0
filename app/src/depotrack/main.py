@@ -13,12 +13,15 @@ from depotrack.api import (
     admin_directions,
     admin_users,
     auth,
+    courier,
     dashboard,
     depots,
     fleet,
     internal,
     loading,
+    notifications,
     system,
+    track,
 )
 from depotrack.core.config import get_settings
 from depotrack.core.csrf import OriginCheckMiddleware
@@ -61,6 +64,9 @@ def create_app() -> FastAPI:
     app.include_router(depots.router)
     app.include_router(loading.router)
     app.include_router(fleet.router)
+    app.include_router(courier.router)
+    app.include_router(track.router)
+    app.include_router(notifications.router)
     app.include_router(internal.router)
     # must be last: catch-all route for the single-page frontend
     mount_spa(app, settings.static_dir)

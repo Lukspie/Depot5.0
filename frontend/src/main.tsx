@@ -22,6 +22,8 @@ import { StatusPage } from "./pages/StatusPage";
 // map pages carry MapLibre + Three.js: loaded only when opened
 const FleetPage = lazy(() => import("./pages/FleetPage").then((m) => ({ default: m.FleetPage })));
 const TwinPage = lazy(() => import("./pages/TwinPage").then((m) => ({ default: m.TwinPage })));
+const TrackPage = lazy(() => import("./pages/TrackPage").then((m) => ({ default: m.TrackPage })));
+const CourierPage = lazy(() => import("./pages/CourierPage").then((m) => ({ default: m.CourierPage })));
 
 // before the first render, so the page never flashes in the wrong colours
 applyTheme(loadTheme());
@@ -54,6 +56,15 @@ createRoot(root).render(
           <Route path="/login" element={<LoginPage />} />
           {/* public ETA board for depot screens: no login, key in the URL */}
           <Route path="/board" element={<BoardPage />} />
+          {/* public customer tracking: the token in the URL is the only key (zadanie 6) */}
+          <Route
+            path="/track/:token"
+            element={
+              <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
+                <TrackPage />
+              </Suspense>
+            }
+          />
           <Route
             element={
               <RequireAuth>
@@ -89,6 +100,16 @@ createRoot(root).render(
                 <RequireAuth roles={["dispatcher", "security"]}>
                   <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
                     <TwinPage />
+                  </Suspense>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="courier"
+              element={
+                <RequireAuth roles={["courier", "dispatcher"]}>
+                  <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
+                    <CourierPage />
                   </Suspense>
                 </RequireAuth>
               }
