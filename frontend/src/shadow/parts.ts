@@ -10,7 +10,7 @@
 import * as THREE from "three";
 import { beltZ, hallOf, type DepotLayout, type DeviceStatus, type LayoutDoor } from "./layout";
 
-export const STATUS_COLOR: Record<DeviceStatus, number> = { online: 0x23874f, degraded: 0xd99a1e, offline: 0xc93434 };
+export const STATUS_COLOR: Record<DeviceStatus, number> = { online: 0x23874f, degraded: 0xd99a1e, offline: 0xc93434, maintenance: 0x7c5cd6 };
 export const TRUCK_COLOR: Record<string, number> = { linehaul: 0x2f5be9, transit: 0x23874f, local: 0x8a8a86 };
 
 export function cssColor(name: string, fallback: string): THREE.Color {

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 
 from depotrack.core.clock import TZ
 from depotrack.core.config import Settings
-from depotrack.models import Alert, LoadingScan, Parcel, ParcelEvent, SeedMeta, Trip
-from depotrack.models.enums import ParcelStatus, TripStatus
+from depotrack.models import Alert, Door, LoadingScan, Parcel, ParcelEvent, SeedMeta, Trip
+from depotrack.models.enums import DoorKind, ParcelStatus, TripStatus
 from depotrack.seed import seed_parcels, seed_reference, seed_users, seed_waves, step
 from depotrack.seed.geo import seed_geo
 from depotrack.services.couriers import build_courier_routes, reset_routes
@@ -45,7 +45,8 @@ def reset_operating_day(db: Session, day: date) -> dict[str, int]:
     """Undo the execution of a day (the simulation replays it from 15:00, ADR-033):
     trips back to planned, parcels back to collected, loading scans and the day's alerts removed,
     courier routes back to planned (tracking links and simulated SMS removed).
-    The plan and the parcels themselves stay, so the replay is deterministic."""
+    The plan and the parcels themselves stay, so the replay is deterministic; trips moved to
+    another door from the digital shadow go back to the default door (ADR-048)."""
     start = datetime.combine(day, OPERATING_DAY_START, TZ)
     trip_ids = list(db.execute(select(Trip.id).where(Trip.operating_day == day)).scalars())
     parcel_ids = select(Parcel.id).where(in_day(day)).scalar_subquery()
@@ -56,6 +57,12 @@ def reset_operating_day(db: Session, day: date) -> dict[str, int]:
         )
     )
     parcels = db.execute(update(Parcel).where(in_day(day)).values(status=ParcelStatus.COLLECTED))
+    default_dock = (
+        select(Door.id)
+        .where(Door.direction_id == Trip.direction_id, Door.kind == DoorKind.LOADING_DOCK)
+        .limit(1)
+        .scalar_subquery()
+    )
     db.execute(
         update(Trip)
         .where(Trip.id.in_(trip_ids))
@@ -64,7 +71,9 @@ def reset_operating_day(db: Session, day: date) -> dict[str, int]:
             actual_arrival=None,
             actual_departure=None,
             predicted_arrival=None,
+            door_id=default_dock,
         )
+        .execution_options(synchronize_session=False)
     )
     alerts = db.execute(delete(Alert).where(Alert.created_at >= start))
     routes = reset_routes(db, day)

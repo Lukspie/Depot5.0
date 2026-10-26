@@ -51,6 +51,8 @@ export interface ScenarioOptions {
   seed: number;
   forceCascade: boolean;
   routes: RouteBook;
+  /** what-if: extra minutes for a trip (inbound arrival / outbound departure), after the incident */
+  extraDelayMin?: ReadonlyMap<number, number>;
 }
 
 export interface DayScenario {
@@ -142,6 +144,16 @@ export function buildScenario(plan: Plan, opts: ScenarioOptions): DayScenario {
     }
   }
 
+  // 2b) what-if: extra delay of inbound trucks (their dependants react in step 3)
+  for (const [tripId, extra] of opts.extraDelayMin ?? []) {
+    const s = schedules.get(tripId);
+    if (!s || s.arriveDepot === undefined) continue;
+    s.delayMin += extra;
+    s.arriveDepot += extra * MINUTE;
+    if (s.unloadedAt !== undefined) s.unloadedAt += extra * MINUTE;
+    if (s.departOrigin !== undefined) s.departOrigin += extra * MINUTE;
+  }
+
   // 3) outbound trips
   for (const trip of plan.trips.filter((t) => t.kind === "outbound")) {
     const plannedDep = ms(trip.plannedDeparture);
@@ -164,6 +176,7 @@ export function buildScenario(plan: Plan, opts: ScenarioOptions): DayScenario {
         if (arrive !== undefined) departure = Math.max(departure, arrive + buffer);
       }
     }
+    departure += (opts.extraDelayMin?.get(trip.id) ?? 0) * MINUTE;
     const atDoor = plannedAtDoor + rng.int(-10, 10) * MINUTE;
     schedules.set(trip.id, {
       trip,

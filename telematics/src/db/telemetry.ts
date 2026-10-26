@@ -33,7 +33,7 @@ export interface MetricRow {
 export interface HeartbeatRow {
   deviceId: number;
   at: number;
-  status: "online" | "degraded" | "offline";
+  status: "online" | "degraded" | "offline" | "maintenance";
 }
 
 export interface GpsRow {

@@ -209,7 +209,10 @@ export function useAckAlert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => sendJson<Alert>("POST", `/api/alerts/${String(id)}/ack`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["dashboard"] });
+      await qc.invalidateQueries({ queryKey: ["shadow"] });
+    },
   });
 }
 

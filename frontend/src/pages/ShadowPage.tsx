@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useLayout } from "../api/depots";
 import { useParcelLocate, useShadow, type ParcelLocate } from "../api/shadow";
@@ -6,9 +6,12 @@ import { Card, EmptyState, PageHeader, Spinner } from "../components/ui";
 import { beltZ, type DepotLayout } from "../shadow/layout";
 import { DevicePanel } from "../shadow/panels/DevicePanel";
 import { KpiBar } from "../shadow/panels/KpiBar";
+import { useCanAct } from "../shadow/permissions";
 import { ParcelSearch } from "../shadow/panels/ParcelSearch";
+import { ScenarioPanel } from "../shadow/panels/ScenarioPanel";
 import { TruckPanel } from "../shadow/panels/TruckPanel";
 import { ShadowScene, type Selection } from "../shadow/ShadowScene";
+import { useShadowStore } from "../shadow/store";
 import { useShadowFeed } from "../shadow/useShadowFeed";
 
 /** Where to mark a found parcel in the scene, if it is physically in the hall. */
@@ -30,6 +33,7 @@ function Legend() {
       <span className="flex items-center gap-1.5"><i className={`${dot} bg-ok-600`} />online</span>
       <span className="flex items-center gap-1.5"><i className={`${dot} bg-warn-600`} />degradované</span>
       <span className="flex items-center gap-1.5"><i className={`${dot} bg-danger-600`} />offline</span>
+      <span className="flex items-center gap-1.5"><i className={`${dot} bg-[#7c5cd6]`} />údržba</span>
       <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-3 rounded-sm bg-[#2f5be9]" />diaľkový</span>
       <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-3 rounded-sm bg-[#23874f]" />prechod</span>
     </div>
@@ -44,16 +48,35 @@ function Legend() {
 export function ShadowPage() {
   const [params] = useSearchParams();
   const code = params.get("depot") ?? "BUD";
-  const measuring = params.get("fps") === "1";
+  // fps measurement (docs/fazy/faza-5): ?fps=1 live data, ?fps=stress also a full belt (~300 parcels)
+  const stress = params.get("fps") === "stress";
+  const measuring = params.get("fps") === "1" || stress;
   const layout = useLayout(code);
   const live = useShadow(code);
   useShadowFeed(code);
-  const [selection, setSelection] = useState<Selection>(null);
+  // ?door=LD-02 / ?device=DOCK-SCN-02 open a panel directly (demo, links from other screens)
+  const [selection, setSelection] = useState<Selection>(() => {
+    const door = params.get("door");
+    const device = params.get("device");
+    return door ? { kind: "dock", code: door } : device ? { kind: "device", code: device } : null;
+  });
   const [barcode, setBarcode] = useState<string | null>(null);
   const parcel = useParcelLocate(barcode);
   const [fps, setFps] = useState<number | null>(null);
   const onFps = useCallback((v: number) => setFps(v), []);
   const close = useCallback(() => setSelection(null), []);
+  const canAct = useCanAct();
+  const [affected, setAffected] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    if (!stress || !layout.data) return;
+    const docks = layout.data.doors.filter((d) => d.kind === "loading_dock").map((d) => d.code);
+    let i = 0;
+    const t = window.setInterval(() => {
+      useShadowStore.getState().pushFlow(Array.from({ length: 8 }, () => ({ doorCode: docks[i++ % docks.length] ?? null, readOk: i % 9 !== 0 })));
+    }, 100);
+    return () => window.clearInterval(t);
+  }, [stress, layout.data]);
 
   const found = useMemo(() => (layout.data ? foundAt(layout.data, parcel.data) : null), [layout.data, parcel.data]);
 
@@ -80,7 +103,7 @@ export function ShadowPage() {
             live={live.data}
             selection={selection}
             onSelect={setSelection}
-            marks={{ found }}
+            marks={{ found, affected: affected ?? [] }}
             onFps={measuring ? onFps : undefined}
           />
           <Legend />
@@ -89,11 +112,12 @@ export function ShadowPage() {
               {fps === null ? "… fps" : `${String(fps)} fps`}
             </div>
           )}
-          {selection?.kind === "device" && <DevicePanel code={selection.code} onClose={close} />}
-          {selection?.kind === "dock" && <TruckPanel code={selection.code} onClose={close} />}
+          {selection?.kind === "device" && <DevicePanel code={selection.code} alerts={live.data?.alerts ?? []} onClose={close} />}
+          {selection?.kind === "dock" && <TruckPanel code={selection.code} layout={l} onClose={close} onMoved={(door) => setSelection({ kind: "dock", code: door })} />}
         </div>
       </Card>
       <ParcelSearch result={parcel.data} error={parcel.error} loading={parcel.isFetching && !parcel.data} onSearch={setBarcode} />
+      {canAct && l.depot.kind === "depot" && <ScenarioPanel layout={l} onAffected={setAffected} />}
     </div>
   );
 }

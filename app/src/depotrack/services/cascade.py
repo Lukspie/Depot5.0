@@ -7,6 +7,7 @@ the transit departure is at risk and dispatchers get a warning (critical when ev
 itself is later than the departure).
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from sqlalchemy import select
@@ -22,6 +23,22 @@ from depotrack.models.enums import (
     TripStatus,
 )
 from depotrack.services.alerts import AlertChange, resolve_alert, upsert_alert
+
+
+@dataclass(frozen=True)
+class CascadeRisk:
+    severity: AlertSeverity
+    late_min: int
+
+
+def cascade_risk(eta: datetime, departure: datetime, buffer: timedelta) -> CascadeRisk | None:
+    """The cascade rule, also implemented in telematics (what-if scenarios). Both are checked
+    against the shared cases in contracts/cascade-cases.json (ADR-047)."""
+    ready_at = eta + buffer
+    if ready_at <= departure:
+        return None
+    severity = AlertSeverity.CRITICAL if eta > departure else AlertSeverity.WARNING
+    return CascadeRisk(severity, int((ready_at - departure).total_seconds() // 60))
 
 
 def expected_arrival(trip: Trip) -> datetime | None:
@@ -62,7 +79,8 @@ def evaluate_cascade(
         departure = transit_trip.planned_departure
         if transit_trip.status in (TripStatus.DEPARTED, TripStatus.COMPLETED) or departure is None:
             continue
-        if ready_at <= departure:
+        risk = cascade_risk(eta, departure, buffer)
+        if risk is None:
             # the feeder caught up: close a previous warning about this departure
             resolved = resolve_alert(
                 db, kind=AlertKind.CASCADE_DELAY, ref_type="cascade", ref_id=ref_id, at=now
@@ -70,19 +88,17 @@ def evaluate_cascade(
             if resolved is not None:
                 changes.append(AlertChange(resolved, created=False))
             continue
-        severity = AlertSeverity.CRITICAL if eta > departure else AlertSeverity.WARNING
-        late_min = int((ready_at - departure).total_seconds() // 60)
         message = (
             f"Prechod {transit.name} (odchod {local_hhmm(departure)}) je ohrozený: "
             f"nočný kamión {feeder.name} príde podľa predikcie o {local_hhmm(eta)}, "
             f"po triedení ({int(buffer.total_seconds() // 60)} min) až o {local_hhmm(ready_at)} "
-            f"– oneskorenie odchodu približne {late_min} min."
+            f"– oneskorenie odchodu približne {risk.late_min} min."
         )
         changes.append(
             upsert_alert(
                 db,
                 kind=AlertKind.CASCADE_DELAY,
-                severity=severity,
+                severity=risk.severity,
                 message=message,
                 ref_type="cascade",
                 ref_id=ref_id,

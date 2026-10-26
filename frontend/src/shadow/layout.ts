@@ -25,7 +25,7 @@ export interface DepotLayout {
   doors: LayoutDoor[];
 }
 
-export type DeviceStatus = "online" | "degraded" | "offline";
+export type DeviceStatus = "online" | "degraded" | "offline" | "maintenance";
 
 export const DEFAULT_HALL = { width: 60, depth: 30, height: 9 };
 

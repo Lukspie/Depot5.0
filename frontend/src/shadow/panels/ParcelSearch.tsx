@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { isApiError } from "../../api/client";
 import type { ParcelLocate } from "../../api/shadow";
-import { Badge, Card } from "../../components/ui";
+import { Badge, Button, Card } from "../../components/ui";
 import { PARCEL_STATUS, hhmm } from "../../domain/labels";
 
 function placeLabel(p: ParcelLocate["place"]): string {
@@ -55,20 +55,17 @@ export function ParcelSearch({ result, error, loading, onSearch }: Props) {
             autoComplete="off"
           />
         </div>
-        <button type="submit" className="bg-brand-500 text-on-brand rounded-xl px-4 py-2 text-sm font-medium whitespace-nowrap">
-          Hľadať
-        </button>
+        <Button type="submit">Hľadať</Button>
         {result && (
-          <button
-            type="button"
-            className="text-ink-muted text-sm underline"
+          <Button
+            variant="ghost"
             onClick={() => {
               setText("");
               onSearch(null);
             }}
           >
             Zrušiť
-          </button>
+          </Button>
         )}
       </form>
       {loading && <p className="text-ink-muted mt-3 text-sm">Hľadám…</p>}

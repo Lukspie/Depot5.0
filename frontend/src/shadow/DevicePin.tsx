@@ -5,8 +5,12 @@ import type { DeviceStatus } from "./layout";
 import { useShadowStore } from "./store";
 
 const PULSE_MS = 700;
-const DOT: Record<DeviceStatus, string> = { online: "bg-ok-600", degraded: "bg-warn-600", offline: "bg-danger-600" };
-const LABEL: Record<DeviceStatus, string> = { online: "online", degraded: "degradované", offline: "offline" };
+const STEPS = 14;
+// precomputed CSS values of the pulse, so useFrame allocates nothing
+const SCALE = Array.from({ length: STEPS }, (_, i) => `scale(${String(1 + (i / STEPS) * 1.6)})`);
+const OPACITY = Array.from({ length: STEPS }, (_, i) => String(0.7 * (1 - i / STEPS)));
+const DOT: Record<DeviceStatus, string> = { online: "bg-ok-600", degraded: "bg-warn-600", offline: "bg-danger-600", maintenance: "bg-[#7c5cd6]" };
+const LABEL: Record<DeviceStatus, string> = { online: "online", degraded: "degradované", offline: "offline", maintenance: "údržba" };
 
 /**
  * IoT pin above a device (drei Html): colour by status, a short pulse on every scan. The pulse
@@ -22,9 +26,9 @@ export function DevicePin({ code, x, z, height, selected, onSelect }: { code: st
     const last = useShadowStore.getState().pulses[code];
     const age = last === undefined ? Infinity : performance.now() - last;
     if (age < PULSE_MS) {
-      const k = age / PULSE_MS;
-      el.style.transform = `scale(${String(1 + k * 1.6)})`;
-      el.style.opacity = String(0.7 * (1 - k));
+      const step = Math.min(STEPS - 1, Math.floor((age / PULSE_MS) * STEPS));
+      el.style.transform = SCALE[step] ?? "";
+      el.style.opacity = OPACITY[step] ?? "0";
       state.invalidate();
     } else if (el.style.opacity !== "0") {
       el.style.opacity = "0";

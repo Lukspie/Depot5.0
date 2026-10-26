@@ -1,7 +1,7 @@
 /** Digital shadow (ADR-045): scene data from the app, device sparkline from telematics. */
 
-import { useQuery } from "@tanstack/react-query";
-import { getJson } from "./client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getJson, sendJson } from "./client";
 import { telematics } from "./telematicsApi";
 import type { Alert, Clock, DirectionType, ParcelStatus, TripBrief } from "./wms";
 
@@ -90,5 +90,86 @@ export function useDeviceMetrics(code: string | null, hours = 6) {
     queryFn: () => telematics<{ code: string; buckets: MetricBucket[] }>("GET", `/devices/${encodeURIComponent(code ?? "")}/metrics?hours=${String(hours)}`),
     enabled: code !== null,
     refetchInterval: 30_000,
+  });
+}
+
+// ------------------------------------------------------------------ WMS actions (ADR-048)
+
+export interface MaintenanceOrder {
+  id: number;
+  deviceCode: string;
+  note: string | null;
+  minutes: number;
+  createdAt: string;
+  until: string;
+}
+
+export function useMoveTrip() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tripId, doorCode }: { tripId: number; doorCode: string }) =>
+      sendJson<TripBrief>("PATCH", `/api/trips/${String(tripId)}/door`, { doorCode }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["shadow"] }),
+  });
+}
+
+export function useStartMaintenance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ code, minutes }: { code: string; minutes: number }) =>
+      sendJson<MaintenanceOrder>("POST", `/api/devices/${encodeURIComponent(code)}/maintenance`, { minutes }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance"] }),
+  });
+}
+
+export function useMaintenanceOrders() {
+  return useQuery({
+    queryKey: ["maintenance"],
+    queryFn: () => getJson<MaintenanceOrder[]>("/api/maintenance"),
+    refetchInterval: 30_000,
+  });
+}
+
+// ------------------------------------------------------------------ what-if scenarios (ADR-047)
+
+export type Intervention =
+  | { kind: "delay"; tripId: number; minutes: number }
+  | { kind: "device_outage"; device: string }
+  | { kind: "read_rate"; device: string; rate: number }
+  | { kind: "extra_scanner"; doorCode: string }
+  | { kind: "move_trip"; tripId: number; doorCode: string };
+
+export interface WhatIfKpis {
+  transitDelayMin: number;
+  transitLate: number;
+  cascadeWarnings: number;
+  unidentified: number;
+  wrongDirection: number;
+  wrongUndetected: number;
+}
+
+export interface WhatIfResult {
+  from: string;
+  to: string;
+  plan: WhatIfKpis;
+  scenario: WhatIfKpis;
+  trips: {
+    tripId: number;
+    kind: "inbound" | "outbound";
+    directionCode: string;
+    directionName: string;
+    doorCode: string | null;
+    planned: string | null;
+    base: string | null;
+    scenario: string | null;
+    deltaMin: number;
+  }[];
+  affected: { trips: number[]; doors: string[]; devices: string[] };
+  notes: string[];
+}
+
+export function useWhatIf() {
+  return useMutation({
+    mutationFn: (interventions: Intervention[]) => telematics<WhatIfResult>("POST", "/sim/what-if", { interventions }),
   });
 }

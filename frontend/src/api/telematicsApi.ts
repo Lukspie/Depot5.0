@@ -45,7 +45,7 @@ export interface DeviceInfo {
   doorCode: string | null;
   enabled: boolean;
   external: boolean;
-  status: "online" | "degraded" | "offline";
+  status: "online" | "degraded" | "offline" | "maintenance";
   readRate: number | null;
   items30m: number;
   lastScanAt: string | null;

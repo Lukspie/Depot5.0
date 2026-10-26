@@ -1,0 +1,15 @@
+{
+  "description": "Shared test cases of the delay cascade rule (ADR-030, ADR-047). The app (Python, live warnings) and telematics (TypeScript, what-if scenarios) must give the same answer: pytest app/tests/test_cascade_contract.py and vitest telematics/tests/cascade-contract.test.ts read this file. Rule: ready = eta + buffer; at risk if ready > departure; critical if eta > departure; lateMin = floor((ready - departure) / 1 min).",
+  "cases": [
+    { "name": "ready exactly at departure", "eta": "2026-10-24T03:30:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": null },
+    { "name": "one minute late", "eta": "2026-10-24T03:31:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": { "severity": "warning", "lateMin": 1 } },
+    { "name": "default seed: Humenné waits for Bratislava", "eta": "2026-10-24T03:59:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": { "severity": "warning", "lateMin": 29 } },
+    { "name": "seconds are floored", "eta": "2026-10-24T03:59:30Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": { "severity": "warning", "lateMin": 29 } },
+    { "name": "arrival at departure time is still a warning", "eta": "2026-10-24T04:00:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": { "severity": "warning", "lateMin": 30 } },
+    { "name": "arrival after departure is critical", "eta": "2026-10-24T04:10:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": { "severity": "critical", "lateMin": 40 } },
+    { "name": "no buffer", "eta": "2026-10-24T03:59:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 0, "expected": null },
+    { "name": "longer buffer", "eta": "2026-10-24T03:20:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 45, "expected": { "severity": "warning", "lateMin": 5 } },
+    { "name": "early arrival", "eta": "2026-10-24T01:00:00Z", "departure": "2026-10-24T04:00:00Z", "bufferMin": 30, "expected": null },
+    { "name": "across midnight (local)", "eta": "2026-10-23T22:50:00Z", "departure": "2026-10-23T23:00:00Z", "bufferMin": 30, "expected": { "severity": "warning", "lateMin": 20 } }
+  ]
+}

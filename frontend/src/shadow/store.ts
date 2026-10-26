@@ -48,6 +48,8 @@ interface ShadowStore {
   gate(p: { direction: "in" | "out"; vehicleType: string; plate: string | null; at: string }): void;
   /** take the queued parcels (called by the scene every frame) */
   takeFlow(): FlowItem[];
+  /** fps stress test (?fps=stress): synthetic parcels on the belt, no simulation involved */
+  pushFlow(items: FlowItem[]): void;
   reset(): void;
 }
 
@@ -79,5 +81,6 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
     if (items.length > 0) set({ flow: [] });
     return items;
   },
+  pushFlow: (items) => set((s) => ({ flow: [...s.flow, ...items].slice(-MAX_FLOW_QUEUE) })),
   reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [] }),
 }));

@@ -1,8 +1,11 @@
 import { ScanLine } from "lucide-react";
 import { useDeviceMetrics } from "../../api/shadow";
+import type { Alert } from "../../api/wms";
 import { Badge, KeyValue, SidePanel, StatusDot, type Tone } from "../../components/ui";
 import { hhmmss } from "../../domain/labels";
 import { useShadowStore, type LiveScan } from "../store";
+import { useCanAct } from "../permissions";
+import { AlertList, Maintenance } from "./Actions";
 import { Sparkline } from "./Sparkline";
 
 const EMPTY: LiveScan[] = [];
@@ -10,6 +13,7 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   online: { label: "Online", tone: "ok" },
   degraded: { label: "Degradované", tone: "warn" },
   offline: { label: "Offline", tone: "danger" },
+  maintenance: { label: "Údržba", tone: "neutral" },
 };
 const KIND: Record<string, string> = {
   dock_scanner: "Skener brány",
@@ -21,7 +25,8 @@ const KIND: Record<string, string> = {
 const THRESHOLD = 0.92;
 
 /** Device detail (zadanie §7): live scans, read rate over the shift, sparkline, risk score (phase 6). */
-export function DevicePanel({ code, onClose }: { code: string; onClose: () => void }) {
+export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: Alert[]; onClose: () => void }) {
+  const canAct = useCanAct();
   const d = useShadowStore((s) => s.devices[code]);
   const recent = useShadowStore((s) => s.recent[code] ?? EMPTY);
   const shift = useDeviceMetrics(code, 8);
@@ -48,6 +53,7 @@ export function DevicePanel({ code, onClose }: { code: string; onClose: () => vo
           ["Riziko poruchy", <span key="r" className="text-ink-muted">model príde vo Fáze 6</span>],
         ]}
       />
+      <AlertList alerts={alerts.filter((a) => a.refType === "device" && a.refId === code)} canAct={canAct} />
       <h3 className="mt-4 mb-1 text-sm font-semibold">Čítanosť za posledné hodiny</h3>
       <Sparkline values={buckets.slice(-36).map((b) => b.readRate)} threshold={THRESHOLD} />
       <h3 className="mt-4 mb-2 text-sm font-semibold">Posledné skeny (naživo)</h3>
@@ -64,6 +70,7 @@ export function DevicePanel({ code, onClose }: { code: string; onClose: () => vo
           ))}
         </ul>
       )}
+      {canAct && d?.kind !== "gate_camera" && <Maintenance code={code} />}
     </SidePanel>
   );
 }

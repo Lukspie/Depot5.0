@@ -1,13 +1,17 @@
-import { AlertTriangle, Truck } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useDockDetail } from "../../api/shadow";
 import { Badge, EmptyState, KeyValue, Progress, SidePanel, Spinner } from "../../components/ui";
 import { DIRECTION_TYPE, TRIP_STATUS, delayLabel, delayTone, hhmm } from "../../domain/labels";
+import type { DepotLayout } from "../layout";
+import { useCanAct } from "../permissions";
+import { AlertList, MoveTrip } from "./Actions";
 
 /**
  * Truck at a loading door (zadanie §7): direction, fill in pieces and kg against the capacity,
  * parcels still missing, wrong-direction alarms, planned departure and the cascade warning.
  */
-export function TruckPanel({ code, onClose, actions }: { code: string; onClose: () => void; actions?: React.ReactNode }) {
+export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; layout: DepotLayout; onClose: () => void; onMoved: (door: string) => void }) {
+  const canAct = useCanAct();
   const q = useDockDetail(code);
   const dock = q.data?.dock;
   const t = dock?.trip;
@@ -28,12 +32,7 @@ export function TruckPanel({ code, onClose, actions }: { code: string; onClose: 
         <EmptyState title="Brána je voľná" description="Žiadna jazda tu práve nenakladá." />
       ) : (
         <>
-          {dock.cascade && (
-            <div className="bg-danger-100 text-danger-600 mb-3 flex gap-2 rounded-xl p-3 text-sm">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <span>{dock.cascade.message}</span>
-            </div>
-          )}
+          <AlertList alerts={dock.cascade ? [dock.cascade] : []} canAct={canAct} />
           <KeyValue
             rows={[
               ["Stav", <Badge key="s" tone={TRIP_STATUS[t.status].tone}>{TRIP_STATUS[t.status].label}</Badge>],
@@ -86,7 +85,7 @@ export function TruckPanel({ code, onClose, actions }: { code: string; onClose: 
           {detail.missingCount > detail.missing.length && (
             <p className="text-ink-muted mt-1 text-xs">… a ďalších {detail.missingCount - detail.missing.length}</p>
           )}
-          {actions}
+          {canAct && <MoveTrip dock={dock} layout={layout} onMoved={onMoved} />}
         </>
       )}
     </SidePanel>

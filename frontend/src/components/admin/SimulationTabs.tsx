@@ -68,8 +68,8 @@ const DEVICE_KIND: Record<DeviceInfo["kind"], string> = {
   gate_camera: "Kamera brány",
   line_sensor: "Senzor linky",
 };
-const DEVICE_TONE: Record<DeviceInfo["status"], Tone> = { online: "ok", degraded: "warn", offline: "danger" };
-const DEVICE_STATUS: Record<DeviceInfo["status"], string> = { online: "online", degraded: "degradovaný", offline: "offline" };
+const DEVICE_TONE: Record<DeviceInfo["status"], Tone> = { online: "ok", degraded: "warn", offline: "danger", maintenance: "info" };
+const DEVICE_STATUS: Record<DeviceInfo["status"], string> = { online: "online", degraded: "degradovaný", offline: "offline", maintenance: "údržba" };
 
 export function DevicesTab() {
   const qc = useQueryClient();

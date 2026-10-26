@@ -337,13 +337,58 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Kontext:** Fáza 5 stavia 3D scénu digitálneho tieňa. Zadanie (§7) uvádza React 18 a `@react-three/fiber` s `@react-three/drei`. Aktuálne verzie R3F 9 a drei 10 vyžadujú React 19. Staršie R3F 8 a drei 9 nemajú overenú kompatibilitu s three 0.186, ktoré už používa mapa. Zvažoval sa aj prechod na Next.js.
 - **Rozhodnutie:**
   - **Upgrade na React 19** (`react`, `react-dom`, `@types/react*` 19) ako samostatný commit. Ostatné závislosti (react-router 7, TanStack Query 5, lucide-react) React 19 podporujú. Leaflet, ktorý verziu obmedzoval (ADR-032), z projektu zmizol vo Fáze 3b.
-  - Pre `/shadow`: `@react-three/fiber` 9, `@react-three/drei` 10 (hotové `OrbitControls`, `Html`, `Instances`, `Bounds`, `ContactShadows`, `useGLTF`, `Detailed`) a `zustand` 5 na vysokofrekvenčné dáta z WebSocketu, ktoré scéna číta cez refy v `useFrame` bez re-renderu. Na analýzu bundlu `rollup-plugin-visualizer` (dev, podporuje rolldown z Vite 8).
+  - Pre `/shadow`: `@react-three/fiber` 9, `@react-three/drei` 10 (hotové `OrbitControls`, `Html`, `Instances`, `Bounds`, `ContactShadows`, `useGLTF`; čo sa nakoniec použilo, je v ADR-049) a `zustand` 5 na vysokofrekvenčné dáta z WebSocketu, ktoré scéna číta cez refy v `useFrame` bez re-renderu. Na analýzu bundlu `rollup-plugin-visualizer` (dev, podporuje rolldown z Vite 8).
   - **Ostávame pri React + Vite, nie Next.js:**
     - aplikácia je za loginom, SSR a SEO nemajú prínos,
     - 3D scéna (WebGL) sa na serveri nevyrenderuje,
     - frontend servíruje `app` ako statické súbory a Next.js server by bol 5. kontajner (povinná podmienka sú 4).
   - three.js a R3F sa načítajú len v lazy chunkoch (`React.lazy` pre `/shadow` a Flotilu). Overí to analýza bundlu.
 - **Dôsledok:** Odchýlka od zadania (React 18 → 19). Kontrola po upgrade prešla bez chýb na všetkých obrazovkách pri 1280, 1440 a 390 px (admin, kuriér, tabuľa, sledovanie).
+
+## ADR-047 Scenáre „čo ak“: prepočet dňa na kópii, spoločné prípady kaskády
+- **Kontext:** Panel „Scenár“ v digitálnom tieni má ukázať, čo urobí zásah (meškanie jazdy, výpadok zariadenia, zmena čítanosti, druhý skener na bránu, presun jazdy na inú bránu). Výsledok má byť porovnanie KPI plán vs. scenár. Scenár nesmie zapisovať do živých dát a musí byť deterministický. Vzorec kaskády je v app (Python, živé varovania) a novo aj v telematike (scenár).
+- **Rozhodnutie:**
+  - **Žiadne druhé hodiny ani druhý simulátor.** Deň je čistá funkcia (plán, seed, manifesty, model čítanosti), ADR-023. Scenár (`telematics/src/simulator/whatif.ts`) ho prepočíta dvakrát tým istým kódom ako živý engine (`buildScenario` a `dayScans`): raz bez zásahov („plán“), raz so zásahmi („scenár“). Výsledok je okamžitý („zrýchlene“), počíta sa na kópiách a nič neposiela do DB, app ani WebSocketu.
+  - **Zásahy:**
+    - `delay` pridá minúty k príchodu alebo odchodu. Pri nočnom kamióne sa to pripočíta až po zaručenej poruche, aby ju nepohltila, a regionálne kamióny, ktoré naň čakajú, odídu neskôr.
+    - `device_outage` znamená čítanosť 0: balíky sa spočítajú, ale neprečítajú.
+    - `read_rate` nastaví pevnú čítanosť zariadenia.
+    - `extra_scanner` znamená druhú kameru: 1 − (1 − r)².
+    - `move_trip` presunie jazdu na inú bránu: skenuje ju skener tej brány. Ak je brána obsadená, kamión čaká na odchod predchádzajúceho a o 5 min ďalej (`DOOR_DELAY_MIN`).
+  - **Horizont:** od teraz do konca prevádzkového dňa (15:00), nie do konca vlny. Kaskády vznikajú v noci, zásah sa robí večer (schválené s plánom Fázy 5). Do KPI idú len jazdy, ktoré ešte len majú prebehnúť.
+  - **KPI:**
+    - meškanie prechodov: súčet minút a počet oneskorených transitných odchodov,
+    - kaskádové varovania: páry (prechod, nočný dodávateľ), ktoré sú podľa pravidla ohrozené,
+    - neidentifikované balíky: spočítané a neprečítané,
+    - zlé smery (a z toho neodhalené, ktoré skener neprečítal).
+  - **Férové porovnanie:** zásah nesmie posunúť celú náhodnú postupnosť. Kód zdieľaný so scenárom preto ťahá náhodné čísla vždy rovnako, nezávisle od vstupov:
+    - `facesRead` rovnako pri prečítanom aj neprečítanom štítku,
+    - čakanie nočného balíka (`loadingScans`, `lineScans`) aj vtedy, keď ho netreba.
+  - Zmena čítanosti potom nezmení, ktoré balíky skončia pri zlej bráne, a meškanie kamióna mení len časy. Testy to kontrolujú. Deň ostáva deterministický, len s inou postupnosťou ako pred Fázou 5.
+  - **Kaskáda v dvoch jazykoch:** pravidlo je čistá funkcia `cascade_risk` (app) a `cascadeRisk` (telematika). Obe overuje rovnaký súbor prípadov [contracts/cascade-cases.json](../contracts/cascade-cases.json): `app/tests/test_cascade_contract.py` a `telematics/tests/cascade-contract.test.ts`. Kto zmení pravidlo, musí zmeniť JSON a obe implementácie, inak padne jeden z testov. Image `app` kopíruje `contracts/` kvôli testom.
+  - API: `POST /sim/what-if` v telematike (ticket, dispečer a admin), najviac 10 zásahov. Telo validuje JSON schéma, neznáma jazda, brána alebo zariadenie vráti 400. Frontend volá telematiku priamo (ADR-027) a dotknuté brány a zariadenia zvýrazní v scéne.
+- **Dôsledok:** Scenár používa simulovanú pravdu (skutočný príchod v simulácii), dashboard predikciu ETA, takže čísla sa môžu líšiť o chybu predikcie. Scenár nerieši kuriérske dodávky ani prebiehajúcu údržbu. Čísla scenára sú porovnateľné s plánom vďaka rovnakému seedu a rovnakým náhodným ťahom.
+
+## ADR-048 Akcie WMS zo scény: presun jazdy, údržba zariadenia, potvrdenie alarmu
+- **Kontext:** Tieň nesmie riadiť fyzické zariadenia (ADR-045), ale dispečer má zo scény rozhodovať. Rozhodnutie je bežná akcia WMS s RBAC.
+- **Rozhodnutie:**
+  - `PATCH /api/trips/{id}/door` (dispečer, admin):
+    - len odchádzajúca jazda, ktorá ešte nenakladá (`planned`, `at_door`),
+    - len nakladacia brána toho istého depa (inak 422),
+    - konflikt (409), ak sa jej plánované okno prekrýva s inou neodídenou jazdou na tej bráne. Okno je od plánovaného príchodu (alebo 4 h pred odchodom) po plánovaný odchod.
+    - Po zmene app zavolá `POST /internal/plan/reload` a telematika prepočíta budúce skeny: kamión skenuje skener novej brány. Ak telematika práve nebeží, app to zaloguje a zmenu telematika prevezme až pri ďalšom načítaní dňa.
+    - Presun platí do reštartu dňa: reset (ADR-033) vráti jazdy na predvolenú bránu smeru, aby sa deň prehral rovnako a degradovaný skener pri BA mal čo skenovať.
+    - Kontrola obsadenosti zamkne riadok brány (`SELECT … FOR UPDATE`), takže dva súčasné presuny na tú istú bránu neprejdú oba.
+  - Údržba:
+    - `POST /api/devices/{code}/maintenance` (dispečer, admin) založí záznam v novej tabuľke `maintenance_orders` (Alembic) a zavolá `POST /internal/devices/{code}/maintenance`,
+    - zariadenie má na `minutes` simulovaných minút stav **`maintenance`** (v db-telemetry migrácia `005`, v scéne fialový pin) a neposiela skeny, nakládka sa medzitým sníma ručne. Potom je opravené. Stav sa mení len cez `monitorDevices`, takže alarmy offline zariadení ostanú konzistentné,
+    - záznam sa uloží v tej istej transakcii, ale commitne sa až keď telematika potvrdí, inak 503 bez záznamu,
+    - `restartDay` okná údržby zruší (sú v simulovanom čase), deň sa prehrá rovnako ako bez údržby,
+    - `GET /api/maintenance` vidí aj ochranka.
+  - **Oprava nezruší zaručenú degradáciu** (požiadavka pre Fázu 6): degradovaný skener je čistý do konca prevádzkového dňa a od 15:30 nasledujúceho dňa sa začne znova špiniť. `restartDay` ho vráti na začiatok dňa ako doteraz. To isté platí pre admin tlačidlo „opraviť“.
+  - Potvrdenie alarmu používa existujúce `POST /api/alerts/{id}/ack`. V paneli kamióna je kaskádové varovanie, v paneli zariadenia jeho alarmy.
+  - Frontend tlačidlá ukáže len dispečerovi a adminovi. O prístupe rozhoduje backend (ADR-017), testy majú maticu rolí.
+- **Dôsledok:** Model → realita ide len cez človeka a auditovateľné API (log, `maintenance_orders`). Okno údržby si telematika drží v pamäti, reštart kontajnera ho zruší (zariadenie je hneď online). Počas údržby ostanú balíky nenaložené, kým ich operátor nenaskenuje ručne. To je zámerný dôsledok, ktorý sa dá ukázať.
 
 ## ADR-049 Spoločné 3D diely pre digitálny tieň a mapu, scéna v React Three Fiber
 - **Kontext:** Zadanie chce jednu knižnicu 3D komponentov pre `/shadow` aj pre 3D halu na mape. Mapa je MapLibre custom layer v čistom three.js (ADR-040). Most R3F ↔ MapLibre (`react-three-map`) by vyžadoval prechod mapy na `react-map-gl`, alebo vlastný most cez R3F `createRoot`, ktorý zadanie nechce.

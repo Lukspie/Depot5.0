@@ -40,6 +40,8 @@ export interface ReadRateModel {
   eveningPenalty: number;
   line: number;
   degradation: Degradation | null;
+  /** what-if scenarios: fixed read rate and/or a second scanner (1 - (1 - r)^2) per device */
+  overrides?: Readonly<Record<string, { rate?: number; extra?: boolean }>>;
 }
 
 export const DEFAULT_READ_RATE: Omit<ReadRateModel, "degradation"> = {
@@ -49,6 +51,12 @@ export const DEFAULT_READ_RATE: Omit<ReadRateModel, "degradation"> = {
 };
 
 export function readRate(model: ReadRateModel, device: string, t: number): number {
+  const o = model.overrides?.[device];
+  const r = o?.rate ?? baseReadRate(model, device, t);
+  return o?.extra ? 1 - (1 - r) ** 2 : r;
+}
+
+function baseReadRate(model: ReadRateModel, device: string, t: number): number {
   const d = model.degradation;
   if (d && d.device === device && t >= d.startedAt) {
     const progress = Math.min((t - d.startedAt) / (d.hours * HOUR), 1);
@@ -60,9 +68,14 @@ export function readRate(model: ReadRateModel, device: string, t: number): numbe
   return model.base - (evening ? model.eveningPenalty : 0);
 }
 
+/**
+ * Always the same number of random draws, read or not: a what-if scenario that changes a read rate
+ * then changes only which labels are read, not which parcels go to a wrong door (ADR-047).
+ */
 function facesRead(rng: Rng, readOk: boolean): number {
-  if (!readOk) return 0;
-  return 1 + (rng.chance(0.35) ? 1 : 0) + (rng.chance(0.1) ? 1 : 0);
+  const second = rng.chance(0.35);
+  const third = rng.chance(0.1);
+  return readOk ? 1 + (second ? 1 : 0) + (third ? 1 : 0) : 0;
 }
 
 function scan(rng: Rng, model: ReadRateModel, device: string, at: number, parcel: string, truth: ScanTruth): ScanEvent {
@@ -106,7 +119,9 @@ export function loadingScans(a: LoadingScanArgs): ScanEvent[] {
   for (const parcel of a.manifest) {
     let at = a.start + Math.floor(rng.next() * span);
     const notBefore = a.earliest?.get(parcel);
-    if (notBefore !== undefined && at < notBefore) at = notBefore + rng.int(3, 20) * MINUTE;
+    // drawn always, so a later night truck (what-if) shifts only this parcel (ADR-047)
+    const wait = rng.int(3, 20) * MINUTE;
+    if (notBefore !== undefined && at < notBefore) at = notBefore + wait;
     events.push(scan(rng, a.model, a.device, at, parcel, "ok"));
     if (rng.chance(dupP)) {
       events.push(scan(rng, a.model, a.device, at + rng.int(2, 20) * 1000, parcel, "duplicate"));
@@ -138,7 +153,8 @@ export function lineScans(a: LineScanArgs): ScanEvent[] {
     .map((parcel) => {
       let at = a.start + Math.floor(rng.next() * span);
       const notBefore = a.earliest?.get(parcel);
-      if (notBefore !== undefined && at < notBefore) at = notBefore + rng.int(1, 15) * MINUTE;
+      const wait = rng.int(1, 15) * MINUTE;
+      if (notBefore !== undefined && at < notBefore) at = notBefore + wait;
       return scan(rng, a.model, a.device, at, parcel, "ok");
     })
     .sort((x, y) => x.at - y.at);

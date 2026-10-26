@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 
 from depotrack import __version__
 from depotrack.api import (
+    actions,
     admin_directions,
     admin_users,
     auth,
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(depots.router)
     app.include_router(shadow.router)
+    app.include_router(actions.router)
     app.include_router(loading.router)
     app.include_router(fleet.router)
     app.include_router(courier.router)

@@ -9,11 +9,15 @@ const GltfModel = lazy(() => import("./GltfModel"));
 const ENTER_S = 1.6;
 const ENTER_FROM = -26;
 
+/** how long a departing truck stays in the scene (it drives away meanwhile) */
+export const LEAVE_MS = ENTER_S * 1000;
+
 /**
- * Truck backed into a door (cab + trailer, colour by direction type). On arrival it drives in
- * smoothly; while moving it requests frames itself (frameloop="demand").
+ * Truck backed into a door (cab + trailer, colour by direction type). It drives in smoothly on
+ * arrival and away on departure (`leaving`); while moving it requests frames itself
+ * (frameloop="demand").
  */
-export function Truck({ x, z, directionType, onSelect }: { x: number; z: number; directionType: string; onSelect?: () => void }) {
+export function Truck({ x, z, directionType, leaving = false, onSelect }: { x: number; z: number; directionType: string; leaving?: boolean; onSelect?: () => void }) {
   const model = useMemo(() => truckModel(TRUCK_COLOR[directionType] ?? 0x8a8a86), [directionType]);
   useEffect(() => () => disposeTree(model), [model]);
   const group = useRef<THREE.Group>(null);
@@ -25,15 +29,15 @@ export function Truck({ x, z, directionType, onSelect }: { x: number; z: number;
     const now = performance.now() / 1000;
     born.current ??= now;
     const t = Math.min(1, (now - born.current) / ENTER_S);
-    const ease = 1 - (1 - t) ** 3;
-    g.position.z = z + ENTER_FROM * (1 - ease);
+    const ease = leaving ? t ** 3 : 1 - (1 - t) ** 3;
+    g.position.z = leaving ? z + ENTER_FROM * ease : z + ENTER_FROM * (1 - ease);
     if (t < 1) state.invalidate();
   });
 
   return (
     <group
       ref={group}
-      position={[x, 0, z + ENTER_FROM]}
+      position={[x, 0, leaving ? z : z + ENTER_FROM]}
       onClick={(e) => {
         if (!onSelect) return;
         e.stopPropagation();

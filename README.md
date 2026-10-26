@@ -60,7 +60,7 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/ | dispečer, admin | Dispečing |
 | http://localhost:8000/loading | operátor, admin | Nakládka pri bránach |
 | http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
-| http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň depa (3D scéna vo Fáze 5) |
+| http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň: 3D hala naživo, panely zariadení a kamiónov, hľadanie balíka, scenár „čo ak“ a akcie (dispečer) |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
 | http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
 | http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
@@ -73,6 +73,8 @@ Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, 
 
 Sledovanie zásielky: kuriéri nakladajú ráno od 7:00 (v admine *Simulácia → skok na 06:00*). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
+
+Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md).
 
 **Digitálny tieň, nie dvojča:** 3D pohľad automaticky zrkadlí realitu (skeny, vozidlá, zariadenia), ale do fyzického sveta zasahuje len cez rozhodnutia človeka v bežných obrazovkách WMS. Rozdiel model / tieň / dvojča vysvetľuje ADR-045.
 
@@ -133,7 +135,7 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 3b: MapLibre mapa, 3D sklady, depo Budimír + hub Bratislava, offline routing po reálnych cestách
 - [x] Fáza 4: zákazník a kuriér (trasy kuriérov po uliciach, sledovanie zásielky so súkromím, `/courier`, simulované SMS)
 - [x] Pred Fázou 5: názov Depot 5.0, digitálny tieň (`/shadow`), nový rate limit sledovania
-- [ ] Fáza 5: digitálny tieň (3D scéna, scenáre what-if)
+- [x] Fáza 5: digitálny tieň (React 19 + R3F scéna, panely, scenáre „čo ak“, akcie WMS zo scény, údržba skenerov)
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML
 - [ ] Fáza 7: dokončenie

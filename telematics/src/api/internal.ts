@@ -41,6 +41,34 @@ export const internalRoutes: FastifyPluginAsync<InternalRoutesDeps> = async (app
     },
   );
 
+  app.post(
+    "/internal/plan/reload",
+    {
+      preHandler: serviceTokenGuard(serviceToken),
+      schema: { tags: ["internal"], summary: "Plán sa zmenil (jazda na inú bránu): načítať ho znova (volá app)" },
+    },
+    async () => ({ days: await engine.refreshPlan() }),
+  );
+
+  app.post<{ Params: { code: string }; Body: { minutes: number } }>(
+    "/internal/devices/:code/maintenance",
+    {
+      preHandler: serviceTokenGuard(serviceToken),
+      schema: {
+        tags: ["internal"],
+        summary: "Zariadenie označené na údržbu vo WMS (volá app)",
+        params: { type: "object", properties: { code: { type: "string", maxLength: 32 } } },
+        body: {
+          type: "object",
+          required: ["minutes"],
+          additionalProperties: false,
+          properties: { minutes: { type: "integer", minimum: 5, maximum: 240 } },
+        },
+      },
+    },
+    async (req, reply) => (await engine.startMaintenance(req.params.code, req.body.minutes)) ?? reply.code(404).send({ error: "unknown device" }),
+  );
+
   app.get<{ Params: { plate: string } }>(
     "/internal/vehicles/:plate",
     {

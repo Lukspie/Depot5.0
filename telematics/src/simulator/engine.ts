@@ -31,7 +31,9 @@ import { rngFor } from "./rng.js";
 import type { RoadRouter } from "./roads.js";
 import type { LatLon, RouteBook } from "./routes.js";
 import { buildScenario, type DayScenario, type TripSchedule } from "./scenario.js";
-import { DEFAULT_READ_RATE, lineScans, loadingScans, type ReadRateModel, type ScanEvent } from "./scanners.js";
+import { dayScans } from "./dayevents.js";
+import { runWhatIf, validateInterventions, type Intervention, type WhatIfResult } from "./whatif.js";
+import { DEFAULT_READ_RATE, type ReadRateModel, type ScanEvent } from "./scanners.js";
 import { activeWindow, endLocation, executionAt, gateEvents, positionAt, startLocation, statusAt } from "./trips.js";
 import type { Position, TripExecution } from "./types.js";
 
@@ -66,7 +68,8 @@ export interface EngineDeps {
   realNow?: () => number;
 }
 
-export type DeviceStatus = "online" | "degraded" | "offline";
+/** "maintenance": marked by a dispatcher in the WMS, no scans until the service is done */
+export type DeviceStatus = "online" | "degraded" | "offline" | "maintenance";
 
 export interface MetricBucket {
   at: string;
@@ -101,6 +104,7 @@ export interface ClockInfo {
 
 interface DayState {
   plan: PlanWithLocal;
+  book: RouteBook;
   scenario: DayScenario;
   manifests: Map<string, ManifestParcel[]>;
   scans: ScanEvent[];
@@ -154,8 +158,6 @@ const ROLLING_MS = 30 * MINUTE;
 const MIN_ITEMS_FOR_RATE = 30;
 const SENSORS = ["LINE-SNS-01", "LINE-SNS-02", "LINE-SNS-03"] as const;
 /** night parcels reach the belt / the dock this long after their truck arrived */
-const BELT_AFTER_ARRIVAL = 10 * MINUTE;
-const DOCK_AFTER_ARRIVAL = 25 * MINUTE;
 const MAX_SCAN_QUEUE = 20_000;
 const BUCKET_MS = 10 * MINUTE;
 
@@ -183,6 +185,8 @@ export class Engine {
   private readonly realNow: () => number;
   private seedValue: number;
   private degradationStartedAt: number | null;
+  /** devices under maintenance: until when (simulated time) */
+  private readonly maintenanceUntil = new Map<string, number>();
   /** routes of the most recently loaded day (depot + destinations rarely change) */
   private book: RouteBook | null = null;
 
@@ -280,9 +284,12 @@ export class Engine {
     this.scanQueue = [];
     this.courierQueue = [];
     this.pendingEtas.clear();
+    // maintenance windows are in simulated time: the replayed day starts without them
+    this.maintenanceUntil.clear();
     for (const d of this.devices.values()) {
       d.recent = [];
       d.lastScanAt = null;
+      if (d.status === "maintenance") d.status = "online";
     }
     if (this.deps.config.degradedDevice) this.degradationStartedAt = start + 30 * MINUTE;
     this.deps.clock.set(start);
@@ -345,14 +352,90 @@ export class Engine {
       await this.deps.store.setDeviceEnabled(code, change.enabled);
       if (change.enabled) d.lastHeartbeat = this.realNow();
     }
-    if (change.repair && this.deps.config.degradedDevice === code) {
-      this.degradationStartedAt = null;
-      d.recent = [];
-      this.rebuildScans();
-      await this.persist();
-    }
+    if (change.repair) await this.repair(code);
     await this.monitorDevices();
     return this.deviceList().find((x) => x.code === code) ?? null;
+  }
+
+  /**
+   * Clean the optics of the degraded scanner: its read rate is back to normal for the rest of
+   * the operating day. The optics get dirty again from the next day (15:30), so the guaranteed
+   * degradation scenario of the default seed stays for phase 6 (and restartDay starts it again).
+   */
+  private async repair(code: string): Promise<void> {
+    const d = this.devices.get(code);
+    if (!d) return;
+    d.recent = [];
+    if (this.deps.config.degradedDevice !== code) return;
+    const day = operatingDay(this.deps.clock.now());
+    this.degradationStartedAt = operatingDayStart(addDays(day, 1)) + 30 * MINUTE;
+    this.rebuildScans();
+    await this.persist();
+  }
+
+  /**
+   * WMS action "mark for maintenance" (app -> POST /internal/devices/:code/maintenance): the device
+   * shows status "maintenance" and sends no scans for `minutes` of simulated time (operators scan by
+   * hand meanwhile), then it is repaired.
+   */
+  async startMaintenance(code: string, minutes: number): Promise<DeviceInfo | null> {
+    if (!this.devices.has(code)) return null;
+    this.maintenanceUntil.set(code, this.deps.clock.now() + minutes * MINUTE);
+    await this.monitorDevices();
+    return this.deviceList().find((x) => x.code === code) ?? null;
+  }
+
+  /** maintenance windows that are over: repair the device */
+  private async finishMaintenance(now: number): Promise<void> {
+    for (const [code, until] of this.maintenanceUntil) {
+      if (now < until) continue;
+      this.maintenanceUntil.delete(code);
+      await this.repair(code);
+      await this.monitorDevices();
+    }
+  }
+
+  private inMaintenance(code: string, at: number): boolean {
+    const until = this.maintenanceUntil.get(code);
+    return until !== undefined && at < until;
+  }
+
+  /**
+   * What-if scenario of the current operating day (ADR-047): computed on copies, from now to the
+   * end of the day. null = the day is not loaded yet.
+   */
+  whatIf(list: Intervention[]): { result: WhatIfResult } | { errors: string[] } | null {
+    const now = this.deps.clock.now();
+    const state = this.days.get(operatingDay(now));
+    if (!state) return null;
+    const ctx = {
+      plan: state.plan,
+      manifests: state.manifests,
+      seed: this.seedValue,
+      forceCascade: this.deps.config.forceCascade,
+      routes: state.book,
+      model: this.readRateModel(),
+      devices: [...this.devices.values()].filter((d) => this.simulated(d.row.code)).map((d) => d.row),
+      now,
+    };
+    const errors = validateInterventions(ctx, list);
+    return errors.length > 0 ? { errors } : { result: runWhatIf(ctx, list) };
+  }
+
+  /** The app changed the plan (a trip moved to another door): reload it and rebuild future scans. */
+  async refreshPlan(): Promise<string[]> {
+    const days = [...this.days.keys()];
+    // fetch everything first, then swap without awaiting, so a tick never sees half a change
+    const plans = await Promise.all(days.map((day) => this.deps.app.getPlan(day)));
+    days.forEach((day, i) => {
+      const state = this.days.get(day);
+      const plan = plans[i];
+      if (!state || !plan) return;
+      state.plan = plan;
+      state.scenario = buildScenario(plan, { seed: this.seedValue, forceCascade: this.deps.config.forceCascade, routes: state.book });
+    });
+    this.rebuildScans(this.lastT);
+    return days;
   }
 
   /** Real heartbeat from an external device (Phase 6 scripts). */
@@ -472,7 +555,8 @@ export class Engine {
         if (!fastForward && ev.at > from) gate.push(ev);
       }
     }
-    await this.emitScans(scans.filter((s) => this.simulated(s.device)));
+    await this.emitScans(scans.filter((s) => this.simulated(s.device) && !this.inMaintenance(s.device, s.at)));
+    await this.finishMaintenance(now);
     await this.emitGate(gate);
     this.updateCouriers(now);
     this.updateTrips(now);
@@ -520,6 +604,7 @@ export class Engine {
       });
       const state: DayState = {
         plan,
+        book,
         scenario,
         manifests,
         scans: [],
@@ -573,66 +658,16 @@ export class Engine {
 
   /** Scans and gate passages of a day, fully determined by the scenario and the manifests. */
   private buildDayEvents(state: DayState): void {
-    const { plan, scenario, manifests } = state;
-    const model = this.readRateModel();
-    const scans: ScanEvent[] = [];
-    const outbound = plan.trips.filter((t) => t.kind === "outbound");
-    const barcodes = (dir: string): string[] => (manifests.get(dir) ?? []).map((p) => p.barcode);
-    // parcels on the night trucks can be scanned only after their truck arrived
-    const beltEarliest = new Map<string, number>();
-    const dockEarliest = new Map<string, number>();
-    for (const parcels of manifests.values()) {
-      for (const p of parcels) {
-        if (p.arrivesWithTripId === null) continue;
-        const arrive = scenario.schedules.get(p.arrivesWithTripId)?.arriveDepot;
-        if (arrive === undefined) continue;
-        beltEarliest.set(p.barcode, arrive + BELT_AFTER_ARRIVAL);
-        dockEarliest.set(p.barcode, arrive + DOCK_AFTER_ARRIVAL);
-      }
-    }
-    for (const trip of outbound) {
-      const s = scenario.schedules.get(trip.id);
-      const device = this.dockDevice(trip.doorCode);
-      if (!s || !device || s.loadStart === undefined || s.loadEnd === undefined) continue;
-      const foreign = outbound
-        .filter((o) => o.directionCode !== trip.directionCode)
-        .flatMap((o) => barcodes(o.directionCode));
-      scans.push(
-        ...loadingScans({
-          seed: this.seedValue,
-          day: plan.day,
-          key: `${trip.directionCode}-${String(trip.id)}`,
-          device,
-          start: s.loadStart,
-          end: s.loadEnd,
-          manifest: barcodes(trip.directionCode),
-          foreign,
-          model,
-          earliest: dockEarliest,
-        }),
-      );
-    }
-    const line = this.lineDevice();
-    if (line) {
-      const next = addDays(plan.day, 1);
-      const morning = [
-        ...outbound.filter((t) => t.directionType === "transit").map((t) => t.directionCode),
-        ...plan.localDirections,
-      ].flatMap((dir) => barcodes(dir));
-      scans.push(
-        ...lineScans({
-          seed: this.seedValue,
-          day: plan.day,
-          device: line,
-          start: zonedToUtc(next, "01:15"),
-          end: zonedToUtc(next, "05:30"),
-          parcels: morning,
-          model,
-          earliest: beltEarliest,
-        }),
-      );
-    }
-    state.scans = scans.sort((a, b) => a.at - b.at || a.device.localeCompare(b.device));
+    const { plan, scenario } = state;
+    state.scans = dayScans({
+      plan,
+      scenario,
+      manifests: state.manifests,
+      model: this.readRateModel(),
+      seed: this.seedValue,
+      dockDevice: (door) => this.dockDevice(door),
+      lineDevice: this.lineDevice(),
+    });
 
     const rng = rngFor(this.seedValue, plan.day, "gate");
     const gate: GateRow[] = [];
@@ -664,9 +699,8 @@ export class Engine {
     state.gate = gate.sort((a, b) => a.at - b.at);
   }
 
-  /** Recompute future scans after the read-rate model changed (scanner repaired). */
-  private rebuildScans(): void {
-    const now = this.deps.clock.now();
+  /** Recompute future scans after the read-rate model or the plan changed. */
+  private rebuildScans(now: number = this.deps.clock.now()): void {
     for (const state of this.days.values()) {
       this.buildDayEvents(state);
       const s = state.scans.findIndex((x) => x.at > now);
@@ -1019,7 +1053,8 @@ export class Engine {
       d.recent = d.recent.filter((r) => r.at > now - ROLLING_MS);
       const rate = d.recent.length >= MIN_ITEMS_FOR_RATE ? d.recent.filter((r) => r.ok).length / d.recent.length : null;
       let status: DeviceStatus = "online";
-      if (real - d.lastHeartbeat > OFFLINE_AFTER_MS) status = "offline";
+      if (this.maintenanceUntil.has(d.row.code)) status = "maintenance";
+      else if (real - d.lastHeartbeat > OFFLINE_AFTER_MS) status = "offline";
       else if (rate !== null && rate < this.deps.config.degradedThreshold) status = "degraded";
       if (status === d.status) continue;
       const previous = d.status;

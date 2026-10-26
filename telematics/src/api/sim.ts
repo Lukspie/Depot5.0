@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { SimClock } from "../clock/clock.js";
 import { MAX_SPEED, MIN_SPEED } from "../clock/clock.js";
 import type { Engine } from "../simulator/engine.js";
+import type { Intervention } from "../simulator/whatif.js";
 import type { TicketVerifier } from "../ws/ticket.js";
 import { roleGuard } from "./guards.js";
 
@@ -30,6 +31,7 @@ const clockSchema = {
 export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock, engine, verifier, serviceToken }) => {
   const admin = roleGuard(verifier, serviceToken, []);
   const staff = roleGuard(verifier, serviceToken, ["dispatcher", "security", "operator"]);
+  const dispatcher = roleGuard(verifier, serviceToken, ["dispatcher"]);
   const secured = { security: [{ bearerAuth: [] }] };
 
   app.get(
@@ -168,6 +170,56 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
     "/sim/scenario",
     { preHandler: staff, schema: { tags: ["simulation"], summary: "Prehľad scenára načítaných dní", ...secured } },
     () => ({ days: engine.scenarioSummary() }),
+  );
+
+  // what-if scenario of the digital shadow (ADR-047): a computation on copies, no live data changes
+  const tripId = { type: "integer", minimum: 1 } as const;
+  const device = { type: "string", minLength: 1, maxLength: 32 } as const;
+  const door = { type: "string", minLength: 1, maxLength: 16 } as const;
+  const intervention = (kind: string, props: Record<string, object>) =>
+    ({
+      type: "object",
+      required: ["kind", ...Object.keys(props)],
+      additionalProperties: false,
+      properties: { kind: { const: kind }, ...props },
+    }) as const;
+  app.post<{ Body: { interventions: Intervention[] } }>(
+    "/sim/what-if",
+    {
+      preHandler: dispatcher,
+      schema: {
+        tags: ["simulation"],
+        summary: "Scenár čo ak: KPI plán vs. scenár do konca prevádzkového dňa (dispečer)",
+        ...secured,
+        body: {
+          type: "object",
+          required: ["interventions"],
+          additionalProperties: false,
+          properties: {
+            interventions: {
+              type: "array",
+              minItems: 1,
+              maxItems: 10,
+              items: {
+                oneOf: [
+                  intervention("delay", { tripId, minutes: { type: "integer", minimum: -120, maximum: 600 } }),
+                  intervention("device_outage", { device }),
+                  intervention("read_rate", { device, rate: { type: "number", minimum: 0, maximum: 1 } }),
+                  intervention("extra_scanner", { doorCode: door }),
+                  intervention("move_trip", { tripId, doorCode: door }),
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    (req, reply) => {
+      const out = engine.whatIf(req.body.interventions);
+      if (out === null) return reply.code(503).send({ error: "operating day not loaded yet" });
+      if ("errors" in out) return reply.code(400).send({ error: out.errors.join("; ") });
+      return out.result;
+    },
   );
 
   app.put<{ Params: { code: string }; Body: { enabled?: boolean; repair?: boolean } }>(

@@ -24,6 +24,8 @@ RUN mkdir -p src/depotrack && touch src/depotrack/__init__.py \
 
 COPY app/src ./src
 COPY app/tests ./tests
+# shared test cases checked by both backends (ADR-047)
+COPY contracts ./contracts
 COPY app/alembic.ini ./
 COPY app/alembic ./alembic
 RUN pip install --no-deps .

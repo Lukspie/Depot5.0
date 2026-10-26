@@ -51,7 +51,7 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
    - V docs vysvetliť rozdiel **model / tieň / dvojča**. Uviesť, čo chýba k dvojčaťu (priame príkazy fyzickým zariadeniam) ako „ďalší rozvoj“.
    - *Hotové (ADR-045).*
 
-## Fáza 5 – Digitálny tieň (`/shadow`)
+## Fáza 5 – Digitálny tieň (`/shadow`) *(hotové, ADR-046 až 049, docs/fazy/faza-5-digitalny-tien.md)*
 Podľa §7 zadania, plus nasledujúce rozšírenia.
 
 **Schválené s plánom Fázy 5 (všetky odporúčania z otvorených otázok prijaté):**

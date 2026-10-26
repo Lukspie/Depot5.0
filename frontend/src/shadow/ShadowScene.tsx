@@ -1,6 +1,6 @@
 import { ContactShadows } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 import type { Shadow } from "../api/shadow";
 import { CameraRig } from "./CameraRig";
@@ -14,7 +14,7 @@ import { devicePosition, type DepotLayout } from "./layout";
 import { ParcelFlow } from "./ParcelFlow";
 import { cssColor } from "./parts";
 import { useShadowStore } from "./store";
-import { Truck } from "./Truck";
+import { LEAVE_MS, Truck } from "./Truck";
 import { YardCars } from "./YardCars";
 
 export type Selection = { kind: "dock" | "device"; code: string } | null;
@@ -69,6 +69,30 @@ function useBrand(): THREE.Color {
   }, [theme]);
 }
 
+interface TruckSpot {
+  key: string;
+  x: number;
+  z: number;
+  type: string;
+  door: string;
+}
+
+/** Trucks that just left stay for LEAVE_MS with `leaving`, so they drive away instead of vanishing. */
+function useDepartures(current: TruckSpot[]): TruckSpot[] {
+  const previous = useRef<TruckSpot[]>([]);
+  const [leaving, setLeaving] = useState<TruckSpot[]>([]);
+  useEffect(() => {
+    const here = new Set(current.map((t) => t.key));
+    const gone = previous.current.filter((t) => !here.has(t.key));
+    previous.current = current;
+    if (gone.length === 0) return;
+    const goneKeys = new Set(gone.map((t) => t.key));
+    setLeaving((l) => [...l.filter((t) => !here.has(t.key) && !goneKeys.has(t.key)), ...gone]);
+    window.setTimeout(() => setLeaving((l) => l.filter((t) => !goneKeys.has(t.key))), LEAVE_MS);
+  }, [current]);
+  return leaving;
+}
+
 function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps">) {
   const brand = useBrand();
   const devices = useShadowStore((s) => s.devices);
@@ -78,7 +102,8 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
   const selectDock = (code: string) => onSelect({ kind: "dock", code });
   const selectDevice = (code: string) => onSelect({ kind: "device", code });
 
-  const trucks: { key: string; x: number; z: number; type: string; door: string }[] = [];
+  const trucks = useMemo(() => {
+  const trucks: TruckSpot[] = [];
   if (layout.depot.kind === "depot") {
     for (const d of live?.docks ?? []) {
       const t = d.trip;
@@ -96,6 +121,9 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
       if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, type: "linehaul", door: r.code });
     });
   }
+  return trucks;
+  }, [layout, live, doors]);
+  const departing = useDepartures(trucks);
 
   const ringAt = (code: string): [number, number] | null => {
     const door = doors.get(code);
@@ -118,6 +146,9 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
       )}
       {trucks.map((t) => (
         <Truck key={t.key} x={t.x} z={t.z} directionType={t.type} onSelect={() => selectDock(t.door)} />
+      ))}
+      {departing.map((t) => (
+        <Truck key={`leaving-${t.key}`} x={t.x} z={t.z} directionType={t.type} leaving />
       ))}
       {Object.values(devices).map((d) => {
         const p = devicePosition(layout, d);

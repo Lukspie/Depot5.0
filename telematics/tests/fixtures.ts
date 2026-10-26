@@ -213,9 +213,13 @@ export class FakeApp implements AppApi {
   readonly calls: string[] = [];
   down = false;
 
+  /** door changes made "in the app" (trip id -> door), applied to the plan */
+  readonly doorOverrides = new Map<number, string>();
+
   planFor(day: string): PlanWithLocal {
     const offset = (Date.parse(day) / 86_400_000) % 1000;
-    return makePlan(day, offset * 100);
+    const plan = makePlan(day, offset * 100);
+    return { ...plan, trips: plan.trips.map((t) => ({ ...t, doorCode: this.doorOverrides.get(t.id) ?? t.doorCode })) };
   }
 
   getPlan(day: string): Promise<PlanWithLocal> {

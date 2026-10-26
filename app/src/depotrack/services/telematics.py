@@ -58,6 +58,39 @@ def devices() -> list[dict[str, Any]]:
     return data
 
 
+def reload_plan() -> bool:
+    """The plan changed (trip moved to another door): telematics reloads it (ADR-048)."""
+    try:
+        httpx.post(
+            f"{get_settings().telematics_internal_url}/internal/plan/reload",
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        ).raise_for_status()
+    except httpx.HTTPError as exc:
+        log.warning("plan reload in telematics failed: %s", exc)
+        return False
+    return True
+
+
+def start_maintenance(code: str, minutes: int) -> dict[str, Any] | None:
+    """Put a device into maintenance in the simulator; None if telematics is unreachable."""
+    global _devices_cache
+    try:
+        resp = httpx.post(
+            f"{get_settings().telematics_internal_url}/internal/devices/{code}/maintenance",
+            json={"minutes": minutes},
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data: dict[str, Any] = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        log.warning("maintenance of %s in telematics failed: %s", code, exc)
+        return None
+    _devices_cache = None
+    return data
+
+
 _positions: dict[str, tuple[float, dict[str, Any] | None]] = {}
 
 
