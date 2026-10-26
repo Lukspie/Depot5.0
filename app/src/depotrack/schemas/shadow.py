@@ -68,6 +68,7 @@ class ParcelStep(CamelModel):
 
 
 class ParcelLocate(CamelModel):
+    id: int
     barcode: str
     status: ParcelStatus
     direction_code: str

@@ -27,6 +27,8 @@ export interface Shadow {
     readRate: number | null;
     unidentified: number;
     openAlerts: number;
+    waveKind: "evening" | "morning";
+    parcelsWave: number;
   } | null;
   docks: ShadowDock[];
   staged: { doorCode: string; directionCode: string; parcels: number }[];
@@ -42,6 +44,7 @@ export interface ShadowDockDetail {
 }
 
 export interface ParcelLocate {
+  id: number;
   barcode: string;
   status: ParcelStatus;
   directionCode: string;

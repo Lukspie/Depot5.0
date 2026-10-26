@@ -1,4 +1,6 @@
-import { Truck } from "lucide-react";
+import { ExternalLink, Truck } from "lucide-react";
+import { Link } from "react-router";
+import { useMe } from "../../api/auth";
 import { useDockDetail } from "../../api/shadow";
 import { Badge, EmptyState, KeyValue, Progress, SidePanel, Spinner } from "../../components/ui";
 import { DIRECTION_TYPE, TRIP_STATUS, delayLabel, delayTone, hhmm } from "../../domain/labels";
@@ -12,6 +14,7 @@ import { AlertList, MoveTrip } from "./Actions";
  */
 export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; layout: DepotLayout; onClose: () => void; onMoved: (door: string) => void }) {
   const canAct = useCanAct();
+  const isAdmin = useMe().data?.role === "admin";
   const q = useDockDetail(code);
   const dock = q.data?.dock;
   const t = dock?.trip;
@@ -21,6 +24,7 @@ export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; l
     <SidePanel
       open
       onClose={onClose}
+      inset="md:top-[76px] md:right-[68px]"
       icon={<Truck size={22} />}
       eyebrow={t ? `Kamión · ${DIRECTION_TYPE[t.directionType]}` : "Nakládková brána"}
       title={t ? `${t.directionName} · ${t.vehiclePlate}` : `Brána ${code}`}
@@ -86,6 +90,18 @@ export function TruckPanel({ code, layout, onClose, onMoved }: { code: string; l
             <p className="text-ink-muted mt-1 text-xs">… a ďalších {detail.missingCount - detail.missing.length}</p>
           )}
           {canAct && <MoveTrip dock={dock} layout={layout} onMoved={onMoved} />}
+          {canAct && (
+            <div className="border-line mt-4 flex flex-wrap gap-4 border-t pt-3 text-sm">
+              <Link to={`/fleet?plate=${encodeURIComponent(t.vehiclePlate)}`} className="text-brand-700 flex items-center gap-1 underline">
+                Vozidlo na mape <ExternalLink size={13} />
+              </Link>
+              {isAdmin && (
+                <Link to={`/loading?door=${encodeURIComponent(code)}`} className="text-brand-700 flex items-center gap-1 underline">
+                  Nakládka pri bráne <ExternalLink size={13} />
+                </Link>
+              )}
+            </div>
+          )}
         </>
       )}
     </SidePanel>

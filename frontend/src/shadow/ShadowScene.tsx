@@ -3,7 +3,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 import type { Shadow } from "../api/shadow";
-import { CameraRig } from "./CameraRig";
+import { CameraRig, type CameraApi } from "./CameraRig";
 import { Conveyor } from "./Conveyor";
 import { DevicePin } from "./DevicePin";
 import { Dock, StagingBay } from "./Dock";
@@ -34,6 +34,8 @@ interface Props {
   marks?: SceneMarks;
   /** measurement mode: render every frame and report fps */
   onFps?: (fps: number) => void;
+  /** camera buttons of the page */
+  onCamera?: (api: CameraApi) => void;
 }
 
 /** Re-render on demand: whenever the live store changes and the tab is visible. */
@@ -93,7 +95,7 @@ function useDepartures(current: TruckSpot[]): TruckSpot[] {
   return leaving;
 }
 
-function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps">) {
+function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps" | "onCamera">) {
   const brand = useBrand();
   const devices = useShadowStore((s) => s.devices);
   const doors = useMemo(() => new Map(layout.doors.map((d) => [d.code, d])), [layout]);
@@ -181,7 +183,7 @@ function Depot({ layout, live, selection, onSelect, marks }: Omit<Props, "onFps"
  * The 3D scene of the digital shadow (zadanie §7, ADR-046): React Three Fiber, rendered on demand
  * (frameloop="demand"); live updates, moving parcels and arriving trucks request frames themselves.
  */
-export function ShadowScene({ onFps, ...props }: Props) {
+export function ShadowScene({ onFps, onCamera, ...props }: Props) {
   return (
     <Canvas
       shadows="percentage"
@@ -207,7 +209,7 @@ export function ShadowScene({ onFps, ...props }: Props) {
         shadow-camera-bottom={-110}
       />
       <YardGround layout={props.layout} />
-      <CameraRig>
+      <CameraRig onReady={onCamera}>
         <Depot {...props} />
       </CameraRig>
       <ContactShadows position={[0, 0.12, -10]} scale={240} blur={2.4} opacity={0.3} far={18} resolution={1024} />

@@ -44,7 +44,7 @@ def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
     day = clk.operating_day
     look = Lookup(db)
     trips = sorted(trips_of(db, day), key=sort_key)
-    kpis, rows = day_overview(db, day, trips, look)
+    kpis, rows = day_overview(db, day, trips, look, clk.sim_time)
     alerts = open_alerts(db)
     return DashboardOut(
         clock=clk,

@@ -96,3 +96,19 @@ def test_shadow_role_matrix(
 
 def test_shadow_needs_login(client: TestClient) -> None:
     assert client.get("/api/shadow/BUD").status_code == 401
+
+
+@pytest.mark.usefixtures("seeded")
+def test_kpi_parcels_of_the_current_wave(
+    viewer: TestClient, db: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from depotrack.services import telematics
+
+    monkeypatch.setattr(telematics, "sim_now", lambda: local(18, 0))
+    evening = viewer.get("/api/shadow/BUD").json()["kpis"]
+    monkeypatch.setattr(telematics, "sim_now", lambda: local(3, 0, DAY.replace(day=DAY.day + 1)))
+    morning = viewer.get("/api/shadow/BUD").json()["kpis"]
+    assert evening["waveKind"] == "evening" and morning["waveKind"] == "morning"
+    assert evening["parcelsWave"] > 0 and morning["parcelsWave"] > 0
+    # the two waves split the day's parcels
+    assert evening["parcelsWave"] + morning["parcelsWave"] == evening["parcelsTotal"]

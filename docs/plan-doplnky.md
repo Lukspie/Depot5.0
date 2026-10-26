@@ -109,6 +109,20 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
 - **Jedna zdieľaná knižnica 3D komponentov** pre `/shadow` aj 3D halu na mape (dnes `components/map/depot3d.ts` v čistom three.js).
 
 ## Fáza 5c – Digitálny tieň v2: layout podľa referencie a reálne brány (pred Fázou 5b)
+
+**Schválené s plánom 5c (kroky 5c-1 layout, 5c-2 scéna v2, 5c-3 reálne brány, 5c-4 GLTF a hub, každý vlastný commit):**
+- *5c-1 hotové:* plávajúce panely nad scénou, lišta tieňa, KPI „balíky v aktuálnej vlne“, ovládanie kamery, zoznam Brány/Kamióny/Zariadenia, sledovanie balíka, scenár v draweri, odkazy na `/parcels/:id`, `/fleet?plate=`, `/loading?door=`.
+- Brána má dve polia: `door_drive` (`electric` | `manual`) a `dock_equipment` (`dock_leveler` | `telescopic_conveyor` | `none`). Dočasný seed, kým tím nedodá reálne rozloženie Budimíra:
+  - LD-01–02: `electric` + `dock_leveler` (2 hlavné s rampou),
+  - LD-03–05: `electric` + `telescopic_conveyor` (plošina),
+  - LD-06–08: `electric` + `none`,
+  - kuriérske SB: `manual` + `none`.
+- `door_sensor` nesmie vstupovať do čítanosti v KPI, do `device_metrics_minutely` ani do dát pre prediktívnu údržbu (Fáza 6). Pokryje to test.
+- `*.glb binary` do `.gitattributes` pred prvým modelom, modely spolu do ~2 MB.
+- KPI „balíky dňa“ sa mení na **„balíky v aktuálnej vlne“** podľa zadania (5c-1):
+  - večerná vlna (15:00–01:00) sú balíky dňa okrem nočných,
+  - ranná vlna (01:00–15:00) sú balíky z nočných kamiónov.
+- Hub sa presunie do Ivanky pri Dunaji, len ak to pokryje offline cestná sieť.
 Spätná väzba tímu na Fázu 5: scéna funguje, ale **layoutom sa nepodobá na referenciu** ([docs/design/reference.png](design/reference.png)).
 Dnes je `/shadow` stránka s kartami pod sebou a malou scénou v karte, takže sa scrolluje. Cieľom je, aby **layoutovo** zodpovedala referencii.
 Nemusí ísť o presnú kópiu. Podrobnejšie veci sa otvárajú v overlayi alebo na samostatnej obrazovke.

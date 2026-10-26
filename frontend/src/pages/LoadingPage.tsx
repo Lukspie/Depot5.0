@@ -112,7 +112,8 @@ function ManualScan({ door }: { door: string }) {
 
 export function LoadingPage() {
   const doors = useDoors();
-  const [chosen, setChosen] = useState<string | null>(loadDoor);
+  // /loading?door=LD-02 (link from the digital shadow) wins over the remembered door
+  const [chosen, setChosen] = useState<string | null>(() => new URLSearchParams(window.location.search).get("door") ?? loadDoor());
   // until the operator picks one: the first door where a truck is being loaded
   const fallback = (doors.data?.find((d) => d.trip && ["at_door", "loading"].includes(d.trip.status)) ?? doors.data?.[0])?.code;
   const door = chosen ?? fallback ?? null;

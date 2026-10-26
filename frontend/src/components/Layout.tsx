@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useLogout, useMe } from "../api/auth";
 import { canAccess, NAV, ROLE_LABEL } from "../auth/roles";
 import { useSimClock, useSocketStatus } from "../hooks/telematics";
@@ -81,6 +81,8 @@ export function Layout() {
   const me = useMe();
   const logout = useLogout();
   const navigate = useNavigate();
+  // the digital shadow uses the whole area under the top bar (plan-doplnky 5c)
+  const fullBleed = useLocation().pathname.startsWith("/shadow");
   const user = me.data;
   const items = user ? NAV.filter((item) => canAccess(user.role, item.roles)) : [];
 
@@ -156,7 +158,7 @@ export function Layout() {
         )}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className={`flex min-w-0 flex-1 flex-col ${fullBleed ? "md:h-screen" : ""}`}>
         <div className="flex items-center justify-end gap-2 px-4 pt-4 md:px-8">
           <LiveClock />
           <ThemeSwitch />
@@ -171,7 +173,7 @@ export function Layout() {
             </button>
           )}
         </div>
-        <main className="min-w-0 flex-1 p-4 md:px-8 md:pt-2 md:pb-8">
+        <main className={fullBleed ? "relative min-h-0 min-w-0 flex-1 md:px-4 md:pt-2 md:pb-4" : "min-w-0 flex-1 p-4 md:px-8 md:pt-2 md:pb-8"}>
           <Outlet />
         </main>
       </div>

@@ -41,7 +41,7 @@ export function DevicePin({ code, x, z, height, selected, onSelect }: { code: st
         <boxGeometry args={[0.15, height, 0.15]} />
         <meshStandardMaterial color="#9c9c97" />
       </mesh>
-      <Html position={[0, height + 0.8, 0]} center zIndexRange={[20, 10]}>
+      <Html position={[0, height + 0.8, 0]} center zIndexRange={[8, 5]}>
         <button
           type="button"
           data-pin

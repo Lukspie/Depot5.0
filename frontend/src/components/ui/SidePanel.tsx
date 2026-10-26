@@ -11,13 +11,15 @@ interface Props {
   icon?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
+  /** desktop position inside the nearest positioned parent */
+  inset?: string;
 }
 
 /**
  * Detail panel floating on the right (desktop) or as a bottom sheet (mobile), like the object
  * detail in the reference. Closes with Escape.
  */
-export function SidePanel({ open, onClose, eyebrow, title, subtitle, icon, actions, children }: Props) {
+export function SidePanel({ open, onClose, eyebrow, title, subtitle, icon, actions, children, inset = "md:top-4 md:right-4" }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -31,7 +33,7 @@ export function SidePanel({ open, onClose, eyebrow, title, subtitle, icon, actio
   return (
     <aside
       aria-label="Detail"
-      className="bg-surface shadow-float fixed inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-2xl md:absolute md:inset-x-auto md:top-4 md:right-4 md:bottom-auto md:max-h-[calc(100%-2rem)] md:w-[26rem] md:rounded-2xl"
+      className={`bg-surface shadow-float fixed inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-2xl md:absolute md:inset-x-auto ${inset} md:bottom-auto md:max-h-[calc(100%-2rem)] md:w-[26rem] md:rounded-2xl`}
     >
       <header className="border-line sticky top-0 z-10 flex items-start gap-3 border-b bg-inherit px-5 py-4">
         {icon !== undefined && (

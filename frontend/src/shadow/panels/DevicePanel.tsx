@@ -38,6 +38,7 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
     <SidePanel
       open
       onClose={onClose}
+      inset="md:top-[76px] md:right-[68px]"
       icon={<ScanLine size={22} />}
       eyebrow={KIND[d?.kind ?? ""] ?? "Zariadenie"}
       title={code}

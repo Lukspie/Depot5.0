@@ -102,7 +102,7 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
     kpis = None
     if d.kind == DepotKind.DEPOT:
         trips = sorted(trips_of(db, clk.operating_day), key=sort_key)
-        kpis, _rows = day_overview(db, clk.operating_day, trips, look)
+        kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time)
         doors = sorted(
             (
                 x
@@ -232,6 +232,7 @@ def locate_parcel(barcode: Barcode, _: Viewer, db: DbSession) -> ParcelLocate:
     last_trip = next((e.trip_id for e in reversed(events) if e.trip_id is not None), None)
     direction = look.directions[parcel.direction_id]
     return ParcelLocate(
+        id=parcel.id,
         barcode=parcel.barcode,
         status=parcel.status,
         direction_code=direction.code,

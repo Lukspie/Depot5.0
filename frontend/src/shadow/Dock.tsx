@@ -32,7 +32,7 @@ export function Dock({ door, brand, label, onSelect }: { door: LayoutDoor; brand
         <boxGeometry args={[5, 5, 18]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      <Html position={[0, 5.6, -2.2]} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }} className="hidden md:block">
+      <Html position={[0, 5.6, -2.2]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }} className="hidden md:block">
         <div className="bg-surface/90 shadow-card rounded-md px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap">
           {door.code}
           {label ? <span className="text-ink-muted font-normal"> · {label}</span> : null}
