@@ -28,6 +28,7 @@ Ak číslo chýba, zisti ďalšiu nehotovú fázu z `git log --oneline` a `docs/
 
 ## C. Koniec fázy (`koniec`)
 1. **Kontroly** (všetky musia prejsť):
+   - najprv `docker compose build app`, inak testy bežia nad starým kódom v image
    - `docker compose run --rm app ruff check src tests`
    - `docker compose run --rm app mypy src`
    - `docker compose run --rm app pytest`

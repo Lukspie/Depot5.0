@@ -27,6 +27,69 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
 - 3D hala na mape (Three.js custom layer) z rovnakého rozloženia ako `/twin`, klik na sklad otvorí `/twin?depot=…`.
 - Offline cestná sieť a reálne adresy z OSM, routing A* v telematike bez internetu za behu.
 
+## Pred Fázou 5 (schválené spolu s Fázou 4, ADR-041 až 043 OK)
+1. **Rate limit `/api/track` – nová stratégia.** Pri limite na IP demo spadne pri 3 otvorených oknách (polling 12/min na okno).
+   - Neplatný alebo neexistujúci token: prísny limit na IP (napr. 10/min) ako ochrana proti hádaniu.
+   - Platný token: limit podľa tokenu (napr. 30/min), nie podľa IP.
+   - Podpora forwarded hlavičiek pre nasadenie za proxy: `uvicorn --proxy-headers`, `forwarded-allow-ips` z `.env`.
+   - Test: 5 súbežných klientov s platným tokenom nesmie dostať 429.
+   - Upraviť ADR-042.
+2. **Stav Fázy 3b:**
+   - poslať screenshot `/fleet` s priblíženým Budimírom (3D hala na mape),
+   - potvrdiť, že hub (druhý sklad) a `depot_id` v modeli sú hotové (podľa ADR-039 áno),
+   - ak niečo chýba, dokončiť to ako prvé.
+3. **Premenovanie projektu na „Depot 5.0“** (v kóde môže ostať `depotrack`).
+   - Upraviť UI, README a `docs/`.
+   - Tému „SPS“ premenovať na neutrálnu **„Oranžová“** a v UI nepoužívať názov SPS.
+   - Depo je „Budimír“.
+4. **Terminológia „digitálny tieň“ (digital shadow).** Pojem „digitálne dvojča / digital twin“ sa nepoužíva: garant ho vyžaduje len pre systém, ktorý priamo riadi fyzické zariadenia.
+   - Tieň znamená: realita → model automaticky, model → realita len cez rozhodnutia človeka.
+   - Premenovať v UI, kóde (`/twin` → `/shadow`, `src/twin` → `src/shadow`), dokumentácii, ADR a v `docs/PROMPT.md`.
+   - V docs vysvetliť rozdiel **model / tieň / dvojča**. Uviesť, čo chýba k dvojčaťu (priame príkazy fyzickým zariadeniam) ako „ďalší rozvoj“.
+
+## Fáza 5 – Digitálny tieň (`/shadow`)
+Podľa §7 zadania, plus nasledujúce rozšírenia.
+
+**Simulácia scenárov (what-if) – panel „Scenár“:**
+- Typy zásahov:
+  - meškanie jazdy o X min,
+  - výpadok zariadenia,
+  - zmena čítanosti skenera,
+  - pridanie skenera na bránu,
+  - presun jazdy na inú bránu.
+- Telematika spustí **kópiu simulácie** od aktuálneho času do konca vlny:
+  - zrýchlene,
+  - bez zápisu do živých dát,
+  - deterministicky.
+- Výsledok je porovnanie KPI **plán vs. scenár**:
+  - meškanie prechodov,
+  - kaskádové varovania,
+  - neidentifikované balíky,
+  - zlé smery.
+- Dotknuté objekty sa zvýraznia v scéne.
+
+**Akcie WMS zo scény** (cez bežné API s RBAC):
+- presun jazdy na inú bránu,
+- označenie zariadenia na údržbu,
+- potvrdenie alarmu.
+
+**Architektúra 3D:**
+- Ostávame na **React + Vite + R3F**, nie Next.js. Zapísať ADR s dôvodmi:
+  - app je za loginom,
+  - SSR nefunguje pre 3D scénu,
+  - frontend musí servírovať app (4 kontajnery).
+- Bundle:
+  - `/shadow` a 3D vrstva mapy cez `React.lazy` a dynamický import,
+  - three.js a R3F nesmú byť v hlavnom bundli,
+  - overiť analýzou bundlu (`rollup-plugin-visualizer`), výsledok dať do docs.
+- Používať hotové komponenty z **drei** (`Instances`, `Html`, `Bounds`, `useGLTF`, `Detailed`, `ContactShadows`, `OrbitControls`), nevymýšľať vlastné.
+- Malé komponenty v `src/shadow/` (`Hall`, `Conveyor`, `Dock`, `Truck`, `DevicePin`, `ParcelFlow`, `CameraRig`). Rozloženie len z `/api/layout`.
+- Dáta a výkon:
+  - vysokofrekvenčné WebSocket dáta do **zustand** store, v scéne ich čítať cez refy v `useFrame` (bez re-renderu pri každom skene),
+  - React state len pre panely a výber,
+  - `frameloop="demand"` alebo nižšie fps, keď sa nič nehýbe alebo karta nie je viditeľná.
+- **Jedna zdieľaná knižnica 3D komponentov** pre `/shadow` aj 3D halu na mape (dnes `components/map/depot3d.ts` v čistom three.js).
+
 ## Fáza 5b – UX review (po Fáze 5)
 - Prejsť všetky obrazovky za každú rolu a urobiť screenshoty pri 3 šírkach. Spísať zoznam problémov a opraviť ich.
 - Osobitne skontrolovať:
@@ -36,6 +99,29 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
 
 ## Fáza 7 – doplnky
 - **Offline PMTiles výrez SR** ako záloha mapového podkladu pre obhajobu bez internetu: súbor servíruje app, ostávajú 4 kontajnery (ADR-040).
+- **Deprecation warning v testoch app** (Starlette `TestClient` nad `httpx`): odsúhlasené vyriešiť až vo Fáze 7.
+
+## Otvorené otázky (zatiaľ nerozhodnuté)
+- **Limit pre platný token na `/api/track`:**
+  - zadanie bodu 1 navrhuje napr. 30/min,
+  - 3 okná s tým istým odkazom pri pollingu každých 5 s dajú 36/min,
+  - návrh: 60/min na token (zvládne ~5 okien jedného odkazu).
+- **„SPS“ mimo UI textov:**
+  - čiarové kódy balíkov majú prefix `SPS…` (zobrazujú sa v UI),
+  - text simulovanej SMS začína „SPS:“,
+  - `docs/PROMPT.md` a ADR opisujú kontext SPS.
+  - Treba rozhodnúť, či zmeniť prefix kódov pre nové dni a či kontext SPS v dokumentácii ponechať.
+- **3D stack pre Fázu 5:**
+  - R3F 9 a drei 10 vyžadujú React 19, projekt je na React 18. Možnosti:
+    - upgrade na React 19,
+    - R3F 8 a drei 9 (kompatibilita s three 0.186 neoverená).
+  - Zdieľaná knižnica pre mapu potrebuje most R3F ↔ MapLibre custom layer. Možnosti:
+    - `react-three-map`, ktorý vyžaduje `react-map-gl` (dnešný `MapView` používa čistý maplibre-gl),
+    - vlastný most cez R3F `createRoot` (zadanie však žiada nevymýšľať vlastné).
+- **Jednorazová chyba v testoch app:**
+  - pri behu podmnožiny testov raz padol `test_depots` s `cache lookup failed for type`,
+  - celý beh aj beh z čistého klonu prešli,
+  - sledovať, či sa zopakuje.
 
 ## Pravidlá práce
 - `docker compose down -v` ani mazanie volumes sa nespúšťa bez výslovného súhlasu.

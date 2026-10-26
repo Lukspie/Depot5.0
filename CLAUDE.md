@@ -25,7 +25,7 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 | Čo | Príkaz |
 | --- | --- |
 | Spustiť všetko | `docker compose up --build` |
-| Testy app (potrebujú DB, ADR-015) | `docker compose run --rm app pytest` |
+| Testy app (potrebujú DB, ADR-015) | `docker compose run --rm app pytest`. Image má kód napevno: po zmene najprv `docker compose build app`, alebo namontuj zdrojáky (Lessons learned) |
 | Lint / typy app | `docker compose run --rm app ruff check src tests` · `docker compose run --rm app mypy src` |
 | Telematika | `cd telematics && npm run lint && npm run typecheck && npm test` |
 | Frontend | `cd frontend && npm run lint && npm run typecheck` |
@@ -40,7 +40,15 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 - Typy všade (mypy strict, strict TS). Nové závislosti len s odôvodnením v ADR.
 - Používaj komponenty z `frontend/src/components/ui`. Layout kontroluj pri 1280, 1440 a 390 px.
 - Nejasnosť: zvoľ rozumný default a zapíš krátke ADR (kontext, rozhodnutie, dôsledok). Odchýlku od zadania povedz otvorene.
-- **Terminológia:** 3D pohľad `/twin` nazývaj **digitálny tieň** (digital shadow), nie „digitálne dvojča“. Dvojča by muselo riadiť fyzickú stranu, tieň ju len zrkadlí (odporúčanie cvičiaceho). Route `/twin` a názvy v kóde môžu ostať.
+- **Terminológia:** 3D pohľad nazývaj **digitálny tieň** (digital shadow), nikdy „digitálne dvojča / digital twin“. Dvojča by muselo priamo riadiť fyzické zariadenia, tieň ich len zrkadlí (požiadavka garanta). Pôvodná výnimka „route `/twin` a názvy v kóde môžu ostať“ už neplatí: pred Fázou 5 sa premenuje `/twin` → `/shadow` a `src/twin` → `src/shadow` (`docs/plan-doplnky.md`). Dvojča spomínaj len ako „ďalší rozvoj“.
+- **Názov:** projekt sa navonok volá **„Depot 5.0“** (v kóde môže ostať `depotrack`). V UI nepoužívaj názov SPS. Téma „SPS“ sa volá **„Oranžová“**. Depo je „Budimír“.
+- **Simulátor za behu nevolá internet.** Determinizmus z Fázy 2 musí ostať. Nové náhodné rozhodnutia dostanú vlastný prúd `rngFor(seed, deň, …)`.
+- **Git:** commituj len lokálne, remote zatiaľ nie je nastavený (nepushuj).
+- **Test z čistého klonu bez volumes:**
+  - naklonuj repo do dočasného priečinka a skopíruj `.env.example` → `.env`,
+  - hlavný stack len zastav (`docker compose stop`), aby sa uvoľnili porty,
+  - spusti `docker compose -p dtclean -f docker-compose.yml -f tmpfs.yml up -d --build`, kde `tmpfs.yml` (mimo repa) dá pre `db-wms` aj `db-telemetry` `volumes: !reset []` a `tmpfs: [/var/lib/postgresql/data]` a na najvyššej úrovni `volumes: !reset {}`,
+  - na konci `docker compose -p dtclean … down` (bez `-v`, volumes nevznikli) a hlavný stack znova `up -d`.
 - Pracuj po fázach. Na začiatku a konci fázy použi skill `/faza`. Po fáze sa zastav a počkaj na potvrdenie.
 
 ## Automatické kontroly (`.claude/`)
@@ -53,3 +61,7 @@ Sem pridaj krátky riadok vždy, keď narazíš na chybu, ktorá by sa mohla zop
 Formát: `- [oblasť] čo sa stalo → ako to robiť správne`. Keď sekcia narastie nad ~30 riadkov, zlúč podobné body.
 
 - [docs] Názov „digitálne dvojča“ v zadaní je zastaraný → v UI a dokumentácii používaj „digitálny tieň“.
+- [frontend] Projekt nemá konfiguráciu Prettier. `npx prettier --write` na celé priečinky preformátoval 9 nedotknutých stránok → neformátuj hromadne, drž štýl okolitého kódu (dlhé riadky ~130 znakov).
+- [app] Balík `depotrack` je v image nainštalovaný ne-editovateľne, `docker compose run app …` testuje starý kód → bez rebuildu namontuj zdrojáky: `docker compose run --rm -e PYTHONPATH=/app/src -v "$(pwd -W)/app/src:/app/src" -v "$(pwd -W)/app/tests:/app/tests" app pytest` (Git Bash: `MSYS_NO_PATHCONV=1`).
+- [shell] Bash heredoc so zložitým Python/TS obsahom (úvodzovky, `$`, backticky) padá → skript na úpravy zapíš do súboru v scratchpade a spusti ho. V Git Bash daj pred príkazy s cestami ako `/admin` prefix `MSYS_NO_PATHCONV=1`.
+- [docs] Časy v `toISOString()` sú v UTC. Pri odhade návratu kuriérov to dalo omyl o 1 h → lokálny čas (Europe/Bratislava) over cez `localHhmm`.
