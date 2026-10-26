@@ -100,7 +100,7 @@ export function BoardPage() {
           <Logo size={56} />
           <div>
             <h1 className="text-4xl font-bold">Príchody a odchody</h1>
-            <p className="text-xl text-white/60">Prekládkové depo Košice{b?.clock.wave ? ` · ${WAVE_LABEL[b.clock.wave] ?? ""}` : ""}</p>
+            <p className="text-xl text-white/60">Prekládkové depo Budimír{b?.clock.wave ? ` · ${WAVE_LABEL[b.clock.wave] ?? ""}` : ""}</p>
           </div>
         </div>
         <div className="text-right">

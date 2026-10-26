@@ -332,3 +332,15 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Scenáre what-if vo Fáze 5 pobežia v kópii simulácie a živé dáta nezmenia. Akcie zo scény pôjdu cez bežné API s RBAC, teda vždy ako rozhodnutie prihláseného človeka.
   - **Čo chýba k dvojčaťu (ďalší rozvoj):** priame príkazy fyzickým zariadeniam (napr. zastavenie alebo prestavenie triediaceho pásu, prepnutie výhybky k bráne, reštart skenera, otvorenie vjazdovej závory) cez riadiacu vrstvu (PLC/OPC UA, MQTT) s bezpečnostnými blokovaniami, potvrdením vykonania a auditom. Model by potom realitu nielen zrkadlil, ale aj automaticky riadil.
 - **Dôsledok:** Terminológia v UI, kóde a dokumentácii zodpovedá tomu, čo systém naozaj robí. Na obhajobe vieme presne povedať, čo by k dvojčaťu ešte chýbalo.
+
+## ADR-046 3D stack: React 19, React Three Fiber 9, drei 10, zustand (nie Next.js)
+- **Kontext:** Fáza 5 stavia 3D scénu digitálneho tieňa. Zadanie (§7) uvádza React 18 a `@react-three/fiber` s `@react-three/drei`. Aktuálne verzie R3F 9 a drei 10 vyžadujú React 19. Staršie R3F 8 a drei 9 nemajú overenú kompatibilitu s three 0.186, ktoré už používa mapa. Zvažoval sa aj prechod na Next.js.
+- **Rozhodnutie:**
+  - **Upgrade na React 19** (`react`, `react-dom`, `@types/react*` 19) ako samostatný commit. Ostatné závislosti (react-router 7, TanStack Query 5, lucide-react) React 19 podporujú. Leaflet, ktorý verziu obmedzoval (ADR-032), z projektu zmizol vo Fáze 3b.
+  - Pre `/shadow`: `@react-three/fiber` 9, `@react-three/drei` 10 (hotové `OrbitControls`, `Html`, `Instances`, `Bounds`, `ContactShadows`, `useGLTF`, `Detailed`) a `zustand` 5 na vysokofrekvenčné dáta z WebSocketu, ktoré scéna číta cez refy v `useFrame` bez re-renderu. Na analýzu bundlu `rollup-plugin-visualizer` (dev, podporuje rolldown z Vite 8).
+  - **Ostávame pri React + Vite, nie Next.js:**
+    - aplikácia je za loginom, SSR a SEO nemajú prínos,
+    - 3D scéna (WebGL) sa na serveri nevyrenderuje,
+    - frontend servíruje `app` ako statické súbory a Next.js server by bol 5. kontajner (povinná podmienka sú 4).
+  - three.js a R3F sa načítajú len v lazy chunkoch (`React.lazy` pre `/shadow` a Flotilu). Overí to analýza bundlu.
+- **Dôsledok:** Odchýlka od zadania (React 18 → 19). Kontrola po upgrade prešla bez chýb na všetkých obrazovkách pri 1280, 1440 a 390 px (admin, kuriér, tabuľa, sledovanie).

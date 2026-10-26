@@ -54,6 +54,20 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
 ## Fáza 5 – Digitálny tieň (`/shadow`)
 Podľa §7 zadania, plus nasledujúce rozšírenia.
 
+**Schválené s plánom Fázy 5 (všetky odporúčania z otvorených otázok prijaté):**
+- Commity po krokoch:
+  1. upgrade na React 19 s kontrolou všetkých obrazoviek,
+  2. scéna a panely,
+  3. what-if a akcie WMS.
+- React 19, R3F 9, drei 10, zustand 5 (ADR-046). Spoločné 3D diely v čistom three.js pre `/shadow` aj mapu, bez `react-three-map`.
+- Horizont scenára je do konca prevádzkového dňa (15:00), lebo kaskády vznikajú v noci.
+- Presun jazdy na obsadenú bránu: akcia WMS vráti 409, scenár ukáže čakanie.
+- Scenáre spúšťa dispečer a admin, ochranka scénu len prezerá. GLTF len ako mechanizmus, predvolene jednoduché tvary.
+- **Kaskáda v Pythone aj v TypeScripte:** spoločné testovacie prípady v JSON v repozitári overí pytest aj vitest, aby sa vzorce nerozišli (ADR-047).
+- `frameloop="demand"`: kým sa balíky hýbu po páse, `ParcelFlow` volá `invalidate()` každý frame, aby animácia nezamrzla.
+- Údržba nesmie odstrániť zaručený scenár degradácie skenera z predvoleného seedu, Fáza 6 ho potrebuje.
+- Kontrola fps má konkrétny nástroj aj cieľ (napr. 60 fps pri 1440 px počas večernej vlny). Výsledok sa zapíše do `docs/fazy`.
+
 **Simulácia scenárov (what-if) – panel „Scenár“:**
 - Typy zásahov:
   - meškanie jazdy o X min,
@@ -100,6 +114,8 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
   - `/board`: čitateľný na veľkom displeji z diaľky,
   - `/loading`: veľké prvky a výrazný alarm,
   - `/courier` a `/track`: plne použiteľné na mobile.
+- Nájdené pri upgrade na React 19 (nesúvisí s ním): `/board` pri 390 px vodorovne preteká o ~150 px (tabuľa jázd).
+- Nafotiť znova screenshoty Fázy 4 (ešte ukazujú „DepoTrack“ a „Digitálne dvojča“).
 
 ## Fáza 7 – doplnky
 - **Offline PMTiles výrez SR** ako záloha mapového podkladu pre obhajobu bez internetu: súbor servíruje app, ostávajú 4 kontajnery (ADR-040).
