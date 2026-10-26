@@ -69,6 +69,9 @@ Formát: `- [oblasť] čo sa stalo → ako to robiť správne`. Keď sekcia nara
 - [telematics] Nový stav v pamäti simulátora (okná údržby) prežil `restartDay` → každý taký stav vymaž v `restartDay` a pridaj test „akcia → restart → rovnaké skeny ako čistý engine“.
 - [telematics] Súbežné behy vitestu (napr. hook + reviewer) padnú na `Cannot read properties of undefined (reading 'config')` → nejde o chybu testov, spusti znova sám.
 - [frontend] Kliknutie na drei `Html` (DOM) sa v R3F hlási ako `onPointerMissed` a zruší výber → v handleri ignoruj ciele s `[data-pin]`. react-hooks 7 nedovolí meniť hodnotu z `useMemo`/props v `useFrame` → mutovateľné polia drž v `useRef`.
+- [telematics] Coalescing kľúč v `hub.publish` je spoločný pre celý kanál → rôzne typy udalostí toho istého objektu musia mať rôzne kľúče (`door:CODE` vs `CODE`), inak sa v dávke prepíšu.
+- [shadow] Stav zo senzora pri vypnutom alebo offline senzore nesmie ostať zobrazený ako platný → pri strate zdroja kresli neutrálny stav, nie posledný známy.
+- [frontend] drei `Bounds.fit()` s `frameloop="demand"` kameru spoľahlivo nepohol → zaostrenie rieš priamo (cieľ OrbitControls + zoom ortho kamery cez `useThree(s => s.get)`), efekty s WS dátami v závislostiach rušia `setTimeout` pri každej zmene.
 - [docs] Pred commitom fázy over `ls docs/screenshots/faza-N/` proti odkazom v `docs/fazy/faza-N-*.md`. Screenshoty s celou cestou (`stats.html`) prezradia meno používateľa → `projectRoot` vo visualizeri.
 - [docs] Pri premenovaní (názov, terminológia) sa zabudli historické sekcie plánu a screenshoty → po premenovaní `grep -ri` cez celé `docs/` a skontroluj aj `docs/screenshots/`.
 - [docs] Časy v `toISOString()` sú v UTC. Pri odhade návratu kuriérov to dalo omyl o 1 h → lokálny čas (Europe/Bratislava) over cez `localHhmm`.

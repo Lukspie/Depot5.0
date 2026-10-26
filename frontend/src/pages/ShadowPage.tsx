@@ -53,6 +53,12 @@ function Legend() {
  */
 export function ShadowPage() {
   const [params] = useSearchParams();
+  // a new depot = a fresh page: the devices channel is subscribed again and sends its snapshot
+  return <ShadowView key={params.get("depot") ?? "BUD"} />;
+}
+
+function ShadowView() {
+  const [params] = useSearchParams();
   const code = params.get("depot") ?? "BUD";
   // fps measurement (docs/fazy/faza-5): ?fps=1 live data, ?fps=stress also a full belt (~300 parcels)
   const stress = params.get("fps") === "stress";

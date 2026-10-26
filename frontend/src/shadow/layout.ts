@@ -17,7 +17,7 @@ export interface LayoutDoor {
 }
 
 /** State of a door from its contact sensor (ADR-050); undefined = no reading yet. */
-export type DoorState = "open" | "closed" | "fault";
+export type DoorState = "open" | "closed" | "fault" | "unknown";
 
 export interface DepotLayout {
   depot: { code: string; name: string; kind: "depot" | "hub"; lat: number; lon: number };

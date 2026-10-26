@@ -419,8 +419,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
     Reálne rozloženie Budimíra ich nahradí len zmenou dát. `/api/layout` vracia `doorDrive` a `dockEquipment`.
   - **Dverový kontaktný senzor** (`door_sensor`, `DOOR-SNS-01…08` pri LD-01…08, db-telemetry `006`) je lacný retrofit. Simulátor z neho posiela na kanál `devices` udalosti `door` so stavom `open` / `closed` / `fault` a ich snapshot pri prihlásení na odber.
     - Kamión pri bráne je len vstup simulátora: odchod je otvorený od príchodu k bráne po odchod, príjazd od príchodu po vyloženie.
-    - Raz za prevádzkový deň jeden senzor počas večernej vlny na 30–75 min vypadne. Má vlastný náhodný prúd `rngFor(seed, deň, "door")`, takže skeny, jazdy ani kaskáda sa nezmenia.
-  - **Zdrojom stavu brány v scéne aj v paneli je len senzor.** Pri poruche je brána neutrálna (polopriesvitný panel) so štítkom „senzor – porucha“, stav sa nehádá podľa kamióna. Bez údajov je brána zatvorená.
+    - Raz za prevádzkový deň jeden senzor počas večernej vlny na 30–75 min vypadne (začne 17:30–20:45, vždy skončí do 22:00). Má vlastný náhodný prúd `rngFor(seed, deň, "door")`, takže skeny, jazdy ani kaskáda sa nezmenia.
+  - **Zdrojom stavu brány v scéne aj v paneli je len senzor.** Stav sa nehádá podľa kamióna:
+    - pri poruche je brána neutrálna (polopriesvitný panel) so štítkom „senzor – porucha“,
+    - vypnutý senzor hlási `unknown` a offline senzor sa vo frontende berie rovnako, takže brána je neutrálna so štítkom „senzor – bez údajov“,
+    - brána bez senzora (rampy hubu) alebo pred prvým údajom je neutrálna bez štítku,
+    - stav brány a vybavenie ukazuje panel aj pri voľnej bráne.
+  - Udalosť `door` má v hube vlastný kľúč `door:<kód>`, aby ju v tej istej dávke neprepísala udalosť `status` toho istého zariadenia.
   - Senzor nikdy neposiela skeny. Preto nie je v čítanosti (KPI z `loading_scans`), v `device_metrics_minutely` ani v dátach pre prediktívnu údržbu (Fáza 6, `gen-history.ts` má pevný zoznam skenerov). Pokrýva to `telematics/tests/doors.test.ts`.
   - 3D: mostík je doska v 1 m medzere medzi návesom a fasádou, teleskopický pás sa pri otvorenej bráne vysunie do návesu. Ručná brána je zatiaľ len údaj v paneli (kuriérske plochy SB nie sú v stene haly).
 - **Dôsledok:** Model dát zodpovedá skutočnému depu a tieň ostáva tieňom: zobrazuje senzor, neriadi bránu. Stav brány sa dá ukázať aj počas poruchy senzora bez zavádzania.

@@ -26,7 +26,7 @@ export interface FlowItem {
 export interface DoorReading {
   device: string;
   doorCode: string;
-  state: "open" | "closed" | "fault";
+  state: "open" | "closed" | "fault" | "unknown";
   at: string;
 }
 

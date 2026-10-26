@@ -1,6 +1,6 @@
 """Digital shadow (ADR-045): scene data for dispatchers and security, no personal data."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -104,7 +104,7 @@ def test_kpi_parcels_of_the_current_wave(
 ) -> None:
     from depotrack.services import telematics
 
-    next_day = DAY.replace(day=DAY.day + 1)
+    next_day = DAY + timedelta(days=1)
     monkeypatch.setattr(telematics, "sim_now", lambda: local(18, 0))
     evening = viewer.get("/api/shadow/BUD").json()["kpis"]
     monkeypatch.setattr(telematics, "sim_now", lambda: local(3, 0, next_day))

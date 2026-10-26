@@ -1,6 +1,7 @@
 """Schemas of the WMS screens (dashboard, loading, board, fleet, parcels). camelCase on the wire."""
 
 from datetime import date, datetime, time
+from typing import Literal
 
 from pydantic import Field
 
@@ -123,7 +124,7 @@ class DashboardKpis(CamelModel):
     # parcels of the current sorting wave (services/waves.py): evening 15:30-22:00 = the day's
     # parcels except the night ones, night 01:00-06:00 = parcels brought by the night trucks;
     # outside the waves None and the start of the next wave (plan-doplnky 5c)
-    wave_kind: str | None
+    wave_kind: Literal["evening", "night"] | None
     parcels_wave: int | None
     next_wave_at: datetime | None
 

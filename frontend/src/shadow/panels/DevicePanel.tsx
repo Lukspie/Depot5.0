@@ -72,7 +72,7 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
           ))}
         </ul>
       )}
-      {canAct && d?.kind !== "gate_camera" && <Maintenance code={code} />}
+      {canAct && d?.kind !== "gate_camera" && d?.kind !== "door_sensor" && <Maintenance code={code} />}
     </SidePanel>
   );
 }

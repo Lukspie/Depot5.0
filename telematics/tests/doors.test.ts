@@ -5,14 +5,19 @@ import { Engine } from "../src/simulator/engine.js";
 import { loadRoutes } from "../src/simulator/routes.js";
 import { Hub } from "../src/ws/hub.js";
 import { DEVICES, FakeApp, MemoryStore, silentLog } from "./fixtures.js";
+import type { DeviceRow } from "../src/db/telemetry.js";
 
 const DAY = "2026-10-23";
 const START = operatingDayStart(DAY);
 const DOOR_IDS = new Set(DEVICES.filter((d) => d.kind === "door_sensor").map((d) => d.id));
 
-async function run(until: string) {
+async function run(until: string, withoutSensors = false) {
   const clock = new SimClock({ simTime: START, speed: 60, paused: true }, () => 0);
   const store = new MemoryStore();
+  if (withoutSensors) {
+    const all = await store.devices();
+    store.devices = (): Promise<DeviceRow[]> => Promise.resolve(all.filter((d) => d.kind !== "door_sensor"));
+  }
   const hub = new Hub();
   const events: { type: string; data: unknown }[] = [];
   const publish = hub.publish.bind(hub);
@@ -72,5 +77,31 @@ describe("door sensors (ADR-050)", () => {
     const sensors = engine.deviceList().filter((d) => d.kind === "door_sensor");
     expect(sensors).toHaveLength(8);
     expect(sensors.every((d) => d.readRate === null && d.items30m === 0)).toBe(true);
+  });
+
+  it("do not change scans or trips: their random stream is their own", async () => {
+    const a = await run("21:00");
+    const b = await run("21:00", true);
+    expect(b.events).toEqual([]);
+    expect(a.store.scans).toEqual(b.store.scans);
+  });
+
+  it("a switched-off sensor reports unknown, not its last state", async () => {
+    const { engine, events } = await run("18:00");
+    await engine.updateDevice("DOOR-SNS-02", { enabled: false });
+    await engine.step(zonedToUtc(DAY, "18:01"));
+    const last = events.filter((e) => (e.data as { device: string }).device === "DOOR-SNS-02").at(-1);
+    expect((last?.data as { state: string }).state).toBe("unknown");
+  });
+
+  it("door and status events of one sensor both survive a WebSocket batch", () => {
+    const hub = new Hub({ flushMs: 1_000_000 });
+    const sent: string[] = [];
+    hub.subscribe(hub.addClient((msg) => sent.push(msg)), ["devices"]);
+    hub.publish("devices", "status", { code: "DOOR-SNS-01" }, "DOOR-SNS-01");
+    hub.publish("devices", "door", { device: "DOOR-SNS-01", state: "open" }, "door:DOOR-SNS-01");
+    hub.flush();
+    const types = sent.flatMap((m) => (JSON.parse(m) as { events?: { type: string }[] }).events ?? []).map((e) => e.type);
+    expect(types).toEqual(expect.arrayContaining(["status", "door"]));
   });
 });

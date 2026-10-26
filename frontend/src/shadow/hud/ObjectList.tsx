@@ -11,6 +11,18 @@ export type Pick = { kind: "dock" | "device"; code: string };
 const DEVICE_TONE: Record<string, Tone> = { online: "ok", degraded: "warn", offline: "danger", maintenance: "neutral" };
 const DEVICE_LABEL: Record<string, string> = { online: "online", degraded: "degradované", offline: "offline", maintenance: "údržba" };
 
+const DOOR: Record<string, { label: string; tone: Tone }> = {
+  open: { label: "brána otvorená", tone: "ok" },
+  closed: { label: "brána zatvorená", tone: "neutral" },
+  fault: { label: "senzor – porucha", tone: "warn" },
+  unknown: { label: "senzor – bez údajov", tone: "neutral" },
+};
+
+function DoorBadge({ state }: { state: string | undefined }) {
+  const s = DOOR[state ?? "unknown"] ?? { label: "?", tone: "neutral" as Tone };
+  return <StatusDot tone={s.tone}>{s.label}</StatusDot>;
+}
+
 function Row({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <li>
@@ -29,6 +41,7 @@ function Row({ onClick, children }: { onClick: () => void; children: React.React
 export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick: (p: Pick) => void }) {
   const [tab, setTab] = useState<Tab>("doors");
   const devices = useShadowStore((s) => s.devices);
+  const doorReadings = useShadowStore((s) => s.doors);
   const docks = live?.docks ?? [];
   const busy = docks.filter((d) => d.trip && (d.trip.status === "at_door" || d.trip.status === "loading"));
   const deviceList = Object.values(devices).sort((a, b) => a.code.localeCompare(b.code));
@@ -70,8 +83,14 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
           deviceList.map((dev) => (
             <Row key={dev.code} onClick={() => onPick({ kind: "device", code: dev.code })}>
               <span className="w-24 shrink-0 font-mono text-xs font-semibold">{dev.code}</span>
-              <StatusDot tone={DEVICE_TONE[dev.status] ?? "neutral"}>{DEVICE_LABEL[dev.status] ?? dev.status}</StatusDot>
-              <Progress className="min-w-0 flex-1" value={Math.round((dev.readRate ?? 0) * 100)} max={dev.readRate === null ? 0 : 100} tone={dev.status === "degraded" ? "warn" : "ok"} />
+              {dev.kind === "door_sensor" ? (
+                <DoorBadge state={dev.status === "offline" ? "unknown" : doorReadings[dev.doorCode ?? ""]?.state} />
+              ) : (
+                <>
+                  <StatusDot tone={DEVICE_TONE[dev.status] ?? "neutral"}>{DEVICE_LABEL[dev.status] ?? dev.status}</StatusDot>
+                  <Progress className="min-w-0 flex-1" value={Math.round((dev.readRate ?? 0) * 100)} max={dev.readRate === null ? 0 : 100} tone={dev.status === "degraded" ? "warn" : "ok"} />
+                </>
+              )}
             </Row>
           ))}
       </ul>

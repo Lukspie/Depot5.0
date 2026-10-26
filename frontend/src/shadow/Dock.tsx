@@ -34,7 +34,9 @@ export function Dock({
   const plate = useMemo(() => numberPlate(door.code.replace(/^\D+-?0?/, ""), brand), [door.code, brand]);
   const open = state === "open";
   const fault = state === "fault";
-  const leaf = useMemo(() => (fault ? doorUnknown() : doorLeaf(open)), [open, fault]);
+  // no valid reading (no sensor, switched off, not received yet): neutral, never a guess
+  const neutral = state !== "open" && state !== "closed";
+  const leaf = useMemo(() => (neutral ? doorUnknown() : doorLeaf(open)), [open, neutral]);
   const pile = useMemo(() => (open ? cardboardPile(60) : null), [open]);
   const equipment = useMemo(
     () => (door.dockEquipment === "dock_leveler" ? dockLeveler(open) : door.dockEquipment === "telescopic_conveyor" ? telescopicConveyor(open) : null),
@@ -58,9 +60,9 @@ export function Dock({
       {/* parcels at the threshold, beside the trailer, so they are visible from the yard */}
       {pile && <primitive object={pile} position={[1.55, 0.3, -0.2]} scale={0.45} />}
       {equipment && <primitive object={equipment} />}
-      {fault && (
+      {(fault || state === "unknown") && (
         <Html position={[0, OPENING_H / 2, -0.6]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-          <div className="bg-warn-100 text-warn-600 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shadow">senzor – porucha</div>
+          <div className="bg-warn-100 text-warn-600 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shadow">{fault ? "senzor – porucha" : "senzor – bez údajov"}</div>
         </Html>
       )}
       <primitive object={plate} position={[0, OPENING_H + 1.4, -0.3]} />

@@ -151,7 +151,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
             layout={layout}
             brand={brand}
             label={docks.get(door.code)?.trip?.directionCode ?? door.directionCode}
-            state={doorStates[door.code]?.state}
+            state={devices[doorStates[door.code]?.device ?? ""]?.status === "offline" ? "unknown" : doorStates[door.code]?.state}
             selected={selection?.kind === "dock" && selection.code === door.code}
             onSelect={selectDock}
           />

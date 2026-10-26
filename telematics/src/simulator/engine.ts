@@ -69,7 +69,8 @@ export interface EngineDeps {
 }
 
 /** Door contact sensor (ADR-050): the only source of the door state shown in the shadow. */
-export type DoorState = "open" | "closed" | "fault";
+/** "unknown": the sensor is switched off or external without data, nothing to show as valid */
+export type DoorState = "open" | "closed" | "fault" | "unknown";
 
 export interface DoorEvent {
   device: string;
@@ -302,6 +303,7 @@ export class Engine {
     this.pendingEtas.clear();
     // maintenance windows are in simulated time: the replayed day starts without them
     this.maintenanceUntil.clear();
+    this.doorStates.clear();
     for (const d of this.devices.values()) {
       d.recent = [];
       d.lastScanAt = null;
@@ -420,14 +422,13 @@ export class Engine {
     if (doors.length === 0) return null;
     const rng = rngFor(this.seedValue, day, "door");
     const door = rng.pick(doors);
-    const from = zonedToUtc(day, "17:30") + rng.int(0, 210) * MINUTE;
+    // starts 17:30-20:45 and lasts at most 75 min: always over by the end of the wave (22:00)
+    const from = zonedToUtc(day, "17:30") + rng.int(0, 195) * MINUTE;
     return { door, from, to: from + rng.int(30, 75) * MINUTE };
   }
 
   /** What the door sensor of `door` reads at `now`: open while a truck is at the door, or fault. */
-  doorState(door: string, now: number): DoorState {
-    const day = operatingDay(now);
-    const fault = this.doorFault(day);
+  doorState(door: string, now: number, fault = this.doorFault(operatingDay(now))): DoorState {
     if (fault && fault.door === door && now >= fault.from && now < fault.to) return "fault";
     for (const state of this.days.values()) {
       for (const s of state.scenario.schedules.values()) {
@@ -442,13 +443,16 @@ export class Engine {
 
   /** Publish door sensor changes on the "devices" channel (type "door"). */
   private updateDoors(now: number): void {
+    const fault = this.doorFault(operatingDay(now));
     for (const d of this.devices.values()) {
-      if (d.row.kind !== "door_sensor" || !d.row.doorCode || !this.simulated(d.row.code)) continue;
-      const state = this.doorState(d.row.doorCode, now);
+      if (d.row.kind !== "door_sensor" || !d.row.doorCode) continue;
+      // a switched-off sensor gives no reading: the shadow must not keep the last one as valid
+      const state = this.simulated(d.row.code) ? this.doorState(d.row.doorCode, now, fault) : "unknown";
       if (this.doorStates.get(d.row.code)?.state === state) continue;
       const ev: DoorEvent = { device: d.row.code, doorCode: d.row.doorCode, state, at: iso(now) };
       this.doorStates.set(d.row.code, ev);
-      this.deps.hub.publish("devices", "door", ev, d.row.code);
+      // own coalescing key: the "status" event of the same device must not overwrite it in a batch
+      this.deps.hub.publish("devices", "door", ev, `door:${d.row.code}`);
     }
   }
 
