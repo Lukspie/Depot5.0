@@ -28,3 +28,7 @@ Thumbs.db
 
 # raw OpenStreetMap extract (tools/osm/README.md)
 tools/osm/cache/
+
+# claude code (local settings and hook cache)
+.claude/settings.local.json
+.claude/.cache/
