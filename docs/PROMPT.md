@@ -2,6 +2,8 @@
 
 Si senior full-stack inžinier. Postavíš funkčný prototyp informačného systému **DepoTrack**: WMS pre prekládkové depo SPS (Slovak Parcel Service) v Košiciach. Je to školský tímový projekt na predmet AISPU (Architektúry informačných systémov a prediktívna údržba). Proces depa je reálny, všetky dáta sú simulované.
 
+> **Poznámky tímu k zadaniu (pred Fázou 5):** projekt sa navonok volá **Depot 5.0** (v kóde ostáva `depotrack`) a v UI nepoužíva názov SPS (ADR-044). Kontext reálneho depa SPS v tomto zadaní ostáva ako opis procesu. Pojem „digitálne dvojča / `/twin`“ je nahradený pojmom **digitálny tieň / `/shadow`** (ADR-045): tieň realitu automaticky zrkadlí, ale fyzické zariadenia priamo neriadi. Rate limit sledovania zásielky nie je 30/min na IP, ale 60/min na platný odkaz a 10 neúspechov za minútu na IP (ADR-042). Doplnky sú v `docs/plan-doplnky.md`.
+
 Pracuj **po fázach** (sekcia „Fázy“). Po každej fáze sa zastav, zhrň, čo si spravil, ako to overiť, a počkaj na potvrdenie. Na začiatku si celý dokument prečítaj a navrhni plán. Ak je niečo nejasné, zvoľ rozumný default a zapíš rozhodnutie do `docs/decisions.md` (krátke ADR: kontext, rozhodnutie, dôsledok).
 
 ---
@@ -84,7 +86,7 @@ Telematics vlastní simulovaný čas s násobiteľom (`SIM_SPEED`, default 60×)
 - `sessions` (id, user_id, created_at, expires_at, ip, user_agent)
 - `directions` (id, code, name, type, cutoff_time, planned_departure, depends_on_linehaul[]) – pre `transit` zoznam diaľkových smerov, ktoré ho dopĺňajú
 - `waves` (id, date, kind `evening|night`, starts_at, ends_at)
-- `doors` (id, code, kind `loading_dock|staging_bay|yard_gate`, direction_id nullable, position_x, position_y) – pozície pre digitálne dvojča
+- `doors` (id, code, kind `loading_dock|staging_bay|yard_gate`, direction_id nullable, position_x, position_y) – pozície pre digitálny tieň
 - `vehicles` (id, plate, kind `truck|van`, capacity_kg, capacity_parcels)
 - `trips` (id, vehicle_id, direction_id, door_id, kind `inbound|outbound`, planned_arrival, actual_arrival, predicted_arrival, planned_departure, actual_departure, status)
 - `parcels` (id, barcode, weight_kg, length_cm, width_cm, height_cm, recipient_name, address, lat, lon, direction_id, status, sender)
@@ -146,7 +148,7 @@ React 18 + Vite + TypeScript, React Router, TanStack Query, Tailwind CSS. Mapy: 
 | --- | --- | --- |
 | `/login` | všetci interní | prihlásenie, chybové hlášky |
 | `/` Dispečerský dashboard | dispatcher, admin | aktuálna vlna, simulovaný čas, KPI, počty balíkov po smeroch, naplnenosť jázd, zoznam alarmov |
-| `/twin` **Digitálne dvojča** | dispatcher, admin, security | hlavná „wow“ obrazovka, viď nižšie |
+| `/shadow` **Digitálny tieň** | dispatcher, admin, security | hlavná „wow“ obrazovka, viď nižšie |
 | `/fleet` Flotila | dispatcher | Leaflet mapa dodávok a kamiónov; klik na vozidlo → panel: zoznam balíkov so stavom, súčet hmotnosti voči nosnosti (progress bar), zostávajúce zastávky, meškanie |
 | `/board` Tabuľa ETA | verejná v sieti depa (bez ovládania, bez loginu, len čítanie, prístup cez `BOARD_KEY` v URL) | celá obrazovka, veľké písmo, príchody/odchody kamiónov, meškania, varovania kaskády, stav linky; automatická obnova |
 | `/loading` Nakládka | operator | výber brány, živý feed IoT skenov, počítadlá (prečítané / spočítané / neidentifikované), výrazný červený alarm pri zlom smere, ručné pole pre sken (simulácia ručného skenera), zoznam balíkov ešte chýbajúcich v jazde |
@@ -155,7 +157,7 @@ React 18 + Vite + TypeScript, React Router, TanStack Query, Tailwind CSS. Mapy: 
 | `/admin` | admin | používatelia a roly, smery, zariadenia, ovládanie simulovaných hodín a scenárov, simulované notifikácie zákazníkom |
 | `/track/:token` | zákazník (verejná) | mapa, ETA, poradie, stav; mobile-first |
 
-### Digitálne dvojča (`/twin`) – detailná špecifikácia
+### Digitálny tieň (`/shadow`) – detailná špecifikácia
 Inšpirácia: izometrické 3D dashboardy skladov (svetlé pozadie, pastelová low-poly scéna, piny nad objektmi, plávajúce panely).
 
 - **Kamera:** `OrthographicCamera` v izometrickom uhle (napr. pozícia `[60, 60, 60]`, pohľad na stred). `OrbitControls` len rotácia okolo osi Y, zoom s limitmi, bez prevrátenia.
@@ -216,7 +218,7 @@ depotrack/
     data/routes.json
     tests/
   frontend/                 # React + Vite + TS
-    src/{pages,components,twin,api,hooks}/
+    src/{pages,components,shadow,api,hooks}/
   ml/                       # tréning, notebooky, artefakty
   docs/
     architektura.md
@@ -236,7 +238,7 @@ Po každej fáze: `docker compose up --build` z čistého klonu musí prejsť, t
 - **Fáza 2 – telematika:** simulované hodiny, simulátor vozidiel a zariadení, WebSocket s ticketom, ukladanie telemetrie, REST medzi backendmi.
 - **Fáza 3 – jadro WMS:** nakládka (IoT + ručné skeny, kontrola smeru, chýbajúce balíky), dashboard, tabuľa ETA s kaskádou, flotila s detailom vozidla, detail balíka.
 - **Fáza 4 – zákazník:** tokeny, verejná stránka, súkromie, rate limit, zneplatnenie po doručení.
-- **Fáza 5 – digitálne dvojča:** celá sekcia 7 `/twin`.
+- **Fáza 5 – digitálny tieň:** celá sekcia 7 `/shadow`.
 - **Fáza 6 – ML:** všetky 4 modely, ich napojenie do UI, `ml/README.md`.
 - **Fáza 7 – dokončenie:** testy kritických ciest (auth, RBAC, token lifecycle, kontrola smeru, kaskáda), `docs/` (architektúra s diagramom, API, demo scenár), upratanie.
 

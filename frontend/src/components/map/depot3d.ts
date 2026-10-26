@@ -1,5 +1,5 @@
 /**
- * 3D model of a depot/hub built from the same layout as /twin (GET /api/layout), rendered inside
+ * 3D model of a depot/hub built from the same layout as /shadow (GET /api/layout), rendered inside
  * MapLibre as a custom WebGL layer with Three.js (ADR-040).
  *
  * Model space: metres, x = east, y = up, z = south (layout y). Low-poly primitives in the style of

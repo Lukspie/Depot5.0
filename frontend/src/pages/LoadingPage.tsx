@@ -81,7 +81,7 @@ function ManualScan({ door }: { door: string }) {
             ref={input}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="SPS…"
+            placeholder="DP…"
             autoComplete="off"
             className="border-line focus:border-brand-500 focus:ring-brand-100 w-full rounded-2xl border py-4 pr-4 pl-12 font-mono text-lg outline-none focus:ring-4"
           />

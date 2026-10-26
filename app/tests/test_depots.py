@@ -1,4 +1,4 @@
-"""Depots and hubs (ADR-039): twin/map layout, live state, plan geography, real addresses."""
+"""Depots and hubs (ADR-039): shadow/map layout, live state, plan geography, real addresses."""
 
 from datetime import date
 
@@ -40,7 +40,7 @@ def test_depots_budimir_and_bratislava_hub(user: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("seeded")
-def test_layout_drives_the_twin_and_the_map(user: TestClient) -> None:
+def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
     bud = user.get("/api/layout?depot=BUD").json()
     assert bud["layout"]["hall"]["width"] > 0 and len(bud["layout"]["belt"]) >= 2
     kinds = [d["kind"] for d in bud["doors"]]

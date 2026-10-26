@@ -227,7 +227,7 @@ class AlertListOut(CamelModel):
     alerts: list[AlertOut]
 
 
-# ------------------------------------------------------------------ depots (map, twin)
+# ------------------------------------------------------------------ depots (map, shadow)
 
 
 class DepotOut(CamelModel):

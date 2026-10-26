@@ -18,34 +18,38 @@ Rozšírenia a úpravy oproti [PROMPT.md](PROMPT.md). Odchýlky v návrhu sú za
   - bodka a „Aktívny“ na dvoch riadkoch,
   - zalamujúce sa meno „(vy)“.
 - Komponenty zdokumentovať v `docs/design/komponenty.md`.
-- Témy: **SPS** (oranžová, čierna, sivá – predvolená) a **Modrá** podľa referencie (ADR-032).
-- Vizuálny cieľ je [docs/design/reference.png](design/reference.png) (popis v [docs/design/README.md](design/README.md)). Jeho štýl platí pre KPI karty, panely a celkovú paletu na všetkých obrazovkách, nielen v dvojčati.
+- Témy: **Oranžová** (pôvodne „SPS“; oranžová, čierna, sivá – predvolená) a **Modrá** podľa referencie (ADR-032, ADR-044).
+- Vizuálny cieľ je [docs/design/reference.png](design/reference.png) (popis v [docs/design/README.md](design/README.md)). Jeho štýl platí pre KPI karty, panely a celkovú paletu na všetkých obrazovkách, nielen v digitálnom tieni.
 
 ## Fáza 3b – mapa a sklady *(hotové, ADR-038 až 040)*
 - MapLibre GL + OpenFreeMap (svetlý vektorový štýl, náklon ~45°, 3D budovy, vlastné piny, trasa vybraného vozidla, prelet kamery). Rovnaký komponent neskôr pre `/track` a `/courier`.
 - Depo v **Budimíri**, hub v **Bratislave** (tabuľka `depots`, `depot_id` v dátovom modeli).
-- 3D hala na mape (Three.js custom layer) z rovnakého rozloženia ako `/twin`, klik na sklad otvorí `/twin?depot=…`.
+- 3D hala na mape (Three.js custom layer) z rovnakého rozloženia ako `/shadow`, klik na sklad otvorí `/shadow?depot=…`.
 - Offline cestná sieť a reálne adresy z OSM, routing A* v telematike bez internetu za behu.
 
-## Pred Fázou 5 (schválené spolu s Fázou 4, ADR-041 až 043 OK)
+## Pred Fázou 5 (schválené spolu s Fázou 4, ADR-041 až 043 OK) *(hotové, ADR-042 upravené, ADR-044, ADR-045)*
 1. **Rate limit `/api/track` – nová stratégia.** Pri limite na IP demo spadne pri 3 otvorených oknách (polling 12/min na okno).
    - Neplatný alebo neexistujúci token: prísny limit na IP (napr. 10/min) ako ochrana proti hádaniu.
    - Platný token: limit podľa tokenu (napr. 30/min), nie podľa IP.
    - Podpora forwarded hlavičiek pre nasadenie za proxy: `uvicorn --proxy-headers`, `forwarded-allow-ips` z `.env`.
    - Test: 5 súbežných klientov s platným tokenom nesmie dostať 429.
    - Upraviť ADR-042.
+   - *Hotové:* 60/min na platný odkaz, 10/min neúspechov na IP, `FORWARDED_ALLOW_IPS`.
 2. **Stav Fázy 3b:**
    - poslať screenshot `/fleet` s priblíženým Budimírom (3D hala na mape),
    - potvrdiť, že hub (druhý sklad) a `depot_id` v modeli sú hotové (podľa ADR-039 áno),
    - ak niečo chýba, dokončiť to ako prvé.
+   - *Hotové:* hub BAH aj `depot_id` (directions, doors, trips, waves, vehicles) existujú, nič nechýba. Screenshot: [docs/screenshots/faza-3b/2-budimir-3d-hala.png](screenshots/faza-3b/2-budimir-3d-hala.png) (aktualizovaný).
 3. **Premenovanie projektu na „Depot 5.0“** (v kóde môže ostať `depotrack`).
    - Upraviť UI, README a `docs/`.
    - Tému „SPS“ premenovať na neutrálnu **„Oranžová“** a v UI nepoužívať názov SPS.
    - Depo je „Budimír“.
+   - *Hotové (ADR-044):* nové dni majú čiarové kódy s prefixom `DP`, SMS začína „Depot 5.0:“.
 4. **Terminológia „digitálny tieň“ (digital shadow).** Pojem „digitálne dvojča / digital twin“ sa nepoužíva: garant ho vyžaduje len pre systém, ktorý priamo riadi fyzické zariadenia.
    - Tieň znamená: realita → model automaticky, model → realita len cez rozhodnutia človeka.
    - Premenovať v UI, kóde (`/twin` → `/shadow`, `src/twin` → `src/shadow`), dokumentácii, ADR a v `docs/PROMPT.md`.
    - V docs vysvetliť rozdiel **model / tieň / dvojča**. Uviesť, čo chýba k dvojčaťu (priame príkazy fyzickým zariadeniam) ako „ďalší rozvoj“.
+   - *Hotové (ADR-045).*
 
 ## Fáza 5 – Digitálny tieň (`/shadow`)
 Podľa §7 zadania, plus nasledujúce rozšírenia.
@@ -102,15 +106,8 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
 - **Deprecation warning v testoch app** (Starlette `TestClient` nad `httpx`): odsúhlasené vyriešiť až vo Fáze 7.
 
 ## Otvorené otázky (zatiaľ nerozhodnuté)
-- **Limit pre platný token na `/api/track`:**
-  - zadanie bodu 1 navrhuje napr. 30/min,
-  - 3 okná s tým istým odkazom pri pollingu každých 5 s dajú 36/min,
-  - návrh: 60/min na token (zvládne ~5 okien jedného odkazu).
-- **„SPS“ mimo UI textov:**
-  - čiarové kódy balíkov majú prefix `SPS…` (zobrazujú sa v UI),
-  - text simulovanej SMS začína „SPS:“,
-  - `docs/PROMPT.md` a ADR opisujú kontext SPS.
-  - Treba rozhodnúť, či zmeniť prefix kódov pre nové dni a či kontext SPS v dokumentácii ponechať.
+- ~~Limit pre platný token na `/api/track`~~ → rozhodnuté pred Fázou 5: **60/min na token** (ADR-042), hodnota je v `.env`.
+- ~~„SPS“ mimo UI textov~~ → rozhodnuté pred Fázou 5 (ADR-044): prefix `DP` pre nové dni, SMS „Depot 5.0:“, kontext SPS ostáva v `docs/PROMPT.md` a v starších ADR ako história. Tím to môže zmeniť.
 - **3D stack pre Fázu 5:**
   - R3F 9 a drei 10 vyžadujú React 19, projekt je na React 18. Možnosti:
     - upgrade na React 19,

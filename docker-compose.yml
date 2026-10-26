@@ -1,4 +1,4 @@
-# DepoTrack – presne 4 kontajnery: 2× databáza, 2× backend (Python, Node.js).
+# Depot 5.0 (kód: depotrack) – presne 4 kontajnery: 2× databáza, 2× backend (Python, Node.js).
 # Frontend je zostavený v multi-stage builde `app` a servíruje ho `app`.
 name: depotrack
 
@@ -105,7 +105,9 @@ services:
       CASCADE_BUFFER_MIN: ${CASCADE_BUFFER_MIN:-30}
       BOARD_KEY: ${BOARD_KEY:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
-      TRACK_RATE_LIMIT: ${TRACK_RATE_LIMIT:-30/minute}
+      TRACK_TOKEN_RATE_LIMIT: ${TRACK_TOKEN_RATE_LIMIT:-60/minute}
+      TRACK_MISS_RATE_LIMIT: ${TRACK_MISS_RATE_LIMIT:-10/minute}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:

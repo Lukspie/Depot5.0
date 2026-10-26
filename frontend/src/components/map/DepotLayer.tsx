@@ -11,7 +11,7 @@ interface Props {
 
 /**
  * A depot/hub on the map: 3D hall when zoomed in, big warehouse marker when zoomed out, label
- * always. Clicking it opens the digital twin of that depot.
+ * always. Clicking it opens the digital shadow of that depot.
  */
 export function DepotLayer({ layout, live }: Props) {
   const map = useMap();
@@ -28,7 +28,7 @@ export function DepotLayer({ layout, live }: Props) {
     const label = document.createElement("div");
     label.className = "dt-depot-label";
     label.textContent = `${layout.depot.name}${layout.depot.kind === "hub" ? " · hub" : " · depo"}`;
-    label.addEventListener("click", () => navigate(`/twin?depot=${code}`));
+    label.addEventListener("click", () => navigate(`/shadow?depot=${code}`));
     const marker = new maplibregl.Marker({ element: label, anchor: "top", offset: [0, 18] })
       .setLngLat([layout.depot.lon, layout.depot.lat])
       .addTo(map);
@@ -38,7 +38,7 @@ export function DepotLayer({ layout, live }: Props) {
       const p = map.project([layout.depot.lon, layout.depot.lat]);
       const zoom = map.getZoom();
       const radius = zoom >= 15 ? 120 : 34;
-      if (Math.hypot(e.point.x - p.x, e.point.y - p.y) < radius) navigate(`/twin?depot=${code}`);
+      if (Math.hypot(e.point.x - p.x, e.point.y - p.y) < radius) navigate(`/shadow?depot=${code}`);
     };
     map.on("click", onClick);
     return () => {

@@ -40,8 +40,8 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 - Typy všade (mypy strict, strict TS). Nové závislosti len s odôvodnením v ADR.
 - Používaj komponenty z `frontend/src/components/ui`. Layout kontroluj pri 1280, 1440 a 390 px.
 - Nejasnosť: zvoľ rozumný default a zapíš krátke ADR (kontext, rozhodnutie, dôsledok). Odchýlku od zadania povedz otvorene.
-- **Terminológia:** 3D pohľad nazývaj **digitálny tieň** (digital shadow), nikdy „digitálne dvojča / digital twin“. Dvojča by muselo priamo riadiť fyzické zariadenia, tieň ich len zrkadlí (požiadavka garanta). Pôvodná výnimka „route `/twin` a názvy v kóde môžu ostať“ už neplatí: pred Fázou 5 sa premenuje `/twin` → `/shadow` a `src/twin` → `src/shadow` (`docs/plan-doplnky.md`). Dvojča spomínaj len ako „ďalší rozvoj“.
-- **Názov:** projekt sa navonok volá **„Depot 5.0“** (v kóde môže ostať `depotrack`). V UI nepoužívaj názov SPS. Téma „SPS“ sa volá **„Oranžová“**. Depo je „Budimír“.
+- **Terminológia:** 3D pohľad nazývaj **digitálny tieň** (digital shadow), nikdy „digitálne dvojča / digital twin“. Dvojča by muselo priamo riadiť fyzické zariadenia, tieň ich len zrkadlí (požiadavka garanta). Route je `/shadow`, kód v `frontend/src/shadow`, stránka `ShadowPage` (ADR-045). Dvojča spomínaj len ako „ďalší rozvoj“.
+- **Názov:** projekt sa navonok volá **„Depot 5.0“** (v kóde môže ostať `depotrack`). V UI nepoužívaj názov SPS. Téma sa volá **„Oranžová“** (id `oranzova`). Depo je „Budimír“. Čiarové kódy nových dní majú prefix `DP` (ADR-044).
 - **Simulátor za behu nevolá internet.** Determinizmus z Fázy 2 musí ostať. Nové náhodné rozhodnutia dostanú vlastný prúd `rngFor(seed, deň, …)`.
 - **Git:** commituj len lokálne, remote zatiaľ nie je nastavený (nepushuj).
 - **Test z čistého klonu bez volumes:**
@@ -63,5 +63,7 @@ Formát: `- [oblasť] čo sa stalo → ako to robiť správne`. Keď sekcia nara
 - [docs] Názov „digitálne dvojča“ v zadaní je zastaraný → v UI a dokumentácii používaj „digitálny tieň“.
 - [frontend] Projekt nemá konfiguráciu Prettier. `npx prettier --write` na celé priečinky preformátoval 9 nedotknutých stránok → neformátuj hromadne, drž štýl okolitého kódu (dlhé riadky ~130 znakov).
 - [app] Balík `depotrack` je v image nainštalovaný ne-editovateľne, `docker compose run app …` testuje starý kód → bez rebuildu namontuj zdrojáky: `docker compose run --rm -e PYTHONPATH=/app/src -v "$(pwd -W)/app/src:/app/src" -v "$(pwd -W)/app/tests:/app/tests" app pytest` (Git Bash: `MSYS_NO_PATHCONV=1`).
-- [shell] Bash heredoc so zložitým Python/TS obsahom (úvodzovky, `$`, backticky) padá → skript na úpravy zapíš do súboru v scratchpade a spusti ho. V Git Bash daj pred príkazy s cestami ako `/admin` prefix `MSYS_NO_PATHCONV=1`.
+- [shell] Bash heredoc so zložitým Python/TS obsahom (úvodzovky, `$`, backticky) padá → skript na úpravy zapíš do súboru v scratchpade (nástroj Write) a spusti ho. Python na Windows v `open(..., "w")` píše CRLF → používaj `newline=""`. V Git Bash daj pred príkazy s cestami ako `/admin` prefix `MSYS_NO_PATHCONV=1`.
+- [security] Príklad `FORWARDED_ALLOW_IPS` s celým rozsahom docker sietí (172.16.0.0/12) by dovolil podvrhnúť X-Forwarded-For pre všetky limity vrátane loginu → dôveruj len presnej IP proxy a testuj, že hlavičku od nedôveryhodného klienta app ignoruje.
+- [docs] Pri premenovaní (názov, terminológia) sa zabudli historické sekcie plánu a screenshoty → po premenovaní `grep -ri` cez celé `docs/` a skontroluj aj `docs/screenshots/`.
 - [docs] Časy v `toISOString()` sú v UTC. Pri odhade návratu kuriérov to dalo omyl o 1 h → lokálny čas (Europe/Bratislava) over cez `localHhmm`.

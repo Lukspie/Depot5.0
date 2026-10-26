@@ -10,6 +10,7 @@ from depotrack.core.clock import TZ
 from depotrack.models import Direction, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import DirectionType, EventSource, ParcelStatus, TripKind
 from depotrack.seed.generator import (
+    BARCODE_PREFIX,
     kosice_rajon,
     parcel_dimensions,
     parcel_weight,
@@ -84,7 +85,7 @@ def night_parcels_for(db: Session, day: date, random_seed: int) -> int:
             length, width, height = parcel_dimensions(rng, weight)
             rows.append(
                 {
-                    "barcode": f"SPS{day_code}N{feeder.code}{i:03d}",
+                    "barcode": f"{BARCODE_PREFIX}{day_code}N{feeder.code}{i:03d}",
                     "weight_kg": weight,
                     "length_cm": length,
                     "width_cm": width,

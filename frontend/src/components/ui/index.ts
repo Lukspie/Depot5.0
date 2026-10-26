@@ -1,4 +1,4 @@
-/** DepoTrack UI kit – see docs/design/komponenty.md */
+/** Depot 5.0 UI kit – see docs/design/komponenty.md */
 
 export { Badge } from "./Badge";
 export { Button } from "./Button";

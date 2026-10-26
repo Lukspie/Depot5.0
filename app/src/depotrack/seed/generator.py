@@ -27,6 +27,9 @@ from depotrack.seed.reference import (
 
 KM_PER_DEG_LAT = 111.32
 
+# parcel barcodes of newly generated days (ADR-044); days generated before keep "SPS…"
+BARCODE_PREFIX = "DP"
+
 # share of the daily volume by direction type
 TYPE_SHARE = {"local": 0.30, "transit": 0.35, "linehaul": 0.35}
 
@@ -159,7 +162,7 @@ def generate_parcels(day: date, count: int, seed: int) -> list[ParcelSpec]:
         length, width, height = parcel_dimensions(rng, weight)
         parcels.append(
             ParcelSpec(
-                barcode=f"SPS{day:%y%m%d}{i:05d}",
+                barcode=f"{BARCODE_PREFIX}{day:%y%m%d}{i:05d}",
                 direction_code=code,
                 weight_kg=weight,
                 length_cm=length,

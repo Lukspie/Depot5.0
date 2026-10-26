@@ -21,7 +21,7 @@ import { Logo } from "./ui";
 
 const ICONS: Record<string, LucideIcon> = {
   "/": LayoutDashboard,
-  "/twin": Boxes,
+  "/shadow": Boxes,
   "/fleet": MapPinned,
   "/loading": PackageCheck,
   "/gate": ShieldCheck,
@@ -94,7 +94,7 @@ export function Layout() {
         <div className="mb-3 flex items-center gap-2.5 px-2 md:mb-8">
           <Logo size={36} />
           <div className="min-w-0">
-            <div className="text-lg leading-tight font-bold">DepoTrack</div>
+            <div className="text-lg leading-tight font-bold">Depot 5.0</div>
             <div className="text-chrome-muted truncate text-xs">Prekládkové depo Budimír</div>
           </div>
         </div>

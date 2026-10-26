@@ -9,9 +9,9 @@ Hlavná referencia: [reference.png](reference.png) (izometrický dashboard sklad
 | [reference-3-kamion-panel.png](reference-3-kamion-panel.png) | detail kamióna: progress bar nakládky, odkazy, zoznam vozíkov so stavmi a percentami |
 | [reference-4-zoznam-kamionov.png](reference-4-zoznam-kamionov.png) | zoznam kamiónov: farebná bodka, štítok stavu, mini progress, šípka na detail |
 
-> Referencia slúži **len ako štýlová inšpirácia**. Logo, názov ani obsah nepreberáme, DepoTrack má vlastnú identitu.
+> Referencia slúži **len ako štýlová inšpirácia**. Logo, názov ani obsah nepreberáme, Depot 5.0 má vlastnú identitu.
 
-## Čo z referencie preberáme (platí pre celú aplikáciu, nielen pre dvojča)
+## Čo z referencie preberáme (platí pre celú aplikáciu, nielen pre digitálny tieň)
 
 - **Plocha:** svetlé, mierne modrosivé pozadie a scéna v pastelových modrých tónoch.
 - **Karty a panely:** biele, s veľkým zaoblením (~16 px), jemným rozptýleným tieňom a bez ostrých okrajov. Plávajú nad scénou.

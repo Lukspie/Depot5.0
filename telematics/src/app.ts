@@ -35,7 +35,7 @@ export async function buildApp({ logLevel, allowedOrigins, db }: AppDeps): Promi
   await app.register(swagger, {
     openapi: {
       info: {
-        title: "DepoTrack Telematics API",
+        title: "Depot 5.0 Telematics API",
         description:
           "Simulátor, simulované hodiny, telemetria a WebSocket stream udalostí (ws://…/ws?ticket=…). " +
           "Ovládanie simulácie vyžaduje ticket roly admin z app (`Authorization: Bearer <ticket>`).",

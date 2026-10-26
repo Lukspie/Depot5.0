@@ -6,6 +6,7 @@ import math
 import re
 from collections import Counter
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -13,9 +14,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from depotrack.core.clock import TZ
 from depotrack.core.config import get_settings
+from depotrack.main import create_app
 from depotrack.models import (
     CourierRoute,
     CustomerNotification,
@@ -352,12 +355,56 @@ def test_failed_delivery_shows_no_courier(client: TestClient, db: Session, at: S
 # ------------------------------------------------------------------ rate limit
 
 
+def poll_minute(client: TestClient, token: str) -> list[int]:
+    """One customer window for a minute: the page polls every 5 s (TRACK_POLL_MS)."""
+    return [client.get(f"/api/track/{token}").status_code for _ in range(12)]
+
+
+def poll_windows(client: TestClient, tokens: list[str]) -> list[int]:
+    """Several windows polling concurrently, one per token."""
+    with ThreadPoolExecutor(len(tokens)) as pool:
+        windows = pool.map(lambda t: poll_minute(client, t), tokens)
+        return [code for window in windows for code in window]
+
+
 @pytest.mark.usefixtures("seeded")
-def test_track_rate_limit_per_ip(client: TestClient) -> None:
-    url = "/api/track/" + "B" * 43
-    codes = [client.get(url).status_code for _ in range(31)]
-    assert codes[:30] == [404] * 30
-    assert codes[30] == 429
+def test_track_open_windows_behind_one_ip_are_not_limited(
+    client: TestClient, db: Session, at: SetTime
+) -> None:
+    route = courier_plan(client)[0]
+    load_all(client, route, at("07:10"))
+    tokens = [token_of(db, s["barcode"]) for s in route["stops"][:6]]
+    at("07:20")
+    # 5 customers with their own links at once (the demo: every client is one docker IP)
+    assert poll_windows(client, tokens[1:]) == [200] * 60
+    # one link open in 5 windows: 60/min per link
+    assert poll_windows(client, [tokens[0]] * 5) == [200] * 60
+    assert client.get(f"/api/track/{tokens[0]}").status_code == 429
+    assert client.get(f"/api/track/{tokens[1]}").status_code == 200
+
+
+@pytest.mark.usefixtures("seeded")
+def test_track_guessing_is_limited_per_ip(client: TestClient, db: Session, at: SetTime) -> None:
+    route = courier_plan(client)[0]
+    load_all(client, route, at("07:10"))
+    valid = token_of(db, route["stops"][0]["barcode"])
+    at("07:20")
+    codes = [client.get(f"/api/track/guess{i:02d}" + "B" * 36).status_code for i in range(11)]
+    assert codes == [404] * 10 + [429]
+    # blocked for valid links too: the limit must not tell which tokens exist
+    assert client.get(f"/api/track/{valid}").status_code == 429
+
+    # a client that is not the trusted proxy cannot dodge the limit with X-Forwarded-For
+    direct = TestClient(ProxyHeadersMiddleware(create_app(), trusted_hosts="127.0.0.1"))
+    spoofed = direct.get(f"/api/track/{valid}", headers={"X-Forwarded-For": "203.0.113.7"})
+    assert spoofed.status_code == 429
+
+    # behind a trusted proxy, another customer (X-Forwarded-For) is not affected
+    proxied = TestClient(ProxyHeadersMiddleware(create_app(), trusted_hosts="testclient"))
+    other = proxied.get(f"/api/track/{valid}", headers={"X-Forwarded-For": "203.0.113.7"})
+    assert other.status_code == 200
+    blocked = proxied.get(f"/api/track/{valid}", headers={"X-Forwarded-For": "testclient"})
+    assert blocked.status_code == 429
 
 
 # ------------------------------------------------------------------ courier screen
@@ -453,6 +500,8 @@ def test_notifications_are_admin_only(client: TestClient, at: SetTime) -> None:
     assert len(notes) == 5
     assert notes[0]["link"].startswith("http://localhost:8000/track/")
     assert "Kuriér Tomáš" in notes[0]["message"]
+    # Depot 5.0 branding (ADR-044): no SPS in the SMS or in new barcodes
+    assert notes[0]["message"].startswith("Depot 5.0: Váš balík DP")
     one = client.get(f"/api/admin/notifications?q={route['stops'][0]['barcode']}").json()
     assert [n["barcode"] for n in one] == [route["stops"][0]["barcode"]]
 

@@ -107,7 +107,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 
 ## ADR-021 Vizuálny cieľ podľa referenčného dashboardu
 - **Kontext:** Slová „pastelové, moderné“ nestačia. Tím dodal screenshoty izometrického dashboardu skladu.
-- **Rozhodnutie:** Referencia je `docs/design/reference.png` (plus 3 ďalšie zábery). Popis toho, čo z nej preberáme, je v `docs/design/README.md`. Platí pre celú aplikáciu, nielen pre dvojča. Logo, názov ani obsah referencie nepreberáme.
+- **Rozhodnutie:** Referencia je `docs/design/reference.png` (plus 3 ďalšie zábery). Popis toho, čo z nej preberáme, je v `docs/design/README.md`. Platí pre celú aplikáciu, nielen pre digitálny tieň. Logo, názov ani obsah referencie nepreberáme.
 - **Dôsledok:** Vo Fáze 3 vznikne design systém (`frontend/src/components/ui`) podľa tejto referencie (pozri `docs/plan-doplnky.md`).
 
 ## ADR-022 Plán jázd vlastní app, prevádzkový deň 15:00–15:00
@@ -176,13 +176,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Rozhodnutie:** Smer SE má **dva kamióny (KE-205TR a KE-206TR), ktoré sa striedajú podľa prevádzkového dňa**. Kamión, ktorý večer príde zo Senice, ráno odchádza späť, prespí v Senici a do Košíc sa vráti až o deň neskôr. V ten deň medzitým jazdí ten druhý. Počet kamiónov v striedaní je v `TRUCK_ROTATION` (`app/src/depotrack/seed/reference.py`). Ostatné prechody majú jeden kamión, lebo sa stihnú otočiť za deň.
 - **Dôsledok:** Žiadne vozidlo nemá prekrývajúce sa jazdy, čo overujú testy v app aj v telematike. Využije sa tým rezervný regionálny kamión KE-206TR.
 
-## ADR-032 Témy SPS a Modrá, design systém vo `components/ui`
+## ADR-032 Témy Oranžová a Modrá, design systém vo `components/ui` *(upravené pred Fázou 5)*
 - **Kontext:** Tím chce farby, ako by systém používal prepravca SPS (oranžová, čierna, sivá), a zároveň vizuálny štýl referenčného dashboardu (ADR-021).
 - **Rozhodnutie:**
-  - Farby sú tokeny v `frontend/src/index.css` a prepínajú sa cez `<html data-theme>`. Predvolená je **`sps`**: primárna oranžová `#f39200`, čierna navigácia `#1d1d1b` a teplá sivá plocha. Druhá téma je **`modra`** podľa referencie. Prepínač je v hornej lište a voľba sa pamätá v prehliadači.
-  - Stavové farby (ok/info/warn/danger/neutral) sú v oboch témach rovnaké. „warn“ je v SPS téme jantárová, aby sa neplietla s oranžovou značkou.
+  - Farby sú tokeny v `frontend/src/index.css` a prepínajú sa cez `<html data-theme>`. Predvolená je **`oranzova`** (pôvodne `sps`, premenovaná v ADR-044): primárna oranžová `#f39200`, čierna navigácia `#1d1d1b` a teplá sivá plocha. Druhá téma je **`modra`** podľa referencie. Prepínač je v hornej lište a voľba sa pamätá v prehliadači.
+  - Stavové farby (ok/info/warn/danger/neutral) sú v oboch témach rovnaké. „warn“ je v Oranžovej téme jantárová, aby sa neplietla s oranžovou značkou.
   - Text na oranžovom tlačidle je čierny (`on-brand`) kvôli kontrastu.
-  - Logo SPS nepoužívame, DepoTrack má vlastnú značku.
+  - Logo SPS nepoužívame, Depot 5.0 má vlastnú značku.
   - Komponenty a pravidlá (nezalamovanie štítkov, pevné šírky stĺpcov, kontrola pri 1280/1440/390 px) sú opísané v `docs/design/komponenty.md`.
   - Nové závislosti: `lucide-react` (ikony), `leaflet` + `react-leaflet` 4 (mapa Flotily podľa zadania; verzia 4 je posledná pre React 18).
 - **Dôsledok:** Všetky obrazovky používajú len tokeny a komponenty z `components/ui`, takže zmena farieb jednej témy sa prejaví všade.
@@ -215,7 +215,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 
 ## ADR-035 Čítanosť: deň v app, aktuálny stav zariadenia v telematike
 - **Kontext:** Telematika počíta čítanosť zariadenia len z posledných 30 simulovaných minút a až od 30 položiek, takže mimo vlny je prázdna.
-- **Rozhodnutie:** KPI „Čítanosť“ na dispečingu a na tabuli je **podiel prečítaných štítkov zo všetkých položiek pri nakládke za prevádzkový deň** a počíta ju app z `loading_scans`. Stav zariadenia (online/degradované/offline) a krátkodobá čítanosť pre admin a dvojča zostávajú v telematike.
+- **Rozhodnutie:** KPI „Čítanosť“ na dispečingu a na tabuli je **podiel prečítaných štítkov zo všetkých položiek pri nakládke za prevádzkový deň** a počíta ju app z `loading_scans`. Stav zariadenia (online/degradované/offline) a krátkodobá čítanosť pre admin a digitálny tieň zostávajú v telematike.
 - **Dôsledok:** KPI je stabilné a vysvetliteľné („z 1 000 balíkov sa 104 nedalo prečítať“). Degradáciu konkrétneho skenera ukazuje telematika a vo Fáze 6 ML model.
 
 ## ADR-036 Formát nových API: camelCase
@@ -249,7 +249,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Migrácia vytvorí oba sklady a existujúce dáta priradí k BUD.
   - **BUD (Budimír)** je plne simulovaný. Poloha je zatiaľ v priemyselnej zóne Budimíra (48.79256, 21.30710, sklad 138 m z OSM) a tím ju spresní úpravou `depots.lat/lon`.
   - **BAH (Bratislava hub)** je cieľ diaľkových kamiónov BA. Má 6 rámp a na mape ukazuje kamióny na ceste, na mieste a pri odchode. Nakládka a IoT skenery sa simulujú len v BUD.
-  - `layout` popisuje halu (rozmery, natočenie, pás, vjazd). Rovnaké dáta používa 3D model na mape aj `/twin` (`GET /api/layout?depot=…`). Živý stav: `GET /api/depots/{code}/state`.
+  - `layout` popisuje halu (rozmery, natočenie, pás, vjazd). Rovnaké dáta používa 3D model na mape aj `/shadow` (`GET /api/layout?depot=…`). Živý stav: `GET /api/depots/{code}/state`.
 - **Dôsledok:** Ďalší sklad pribudne ako riadok v `depots` s bránami a rozložením. Kamióny aj kuriéri (Fáza 4) vyrážajú z Budimíra. Kódy brán sú unikátne globálne (hub má `BA-R01…`).
 
 ## ADR-040 Mapy: MapLibre GL + OpenFreeMap, 3D sklady cez Three.js
@@ -258,7 +258,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Mapový podklad je **MapLibre GL 6** so svetlým vektorovým štýlom **OpenFreeMap Positron** (bez API kľúča). Predvolený náklon je ~45° a 3D budovy sa kreslia z vrstvy `building`.
   - Spoločný komponent `components/map/MapView` používa Flotila a neskôr aj `/track` a `/courier`.
   - Vlastné piny podľa referencie: zaoblený pin s ikonou vozidla, farba podľa stavu a meškania. Trasa vybraného vozidla je farebná čiara po reálnej ceste. Klik na vozidlo spustí plynulý prelet kamery a otvorí bočný panel.
-  - Sklady sú **custom layer s Three.js** (`components/map/depot3d.ts`). Pri priblížení (zoom ≥ 15) sa zobrazí hala z rozloženia: pás, brány, kamióny pri obsadených bránach, kopy balíkov na plochách a IoT piny so stavom. Pri oddialení sa zobrazí výrazná 3D značka skladu. Klik na sklad otvorí `/twin?depot=…`.
+  - Sklady sú **custom layer s Three.js** (`components/map/depot3d.ts`). Pri priblížení (zoom ≥ 15) sa zobrazí hala z rozloženia: pás, brány, kamióny pri obsadených bránach, kopy balíkov na plochách a IoT piny so stavom. Pri oddialení sa zobrazí výrazná 3D značka skladu. Klik na sklad otvorí `/shadow?depot=…`.
   - Atribúcia „OpenFreeMap © OpenMapTiles, © OpenStreetMap contributors“ je na mape aj v README.
   - Mapové stránky sa načítavajú lenivo (MapLibre + Three.js ~1,6 MB), takže hlavný balík zostáva ~300 kB. Worker MapLibre zbundluje Vite.
 - **Dôsledok:** Podklad mapy potrebuje v prehliadači internet (dlaždice OpenFreeMap). Simulátor a backendy ho nepotrebujú. Pre obhajobu bez internetu je vo Fáze 7 naplánovaný offline výrez **PMTiles** servírovaný z app (počet kontajnerov sa nezmení). Bez WebGL zobrazí mapa zrozumiteľnú hlášku.
@@ -275,13 +275,18 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Nezastihnutý balík ostáva `failed_delivery`. Opakované doručenie ďalší deň nie je v rozsahu prototypu.
 - **Dôsledok:** Najväčšie rajóny sa vracajú okolo 14:00–15:00, čo zodpovedá zadaniu (kuriéri sa vracajú zo zvozu do 15:30). Reštart dňa (ADR-033) vráti aj trasy do plánovaného stavu a zmaže odkazy a SMS.
 
-## ADR-042 Sledovanie zásielky: životný cyklus tokenu a súkromie
+## ADR-042 Sledovanie zásielky: životný cyklus tokenu a súkromie *(upravené pred Fázou 5)*
 - **Kontext:** Zadanie 6: token pri naskenovaní do dodávky, verejný endpoint s rate limitom, súkromie vynútené na serveri, zneplatnenie po doručení a tvrdá expirácia na konci dňa.
 - **Rozhodnutie:**
   - Pri udalosti `loaded` vznikne `secrets.token_urlsafe(32)`. V `tracking_tokens` je len SHA-256 a SMS v `customer_notifications` nesie celý odkaz (ADR-010). Telefónne číslo je simulované. Do logu ide len informácia o odoslaní, **token v logu nie je**.
   - Platnosť končí o **polnoci dňa doručenia podľa simulovaného času** (simulátor vlastní hodiny, ADR-022).
   - `GET /api/track/{token}`:
-    - limit `TRACK_RATE_LIMIT` = 30/min na IP (slowapi),
+    - **rate limit v dvoch úrovniach** (`core/ratelimit.py`, knižnica `limits`, ktorú už prináša slowapi; posuvné okno v pamäti):
+      - platný odkaz: `TRACK_TOKEN_RATE_LIMIT` = **60/min na token** (kľúč je SHA-256 tokenu). Stránka sa pýta každých 5 s (12/min na okno), takže jeden odkaz zvládne ~5 okien a rôzne odkazy za jednou IP sa navzájom neobmedzujú,
+      - neúspešné vyhľadanie (neznámy, expirovaný alebo zrušený odkaz): `TRACK_MISS_RATE_LIMIT` = **10/min na IP** ako ochrana proti hádaniu,
+      - IP nad limitom neúspechov dostane 429 pre každý token, aj platný, aby sa limit nedal použiť na zistenie, ktoré tokeny existujú,
+      - za reverznou proxy sa IP berie z `X-Forwarded-For`: uvicorn beží s `--proxy-headers` a verí len adresám z `FORWARDED_ALLOW_IPS` (predvolene `127.0.0.1`, teda žiadnej proxy). Uvádza sa **len presná IP proxy**, nie celý rozsah docker sietí (napr. `172.16.0.0/12`), lebo cez bránu docker siete prichádzajú aj priame požiadavky na publikovaný port a hlavička by sa dala podvrhnúť. Za proxy sa port app nepublikuje,
+      - pôvodný limit 30/min na IP zhodil demo pri 3 otvorených oknách, lebo v Dockeri sú všetci klienti jedna IP,
     - formát tokenu sa overí regexom (inak 422),
     - neznámy, expirovaný aj zrušený odkaz dostane rovnakú odpoveď 404 bez rozlíšenia dôvodu,
     - hlavičky `Cache-Control: no-store` a `Referrer-Policy: no-referrer` (aj na HTML stránke `/track/…`), aby token neodišiel cez Referer napr. na server dlaždíc mapy.
@@ -292,7 +297,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
     - meno kuriéra len krstné,
     - zákazník vidí len **vlastné** miesto doručenia.
   - Po doručení endpoint vráti len `{status, barcode, deliveredAt}`. Stránka ukáže „Doručené o HH:MM“ bez mapy.
-- **Dôsledok:** Za reverznou proxy treba rate limit kľúčovať podľa `X-Forwarded-For` (v Docker deme sú všetci klienti jedna IP). Polohu dodávky si app pýta z telematiky (`GET /internal/vehicles/{plate}`, service token) a 2 s ju cachuje, aby veľa zákazníkov jedného kuriéra nezaťažilo telematiku.
+- **Dôsledok:** Limity sú v pamäti jednej inštancie app (pri viacerých inštanciách by potrebovali Redis, čo by bol 5. kontajner). Ak niekto z IP depa skúša neplatné odkazy, na minútu zablokuje sledovanie aj ostatným za tou istou IP. Kontrola a zápis neúspechu nie sú atomické, takže súbežné požiadavky prejdú o pár pokusov viac; pri 256-bitových tokenoch je to bezvýznamné. `--proxy-headers` mení klientsku IP pre všetky limity (login, tabuľa) aj pre `sessions.ip`, nielen pre sledovanie. Knižnica `limits` je v `pyproject.toml` uvedená explicitne. Polohu dodávky si app pýta z telematiky (`GET /internal/vehicles/{plate}`, service token) a 2 s ju cachuje, aby veľa zákazníkov jedného kuriéra nezaťažilo telematiku.
 
 ## ADR-043 Obrazovka kuriéra a dodávky vo Flotile
 - **Kontext:** ADR-011 sľubuje `/courier` vo Fáze 4. Dispečing potrebuje vidieť aj dodávky.
@@ -302,3 +307,28 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - API: `GET /api/courier/route`, `GET /api/courier/routes`, `POST /api/courier/stops/{id}`.
   - Vo Flotile sa dodávky pohybujú a majú stav (nakladá / na trase / na zastávke / vracia sa). Vybraná dodávka ukáže zvyšok trasy po uliciach (`GET /routes/vehicle/:plate` v telematike, len pre staff, zákazník ju nikdy nedostane) a zoznam zostávajúcich zastávok.
 - **Dôsledok:** Dispečer má `/courier` v menu ako náhľad. Tlačidlá vidí len kuriér a admin.
+
+## ADR-044 Názov „Depot 5.0“, téma „Oranžová“ a prefix čiarových kódov
+- **Kontext:** Tím chce projekt navonok prezentovať ako **Depot 5.0** a v UI nepoužívať názov SPS, aby prototyp nepôsobil ako produkt konkrétnej firmy. Proces depa ostáva podľa reálneho depa v Budimíri.
+- **Rozhodnutie:**
+  - UI, README, `docs/`, tituly OpenAPI (`Depot 5.0 API`, `Depot 5.0 Telematics API`) a text simulovanej SMS („Depot 5.0: Váš balík …“) používajú názov Depot 5.0. V kóde ostáva `depotrack` (balík, databázy, cookie, kľúč v `localStorage`), aby premenovanie nerozbilo dáta ani nasadenie.
+  - Téma `sps` sa volá **`oranzova`** („Oranžová“). Uložená voľba `sps` v prehliadači sa číta ako predvolená téma, teda tiež Oranžová.
+  - **Čiarové kódy nových dní majú prefix `DP`** (`DP261026…`, nočné `DP261026N…`). Už vygenerované dni v databáze si nechávajú `SPS…`, reštart dňa (ADR-033) ich pregeneruje s novým prefixom. Kód sa nikde nerozkladá podľa prefixu, kontrola smeru ide cez balík v DB.
+  - Kontext SPS ostáva v `docs/PROMPT.md` (zadanie od učiteľa, opis reálneho procesu) a v starších ADR ako história.
+- **Dôsledok:** Na obhajobe UI neukazuje cudziu značku. V databáze, ktorá vznikla pred touto zmenou, môžu byť balíky s oboma prefixmi naraz.
+
+## ADR-045 Digitálny tieň namiesto digitálneho dvojčaťa
+- **Kontext:** Garant predmetu vyhradzuje pojem **digitálne dvojča** pre systém, ktorý **priamo riadi fyzické zariadenia**. 3D pohľad Depot 5.0 realitu len zrkadlí a zasahuje do nej cez rozhodnutia človeka.
+- **Rozhodnutie:**
+  - Používame tri pojmy podľa smeru toku dát:
+
+    | Pojem | Realita → model | Model → realita | V Depot 5.0 |
+    | --- | --- | --- | --- |
+    | **Digitálny model** | ručne (návrh, import) | nie | rozloženie haly v `depots.layout` |
+    | **Digitálny tieň** | **automaticky** (skeny, polohy, stav zariadení cez WebSocket) | len cez **rozhodnutie človeka** vo WMS (presun jazdy, údržba, potvrdenie alarmu) | `/shadow` a 3D hala na mape |
+    | **Digitálne dvojča** | automaticky | **automaticky**, príkazy priamo fyzickým zariadeniam | nie je, „ďalší rozvoj“ |
+
+  - Premenované: route `/twin` → `/shadow`, priečinok `frontend/src/twin` → `src/shadow`, `TwinPage` → `ShadowPage`, menu „Digitálny tieň“, odkazy z mapy `/shadow?depot=…`, komentáre v kóde, `docs/` a `docs/PROMPT.md`. Stará adresa `/twin` sa nepresmerúva (bol to len zárodok stránky).
+  - Scenáre what-if vo Fáze 5 pobežia v kópii simulácie a živé dáta nezmenia. Akcie zo scény pôjdu cez bežné API s RBAC, teda vždy ako rozhodnutie prihláseného človeka.
+  - **Čo chýba k dvojčaťu (ďalší rozvoj):** priame príkazy fyzickým zariadeniam (napr. zastavenie alebo prestavenie triediaceho pásu, prepnutie výhybky k bráne, reštart skenera, otvorenie vjazdovej závory) cez riadiacu vrstvu (PLC/OPC UA, MQTT) s bezpečnostnými blokovaniami, potvrdením vykonania a auditom. Model by potom realitu nielen zrkadlil, ale aj automaticky riadil.
+- **Dôsledok:** Terminológia v UI, kóde a dokumentácii zodpovedá tomu, čo systém naozaj robí. Na obhajobe vieme presne povedať, čo by k dvojčaťu ešte chýbalo.

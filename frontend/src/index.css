@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 /*
- * DepoTrack themes (docs/design/komponenty.md, ADR-032).
+ * Depot 5.0 themes (docs/design/komponenty.md, ADR-032).
  * Layout and component style follow docs/design/reference.png: floating white cards, soft
  * shadows, pastel status tones. Colours come from tokens, switched by <html data-theme="…">:
- *   sps    (default) – SPS-style: orange primary, black navigation, warm grey canvas
- *   modra            – blue, as in the reference screenshots
+ *   oranzova (default) – orange primary, black navigation, warm grey canvas
+ *   modra              – blue, as in the reference screenshots
  * Status tones (*-100 background, *-600 text/dot) are shared by both themes.
  */
 @theme {
@@ -18,7 +18,7 @@
   --color-ink-muted: #6b6b68;
   --color-line: #e6e5e1;
 
-  /* primary (SPS orange) */
+  /* primary (orange) */
   --color-brand-50: #fff6eb;
   --color-brand-100: #ffe8c7;
   --color-brand-500: #f39200;

@@ -1,4 +1,4 @@
-# Design systém DepoTrack
+# Design systém Depot 5.0
 
 > Pre koho: kto robí frontend. Kód je vo [frontend/src/components/ui](../../frontend/src/components/ui), import cez `import { Badge, Card, … } from "../components/ui"`.
 
@@ -8,7 +8,7 @@ Farby sú tokeny (CSS premenné) v [index.css](../../frontend/src/index.css) a p
 
 | Téma | Primárna | Navigácia | Pozadie | Kedy |
 | --- | --- | --- | --- | --- |
-| `sps` *(predvolená)* | oranžová `#f39200` | čierna `#1d1d1b` | teplá sivá `#f1f1ef` | štýl prepravcu SPS, ako by to bolo u neho |
+| `oranzova` *(predvolená, „Oranžová“)* | oranžová `#f39200` | čierna `#1d1d1b` | teplá sivá `#f1f1ef` | firemný štýl prepravcu (oranžová, čierna, sivá) |
 | `modra` | modrá `#2f5be9` | biela | modrosivá `#eef2f8` | podľa [reference.png](reference.png) |
 
 **Nepoužívaj priame farby** (`bg-orange-500`, `#hex`), vždy tokeny:
@@ -17,7 +17,7 @@ Farby sú tokeny (CSS premenné) v [index.css](../../frontend/src/index.css) a p
 | --- | --- |
 | `canvas`, `surface`, `line` | pozadie stránky, karty, deliace čiary |
 | `ink`, `ink-muted` | hlavný a vedľajší text |
-| `brand-50/100/500/600/700`, `on-brand` | primárna farba, `text-on-brand` = text na primárnom tlačidle (v SPS téme čierny kvôli kontrastu) |
+| `brand-50/100/500/600/700`, `on-brand` | primárna farba, `text-on-brand` = text na primárnom tlačidle (v Oranžovej téme čierny kvôli kontrastu) |
 | `chrome*` | bočná navigácia |
 | `ok`, `info`, `warn`, `danger`, `neutral` (`-100` pozadie, `-600` text/bodka) | stavy, rovnaké v oboch témach |
 

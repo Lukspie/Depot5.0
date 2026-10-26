@@ -3,8 +3,8 @@ import { Link, useSearchParams } from "react-router";
 import { useLayout } from "../api/depots";
 import { Card, EmptyState, KeyValue, PageHeader, Spinner } from "../components/ui";
 
-/** Digital twin of a depot (full 3D scene arrives in phase 5); reached by clicking a depot on the map. */
-export function TwinPage() {
+/** Digital shadow of a depot (ADR-045; full 3D scene arrives in phase 5); reached by clicking a depot on the map. */
+export function ShadowPage() {
   const [params] = useSearchParams();
   const code = params.get("depot") ?? "BUD";
   const layout = useLayout(code);
@@ -20,7 +20,7 @@ export function TwinPage() {
   const hall = l.layout.hall;
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader title={`Digitálne dvojča – ${l.depot.name}`} subtitle="3D scéna haly z tohto rozloženia pribudne vo fáze 5." />
+      <PageHeader title={`Digitálny tieň – ${l.depot.name}`} subtitle="3D scéna haly z tohto rozloženia pribudne vo fáze 5." />
       <Card>
         <div className="bg-brand-100 text-brand-700 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
           <Boxes size={22} />

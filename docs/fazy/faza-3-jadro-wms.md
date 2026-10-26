@@ -6,7 +6,7 @@
 
 ### 1. Design systém a témy
 - Komponenty vo [frontend/src/components/ui](../../frontend/src/components/ui): `Badge`, `StatusDot`, `DataTable`, `Card`, `KpiCard`, `SidePanel` + `KeyValue`, `PageHeader`, `EmptyState`, `Spinner`, `Tabs`, `Progress`, `Button`, `Logo`. Popis a pravidlá sú v [docs/design/komponenty.md](../design/komponenty.md).
-- **Dve témy**: **SPS** (oranžová, čierna, sivá; predvolená) a **Modrá** podľa referencie. Prepínač je v hornej lište vedľa „Live“ simulovaného času.
+- **Dve témy**: **Oranžová** (pred Fázou 5 „SPS“; oranžová, čierna, sivá; predvolená) a **Modrá** podľa referencie. Prepínač je v hornej lište vedľa „Live“ simulovaného času.
 - Opravené chyby v `/admin`: zalomený štítok roly, bodka a „Aktívny“ na dvoch riadkoch a zalamujúce sa „(vy)“. Každá obrazovka je skontrolovaná screenshotmi pri 1280, 1440 a 390 px, pričom skript overí aj to, že stránka vodorovne nepreteká.
 
 ### 2. Jadro WMS
@@ -80,4 +80,4 @@ Ručný skener na obrazovke Nakládka ide **tou istou funkciou** (`process_scan`
 - *Čo keď kamera prečíta kód balíka, ktorý v systéme neexistuje?* Výsledok je `unidentified`. Položka sa započíta, ale nič sa nenaloží a nevznikne ani alarm.
 - *Ako zistíte, ktoré balíky chýbajú v kamióne?* Balíky smeru a dňa, ktoré nemajú stav `loaded`. Po odchode kamióna ich dispečing vidí v stĺpci „Chýba“.
 - *Ako by ste napojili skutočný ručný skener?* Ručný skener je čítačka čiarových kódov, ktorá sa správa ako klávesnica. Pole na obrazovke Nakládka má fokus, takže sken „napíše“ kód a odošle ho Enterom.
-- *Prečo sú dve témy?* Systém je pripravený pre SPS (firemné farby), modrá ukazuje štýl referencie. Vďaka tokenom ide o zmenu niekoľkých premenných, nie o prepisovanie obrazoviek.
+- *Prečo sú dve témy?* Systém je pripravený pre firemné farby prepravcu (téma Oranžová), modrá ukazuje štýl referencie. Vďaka tokenom ide o zmenu niekoľkých premenných, nie o prepisovanie obrazoviek.

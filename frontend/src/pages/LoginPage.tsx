@@ -41,8 +41,8 @@ export function LoginPage() {
         <div className="mb-6 flex items-center gap-3">
           <Logo size={40} />
           <div>
-            <h1 className="text-xl font-semibold">DepoTrack</h1>
-            <p className="text-ink-muted text-sm">SPS depo Košice</p>
+            <h1 className="text-xl font-semibold">Depot 5.0</h1>
+            <p className="text-ink-muted text-sm">Prekládkové depo Budimír</p>
           </div>
         </div>
 

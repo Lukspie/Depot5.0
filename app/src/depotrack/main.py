@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
     logging.basicConfig(level=settings.log_level.upper())
 
     app = FastAPI(
-        title="DepoTrack API",
+        title="Depot 5.0 API",
         version=__version__,
         docs_url="/api/docs",
         redoc_url=None,

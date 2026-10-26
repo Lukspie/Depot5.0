@@ -13,6 +13,8 @@
 
 ![Simulované SMS v admine](../screenshots/faza-4/5-admin-sms.png)
 
+> Screenshoty sú zo stavu pred premenovaním (názov „DepoTrack“, menu „Digitálne dvojča“, SMS „SPS:“). Dnes je to „Depot 5.0“, „Digitálny tieň“ a „Depot 5.0: Váš balík DP…“ (ADR-044, ADR-045).
+
 1. **Trasy kuriérov.**
    - Každý z 8 kuriérov má svoj rajón (KE-01 až KE-08), dodávku a odstavnú plochu.
    - App zoradí zastávky metódou *nearest neighbor* od depa Budimír.
@@ -67,7 +69,7 @@ Rozhodnutia: ADR-041 (trasy a simulácia), ADR-042 (token a súkromie), ADR-043 
 ## Prečo je to tak navrhnuté
 
 - **Prečo sa ukladá len hash tokenu?** Kto ukradne databázu, nezíska funkčné odkazy, lebo SHA-256 sa nedá otočiť. Plný odkaz má len „odoslaná SMS“ (ADR-010), v reálnom svete log SMS brány.
-- **Prečo `token_urlsafe(32)`?** 256 bitov náhody sa nedá uhádnuť ani pri rate limite 30/min. Rate limit navyše bráni skúšaniu a zahlteniu.
+- **Prečo `token_urlsafe(32)`?** 256 bitov náhody sa nedá uhádnuť ani bez limitu. Rate limit (pred Fázou 5: 10 neúspechov za minútu na IP, 60/min na platný odkaz, ADR-042) navyše bráni skúšaniu a zahlteniu.
 - **Prečo rovnaká odpoveď 404 pre neznámy, expirovaný aj zrušený odkaz?** Útočník sa nedozvie, či odkaz niekedy existoval.
 - **Prečo kruh, a nie presná poloha?** Zákazník, ktorý je ďaleko v poradí, nepotrebuje vedieť, kde presne kuriér je. Presná poloha by prezradila, kde sú iní zákazníci. Kruh je zaokrúhlený na mriežku, takže sa nedá „vystopovať“ pohyb.
 - **Prečo súkromie na serveri?** Čo príde do prehliadača, si vie ktokoľvek prečítať. Keby filtroval frontend, údaje by boli v odpovedi API aj tak.

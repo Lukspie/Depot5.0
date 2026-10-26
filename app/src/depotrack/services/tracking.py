@@ -110,7 +110,7 @@ def issue(
         channel="sms",
         recipient=f"{parcel.recipient_name}, {fake_phone(parcel.id)}"[:120],
         message=(
-            f"SPS: Váš balík {parcel.barcode} je dnes na ceste. Kuriér {courier_first_name} "
+            f"Depot 5.0: Váš balík {parcel.barcode} je dnes na ceste. Kuriér {courier_first_name} "
             f"ho doručí{when}. Sledovanie: {link}"
         ),
         link=link,

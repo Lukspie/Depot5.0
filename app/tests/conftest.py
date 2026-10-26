@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 from depotrack.core.config import get_settings  # noqa: E402
 from depotrack.core.db import get_engine, get_session_factory  # noqa: E402
-from depotrack.core.ratelimit import limiter  # noqa: E402
+from depotrack.core.ratelimit import limiter, track_limits  # noqa: E402
 from depotrack.core.security import hash_password  # noqa: E402
 from depotrack.main import create_app  # noqa: E402
 from depotrack.models import Base, User  # noqa: E402
@@ -70,6 +70,7 @@ def clean_tables() -> Iterator[None]:
     with get_engine().begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     limiter.reset()
+    track_limits.reset()
 
 
 FAKE_DEVICES: list[dict[str, object]] = [

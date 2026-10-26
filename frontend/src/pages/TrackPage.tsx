@@ -19,7 +19,7 @@ function Header() {
       <Logo size={30} />
       <div className="leading-tight">
         <div className="text-sm font-semibold">Sledovanie zásielky</div>
-        <div className="text-chrome-muted text-xs">SPS · DepoTrack</div>
+        <div className="text-chrome-muted text-xs">Depot 5.0</div>
       </div>
     </header>
   );
@@ -164,7 +164,7 @@ function Delivered({ t }: { t: TrackInfo }) {
       <div className="flex flex-col items-center py-8 text-center">
         <CheckCircle2 size={56} className="text-ok-600 mb-3" />
         <h1 className="text-2xl font-semibold">Doručené o {hhmm(t.deliveredAt)}</h1>
-        <p className="text-ink-muted mt-1 text-sm">Ďakujeme, že využívate SPS.</p>
+        <p className="text-ink-muted mt-1 text-sm">Ďakujeme za trpezlivosť.</p>
       </div>
     </Card>
   );
@@ -196,7 +196,9 @@ export function TrackPage() {
       </Shell>
     );
   }
-  if (q.isError || !q.data) {
+  // a 429 while polling keeps the last data on screen (several open windows of one link)
+  const throttled = isApiError(q.error, 429);
+  if (!q.data || (q.isError && !throttled)) {
     const gone = isApiError(q.error, 404) || isApiError(q.error, 422);
     return (
       <Shell>
@@ -224,6 +226,7 @@ export function TrackPage() {
         Zásielka <span className="font-mono">{t.barcode}</span>
         {t.updatedAt && t.status !== "delivered" && <> · aktualizované {hhmmss(t.updatedAt)}</>}
       </p>
+      {throttled && <p className="text-warn-600 text-center text-xs">Príliš veľa požiadaviek, údaje sa obnovia o chvíľu.</p>}
     </Shell>
   );
 }

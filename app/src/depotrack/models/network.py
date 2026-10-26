@@ -78,7 +78,7 @@ class Wave(Base):
 
 
 class Door(Base):
-    """Loading dock, courier staging bay or yard gate. Positions (metres) feed the digital twin.
+    """Loading dock, courier staging bay or yard gate. Positions (metres) feed the digital shadow.
 
     `direction_id` is only the default direction;
     the actual assignment is `trips.door_id` (ADR-007).

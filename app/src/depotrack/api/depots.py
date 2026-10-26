@@ -1,7 +1,7 @@
-"""Depots and hubs for the map and the digital twin (ADR-039).
+"""Depots and hubs for the map and the digital shadow (ADR-039).
 
 GET /api/depots                    all depots/hubs with position
-GET /api/layout?depot=BUD          hall layout + doors (the same data drives /twin and the 3D map)
+GET /api/layout?depot=BUD          hall layout + doors (the same data drives /shadow and the 3D map)
 GET /api/depots/{code}/state       live state: occupied doors and staged parcels (depot), or trucks
                                    arriving / waiting / leaving (hub)
 """

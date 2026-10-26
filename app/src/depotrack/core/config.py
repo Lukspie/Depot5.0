@@ -35,8 +35,9 @@ class Settings(BaseSettings):
 
     # base of the customer tracking links in the simulated SMS (/track/<token>)
     public_base_url: str = "http://localhost:8000"
-    # public tracking endpoint, per client IP
-    track_rate_limit: str = "30/minute"
+    # public tracking endpoint (ADR-042): requests per valid link, failed lookups per client IP
+    track_token_rate_limit: str = "60/minute"
+    track_miss_rate_limit: str = "10/minute"
 
     # cascade warning: night truck ETA + sorting buffer > transit departure
     cascade_buffer_min: int = 30

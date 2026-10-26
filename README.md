@@ -1,7 +1,8 @@
-# DepoTrack
+# Depot 5.0
 
-Prototyp informačného systému (WMS) pre prekládkové depo SPS (Slovak Parcel Service) v Košiciach.
-Školský tímový projekt na predmet AISPU. Proces depa je reálny, všetky dáta sú simulované.
+Prototyp informačného systému (WMS) pre prekládkové depo kuriérskej spoločnosti v Budimíri pri Košiciach
+s hubom v Bratislave. Školský tímový projekt na predmet AISPU. Proces depa je reálny, všetky dáta sú simulované.
+V kóde sa projekt volá `depotrack`.
 
 - Zadanie: [docs/PROMPT.md](docs/PROMPT.md)
 - Rozhodnutia: [docs/decisions.md](docs/decisions.md)
@@ -59,17 +60,21 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/ | dispečer, admin | Dispečing |
 | http://localhost:8000/loading | operátor, admin | Nakládka pri bránach |
 | http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
+| http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň depa (3D scéna vo Fáze 5) |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
 | http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
 | http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
 | http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia, simulované SMS |
 | http://localhost:8000/system | všetci | Stav systému a živý WebSocket |
 
-Téma (SPS oranžová / Modrá) sa prepína v hornej lište.
+Téma (Oranžová / Modrá) sa prepína v hornej lište.
 
 Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, `/fleet?plate=KE-102LH` vybrané vozidlo.
 
 Sledovanie zásielky: kuriéri nakladajú ráno od 7:00 (v admine *Simulácia → skok na 06:00*). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
+Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
+
+**Digitálny tieň, nie dvojča:** 3D pohľad automaticky zrkadlí realitu (skeny, vozidlá, zariadenia), ale do fyzického sveta zasahuje len cez rozhodnutia človeka v bežných obrazovkách WMS. Rozdiel model / tieň / dvojča vysvetľuje ADR-045.
 
 ## Mapy a geodáta
 
@@ -124,10 +129,11 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 0: kostra (4 kontajnery, healthchecky, hello endpointy, frontend z `app`)
 - [x] Fáza 1: dáta a auth (schémy, migrácie, seed, sessions, RBAC, správa používateľov)
 - [x] Fáza 2: telematika (hodiny, deterministický simulátor, WebSocket s ticketom, REST medzi backendmi, kaskáda)
-- [x] Fáza 3: design systém (témy SPS / Modrá) + jadro WMS (dispečing, nakládka, flotila, tabuľa ETA, detail balíka, admin simulácie)
+- [x] Fáza 3: design systém (témy Oranžová / Modrá) + jadro WMS (dispečing, nakládka, flotila, tabuľa ETA, detail balíka, admin simulácie)
 - [x] Fáza 3b: MapLibre mapa, 3D sklady, depo Budimír + hub Bratislava, offline routing po reálnych cestách
 - [x] Fáza 4: zákazník a kuriér (trasy kuriérov po uliciach, sledovanie zásielky so súkromím, `/courier`, simulované SMS)
-- [ ] Fáza 5: digitálne dvojča
+- [x] Pred Fázou 5: názov Depot 5.0, digitálny tieň (`/shadow`), nový rate limit sledovania
+- [ ] Fáza 5: digitálny tieň (3D scéna, scenáre what-if)
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML
 - [ ] Fáza 7: dokončenie

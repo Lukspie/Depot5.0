@@ -2,7 +2,7 @@
   "name": "depotrack-telematics",
   "version": "0.1.0",
   "private": true,
-  "description": "DepoTrack – telematika a simulátor (druhý backend)",
+  "description": "Depot 5.0 – telematika a simulátor (druhý backend)",
   "type": "module",
   "engines": {
     "node": ">=22.12"

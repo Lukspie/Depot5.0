@@ -1,4 +1,4 @@
-/** DepoTrack mark in the current theme colour (a parcel). */
+/** Depot 5.0 mark in the current theme colour (a parcel). */
 export function Logo({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">

@@ -21,7 +21,7 @@ import { StatusPage } from "./pages/StatusPage";
 
 // map pages carry MapLibre + Three.js: loaded only when opened
 const FleetPage = lazy(() => import("./pages/FleetPage").then((m) => ({ default: m.FleetPage })));
-const TwinPage = lazy(() => import("./pages/TwinPage").then((m) => ({ default: m.TwinPage })));
+const ShadowPage = lazy(() => import("./pages/ShadowPage").then((m) => ({ default: m.ShadowPage })));
 const TrackPage = lazy(() => import("./pages/TrackPage").then((m) => ({ default: m.TrackPage })));
 const CourierPage = lazy(() => import("./pages/CourierPage").then((m) => ({ default: m.CourierPage })));
 
@@ -95,11 +95,11 @@ createRoot(root).render(
               }
             />
             <Route
-              path="twin"
+              path="shadow"
               element={
                 <RequireAuth roles={["dispatcher", "security"]}>
                   <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
-                    <TwinPage />
+                    <ShadowPage />
                   </Suspense>
                 </RequireAuth>
               }
