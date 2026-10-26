@@ -77,8 +77,12 @@ export function ShadowPage() {
   const [roof, setRoof] = useState(false);
   const [affected, setAffected] = useState<string[] | null>(null);
   const camera = useRef<CameraApi | null>(null);
+  // a panel opened from the URL (?door=, ?device=) also turns the camera to its object, once
+  const initialFocus = useRef<string | null>(params.get("door") ?? params.get("device"));
+  const [cameraReady, setCameraReady] = useState(false);
   const onCamera = useCallback((api: CameraApi) => {
     camera.current = api;
+    setCameraReady(true);
   }, []);
   const getCamera = useCallback(() => camera.current, []);
   const onFps = useCallback((v: number) => setFps(v), []);
@@ -93,6 +97,20 @@ export function ShadowPage() {
     }, 100);
     return () => window.clearInterval(t);
   }, [stress, layout.data]);
+
+  useEffect(() => {
+    const code = initialFocus.current;
+    const l = layout.data;
+    if (!cameraReady || !code || !l || !camera.current) return;
+    const door = l.doors.find((d) => d.code === code);
+    const dev = useShadowStore.getState().devices[code];
+    const at = door ? ([door.x, door.y] as const) : dev ? devicePosition(l, dev) : null;
+    if (!at) return;
+    initialFocus.current = null;
+    // after the initial fit of <Bounds> (it would overwrite an earlier focus)
+    const t = window.setTimeout(() => camera.current?.focus(at[0], at[1]), 900);
+    return () => window.clearTimeout(t);
+  }, [cameraReady, layout.data]);
 
   const found = useMemo(() => (layout.data ? foundAt(layout.data, parcel.data) : null), [layout.data, parcel.data]);
 

@@ -1,6 +1,6 @@
 import { Bounds, OrbitControls, OrthographicCamera, useBounds } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 
 /** camera from the yard side (doors and trucks face the viewer), ~38° above the ground */
@@ -18,42 +18,75 @@ export interface CameraApi {
 }
 
 interface Orbit {
+  target: THREE.Vector3;
   update(): void;
   getAzimuthalAngle(): number;
   setAzimuthalAngle(angle: number): void;
 }
 
-/** Hands the camera controls to the page (inside <Bounds>, so "home" and "focus" can fit). */
+/** Hands the camera controls to the page (focus, home, zoom, rotate). */
 function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void; homeBox?: THREE.Box3 }) {
   const bounds = useBounds();
-  const camera = useThree((s) => s.camera);
-  const controls = useThree((s) => s.controls) as unknown as Orbit | null;
-  const invalidate = useThree((s) => s.invalidate);
+  const get = useThree((s) => s.get);
+  const homed = useRef(false);
   useEffect(() => {
+    /** look at the box: orbit target to its centre, zoom so that it fills the view (no animation) */
+    const view = (box?: THREE.Box3) => {
+      if (!box) {
+        bounds.refresh().fit();
+        return;
+      }
+      const { camera, controls, invalidate } = get();
+      const orbit = controls as unknown as Orbit | null;
+      const ortho = camera as THREE.OrthographicCamera;
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      if (orbit) {
+        const offset = camera.position.clone().sub(orbit.target);
+        orbit.target.copy(center);
+        camera.position.copy(center).add(offset);
+      }
+      const extent = Math.max(size.x, size.z) * 1.15;
+      const zoom = Math.min((ortho.right - ortho.left) / extent, (ortho.top - ortho.bottom) / (extent * 0.6));
+      ortho.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+      ortho.updateProjectionMatrix();
+      orbit?.update();
+      invalidate();
+    };
     onReady({
       zoom(factor) {
+        const { camera, invalidate } = get();
         camera.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, camera.zoom * factor));
         camera.updateProjectionMatrix();
         invalidate();
       },
       rotate(radians) {
-        if (!controls) return;
-        controls.setAzimuthalAngle(controls.getAzimuthalAngle() + radians);
-        controls.update();
+        const { controls, invalidate } = get();
+        const orbit = controls as unknown as Orbit | null;
+        if (!orbit) return;
+        orbit.setAzimuthalAngle(orbit.getAzimuthalAngle() + radians);
+        orbit.update();
         invalidate();
       },
       home() {
-        bounds.refresh(homeBox).fit();
+        view(homeBox);
       },
       focus(x, z) {
-        bounds.refresh(new THREE.Box3(new THREE.Vector3(x - 16, 0, z - 22), new THREE.Vector3(x + 16, 8, z + 10))).fit();
+        // the detail panel covers the right part of the view: extend the box to the screen right,
+        // so the object ends up left of the panel
+        const right = new THREE.Vector3().setFromMatrixColumn(get().camera.matrixWorld, 0).setY(0).normalize().multiplyScalar(14);
+        const box = new THREE.Box3(new THREE.Vector3(x - 14, 0, z - 20), new THREE.Vector3(x + 14, 8, z + 8));
+        box.union(box.clone().translate(right));
+        view(box);
       },
     });
-  }, [bounds, camera, controls, invalidate, onReady, homeBox]);
-  // the first view is the facade with the doors (reference), not the whole yard
-  useEffect(() => {
-    if (homeBox) bounds.refresh(homeBox).fit();
-  }, [bounds, homeBox]);
+    // the first view is the facade with the doors (reference), not the whole yard; only once
+    if (homeBox && !homed.current) {
+      homed.current = true;
+      // after the initial fit of <Bounds>
+      window.setTimeout(() => view(homeBox), 300);
+    }
+  }, [bounds, get, onReady, homeBox]);
   return null;
 }
 

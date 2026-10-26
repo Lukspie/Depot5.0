@@ -45,7 +45,8 @@ export function Dock({
     <group position={[door.x, 0, facadeZ]}>
       <primitive object={frame} />
       <primitive object={leaf} />
-      {pile && <primitive object={pile} position={[0.6, 0, 1.4]} scale={0.7} />}
+      {/* parcels at the threshold, beside the trailer, so they are visible from the yard */}
+      {pile && <primitive object={pile} position={[1.55, 0.3, -0.2]} scale={0.45} />}
       <primitive object={plate} position={[0, OPENING_H + 1.4, -0.3]} />
       {/* invisible click target over the door and the truck in front of it */}
       <mesh

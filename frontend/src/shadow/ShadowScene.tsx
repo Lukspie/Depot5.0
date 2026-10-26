@@ -113,7 +113,8 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       const t = d.trip;
       const door = doors.get(d.code);
       if (t && door && (t.status === "at_door" || t.status === "loading")) {
-        trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y, type: t.directionType, door: d.code });
+        // 1 m gap for the dock leveler between the trailer and the facade
+        trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y - 1, type: t.directionType, door: d.code });
       }
     }
   } else {
