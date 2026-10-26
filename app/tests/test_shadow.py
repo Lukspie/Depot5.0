@@ -1,6 +1,6 @@
 """Digital shadow (ADR-045): scene data for dispatchers and security, no personal data."""
 
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -104,11 +104,39 @@ def test_kpi_parcels_of_the_current_wave(
 ) -> None:
     from depotrack.services import telematics
 
+    next_day = DAY.replace(day=DAY.day + 1)
     monkeypatch.setattr(telematics, "sim_now", lambda: local(18, 0))
     evening = viewer.get("/api/shadow/BUD").json()["kpis"]
-    monkeypatch.setattr(telematics, "sim_now", lambda: local(3, 0, DAY.replace(day=DAY.day + 1)))
-    morning = viewer.get("/api/shadow/BUD").json()["kpis"]
-    assert evening["waveKind"] == "evening" and morning["waveKind"] == "morning"
-    assert evening["parcelsWave"] > 0 and morning["parcelsWave"] > 0
+    monkeypatch.setattr(telematics, "sim_now", lambda: local(3, 0, next_day))
+    night = viewer.get("/api/shadow/BUD").json()["kpis"]
+    assert evening["waveKind"] == "evening" and night["waveKind"] == "night"
+    assert evening["parcelsWave"] > 0 and night["parcelsWave"] > 0
     # the two waves split the day's parcels
-    assert evening["parcelsWave"] + morning["parcelsWave"] == evening["parcelsTotal"]
+    assert evening["parcelsWave"] + night["parcelsWave"] == evening["parcelsTotal"]
+    monkeypatch.setattr(telematics, "sim_now", lambda: local(10, 0, next_day))
+    between = viewer.get("/api/shadow/BUD").json()["kpis"]
+    assert between["waveKind"] is None and between["parcelsWave"] is None
+    assert datetime.fromisoformat(between["nextWaveAt"]) == local(15, 30, next_day)
+
+
+@pytest.mark.parametrize(
+    ("hhmm", "wave", "next_at"),
+    [
+        ("15:29", None, "15:30"),
+        ("15:30", "evening", None),
+        ("22:00", None, "01:00"),
+        ("01:00", "night", None),
+        ("06:00", None, "15:30"),
+        ("10:00", None, "15:30"),
+    ],
+)
+def test_wave_boundaries(hhmm: str, wave: str | None, next_at: str | None) -> None:
+    from depotrack.core.clock import TZ
+    from depotrack.services.waves import current_wave, next_wave_start
+
+    h, m = (int(x) for x in hhmm.split(":"))
+    at = local(h, m)
+    assert current_wave(at) == wave
+    if next_at is not None:
+        assert next_wave_start(at).astimezone(TZ).strftime("%H:%M") == next_at
+        assert next_wave_start(at) > at

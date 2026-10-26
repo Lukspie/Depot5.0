@@ -120,8 +120,9 @@ Podľa §7 zadania, plus nasledujúce rozšírenia.
 - `door_sensor` nesmie vstupovať do čítanosti v KPI, do `device_metrics_minutely` ani do dát pre prediktívnu údržbu (Fáza 6). Pokryje to test.
 - `*.glb binary` do `.gitattributes` pred prvým modelom, modely spolu do ~2 MB.
 - KPI „balíky dňa“ sa mení na **„balíky v aktuálnej vlne“** podľa zadania (5c-1):
-  - večerná vlna (15:00–01:00) sú balíky dňa okrem nočných,
-  - ranná vlna (01:00–15:00) sú balíky z nočných kamiónov.
+  - večerná vlna (15:30–22:00, `services/waves.py`) sú balíky dňa okrem nočných,
+  - nočná vlna (01:00–06:00) sú balíky z nočných kamiónov,
+  - mimo vĺn KPI ukáže „mimo vlny“ a čas ďalšej vlny.
 - Hub sa presunie do Ivanky pri Dunaji, len ak to pokryje offline cestná sieť.
 Spätná väzba tímu na Fázu 5: scéna funguje, ale **layoutom sa nepodobá na referenciu** ([docs/design/reference.png](design/reference.png)).
 Dnes je `/shadow` stránka s kartami pod sebou a malou scénou v karte, takže sa scrolluje. Cieľom je, aby **layoutovo** zodpovedala referencii.

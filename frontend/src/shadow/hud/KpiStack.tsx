@@ -1,6 +1,7 @@
 import { AlertTriangle, Gauge, Package, Truck } from "lucide-react";
 import type { Shadow } from "../../api/shadow";
 import { KpiCard } from "../../components/ui";
+import { hhmm } from "../../domain/labels";
 import { useShadowStore } from "../store";
 
 const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)} %`);
@@ -14,8 +15,8 @@ export function KpiStack({ data }: { data: Shadow | undefined }) {
       <KpiCard
         icon={<Package size={18} />}
         label="Balíky v aktuálnej vlne"
-        value={k ? k.parcelsWave.toLocaleString("sk-SK") : "—"}
-        context={k ? (k.waveKind === "morning" ? "ranná vlna (nočné kamióny)" : "večerná vlna") : undefined}
+        value={!k ? "—" : k.parcelsWave === null ? "mimo vlny" : k.parcelsWave.toLocaleString("sk-SK")}
+        context={!k ? undefined : k.waveKind === "night" ? "nočná vlna 01:00–06:00" : k.waveKind === "evening" ? "večerná vlna 15:30–22:00" : `ďalšia o ${hhmm(k.nextWaveAt)}`}
       />
       <KpiCard
         icon={<Truck size={18} />}

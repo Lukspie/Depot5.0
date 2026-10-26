@@ -22,7 +22,7 @@
    - **IoT piny** (drei `Html`) majú farbu podľa stavu: online, degradované, offline a nový stav údržba (fialová). Pri každom skene krátko pulzujú.
    - **Balíky na páse:** každý sken pošle krabičku po páse k bráne, ktorá ho naskenovala (drei `Instances`, najviac 300 naraz). Nečitateľné sú červenkasté.
    - **Horná lišta KPI:**
-     - balíky v aktuálnej vlne (od Fázy 5c; večerná vlna = balíky dňa okrem nočných, ranná = balíky z nočných kamiónov),
+     - balíky v aktuálnej vlne (od Fázy 5c; večerná 15:30–22:00 = balíky dňa okrem nočných, nočná 01:00–06:00 = balíky z nočných kamiónov, inak „mimo vlny“ a čas ďalšej),
      - kamióny v areáli,
      - čítanosť,
      - nečitateľné,

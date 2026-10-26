@@ -1,17 +1,17 @@
 """KPIs of the operating day, shared by the dispatcher dashboard and the digital shadow."""
 
 from collections import Counter
-from datetime import date, datetime, time
+from datetime import date, datetime
 
 from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
-from depotrack.core.clock import TZ
 from depotrack.models import Alert, LoadingScan, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import ParcelStatus, ScanResult, TripKind, TripStatus
 from depotrack.schemas.wms import DashboardKpis, DirectionRow
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.views import DONE, Lookup
+from depotrack.services.waves import current_wave, next_wave_start
 
 WAITING = (ParcelStatus.COLLECTED, ParcelStatus.ON_BELT)
 
@@ -45,20 +45,10 @@ def day_read_rate(db: Session, day: date) -> float | None:
     return round(1 - rows.get(ScanResult.UNIDENTIFIED, 0) / counted, 4)
 
 
-MORNING_FROM = time(1, 0)
-MORNING_TO = time(15, 0)
-
-
-def wave_kind(now: datetime) -> str:
-    """The sorting wave the depot works on: evening 15:00-01:00, morning 01:00-15:00."""
-    local = now.astimezone(TZ).time()
-    return "morning" if MORNING_FROM <= local < MORNING_TO else "evening"
-
-
 def wave_parcels(db: Session, day: date, kind: str) -> int:
     """Night parcels are the ones whose 'collected' event carries the night trip (ADR-034)."""
     night = exists().where(ParcelEvent.parcel_id == Parcel.id, ParcelEvent.trip_id.is_not(None))
-    condition = night if kind == "morning" else ~night
+    condition = night if kind == "night" else ~night
     return db.execute(
         select(func.count()).select_from(Parcel).where(in_day(day), condition)
     ).scalar_one()
@@ -68,6 +58,7 @@ def day_overview(
     db: Session, day: date, trips: list[Trip], look: Lookup, now: datetime
 ) -> tuple[DashboardKpis, list[DirectionRow]]:
     """Parcel counts per direction and the KPI row of the operating day."""
+    wave = current_wave(now)
     departed_dirs = {
         t.direction_id for t in trips if t.kind == TripKind.OUTBOUND and t.status in DONE
     }
@@ -121,7 +112,8 @@ def day_overview(
         open_alerts=db.execute(
             select(func.count()).select_from(Alert).where(Alert.acknowledged_at.is_(None))
         ).scalar_one(),
-        wave_kind=wave_kind(now),
-        parcels_wave=wave_parcels(db, day, wave_kind(now)),
+        wave_kind=wave,
+        parcels_wave=wave_parcels(db, day, wave) if wave else None,
+        next_wave_at=None if wave else next_wave_start(now),
     )
     return kpis, rows

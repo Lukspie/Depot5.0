@@ -118,10 +118,12 @@ class DashboardKpis(CamelModel):
     read_rate: float | None
     unidentified: int
     open_alerts: int
-    # parcels of the current sorting wave: evening (15:00-01:00) = the day's parcels except the
-    # night ones, morning (01:00-15:00) = parcels brought by the night trucks (plan-doplnky 5c)
-    wave_kind: str
-    parcels_wave: int
+    # parcels of the current sorting wave (services/waves.py): evening 15:30-22:00 = the day's
+    # parcels except the night ones, night 01:00-06:00 = parcels brought by the night trucks;
+    # outside the waves None and the start of the next wave (plan-doplnky 5c)
+    wave_kind: str | None
+    parcels_wave: int | None
+    next_wave_at: datetime | None
 
 
 class DirectionRow(CamelModel):

@@ -27,8 +27,9 @@ export interface Shadow {
     readRate: number | null;
     unidentified: number;
     openAlerts: number;
-    waveKind: "evening" | "morning";
-    parcelsWave: number;
+    waveKind: "evening" | "night" | null;
+    parcelsWave: number | null;
+    nextWaveAt: string | null;
   } | null;
   docks: ShadowDock[];
   staged: { doorCode: string; directionCode: string; parcels: number }[];

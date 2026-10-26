@@ -6,7 +6,7 @@
   scanner and is loaded onto the regional trucks / prepared for couriers
 """
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -27,6 +27,18 @@ def current_wave(at: datetime) -> str | None:
     if NIGHT[0] <= local < NIGHT[1]:
         return "night"
     return None
+
+
+def next_wave_start(at: datetime) -> datetime:
+    """Start of the next sorting wave after `at` (used outside the waves)."""
+    local = at.astimezone(TZ)
+    for days in (0, 1):
+        d = local.date() + timedelta(days=days)
+        for start in (NIGHT[0], EVENING[0]):
+            candidate = datetime.combine(d, start, TZ)
+            if candidate > local:
+                return candidate
+    return datetime.combine(local.date() + timedelta(days=2), NIGHT[0], TZ)
 
 
 def evening_wave_end(day: date) -> datetime:
