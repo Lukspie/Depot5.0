@@ -16,6 +16,7 @@ import { cssColor } from "./parts";
 import { useShadowStore } from "./store";
 import { LEAVE_MS, Truck } from "./Truck";
 import { YardCars } from "./YardCars";
+import { CourierVans } from "./CourierVans";
 
 export type Selection = { kind: "dock" | "device"; code: string } | null;
 
@@ -182,6 +183,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       })}
       <ParcelFlow layout={layout} />
       <YardCars layout={layout} />
+      <CourierVans layout={layout} />
       {selected && <Highlight x={selected[0]} z={selected[1]} radius={selection?.kind === "device" ? 2 : 3.5} />}
       {(marks?.affected ?? []).map((code) => {
         const p = ringAt(code);

@@ -140,3 +140,17 @@ def test_wave_boundaries(hhmm: str, wave: str | None, next_at: str | None) -> No
     if next_at is not None:
         assert next_wave_start(at).astimezone(TZ).strftime("%H:%M") == next_at
         assert next_wave_start(at) > at
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_stale_trip_of_an_old_day_does_not_block_the_door(viewer: TestClient, db: Session) -> None:
+    from depotrack.models import Trip
+    from depotrack.models.enums import TripStatus
+
+    old = trip(db, "BA", "outbound")
+    old.status = TripStatus.LOADING  # the simulator never closed it (stack off for days)
+    old.operating_day = DAY - timedelta(days=5)
+    db.commit()
+    docks = {d["code"]: d for d in viewer.get("/api/shadow/BUD").json()["docks"]}
+    assert docks["LD-02"]["trip"] is None
+    assert db.get(Trip, old.id) is not None

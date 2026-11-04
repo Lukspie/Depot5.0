@@ -1,0 +1,12 @@
+3D models in this folder (digital shadow, plan-doplnky 5c, ADR-052)
+
+car-kit/       Car Kit 3.1 by Kenney (www.kenney.nl)
+               https://kenney.nl/assets/car-kit
+               files: delivery.glb, sedan.glb, suv.glb, Textures/colormap.png
+factory-kit/   Factory Kit 3.0 by Kenney (www.kenney.nl), formerly "Conveyor Kit"
+               https://kenney.nl/assets/factory-kit
+               files: box-small.glb, box-large.glb, Textures/colormap.png
+
+License: Creative Commons Zero (CC0 1.0), http://creativecommons.org/publicdomain/zero/1.0/
+The models are used unchanged. Each kit keeps its own Textures/colormap.png: the GLB files
+reference it by the same relative name, so the two kits must stay in separate folders.

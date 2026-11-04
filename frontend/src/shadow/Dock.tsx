@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import type * as THREE from "three";
 import { hallOf, type DepotLayout, type LayoutDoor } from "./layout";
 import type { DoorState } from "./layout";
-import { cardboardPile, disposeTree, dockFrame, dockLeveler, doorLeaf, doorUnknown, numberPlate, OPENING_H, stagingBay, telescopicConveyor } from "./parts";
+import { BoxPile } from "./BoxPile";
+import { disposeTree, dockFrame, dockLeveler, doorLeaf, doorUnknown, numberPlate, OPENING_H, stagingBay, telescopicConveyor } from "./parts";
 
 /**
  * Loading door in the facade: frame, number plate, sectional door and its equipment (dock leveler
@@ -37,7 +38,6 @@ export function Dock({
   // no valid reading (no sensor, switched off, not received yet): neutral, never a guess
   const neutral = state !== "open" && state !== "closed";
   const leaf = useMemo(() => (neutral ? doorUnknown() : doorLeaf(open)), [open, neutral]);
-  const pile = useMemo(() => (open ? cardboardPile(60) : null), [open]);
   const equipment = useMemo(
     () => (door.dockEquipment === "dock_leveler" ? dockLeveler(open) : door.dockEquipment === "telescopic_conveyor" ? telescopicConveyor(open) : null),
     [door.dockEquipment, open],
@@ -46,7 +46,6 @@ export function Dock({
   useEffect(() => () => disposeTree(frame), [frame]);
   useEffect(() => () => disposeTree(plate), [plate]);
   useEffect(() => () => disposeTree(leaf), [leaf]);
-  useEffect(() => () => (pile ? disposeTree(pile) : undefined), [pile]);
   const facadeZ = -hallOf(layout).depth / 2;
   const pointer = (on: boolean) => (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -58,7 +57,11 @@ export function Dock({
       <primitive object={frame} />
       <primitive object={leaf} />
       {/* parcels at the threshold, beside the trailer, so they are visible from the yard */}
-      {pile && <primitive object={pile} position={[1.55, 0.3, -0.2]} scale={0.45} />}
+      {open && (
+        <group position={[1.55, 0.3, -0.2]} scale={0.45}>
+          <BoxPile parcels={60} />
+        </group>
+      )}
       {equipment && <primitive object={equipment} />}
       {(fault || state === "unknown") && (
         <Html position={[0, OPENING_H / 2, -0.6]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
@@ -94,15 +97,11 @@ export function Dock({
 /** Courier staging bay with a pile of parcels proportional to the count. */
 export function StagingBay({ door, brand, parcels }: { door: LayoutDoor; brand: THREE.Color; parcels: number }) {
   const bay = useMemo(() => stagingBay(brand), [brand]);
-  // rebuild the pile only when it visibly changes (one box per 25 parcels)
-  const boxes = Math.min(18, Math.ceil(parcels / 25));
-  const pile = useMemo(() => cardboardPile(boxes * 25), [boxes]);
   useEffect(() => () => disposeTree(bay), [bay]);
-  useEffect(() => () => disposeTree(pile), [pile]);
   return (
     <group position={[door.x, 0, door.y]}>
       <primitive object={bay} />
-      <primitive object={pile} />
+      <BoxPile parcels={parcels} />
     </group>
   );
 }

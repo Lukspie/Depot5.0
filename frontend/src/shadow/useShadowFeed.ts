@@ -21,6 +21,10 @@ export function useShadowFeed(depotCode: string): void {
     return () => store.getState().reset();
   }, [store, depotCode]);
 
+  useChannel<{ plate: string; kind: string; status: string | null; directionCode: string | null; doorCode: string | null }>("vehicles", (ev) => {
+    if (ev.type === "position") store.getState().van(ev.data);
+  });
+
   useChannel<unknown>("devices", (ev) => {
     const s = store.getState();
     if (ev.type === "status") {

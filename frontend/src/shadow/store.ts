@@ -30,6 +30,13 @@ export interface DoorReading {
   at: string;
 }
 
+/** a courier van loading at the depot (vehicles channel) */
+export interface DepotVan {
+  plate: string;
+  directionCode: string | null;
+  doorCode: string | null;
+}
+
 export interface YardCar {
   plate: string;
   since: string;
@@ -52,6 +59,9 @@ interface ShadowStore {
   /** door contact sensors by door code (the only source of the door state in the scene) */
   doors: Record<string, DoorReading>;
   door(r: DoorReading): void;
+  /** courier vans that are loading right now */
+  vans: Record<string, DepotVan>;
+  van(p: { plate: string; kind: string; status: string | null; directionCode: string | null; doorCode: string | null }): void;
   setDevices(list: DeviceInfo[]): void;
   device(info: DeviceInfo): void;
   scan(s: LiveScan): void;
@@ -70,6 +80,18 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
   flow: [],
   yard: [],
   doors: {},
+  vans: {},
+  van: (p) => {
+    const here = p.kind === "van" && p.status === "loading";
+    const known = p.plate in get().vans;
+    if (here === known) return; // only changes reach React (positions arrive every second)
+    set((s) => {
+      const vans = { ...s.vans };
+      if (here) vans[p.plate] = { plate: p.plate, directionCode: p.directionCode, doorCode: p.doorCode };
+      else delete vans[p.plate];
+      return { vans };
+    });
+  },
   door: (r) => set((s) => ({ doors: { ...s.doors, [r.doorCode]: r } })),
   setDevices: (list) => set({ devices: Object.fromEntries(list.map((d) => [d.code, d])) }),
   device: (info) => set((s) => ({ devices: { ...s.devices, [info.code]: info } })),
@@ -94,5 +116,5 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
     return items;
   },
   pushFlow: (items) => set((s) => ({ flow: [...s.flow, ...items].slice(-MAX_FLOW_QUEUE) })),
-  reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [], doors: {} }),
+  reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [], doors: {}, vans: {} }),
 }));

@@ -4,3 +4,4 @@
 *.mp4 binary
 *.joblib binary
 *.pt binary
+*.glb binary

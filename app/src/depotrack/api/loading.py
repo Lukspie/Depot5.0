@@ -19,7 +19,7 @@ from depotrack.services.loading import (
     process_scan,
     scan_event,
 )
-from depotrack.services.views import Lookup, parcel_brief, scan_out, trip_brief
+from depotrack.services.views import Lookup, clock, parcel_brief, scan_out, trip_brief
 
 router = APIRouter(prefix="/api/loading", tags=["loading"])
 
@@ -35,7 +35,7 @@ MESSAGES = {
 
 def _door_summary(db: DbSession, door: Door, look: Lookup) -> DoorSummary:
     now = telematics.sim_now()
-    trip = active_trip_at(db, door)
+    trip = active_trip_at(db, door, clock().sim_time)
     default = look.directions.get(door.direction_id) if door.direction_id else None
     return DoorSummary(
         code=door.code,
@@ -62,7 +62,7 @@ def door_view(code: str, _: Operator, db: DbSession) -> LoadingView:
     door = _door_or_404(db, code)
     look = Lookup(db)
     summary = _door_summary(db, door, look)
-    trip = active_trip_at(db, door)
+    trip = active_trip_at(db, door, clock().sim_time)
     missing = [parcel_brief(p, look) for p in missing_parcels(db, trip)] if trip else []
     recent: list[ScanOut] = []
     if trip:

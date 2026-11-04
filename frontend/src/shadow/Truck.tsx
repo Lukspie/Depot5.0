@@ -1,10 +1,7 @@
 import { useFrame } from "@react-three/fiber";
-import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
-import { MODEL_URLS } from "./models";
 import { cssColor, disposeTree, truckModel } from "./parts";
-
-const GltfModel = lazy(() => import("./GltfModel"));
 
 const ENTER_S = 1.6;
 const ENTER_FROM = -26;
@@ -48,13 +45,7 @@ export function Truck({ x, z, directionType, leaving = false, onSelect }: { x: n
         onSelect();
       }}
     >
-      {MODEL_URLS.truck ? (
-        <Suspense fallback={<primitive object={model} />}>
-          <GltfModel src={MODEL_URLS.truck} />
-        </Suspense>
-      ) : (
-        <primitive object={model} />
-      )}
+      <primitive object={model} />
     </group>
   );
 }

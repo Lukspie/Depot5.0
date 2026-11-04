@@ -3,6 +3,9 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { beltZ, type DepotLayout } from "./layout";
+import { WithModel } from "./gltf";
+import { useModelMesh, type ModelMesh } from "./useModelMesh";
+import { MODELS } from "./models";
 import { useShadowStore, type FlowItem } from "./store";
 
 const LIMIT = 300;
@@ -11,7 +14,9 @@ const SPEED = 22;
 /** at most this many parcels enter the belt per frame, so bursts spread out */
 const SPAWN_PER_FRAME = 2;
 const Y = 1.65;
-const READ = new THREE.Color("#d9a066");
+/** tint of the instances: the GLTF box has its own texture (white = unchanged), the primitive is cardboard */
+const READ_PRIMITIVE = new THREE.Color("#d9a066");
+const READ_MODEL = new THREE.Color("#ffffff");
 const UNREAD = new THREE.Color("#e0604a");
 
 interface Slot {
@@ -39,6 +44,20 @@ function makeSlots(): Slot[] {
  * the component calls invalidate() so the "demand" frame loop keeps animating.
  */
 export function ParcelFlow({ layout }: { layout: DepotLayout }) {
+  return (
+    <WithModel fallback={<Flow layout={layout} mesh={null} />}>
+      <FlowWithModel layout={layout} />
+    </WithModel>
+  );
+}
+
+function FlowWithModel({ layout }: { layout: DepotLayout }) {
+  const mesh = useModelMesh(MODELS.parcel.url, MODELS.parcel.scale);
+  return <Flow layout={layout} mesh={mesh} />;
+}
+
+function Flow({ layout, mesh }: { layout: DepotLayout; mesh: ModelMesh | null }) {
+  const READ = mesh ? READ_MODEL : READ_PRIMITIVE;
   const refs = useRef<(InstanceRef | null)[]>([]);
   const queue = useRef<FlowItem[]>([]);
   const slots = useRef<Slot[]>([]);
@@ -118,9 +137,9 @@ export function ParcelFlow({ layout }: { layout: DepotLayout }) {
   });
 
   return (
-    <Instances limit={LIMIT} castShadow>
-      <boxGeometry args={[0.9, 0.6, 0.8]} />
-      <meshStandardMaterial roughness={0.8} />
+    <Instances limit={LIMIT} castShadow geometry={mesh?.geometry} material={mesh?.material}>
+      {!mesh && <boxGeometry args={[0.9, 0.6, 0.8]} />}
+      {!mesh && <meshStandardMaterial roughness={0.8} />}
       {POOL.map((i) => (
         <Instance
           key={i}

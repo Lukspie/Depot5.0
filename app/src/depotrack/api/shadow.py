@@ -81,7 +81,7 @@ def _cascade(db: DbSession, trip: Trip) -> AlertOut | None:
 
 
 def _dock(db: DbSession, door: Door, look: Lookup) -> ShadowDock:
-    trip = active_trip_at(db, door)
+    trip = active_trip_at(db, door, clock().sim_time)
     direction = look.directions.get(door.direction_id) if door.direction_id else None
     return ShadowDock(
         code=door.code,
@@ -132,7 +132,7 @@ def dock_detail(code: DoorCode, _: Viewer, db: DbSession) -> ShadowDockDetail:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown loading door")
     look = Lookup(db)
     dock = _dock(db, door, look)
-    trip = active_trip_at(db, door)
+    trip = active_trip_at(db, door, clock().sim_time)
     if trip is None:
         return ShadowDockDetail(dock=dock, missing=[], missing_count=0, wrong_direction=[])
     missing_count = db.execute(

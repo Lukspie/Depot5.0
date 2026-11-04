@@ -27,6 +27,7 @@ from depotrack.models.enums import (
 )
 from depotrack.services.alerts import AlertChange, upsert_alert
 from depotrack.services.parcels import LOADABLE, in_day
+from depotrack.services.trip_plan import operating_day_of
 
 FINISHED = (TripStatus.DEPARTED, TripStatus.COMPLETED, TripStatus.CANCELLED)
 
@@ -60,8 +61,12 @@ def depot_docks(db: Session, depot_code: str = "BUD") -> list[Door]:
     )
 
 
-def active_trip_at(db: Session, door: Door) -> Trip | None:
-    """The outbound trip loading at the door: the earliest one that has not left yet."""
+def active_trip_at(db: Session, door: Door, at: datetime) -> Trip | None:
+    """The outbound trip loading at the door: the earliest one that has not left yet.
+
+    Only trips of the current or the previous operating day: a trip of an older day that the
+    simulator never closed (e.g. the stack was off for days) must not block the door.
+    """
     return (
         db.execute(
             select(Trip)
@@ -69,6 +74,7 @@ def active_trip_at(db: Session, door: Door) -> Trip | None:
                 Trip.door_id == door.id,
                 Trip.kind == TripKind.OUTBOUND,
                 Trip.status.not_in(FINISHED),
+                Trip.operating_day >= operating_day_of(at) - timedelta(days=1),
             )
             .order_by(Trip.planned_departure)
             .limit(1)
@@ -89,7 +95,7 @@ def process_scan(
     user_id: int | None = None,
 ) -> ScanOutcome | None:
     """Record one scan; returns None when no truck is loading at the door."""
-    trip = active_trip_at(db, door)
+    trip = active_trip_at(db, door, at)
     if trip is None:
         return None
     trip_direction = db.get(Direction, trip.direction_id)

@@ -1,10 +1,18 @@
-# Voliteľné 3D modely pre digitálny tieň
+# 3D modely digitálneho tieňa
 
-Scéna `/shadow` predvolene kreslí jednoduché tvary (`src/shadow/parts.ts`). Ak chceš krajší kamión:
+Scéna `/shadow` používa CC0 modely od Kenney (licencia a presný zdroj v [LICENSE.txt](LICENSE.txt), ADR-052):
 
-1. Stiahni CC0 model (napr. [Kenney.nl](https://kenney.nl/assets) – „Car Kit“) vo formáte `.glb`.
-2. Ulož ho sem, napr. `public/models/truck.glb`.
-3. V `src/shadow/models.ts` nastav `truck: "/models/truck.glb"`.
+| Model | Kde v scéne |
+| --- | --- |
+| `car-kit/delivery.glb` | dodávky kuriérov pri ich odstavných plochách počas nakládky |
+| `car-kit/sedan.glb`, `car-kit/suv.glb` | neočakávané autá na dvore (prejazdy vjazdovou bránou) |
+| `factory-kit/box-small.glb` | balíky na páse (inštancie geometrie, max. 300 naraz) |
+| `factory-kit/box-large.glb` | kopy balíkov na odstavných plochách a v otvore brán (inštancie) |
 
-Model má smerovať na sever (−z) a počiatok má byť na zadnej strane návesu (pri bráne).
-Kým sa model načítava alebo ak chýba, scéna ukáže jednoduchý tvar.
+Kamión (ťahač s návesom) je vlastný diel v `src/shadow/parts.ts`, Car Kit ho nemá.
+Hala, pás a brány sú tiež vlastné diely, lebo vznikajú z rozloženia `/api/layout`.
+
+Pravidlá:
+- každý kit má vlastný priečinok s `Textures/colormap.png` (GLB naň odkazujú rovnakým menom),
+- `*.glb` je v `.gitattributes` ako binárny súbor, spolu najviac ~2 MB,
+- nový model zapíš do `src/shadow/models.ts` aj sem, licenciu do `LICENSE.txt`.

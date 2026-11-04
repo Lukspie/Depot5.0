@@ -32,3 +32,6 @@ tools/osm/cache/
 # claude code (local settings and hook cache)
 .claude/settings.local.json
 .claude/.cache/
+
+# Kenney asset kits (downloaded manually, selected models go to frontend/public/models)
+tools/kenney/
