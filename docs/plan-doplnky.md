@@ -177,7 +177,67 @@ Nemusí ísť o presnú kópiu. Podrobnejšie veci sa otvárajú v overlayi aleb
 - **Budimír:** skutočné rozloženie (poradie brán, ich typy, plochy, pás) dodá tím (Lukspie). Dovtedy ostáva súčasné, ale všetko je dátami v `/api/layout`, nič natvrdo.
 - **Bratislava:** hub SPS v **Ivanke pri Dunaji**. Tvar a rozmery haly skús zistiť z budov v OSM extrakte (`tools/osm`). Ak tam nie sú, ostane schematická hala.
 
+## Fáza 5d – Simulácia a testovanie (pred Fázou 5b)
+Problém: scenár „čo ak“ v praxi veľmi nefunguje. Testovať konkrétne situácie je pracné (čakanie na 15:00, skoky bez dát) a v areáli sa nahromadilo 260+ aktívnych alarmov (4. 11. 2026: 202 `wrong_direction` a 81 `cascade_delay` od 25. 10.).
+
+0. **Diagnóza ako prvý krok, bez opráv:** zistiť, prečo scenár nefunguje.
+   - Overiť ho v rôznych časoch (10:00, 15:45, 18:30, 02:00, 05:45) a so všetkými typmi zásahov.
+   - Výsledky dať do tabuľky (čas, zásah, očakávané, skutočné, príčina) a zastaviť sa.
+1. **Ovládanie času** (admin, API telematiky):
+   - skok na ľubovoľný čas HH:MM, nielen predvoľby,
+   - dva režimy skoku:
+     - „preskočiť“ (dnešné správanie, ADR-025),
+     - „pretočiť s dátami“ (rýchlo dosimuluje preskočený úsek, aby skeny, prejazdy a alarmy nadväzovali),
+   - pauza a krok +5 / +15 / +60 min,
+   - „čistý reset dňa“: zmaže alarmy, okná údržby, presuny jázd a zásahy, vráti seed a začne deň znova.
+2. **Situácie**, teda pomenované deterministické predvoľby (seed + čas + vložené udalosti), načítané jedným klikom do pár sekúnd:
+   - Večerná vlna – špička (18:30), Nočné kamióny s kaskádou (02:10), Ranné odchody (05:45), Kuriéri ráno (07:20), Degradácia skenera LD-05, Mimo vlny (10:00).
+   - Dostupné v admine, cez API a cez URL (`?situation=evening-peak`), aby ich používal aj skript na screenshoty, e2e testy a demo na obhajobe.
+   - Rovnaká situácia musí dať vždy rovnaké čísla (test).
+3. **Vkladanie incidentov do živej simulácie** (nie do what-if), na demo a testy:
+   - meškanie jazdy o X min,
+   - skener degradovaný alebo offline,
+   - balík v zlom smere,
+   - neznáma ŠPZ na bráne,
+   - porucha dverového senzora,
+   - nezastihnutí zákazníci.
+
+   Každý zásah sa zaloguje, je viditeľný v admine a čistý reset ho vráti.
+4. **Oprava scenára „čo ak“:**
+   - funguje v každom čase; keď v horizonte nie sú budúce jazdy, UI to jasne povie a ponúkne horizont ďalšieho dňa,
+   - jazdu a zariadenie vyberáš zo zoznamu, nie písaním,
+   - výsledok je tabuľka plán vs. scenár s rozdielom a zvýraznením v scéne,
+   - golden testy: každý typ zásahu v 2–3 situáciách s očakávaným smerom zmeny KPI.
+5. **Hygiena alarmov:**
+   - deduplikácia a automatické uzatváranie vyriešených alarmov,
+   - situácie štartujú bez starých alarmov,
+   - KPI nesmie ukazovať stovky alarmov z minulých dní.
+6. **E2E testy:** Playwright na hostovi ako dev závislosť frontendu, nie nový kontajner (ostávajú 4).
+   - Pre každú situáciu načítať hlavné obrazovky ako správna rola.
+   - Overiť, že v konzole nie sú chyby a že stránka nepreteká pri 1280 / 1440 / 390 px, a urobiť screenshoty.
+   - Jeden príkaz typu `npm run e2e`, postup v README.
+
+**Schválené s plánom 5d (defaulty otvorených otázok OK) a doplnenia tímu:**
+- *Krok 0 hotový:* diagnóza je v [docs/fazy/faza-5d-diagnoza.md](fazy/faza-5d-diagnoza.md).
+- **Replay:**
+  - najprv zmerať, kde je úzke hrdlo,
+  - prednosť má dávkový interný endpoint v app (hromadný insert) pred štartovacou snímkou,
+  - snímka len ako automatická cache s kľúčom (seed, situácia, verzia kódu), nie ručne udržiavaný súbor.
+- **Krok +N min a replay o N min sú rovnaký kód.** Test: step 60 == replay 60 (rovnaké skeny).
+- **E2E `/track`:** token sa po načítaní situácie vytiahne z admin API notifikácií. Tokeny sa nerobia deterministické (ADR-042).
+- **README:** veta, že v ostrom režime sa nastavuje `SIM_CONTROLS_ENABLED=false` (krok 1).
+- **Staré alarmy** sa uzavrú (audit ostane), nezmažú sa. Čistý reset maže len alarmy aktuálneho dňa.
+- **`SIM_CONTROLS_ENABLED=false`** vypne ovládanie času, situácie aj incidenty. Scenár „čo ak“ nie.
+- **Horizont ďalšieho dňa vo what-if:** plán a manifesty D+1 vygeneruje app rovnakým seedom cez interné API, len na čítanie. Konečné rozhodnutie v kroku 4 podľa diagnózy.
+
+**Pravidlá:**
+- Ovládanie simulácie je len pre admina. V ostrom režime sa vypína premennou `SIM_CONTROLS_ENABLED`.
+- Determinizmus simulátora ostáva.
+- ADR pre situácie, režimy skoku a e2e.
+- Commit po krokoch, reviewer po krokoch 1–4.
+
 ## Fáza 5b – UX review (po Fáze 5)
+- **Vizuálny cieľ pre `/shadow` je schválená maketa [docs/design/maketa-tien/](design/maketa-tien/README.md)** (README + PNG). V 5b sa digitálny tieň upraví podľa nej. Reviewer porovnáva screenshot s `tien-maketa.png`, nie s `reference.png`. Showcase čas je situácia „Večerná vlna – špička“ z Fázy 5d.
 - Prejsť všetky obrazovky za každú rolu a urobiť screenshoty pri 3 šírkach. Spísať zoznam problémov a opraviť ich.
 - Osobitne skontrolovať:
   - `/board`: čitateľný na veľkom displeji z diaľky,

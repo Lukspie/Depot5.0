@@ -138,6 +138,7 @@ cd frontend && npm ci && npm run dev
 - [x] Pred Fázou 5: názov Depot 5.0, digitálny tieň (`/shadow`), nový rate limit sledovania
 - [x] Fáza 5: digitálny tieň (React 19 + R3F scéna, panely, scenáre „čo ak“, akcie WMS zo scény, údržba skenerov)
 - [x] Fáza 5c: digitálny tieň v2 (layout podľa referencie, scéna v2, brány so senzormi, GLTF modely Kenney, hub v Ivanke)
+- [ ] Fáza 5d: simulácia a testovanie (ovládanie času, situácie, incidenty, oprava scenára „čo ak“, hygiena alarmov, e2e)
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML
 - [ ] Fáza 7: dokončenie

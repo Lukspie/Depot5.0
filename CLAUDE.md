@@ -8,6 +8,7 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 - Doplnky schválené tímom: `docs/plan-doplnky.md`
 - Rozhodnutia: `docs/decisions.md` (ADR-001 až …). Pred zmenou architektúry nájdi súvisiace ADR.
 - Vysvetlenia hotových fáz: `docs/fazy/` · design systém: `docs/design/komponenty.md`
+- Vizuálny cieľ `/shadow`: schválená maketa `docs/design/maketa-tien/` (`tien-maketa.png`), nie `reference.png`
 - Stav projektu: `git log --oneline` (každá fáza = jeden commit `feat: phase N - …`)
 
 ## Architektúra v skratke (presne 4 kontajnery, nič nepridávaj)
@@ -79,4 +80,5 @@ Formát: `- [oblasť] čo sa stalo → ako to robiť správne`. Keď sekcia nara
 - [frontend] Geometria naklonovaná v `useMemo` sa pri unmounte neuvoľní (R3F uvoľní len to, čo vytvorí z JSX) → zdieľanú geometriu pre inštancie drž v cache modulu, alebo ju uvoľni v cleanup efekte.
 - [assets] kenney.nl vracia botom 403 → kontrolu neobchádzaj, kit stiahne používateľ ručne do `tools/kenney/` (gitignored). `docker compose build` padol na PyPI read timeout → nejde o chybu kódu, zopakuj build.
 - [docs] Pri 30× ubehne počas review a testov 10+ h simulácie → screenshot časovo viazanej scény (dodávky 07:00–07:35, nočné kamióny) urob hneď po skoku. Po screenshote vráť rýchlosť na 30×.
+- [telematics] Fastify AJV má `removeAdditional: true`: v `oneOf` so schémami s `additionalProperties: false` vymaže polia už pri porovnaní s inou vetvou, takže `read_rate` a `move_trip` v what-if nikdy neprešli → varianty rozlišuj podľa `kind` (`if/then`, `discriminator`) a pre každý variant maj HTTP test, nielen test enginu.
 - [frontend] Referenčný layout (docs/design/reference.png) bol vo Fáze 5 postavený ako karty pod sebou → v referencii je scéna cez celú plochu a panely plávajú nad ňou. Pri vizuálnej referencii porovnaj screenshot vedľa seba s referenciou, nielen komponenty.
