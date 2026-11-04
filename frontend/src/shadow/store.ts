@@ -62,6 +62,7 @@ interface ShadowStore {
   /** courier vans that are loading right now */
   vans: Record<string, DepotVan>;
   van(p: { plate: string; kind: string; status: string | null; directionCode: string | null; doorCode: string | null }): void;
+  clearVans(): void;
   setDevices(list: DeviceInfo[]): void;
   device(info: DeviceInfo): void;
   scan(s: LiveScan): void;
@@ -116,5 +117,6 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
     return items;
   },
   pushFlow: (items) => set((s) => ({ flow: [...s.flow, ...items].slice(-MAX_FLOW_QUEUE) })),
+  clearVans: () => set({ vans: {} }),
   reset: () => set({ devices: {}, recent: {}, pulses: {}, flow: [], yard: [], doors: {}, vans: {} }),
 }));

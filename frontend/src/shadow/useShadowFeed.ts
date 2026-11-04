@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { DeviceInfo } from "../api/telematicsApi";
-import { useChannel } from "../hooks/telematics";
+import { useChannel, useSocketStatus } from "../hooks/telematics";
 import { useShadowStore, type DoorReading, type LiveScan } from "./store";
 
 interface GatePassage {
@@ -20,6 +20,12 @@ export function useShadowFeed(depotCode: string): void {
     store.getState().reset();
     return () => store.getState().reset();
   }, [store, depotCode]);
+
+  // without the socket the vans' positions are unknown: show none rather than the last known ones
+  const socket = useSocketStatus();
+  useEffect(() => {
+    if (socket !== "open") store.getState().clearVans();
+  }, [store, socket]);
 
   useChannel<{ plate: string; kind: string; status: string | null; directionCode: string | null; doorCode: string | null }>("vehicles", (ev) => {
     if (ev.type === "position") store.getState().van(ev.data);

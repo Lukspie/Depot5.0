@@ -143,14 +143,36 @@ def test_wave_boundaries(hhmm: str, wave: str | None, next_at: str | None) -> No
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
-def test_stale_trip_of_an_old_day_does_not_block_the_door(viewer: TestClient, db: Session) -> None:
-    from depotrack.models import Trip
+def test_stale_trip_of_the_previous_day_does_not_block_the_door(viewer: TestClient, db: Session) -> None:
+    from sqlalchemy import select
+
+    from depotrack.models import LoadingScan, Trip
     from depotrack.models.enums import TripStatus
 
-    old = trip(db, "BA", "outbound")
-    old.status = TripStatus.LOADING  # the simulator never closed it (stack off for days)
-    old.operating_day = DAY - timedelta(days=5)
+    today = trip(db, "BA", "outbound")
+    send_trip(viewer, today.id, "loading", local(17, 10))
+    # yesterday's trip at the same door that the simulator never closed (stack off for a day);
+    # it departs earlier, so without the day filter it would win the order_by
+    assert today.planned_departure is not None
+    old = Trip(
+        depot_id=today.depot_id,
+        vehicle_id=today.vehicle_id,
+        direction_id=today.direction_id,
+        door_id=today.door_id,
+        kind=today.kind,
+        planned_departure=today.planned_departure - timedelta(days=1),
+        status=TripStatus.LOADING,
+        operating_day=DAY - timedelta(days=1),
+    )
+    db.add(old)
     db.commit()
+
     docks = {d["code"]: d for d in viewer.get("/api/shadow/BUD").json()["docks"]}
-    assert docks["LD-02"]["trip"] is None
-    assert db.get(Trip, old.id) is not None
+    assert docks["LD-02"]["trip"]["id"] == today.id
+    occupied = viewer.get("/api/depots/BUD/state").json()["occupied"]
+    assert [o["tripId"] for o in occupied if o["doorCode"] == "LD-02"] == [today.id]
+
+    ba = parcels_of(db, "BA")[0]
+    send_scans(viewer, [dock_scan("LD-02", ba.barcode)])
+    scans = db.execute(select(LoadingScan.trip_id).where(LoadingScan.parcel_id == ba.id)).scalars().all()
+    assert scans == [today.id]

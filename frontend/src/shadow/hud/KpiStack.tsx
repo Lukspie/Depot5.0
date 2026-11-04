@@ -6,6 +6,10 @@ import { useShadowStore } from "../store";
 
 const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)} %`);
 
+/** The hub has no KPI block, only the alert list the API caps at 30 (api/shadow.py). */
+const ALERT_CAP = 30;
+const alertCount = (n: number | undefined) => (n === undefined ? "—" : n >= ALERT_CAP ? `${String(ALERT_CAP)}+` : String(n));
+
 /** KPI cards in the top left corner (zadanie §7): wave parcels, trucks on site, read rate, alarms. */
 export function KpiStack({ data }: { data: Shadow | undefined }) {
   const cars = useShadowStore((s) => s.yard.length);
@@ -22,11 +26,11 @@ export function KpiStack({ data }: { data: Shadow | undefined }) {
         icon={<Truck size={18} />}
         label="Kamióny v areáli"
         value={k ? String(k.trucksOnSite) : String(data?.trucks.filter((t) => t.state === "at_hub" || t.state === "loading_at_hub").length ?? "—")}
-        context={cars ? `+ ${String(cars)} autá na dvore` : "pri bránach"}
+        context={cars ? `+ ${String(cars)} ${cars === 1 ? "auto" : cars <= 4 ? "autá" : "áut"} na dvore` : "pri bránach"}
         tone="info"
       />
       <KpiCard icon={<Gauge size={18} />} label="Čítanosť" value={pct(k?.readRate ?? null)} context={k ? `${String(k.unidentified)} nečitateľných` : undefined} tone="ok" />
-      <KpiCard icon={<AlertTriangle size={18} />} label="Alarmy" value={k ? String(k.openAlerts) : String(data?.alerts.length ?? "—")} context="aktívne" tone="danger" />
+      <KpiCard icon={<AlertTriangle size={18} />} label="Alarmy" value={k ? String(k.openAlerts) : alertCount(data?.alerts.length)} context="aktívne" tone="danger" />
     </div>
   );
 }

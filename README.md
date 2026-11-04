@@ -60,7 +60,7 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/ | dispečer, admin | Dispečing |
 | http://localhost:8000/loading | operátor, admin | Nakládka pri bránach |
 | http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
-| http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň: 3D hala naživo, panely zariadení a kamiónov, hľadanie balíka, scenár „čo ak“ a akcie (dispečer) |
+| http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň: 3D hala naživo s plávajúcimi panelmi, brány so senzormi, panely zariadení a kamiónov, hľadanie balíka, scenár „čo ak“ a akcie (dispečer) |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
 | http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
 | http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
@@ -74,7 +74,7 @@ Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, 
 Sledovanie zásielky: kuriéri nakladajú ráno od 7:00 (v admine *Simulácia → skok na 06:00*). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
 
-Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md).
+Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji.
 
 **Digitálny tieň, nie dvojča:** 3D pohľad automaticky zrkadlí realitu (skeny, vozidlá, zariadenia), ale do fyzického sveta zasahuje len cez rozhodnutia človeka v bežných obrazovkách WMS. Rozdiel model / tieň / dvojča vysvetľuje ADR-045.
 
@@ -82,7 +82,8 @@ Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&devic
 
 - Mapový podklad: [OpenFreeMap](https://openfreemap.org) (štýl Positron, © OpenMapTiles), dáta **© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)**. Podklad potrebuje v prehliadači internet.
 - Cestná sieť a adresy pre simuláciu sú odvodené z OpenStreetMap (ODbL 1.0) a sú uložené v repozitári. Postup výroby je v [tools/osm/README.md](tools/osm/README.md). Za behu systém nič zo siete nesťahuje.
-- Depo: **Budimír** (BUD), hub: **Bratislava** (BAH).
+- 3D modely v digitálnom tieni (dodávka, autá, krabice): [Kenney](https://kenney.nl) Car Kit 3.1 a Factory Kit 3.0, licencia CC0 ([frontend/public/models/LICENSE.txt](frontend/public/models/LICENSE.txt)).
+- Depo: **Budimír** (BUD), hub: **Ivanka pri Dunaji** (BAH, „hub Bratislava“, poloha z OSM, ADR-051).
 
 ## Simulácia
 
@@ -136,6 +137,7 @@ cd frontend && npm ci && npm run dev
 - [x] Fáza 4: zákazník a kuriér (trasy kuriérov po uliciach, sledovanie zásielky so súkromím, `/courier`, simulované SMS)
 - [x] Pred Fázou 5: názov Depot 5.0, digitálny tieň (`/shadow`), nový rate limit sledovania
 - [x] Fáza 5: digitálny tieň (React 19 + R3F scéna, panely, scenáre „čo ak“, akcie WMS zo scény, údržba skenerov)
+- [x] Fáza 5c: digitálny tieň v2 (layout podľa referencie, scéna v2, brány so senzormi, GLTF modely Kenney, hub v Ivanke)
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [ ] Fáza 6: ML
 - [ ] Fáza 7: dokončenie

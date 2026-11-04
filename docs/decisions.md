@@ -435,7 +435,24 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Rozhodnutie:**
   - Skript `tools/osm/find_hub.py` (pyosmium, lokálny extrakt) hľadá v okolí Ivanky budovy a priemyselné plochy s „SPS“ alebo „Slovak Parcel Service“ v `name`, `operator` alebo `brand` a vypíše aj najväčšie sklady ako kandidátov.
   - Našiel sa práve jeden objekt: way `52070792`, `building=warehouse`, „Slovak Parcel Service | UPS“, stred 48,19404 / 17,22834, 167 × 54 m, dlhá strana ~94° od východu.
-  - Hub `BAH` dostal názov **„Ivanka pri Dunaji“** (v UI s kontextom „hub Bratislava“, kód ostáva `BAH`), túto polohu, halu 167 × 54 × 12 m s `rotationDeg` 86,1 (v smere hodín od východu, ADR-040) a 6 rámp na dlhej strane.
-  - Rovnaké hodnoty sú v `seed/reference.py` (`HUB_*`, rampy vytvára seed) aj v Alembic migrácii `e7f1c3a9b5d2` (existujúce DB: sklad, rampy a cieľ smeru BA). Čistá aj existujúca DB tak skončia rovnako, overuje to `test_depots.py`.
+  - Hub `BAH` dostal názov **„Ivanka pri Dunaji“** (v UI s kontextom „hub Bratislava“, kód ostáva `BAH`), túto polohu a halu 167 × 54 × 12 m s `rotationDeg` 86,1 (v smere hodín od východu, ADR-040).
+  - **Predpoklad, nie údaj z OSM:** 6 rámp na jednej dlhej strane. OSM rampy nemá, tím ich môže upraviť v dátach.
+  - Riadok skladu vzniká v migráciách (`e652f4dbafdb`) a Alembic migrácia `e7f1c3a9b5d2` ho presúva spolu s rampami a cieľom smeru BA v existujúcich DB. Seed vytvára rampy z `HUB_RAMPS`. Konštanty `HUB_NAME`, `HUB_LAT/LON` a `HUB_LAYOUT` v `seed/reference.py` sú vzor, voči ktorému `test_depots.py` kontroluje databázu. Čistý klon (overené ručne) aj existujúca DB tak skončia rovnako.
   - Najbližší uzol offline cestnej siete je 245 m od hubu, trasa Budimír → hub existuje (`roads.test.ts`). Generátor histórie pre ML používa novú polohu.
-- **Dôsledok:** Trasa a čas jazdy kamiónov BA sa trochu zmenia (hub je ďalej od mesta), simulácia ostáva deterministická. Ak sa budova v OSM zmení, stačí znova spustiť `find_hub.py` a upraviť konštanty aj migráciu.
+- **Dôsledok:** Trasa Budimír → hub má 418 km a 5,0 h (predtým 423 km a 5,1 h, ADR-038). Simulácia ostáva deterministická. Náhradná polylínia BA v `telematics/data/routes.json` končí v novom bode. Ak sa budova v OSM zmení, stačí znova spustiť `find_hub.py` a upraviť konštanty aj migráciu.
+
+## ADR-052 GLTF modely Kenney v digitálnom tieni (Fáza 5c)
+- **Kontext:** Tieň mal kamióny, autá a balíky z jednoduchých kvádrov. ADR-049 počítalo s voliteľnými modelmi cez drei `Gltf` a PROMPT §7 chce, aby scéna predvolene fungovala bez nich. Tím chcel vernejšie modely, ale bez veľkého bundlu, bez straty 60 fps a bez licenčných rizík. Car Kit nemá ťahač s návesom.
+- **Rozhodnutie:**
+  - Modely sú z **Kenney Car Kit 3.1** (`delivery`, `sedan`, `suv`) a **Factory Kit 3.0** (`box-small`, `box-large`), oba **CC0**. Tím ich stiahol ručne (stránka má kontrolu proti botom), kity sú v `tools/kenney/` mimo gitu.
+  - Vo `frontend/public/models/` sú len použité súbory (spolu ~0,65 MB). Každý kit má vlastný podpriečinok s vlastným `Textures/colormap.png`, lebo GLB odkazujú na textúru s rovnakým menom. `LICENSE.txt` má presný názov, verziu a URL kitu, `*.glb` je v `.gitattributes` ako binary.
+  - `src/shadow/models.ts` je jediné miesto s cestami a mierkou (1 jednotka kitu ≠ 1 m: vozidlá ×1,7, balík ×1,3, krabica kôpky ×1,2).
+  - **Krabice sú inštancie geometrie z GLTF**, nie klony: `useModelMesh` vytiahne prvú mesh modelu, geometriu zmenší a vycentruje (raz na model, všetky kôpky ju zdieľajú), a drei `Instances` ju vykreslí ako jeden `InstancedMesh` (pás najviac 300 balíkov, kôpky pri bránach a na odstavných plochách). Autá a dodávky (málo kusov) sú drei `Clone`, ktorý zdieľa geometriu aj materiály.
+  - Každý GLTF diel je vo `WithModel` (error boundary + Suspense). Kým sa model načítava alebo keď súbor chýba, scéna ukáže pôvodný jednoduchý diel z `parts.ts`. Mapa (MapLibre) modely nepoužíva.
+  - **Kamión ostáva vlastný diel** (`parts.ts`), lebo kit nemá súpravu v našej mierke a farbách témy.
+  - **Kuriérske dodávky:** tieň sa prihlási aj na kanál `vehicles`. Dodávka v stave `loading` stojí pred južnou stenou pri svojej odstavnej ploche, inak v scéne nie je. Store sa mení len pri začatí alebo skončení nakládky, nie pri každej polohe.
+- **Dôsledok:**
+  - Mení ADR-049 v časti o modeloch: modely sú teraz predvolené (odchýlka od §7 schválená v plan-doplnky 5c-4). Scéna bez nich stále funguje, lebo fallback na jednoduché tvary ostáva.
+  - GLTFLoader je v chunku `ShadowPage` (spolu so scénou v2 teraz 346 kB, gzip 108 kB), prihlasovacia stránka ani 2D obrazovky ho nesťahujú (docs/bundle.md).
+  - Záťažový režim pri 1440 px má stále 60 fps.
+  - Iný model sa dá vymeniť zmenou `models.ts` a súboru, bez zásahu do scény.

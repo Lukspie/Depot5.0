@@ -189,8 +189,10 @@ DOORS = (
 
 # The Bratislava hub of the carrier in Ivanka pri Dunaji (ADR-051): OSM way 52070792,
 # "Slovak Parcel Service | UPS", 167 x 54 m, long side ~94° from east (counter-clockwise).
-# rotationDeg is clockwise from east (map layer, ADR-040); ramps on the long north-east side.
-# The same values are in the Alembic migration e7f1c3a9b5d2 (existing databases).
+# rotationDeg is clockwise from east (map layer, ADR-040). The side and number of the ramps are an
+# assumption (OSM has no ramps): 6 on one long side. The depot row itself comes from the migrations
+# (e652f4dbafdb, moved by e7f1c3a9b5d2); the seed creates the ramps from HUB_RAMPS and test_depots
+# checks the database against these constants.
 HUB_NAME = "Ivanka pri Dunaji"
 HUB_LAT, HUB_LON = 48.19404, 17.22834
 HUB_LAYOUT: dict[str, object] = {

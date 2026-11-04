@@ -64,8 +64,9 @@ def depot_docks(db: Session, depot_code: str = "BUD") -> list[Door]:
 def active_trip_at(db: Session, door: Door, at: datetime) -> Trip | None:
     """The outbound trip loading at the door: the earliest one that has not left yet.
 
-    Only trips of the current or the previous operating day: a trip of an older day that the
-    simulator never closed (e.g. the stack was off for days) must not block the door.
+    Only trips of the current operating day: every outbound trip of day D loads and leaves within
+    D (15:00 D to ~06:30 D+1, trip_plan), so an unfinished trip of an older day was never closed
+    by the simulator (e.g. the stack was off) and must not block the door.
     """
     return (
         db.execute(
@@ -74,7 +75,7 @@ def active_trip_at(db: Session, door: Door, at: datetime) -> Trip | None:
                 Trip.door_id == door.id,
                 Trip.kind == TripKind.OUTBOUND,
                 Trip.status.not_in(FINISHED),
-                Trip.operating_day >= operating_day_of(at) - timedelta(days=1),
+                Trip.operating_day == operating_day_of(at),
             )
             .order_by(Trip.planned_departure)
             .limit(1)

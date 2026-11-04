@@ -16,11 +16,11 @@ function slots(count: number): [number, number, number][] {
   });
 }
 
-function Pile({ boxes, mesh }: { boxes: number; mesh: ModelMesh | null }) {
+function Pile({ boxes, limit, mesh }: { boxes: number; limit: number; mesh: ModelMesh | null }) {
   const at = useMemo(() => slots(boxes), [boxes]);
   if (boxes === 0) return null;
   return (
-    <Instances limit={MAX_BOXES} castShadow receiveShadow geometry={mesh?.geometry} material={mesh?.material}>
+    <Instances limit={limit} castShadow receiveShadow geometry={mesh?.geometry} material={mesh?.material}>
       {!mesh && <boxGeometry args={[1.4, 0.65, 1.1]} />}
       {!mesh && <meshStandardMaterial color="#d9a066" roughness={0.85} />}
       {at.map((p, i) => (
@@ -30,9 +30,9 @@ function Pile({ boxes, mesh }: { boxes: number; mesh: ModelMesh | null }) {
   );
 }
 
-function PileWithModel({ boxes }: { boxes: number }) {
+function PileWithModel({ boxes, limit }: { boxes: number; limit: number }) {
   const mesh = useModelMesh(MODELS.pileBox.url, MODELS.pileBox.scale);
-  return <Pile boxes={boxes} mesh={mesh} />;
+  return <Pile boxes={boxes} limit={limit} mesh={mesh} />;
 }
 
 /**
@@ -42,8 +42,8 @@ function PileWithModel({ boxes }: { boxes: number }) {
 export function BoxPile({ parcels, max = MAX_BOXES }: { parcels: number; max?: number }) {
   const boxes = Math.min(max, Math.ceil(parcels / 25));
   return (
-    <WithModel fallback={<Pile boxes={boxes} mesh={null} />}>
-      <PileWithModel boxes={boxes} />
+    <WithModel fallback={<Pile boxes={boxes} limit={max} mesh={null} />}>
+      <PileWithModel boxes={boxes} limit={max} />
     </WithModel>
   );
 }

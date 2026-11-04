@@ -18,7 +18,7 @@ function KitCar({ index }: { index: number }) {
   const spec = MODELS.cars[index % MODELS.cars.length] ?? MODELS.cars[0];
   const gltf = useGLTF(spec.url);
   // <Clone> shares geometry and materials of the loaded model
-  return <Clone object={gltf.scene} scale={spec.scale} />;
+  return <Clone object={gltf.scene} scale={spec.scale} castShadow />;
 }
 
 /** Unexpected cars that entered through the yard gate (and have not left), parked by the gate. */

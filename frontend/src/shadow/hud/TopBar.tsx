@@ -18,7 +18,8 @@ function occupancy(live: Shadow | undefined): string | null {
   if (!live) return null;
   if (live.depot.kind === "hub") {
     const here = live.trucks.filter((t) => t.state === "at_hub" || t.state === "loading_at_hub").length;
-    return `${String(here)} kamióny na mieste`;
+    const word = here === 1 ? "kamión" : here >= 2 && here <= 4 ? "kamióny" : "kamiónov";
+    return `${String(here)} ${word} na mieste`;
   }
   const busy = live.docks.filter((d) => d.trip && (d.trip.status === "at_door" || d.trip.status === "loading")).length;
   return `${String(busy)}/${String(live.docks.length)} brán obsadených`;
@@ -40,6 +41,7 @@ export function TopBar({ depot, live, onSearch, onScenario }: Props) {
           <Link
             key={d.code}
             to={`/shadow?depot=${d.code}`}
+            title={d.kind === "hub" ? `${d.name} · hub Bratislava` : undefined}
             className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm whitespace-nowrap ${d.code === depot ? "bg-brand-100 text-brand-700 font-semibold" : "text-ink-muted hover:bg-canvas"}`}
           >
             {d.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}

@@ -44,6 +44,9 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
   const doorReadings = useShadowStore((s) => s.doors);
   const docks = live?.docks ?? [];
   const busy = docks.filter((d) => d.trip && (d.trip.status === "at_door" || d.trip.status === "loading"));
+  // the hub has no tracked doors (docks = []): its trucks come from live.trucks
+  const hub = live?.depot.kind === "hub";
+  const hubTrucks = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
   const deviceList = Object.values(devices).sort((a, b) => a.code.localeCompare(b.code));
   return (
     <div className="bg-surface shadow-card flex max-h-full flex-col rounded-2xl p-3">
@@ -53,7 +56,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
         className="mb-2"
         items={[
           { id: "doors", label: "Brány", count: `${String(busy.length)}/${String(docks.length)}` },
-          { id: "trucks", label: "Kamióny", count: String(busy.length) },
+          { id: "trucks", label: "Kamióny", count: String(hub ? hubTrucks.length : busy.length) },
           { id: "devices", label: "Zariadenia", count: String(deviceList.length) },
         ]}
       />
@@ -67,7 +70,23 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
               <Progress className="min-w-0 flex-1" value={d.trip?.load?.loaded ?? 0} max={d.trip?.load?.expected ?? 0} />
             </Row>
           ))}
+        {tab === "doors" && hub && <li className="text-ink-muted px-2 py-3 text-sm">Rampy hubu nemajú sledované brány.</li>}
         {tab === "trucks" &&
+          hub &&
+          (hubTrucks.length === 0 ? (
+            <li className="text-ink-muted px-2 py-3 text-sm">V hube nestojí žiadny kamión.</li>
+          ) : (
+            hubTrucks.map((t) => (
+              <li key={t.plate} className="flex items-center gap-3 px-2 py-2 text-sm">
+                <span className="w-20 shrink-0 font-mono text-xs font-semibold">{t.plate}</span>
+                <Badge tone={t.state === "loading_at_hub" ? "ok" : "neutral"} size="sm">
+                  {t.state === "loading_at_hub" ? "nakladá sa" : "na mieste"}
+                </Badge>
+              </li>
+            ))
+          ))}
+        {tab === "trucks" &&
+          !hub &&
           (busy.length === 0 ? (
             <li className="text-ink-muted px-2 py-3 text-sm">Pri bránach nestojí žiadny kamión.</li>
           ) : (

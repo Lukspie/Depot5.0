@@ -1,16 +1,21 @@
 import { Clone, useGLTF } from "@react-three/drei";
+import { useEffect, useMemo } from "react";
 import { WithModel } from "./gltf";
 import { hallOf, type DepotLayout } from "./layout";
 import { MODELS } from "./models";
-import { box, mat } from "./parts";
+import { box, disposeTree, mat } from "./parts";
 import { useShadowStore } from "./store";
 
 function Van() {
   const gltf = useGLTF(MODELS.van.url);
-  return <Clone object={gltf.scene} scale={MODELS.van.scale} />;
+  return <Clone object={gltf.scene} scale={MODELS.van.scale} castShadow />;
 }
 
-const FALLBACK = box(2, 2.4, 5.2, mat(0xf4f4f2), 0, 1.3, 0);
+function PrimitiveVan() {
+  const model = useMemo(() => box(2, 2.4, 5.2, mat(0xf4f4f2), 0, 1.3, 0), []);
+  useEffect(() => () => disposeTree(model), [model]);
+  return <primitive object={model} />;
+}
 
 /**
  * Courier vans being loaded (morning, ADR-041) stand outside the south wall behind their staging
@@ -26,7 +31,7 @@ export function CourierVans({ layout }: { layout: DepotLayout }) {
         if (!bay) return null;
         return (
           <group key={v.plate} position={[bay.x, 0, south + 4]} rotation-y={Math.PI}>
-            <WithModel fallback={<primitive object={FALLBACK.clone()} />}>
+            <WithModel fallback={<PrimitiveVan />}>
               <Van />
             </WithModel>
           </group>
