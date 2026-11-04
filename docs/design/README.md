@@ -1,5 +1,7 @@
 # Vizuálny cieľ
 
+> **Pre digitálny tieň platí schválená maketa [maketa-tien/](maketa-tien/README.md)** (layout, farby scény, kamera). Referencia nižšie je pôvodná inšpirácia.
+
 Hlavná referencia: [reference.png](reference.png) (izometrický dashboard skladu). Ďalšie zábery:
 
 | Súbor | Čo z neho brať |

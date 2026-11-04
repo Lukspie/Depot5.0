@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="sk"><head><meta charset="utf-8"><title>Digitálny tieň – maketa</title>
+
+<style>
+body{margin:0}
+a{color:#a85f00}a:hover{color:#7a4500}
+button{font-family:inherit;cursor:pointer}
+.d5 *,.d5{box-sizing:border-box}
+.d5{position:relative;width:100%;height:900px;overflow:hidden;background:#f3f2ee;font-family:Inter,system-ui,sans-serif;color:#1d1d1b;font-feature-settings:"tnum" 1}
+.d5-rail{position:absolute;left:0;top:0;bottom:0;width:72px}
+.d5-scene{position:absolute;left:72px;top:0;right:0;bottom:0}
+.d5-top{position:absolute;left:88px;right:16px;top:16px}
+.d5-kpi{position:absolute;left:88px;top:100px;display:grid;grid-template-columns:repeat(4,214px);gap:12px}
+.d5-cam{position:absolute;right:16px;top:100px;width:44px}
+.d5-panel{position:absolute;right:72px;top:100px;width:360px}
+.d5-list{position:absolute;right:16px;bottom:16px;width:420px}
+.d5-track{position:absolute;left:88px;bottom:16px;width:620px;max-width:calc(100% - 560px)}
+@media (max-width:1380px){.d5-kpi{grid-template-columns:repeat(2,214px)}}
+@media (max-width:760px){
+.d5{height:auto;overflow:visible;display:flex;flex-direction:column}
+.d5-rail,.d5-cam{display:none}
+.d5-scene{position:relative;left:0;height:420px;order:1}
+.d5-top{order:0}.d5-kpi{order:2}.d5-panel{order:3}.d5-list{order:4}.d5-track{order:5}
+.d5-top,.d5-kpi,.d5-panel,.d5-list,.d5-track{position:static;width:auto;max-width:none;margin:12px}
+.d5-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head><body><div id="root">
+<div class="d5">
+
+<nav class="d5-rail" aria-label="Hlavná navigácia" style="background:#1d1d1b;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:#f39200;display:grid;place-items:center;margin-bottom:14px;color:#1d1d1b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<a href="#" aria-label="Dispečing" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg></a>
+<a href="#" aria-label="Digitálny tieň" aria-current="page" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#f39200;background:#3a3127"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg></a>
+<a href="#" aria-label="Flotila" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></a>
+<a href="#" aria-label="Nakládka" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg></a>
+<a href="#" aria-label="Kuriéri" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></a>
+<a href="#" aria-label="Tabuľa príchodov" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="15" x="2" y="7" rx="2"></rect><path d="m17 2-5 5-5-5"></path></svg></a>
+<a href="#" aria-label="Stav systému" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></a>
+<span style="flex:1"></span>
+<span title="Dispečer" style="width:36px;height:36px;border-radius:50%;background:#3a3127;color:#f39200;display:grid;place-items:center;font-size:12px;font-weight:700">DI</span>
+</nav>
+
+<div class="d5-scene">
+<svg width="100%" height="100%" viewBox="0 0 1368 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="3D pohľad na depo Budimír: hala s ôsmimi nakládkovými bránami, päť kamiónov pri bránach, kuriérske dodávky, dvor so vjazdovou bránou">
+<rect x="0" y="0" width="1368" height="900" style="fill:#f3f2ee"></rect>
+
+<polygon points="351.4,-400.0 2291.3,720.0 767.1,1600.0 -1172.7,480.0" style="fill:#f3f2ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="351.4,-400.0 850.3,-112.0 -673.9,768.0 -1172.7,480.0" style="fill:#e2ead6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="-230.5,512.0 1210.5,1344.0 767.1,1600.0 -673.9,768.0" style="fill:#e2ead6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="850.3,-112.0 2291.3,720.0 1944.9,920.0 503.9,88.0" style="fill:#e2ead6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1418.4,616.0 1944.9,920.0 1210.5,1344.0 684.0,1040.0" style="fill:#e2ead6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="199.0,264.0 1113.5,792.0 684.0,1040.0 -230.5,512.0" style="fill:#e4e3de;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1224.4,504.0 1418.4,616.0 1113.5,792.0 919.5,680.0" style="fill:#e4e3de;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="503.9,88.0 1224.4,504.0 1155.1,544.0 434.6,128.0" style="fill:#e4e3de;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,296.0 919.5,680.0 909.8,685.6 244.7,301.6" style="fill:#ecebe7;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="501.1,449.6 382.6,518.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="542.7,473.6 424.2,542.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="584.2,497.6 465.8,566.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="625.8,521.6 507.3,590.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="667.4,545.6 548.9,614.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="708.9,569.6 590.5,638.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="750.5,593.6 632.0,662.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="792.1,617.6 673.6,686.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="833.6,641.6 715.2,710.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="382.6,518.0 715.2,710.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="279.4,321.6 226.7,352.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="321.0,345.6 268.3,376.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="362.5,369.6 309.9,400.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="404.1,393.6 351.4,424.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="445.7,417.6 393.0,448.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="226.7,352.0 393.0,448.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="46.6,368.0 67.4,380.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="88.2,392.0 109.0,404.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="129.7,416.0 150.5,428.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="171.3,440.0 192.1,452.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="212.9,464.0 233.7,476.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,488.0 275.2,500.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="296.0,512.0 316.8,524.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="337.6,536.0 358.4,548.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="379.2,560.0 399.9,572.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="420.7,584.0 441.5,596.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="462.3,608.0 483.1,620.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="503.9,632.0 524.6,644.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="545.4,656.0 566.2,668.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="587.0,680.0 607.8,692.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="628.6,704.0 649.3,716.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="670.1,728.0 690.9,740.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="711.7,752.0 732.5,764.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="753.3,776.0 774.0,788.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="794.8,800.0 815.6,812.0" style="fill:none;stroke:#ffffff;stroke-width:3;stroke-linejoin:round"></polygon>
+
+<polygon points="278.7,570.0 143.6,648.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="327.2,598.0 192.1,676.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="375.7,626.0 240.6,704.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="424.2,654.0 289.1,732.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="472.7,682.0 337.6,760.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="143.6,648.0 337.6,760.0" style="fill:none;stroke:#eebd45;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="-230.5,512.0 684.0,1040.0" style="fill:none;stroke:#d4d2cc;stroke-width:2;stroke-linejoin:round"></polygon>
+
+<polygon points="646.6,136.0 642.4,138.4 642.4,128.8 646.6,126.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="638.3,136.0 642.4,138.4 642.4,128.8 638.3,126.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="642.4,124.0 646.6,126.4 642.4,128.8 638.3,126.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="666.0,126.4 642.4,140.0 642.4,117.6 666.0,104.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="618.9,126.4 642.4,140.0 642.4,117.6 618.9,104.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="642.4,90.4 666.0,104.0 642.4,117.6 618.9,104.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="657.7,104.0 642.4,112.8 642.4,101.6 657.7,92.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="627.2,104.0 642.4,112.8 642.4,101.6 627.2,92.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="642.4,84.0 657.7,92.8 642.4,101.6 627.2,92.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="840.6,232.0 836.4,234.4 836.4,224.8 840.6,222.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="832.2,232.0 836.4,234.4 836.4,224.8 832.2,222.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="836.4,220.0 840.6,222.4 836.4,224.8 832.2,222.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="860.0,222.4 836.4,236.0 836.4,213.6 860.0,200.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="812.8,222.4 836.4,236.0 836.4,213.6 812.8,200.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="836.4,186.4 860.0,200.0 836.4,213.6 812.8,200.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="851.6,200.0 836.4,208.8 836.4,197.6 851.6,188.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="821.2,200.0 836.4,208.8 836.4,197.6 821.2,188.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="836.4,180.0 851.6,188.8 836.4,197.6 821.2,188.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1006.8,344.0 1002.7,346.4 1002.7,336.8 1006.8,334.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="998.5,344.0 1002.7,346.4 1002.7,336.8 998.5,334.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1002.7,332.0 1006.8,334.4 1002.7,336.8 998.5,334.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1026.2,334.4 1002.7,348.0 1002.7,325.6 1026.2,312.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="979.1,334.4 1002.7,348.0 1002.7,325.6 979.1,312.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1002.7,298.4 1026.2,312.0 1002.7,325.6 979.1,312.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1017.9,312.0 1002.7,320.8 1002.7,309.6 1017.9,300.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="987.4,312.0 1002.7,320.8 1002.7,309.6 987.4,300.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1002.7,292.0 1017.9,300.8 1002.7,309.6 987.4,300.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1200.8,440.0 1196.7,442.4 1196.7,432.8 1200.8,430.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1192.5,440.0 1196.7,442.4 1196.7,432.8 1192.5,430.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1196.7,428.0 1200.8,430.4 1196.7,432.8 1192.5,430.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1220.2,430.4 1196.7,444.0 1196.7,421.6 1220.2,408.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1173.1,430.4 1196.7,444.0 1196.7,421.6 1173.1,408.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1196.7,394.4 1220.2,408.0 1196.7,421.6 1173.1,408.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1211.9,408.0 1196.7,416.8 1196.7,405.6 1211.9,396.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1181.4,408.0 1196.7,416.8 1196.7,405.6 1181.4,396.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1196.7,388.0 1211.9,396.8 1196.7,405.6 1181.4,396.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="490.0,156.8 1188.3,560.0 947.2,699.2 248.9,296.0" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,296.0 919.5,680.0 919.5,592.0 254.4,208.0" style="fill:#f8f7f4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1155.1,544.0 919.5,680.0 919.5,592.0 1155.1,456.0" style="fill:#d9d7d1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,296.0 919.5,680.0 919.5,670.4 254.4,286.4" style="fill:#d8d6d0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1155.1,544.0 919.5,680.0 919.5,673.6 1155.1,537.6" style="fill:#c6c4be;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="260.0,289.2 260.0,211.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="270.4,295.2 270.4,217.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="280.8,301.2 280.8,223.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="291.2,307.2 291.2,229.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="301.6,313.2 301.6,235.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="312.0,319.2 312.0,241.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="322.3,325.2 322.3,247.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="332.7,331.2 332.7,253.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="343.1,337.2 343.1,259.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="353.5,343.2 353.5,265.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="363.9,349.2 363.9,271.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="374.3,355.2 374.3,277.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="384.7,361.2 384.7,283.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="395.1,367.2 395.1,289.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="405.5,373.2 405.5,295.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="415.9,379.2 415.9,301.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="426.3,385.2 426.3,307.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="436.7,391.2 436.7,313.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="447.0,397.2 447.0,319.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="457.4,403.2 457.4,325.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="467.8,409.2 467.8,331.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="478.2,415.2 478.2,337.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="488.6,421.2 488.6,343.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="499.0,427.2 499.0,349.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="509.4,433.2 509.4,355.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="519.8,439.2 519.8,361.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="530.2,445.2 530.2,367.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="540.6,451.2 540.6,373.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="551.0,457.2 551.0,379.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="561.4,463.2 561.4,385.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="571.8,469.2 571.8,391.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="582.1,475.2 582.1,397.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="592.5,481.2 592.5,403.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="602.9,487.2 602.9,409.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="613.3,493.2 613.3,415.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="623.7,499.2 623.7,421.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="634.1,505.2 634.1,427.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="644.5,511.2 644.5,433.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="654.9,517.2 654.9,439.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="665.3,523.2 665.3,445.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="675.7,529.2 675.7,451.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="686.1,535.2 686.1,457.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="696.5,541.2 696.5,463.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="706.8,547.2 706.8,469.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="717.2,553.2 717.2,475.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="727.6,559.2 727.6,481.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="738.0,565.2 738.0,487.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="748.4,571.2 748.4,493.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="758.8,577.2 758.8,499.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="769.2,583.2 769.2,505.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="779.6,589.2 779.6,511.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="790.0,595.2 790.0,517.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="800.4,601.2 800.4,523.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="810.8,607.2 810.8,529.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="821.2,613.2 821.2,535.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="831.6,619.2 831.6,541.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="841.9,625.2 841.9,547.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="852.3,631.2 852.3,553.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="862.7,637.2 862.7,559.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="873.1,643.2 873.1,565.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="883.5,649.2 883.5,571.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="893.9,655.2 893.9,577.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="904.3,661.2 904.3,583.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="914.7,667.2 914.7,589.7" style="fill:none;stroke:#e6e4df;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1149.5,540.4 1149.5,459.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1139.2,546.4 1139.2,465.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1128.8,552.4 1128.8,471.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1118.4,558.4 1118.4,477.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1108.0,564.4 1108.0,483.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1097.6,570.4 1097.6,489.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1087.2,576.4 1087.2,495.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1076.8,582.4 1076.8,501.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1066.4,588.4 1066.4,507.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1056.0,594.4 1056.0,513.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1045.6,600.4 1045.6,519.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1035.2,606.4 1035.2,525.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1024.8,612.4 1024.8,531.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1014.4,618.4 1014.4,537.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="1004.1,624.4 1004.1,543.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="993.7,630.4 993.7,549.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="983.3,636.4 983.3,555.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="972.9,642.4 972.9,561.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="962.5,648.4 962.5,567.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="952.1,654.4 952.1,573.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="941.7,660.4 941.7,579.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="931.3,666.4 931.3,585.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="920.9,672.4 920.9,591.7" style="fill:none;stroke:#cdcbc5;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,216.0 919.5,600.0 919.5,592.0 254.4,208.0" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="1155.1,464.0 919.5,600.0 919.5,592.0 1155.1,456.0" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="490.0,72.0 1155.1,456.0 919.5,592.0 254.4,208.0" style="fill:#ebe9e4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="508.7,85.1 277.3,218.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="536.4,101.1 305.0,234.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="564.1,117.1 332.7,250.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="591.8,133.1 360.4,266.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="619.6,149.1 388.2,282.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="647.3,165.1 415.9,298.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="675.0,181.1 443.6,314.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="702.7,197.1 471.3,330.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="730.4,213.1 499.0,346.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="758.1,229.1 526.7,362.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="785.8,245.1 554.4,378.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="813.5,261.1 582.1,394.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="841.2,277.1 609.9,410.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="869.0,293.1 637.6,426.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="896.7,309.1 665.3,442.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="924.4,325.1 693.0,458.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="952.1,341.1 720.7,474.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="979.8,357.1 748.4,490.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1007.5,373.1 776.1,506.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1035.2,389.1 803.8,522.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1062.9,405.1 831.6,538.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1090.7,421.1 859.3,554.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1118.4,437.1 887.0,570.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="1146.1,453.1 914.7,586.7" style="fill:none;stroke:#dfddd7;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="718.6,227.8 739.4,239.8 545.4,351.8 524.6,339.8" style="fill:#dde2e5;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="926.5,347.8 947.2,359.8 753.3,471.8 732.5,459.8" style="fill:#dde2e5;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="590.5,194.0 566.2,208.0 566.2,197.6 590.5,183.6" style="fill:#cfcdc7;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="535.0,190.0 566.2,208.0 566.2,197.6 535.0,179.6" style="fill:#e3e1db;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="559.3,165.6 590.5,183.6 566.2,197.6 535.0,179.6" style="fill:#f5f4f1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="912.6,476.0 891.8,488.0 891.8,480.8 912.6,468.8" style="fill:#cfcdc7;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="871.0,476.0 891.8,488.0 891.8,480.8 871.0,468.8" style="fill:#e3e1db;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="891.8,456.8 912.6,468.8 891.8,480.8 871.0,468.8" style="fill:#f5f4f1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="254.4,208.0 919.5,592.0" style="fill:none;stroke:#ffc46b;stroke-width:1.2;stroke-linejoin:round"></polygon>
+
+<polygon points="919.5,680.0 919.5,592.0" style="fill:none;stroke:#c9c7c1;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="519.0,439.6 544.0,454.0 544.0,422.0 519.0,407.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="520.7,440.3 542.2,452.7 542.2,423.1 520.7,410.7" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="522.4,441.3 529.3,445.3 529.3,438.9 522.4,434.9" style="fill:#c99a66;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="530.0,445.7 537.6,450.1 537.6,446.1 530.0,441.7" style="fill:#dcb17e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="524.4,436.1 530.7,439.7 530.7,435.3 524.4,431.7" style="fill:#b5864f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="522.2,446.6 519.4,448.2 519.4,443.8 522.2,442.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="516.7,446.6 519.4,448.2 519.4,443.8 516.7,442.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="519.4,440.6 522.2,442.2 519.4,443.8 516.7,442.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="543.7,459.0 540.9,460.6 540.9,456.2 543.7,454.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="538.1,459.0 540.9,460.6 540.9,456.2 538.1,454.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="540.9,453.0 543.7,454.6 540.9,456.2 538.1,454.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="519.7,403.7 543.2,417.3 543.2,408.9 519.7,395.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="560.6,463.6 585.5,478.0 585.5,446.0 560.6,431.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="562.3,464.3 583.7,476.7 583.7,447.1 562.3,434.7" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="563.9,465.3 570.8,469.3 570.8,462.9 563.9,458.9" style="fill:#c99a66;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="571.5,469.7 579.2,474.1 579.2,470.1 571.5,465.7" style="fill:#dcb17e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="566.0,460.1 572.2,463.7 572.2,459.3 566.0,455.7" style="fill:#b5864f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="563.8,470.6 561.0,472.2 561.0,467.8 563.8,466.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="558.2,470.6 561.0,472.2 561.0,467.8 558.2,466.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="561.0,464.6 563.8,466.2 561.0,467.8 558.2,466.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="585.3,483.0 582.5,484.6 582.5,480.2 585.3,478.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="579.7,483.0 582.5,484.6 582.5,480.2 579.7,478.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="582.5,477.0 585.3,478.6 582.5,480.2 579.7,478.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="561.2,427.7 584.8,441.3 584.8,432.9 561.2,419.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="602.2,487.6 627.1,502.0 627.1,470.0 602.2,455.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,488.3 625.3,500.7 625.3,471.1 603.8,458.7" style="fill:#d4d2cc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,485.1 625.2,497.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,481.5 625.2,493.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,477.9 625.2,490.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,474.3 625.2,486.7" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,470.7 625.2,483.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,467.1 625.2,479.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,463.5 625.2,475.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="603.8,459.9 625.2,472.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="605.4,494.6 602.6,496.2 602.6,491.8 605.4,490.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="599.8,494.6 602.6,496.2 602.6,491.8 599.8,490.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="602.6,488.6 605.4,490.2 602.6,491.8 599.8,490.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="626.8,507.0 624.1,508.6 624.1,504.2 626.8,502.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="621.3,507.0 624.1,508.6 624.1,504.2 621.3,502.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="624.1,501.0 626.8,502.6 624.1,504.2 621.3,502.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="602.8,451.7 626.3,465.3 626.3,456.9 602.8,443.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="643.7,511.6 668.7,526.0 668.7,494.0 643.7,479.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="645.4,512.3 666.9,524.7 666.9,495.1 645.4,482.7" style="fill:#d4d2cc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,509.1 666.8,521.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,505.5 666.8,517.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,501.9 666.8,514.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,498.3 666.8,510.7" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,494.7 666.8,507.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,491.1 666.8,503.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,487.5 666.8,499.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="645.3,483.9 666.8,496.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="646.9,518.6 644.1,520.2 644.1,515.8 646.9,514.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="641.4,518.6 644.1,520.2 644.1,515.8 641.4,514.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="644.1,512.6 646.9,514.2 644.1,515.8 641.4,514.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="668.4,531.0 665.6,532.6 665.6,528.2 668.4,526.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="662.9,531.0 665.6,532.6 665.6,528.2 662.9,526.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="665.6,525.0 668.4,526.6 665.6,528.2 662.9,526.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="660.4,518.8 652.8,523.2 652.8,520.0 660.4,515.6" style="fill:#4a4844;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="644.5,518.4 652.8,523.2 652.8,520.0 644.5,515.2" style="fill:#5a5853;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="652.1,510.8 660.4,515.6 652.8,520.0 644.5,515.2" style="fill:#6d6b66;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="644.4,475.7 667.9,489.3 667.9,480.9 644.4,467.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="685.3,535.6 710.2,550.0 710.2,518.0 685.3,503.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="687.0,536.3 708.4,548.7 708.4,519.1 687.0,506.7" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="688.6,537.3 695.6,541.3 695.6,534.9 688.6,530.9" style="fill:#c99a66;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="696.2,541.7 703.9,546.1 703.9,542.1 696.2,537.7" style="fill:#dcb17e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="690.7,532.1 696.9,535.7 696.9,531.3 690.7,527.7" style="fill:#b5864f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="688.5,542.6 685.7,544.2 685.7,539.8 688.5,538.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="682.9,542.6 685.7,544.2 685.7,539.8 682.9,538.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="685.7,536.6 688.5,538.2 685.7,539.8 682.9,538.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="710.0,555.0 707.2,556.6 707.2,552.2 710.0,550.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="704.4,555.0 707.2,556.6 707.2,552.2 704.4,550.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="707.2,549.0 710.0,550.6 707.2,552.2 704.4,550.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="685.9,499.7 709.5,513.3 709.5,504.9 685.9,491.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="726.9,559.6 751.8,574.0 751.8,542.0 726.9,527.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,560.3 750.0,572.7 750.0,543.1 728.5,530.7" style="fill:#d4d2cc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,557.1 749.9,569.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,553.5 749.9,565.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,549.9 749.9,562.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,546.3 749.9,558.7" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,542.7 749.9,555.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,539.1 749.9,551.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,535.5 749.9,547.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="728.5,531.9 749.9,544.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="730.1,566.6 727.3,568.2 727.3,563.8 730.1,562.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="724.5,566.6 727.3,568.2 727.3,563.8 724.5,562.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="727.3,560.6 730.1,562.2 727.3,563.8 724.5,562.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="751.5,579.0 748.8,580.6 748.8,576.2 751.5,574.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="746.0,579.0 748.8,580.6 748.8,576.2 746.0,574.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="748.8,573.0 751.5,574.6 748.8,576.2 746.0,574.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="727.5,523.7 751.0,537.3 751.0,528.9 727.5,515.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="768.4,583.6 793.4,598.0 793.4,566.0 768.4,551.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="770.1,584.3 791.6,596.7 791.6,567.1 770.1,554.7" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="771.8,585.3 778.7,589.3 778.7,582.9 771.8,578.9" style="fill:#c99a66;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="779.4,589.7 787.0,594.1 787.0,590.1 779.4,585.7" style="fill:#dcb17e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="773.8,580.1 780.1,583.7 780.1,579.3 773.8,575.7" style="fill:#b5864f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="771.6,590.6 768.9,592.2 768.9,587.8 771.6,586.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="766.1,590.6 768.9,592.2 768.9,587.8 766.1,586.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="768.9,584.6 771.6,586.2 768.9,587.8 766.1,586.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="793.1,603.0 790.3,604.6 790.3,600.2 793.1,598.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="787.6,603.0 790.3,604.6 790.3,600.2 787.6,598.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="790.3,597.0 793.1,598.6 790.3,600.2 787.6,598.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="769.1,547.7 792.6,561.3 792.6,552.9 769.1,539.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="810.0,607.6 834.9,622.0 834.9,590.0 810.0,575.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="811.7,608.3 833.1,620.7 833.1,591.1 811.7,578.7" style="fill:#d4d2cc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,605.1 833.1,617.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,601.5 833.1,613.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,597.9 833.1,610.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,594.3 833.1,606.7" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,590.7 833.1,603.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,587.1 833.1,599.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,583.5 833.1,595.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="811.6,579.9 833.1,592.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="813.2,614.6 810.4,616.2 810.4,611.8 813.2,610.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="807.6,614.6 810.4,616.2 810.4,611.8 807.6,610.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="810.4,608.6 813.2,610.2 810.4,611.8 807.6,610.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="834.7,627.0 831.9,628.6 831.9,624.2 834.7,622.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="829.1,627.0 831.9,628.6 831.9,624.2 829.1,622.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="831.9,621.0 834.7,622.6 831.9,624.2 829.1,622.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="810.6,571.7 834.2,585.3 834.2,576.9 810.6,563.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="296.6,320.4 323.0,335.6 323.0,304.0 296.6,288.8" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="298.3,321.1 321.2,334.3 321.2,305.1 298.3,291.9" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="321.9,328.1 321.9,306.5" style="fill:none;stroke:#5c5b57;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="302.1,288.9 317.4,297.7 317.4,290.9 302.1,282.1" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="338.2,344.4 364.5,359.6 364.5,328.0 338.2,312.8" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="339.9,345.1 362.7,358.3 362.7,329.1 339.9,315.9" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="363.5,352.1 363.5,330.5" style="fill:none;stroke:#5c5b57;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="343.7,312.9 358.9,321.7 358.9,314.9 343.7,306.1" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="379.8,368.4 406.1,383.6 406.1,352.0 379.8,336.8" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,369.1 404.3,382.3 404.3,353.1 381.4,339.9" style="fill:#d4d2cc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,365.9 404.2,379.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,362.3 404.2,375.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,358.7 404.2,371.9" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,355.1 404.2,368.3" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,351.5 404.2,364.7" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,347.9 404.2,361.1" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="381.4,344.3 404.2,357.5" style="fill:none;stroke:#c4c2bc;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="405.1,376.1 405.1,354.5" style="fill:none;stroke:#5c5b57;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="385.2,336.9 400.5,345.7 400.5,338.9 385.2,330.1" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="421.3,392.4 447.7,407.6 447.7,376.0 421.3,360.8" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="423.0,393.1 445.9,406.3 445.9,377.1 423.0,363.9" style="fill:#3a3936;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="446.6,400.1 446.6,378.5" style="fill:none;stroke:#5c5b57;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="426.8,360.9 442.1,369.7 442.1,362.9 426.8,354.1" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="290.3,264.1 448.3,355.3 448.3,334.5 290.3,243.3" style="fill:#1d1d1b;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="297.2,264.9 312.4,273.7 312.4,259.3 297.2,250.5" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="298.8,323.2 322.3,336.8 270.4,366.8 246.8,353.2" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="306.8,337.4 299.1,341.8 299.1,335.8 306.8,331.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="286.0,334.2 299.1,341.8 299.1,335.8 286.0,328.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="293.6,323.8 306.8,331.4 299.1,335.8 286.0,328.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="275.6,355.4 268.0,359.8 268.0,353.8 275.6,349.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="254.8,352.2 268.0,359.8 268.0,353.8 254.8,346.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="262.4,341.8 275.6,349.4 268.0,353.8 254.8,346.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="312.6,330.8 276.6,351.6 276.6,332.8 312.6,312.0" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="262.8,343.6 276.6,351.6 276.6,332.8 262.8,324.8" style="fill:#f3f2ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="298.8,304.0 312.6,312.0 276.6,332.8 262.8,324.8" style="fill:#ffffff;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="312.6,322.8 276.6,343.6 276.6,341.2 312.6,320.4" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="276.6,351.6 266.2,357.6 266.2,344.0 276.6,338.0" style="fill:#d7d5cf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="252.4,349.6 266.2,357.6 266.2,344.0 252.4,336.0" style="fill:#eceae6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="262.8,330.0 276.6,338.0 266.2,344.0 252.4,336.0" style="fill:#f7f6f3;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="253.3,343.0 265.1,349.8 265.1,344.6 253.3,337.8" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="275.2,344.8 267.6,349.2 267.6,344.4 275.2,340.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="340.4,347.2 363.9,360.8 312.0,390.8 288.4,377.2" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="348.3,361.4 340.7,365.8 340.7,359.8 348.3,355.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="327.5,358.2 340.7,365.8 340.7,359.8 327.5,352.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="335.2,347.8 348.3,355.4 340.7,359.8 327.5,352.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="317.1,379.4 309.5,383.8 309.5,377.8 317.1,373.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="296.4,376.2 309.5,383.8 309.5,377.8 296.4,370.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="304.0,365.8 317.1,373.4 309.5,377.8 296.4,370.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="354.2,354.8 318.2,375.6 318.2,356.8 354.2,336.0" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="304.3,367.6 318.2,375.6 318.2,356.8 304.3,348.8" style="fill:#f3f2ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="340.4,328.0 354.2,336.0 318.2,356.8 304.3,348.8" style="fill:#ffffff;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="354.2,346.8 318.2,367.6 318.2,365.2 354.2,344.4" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="318.2,375.6 307.8,381.6 307.8,368.0 318.2,362.0" style="fill:#d7d5cf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="293.9,373.6 307.8,381.6 307.8,368.0 293.9,360.0" style="fill:#eceae6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="304.3,354.0 318.2,362.0 307.8,368.0 293.9,360.0" style="fill:#f7f6f3;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="294.9,367.0 306.7,373.8 306.7,368.6 294.9,361.8" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="316.8,368.8 309.2,373.2 309.2,368.4 316.8,364.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="423.5,395.2 447.0,408.8 395.1,438.8 371.5,425.2" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="431.5,409.4 423.8,413.8 423.8,407.8 431.5,403.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="410.7,406.2 423.8,413.8 423.8,407.8 410.7,400.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="418.3,395.8 431.5,403.4 423.8,407.8 410.7,400.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="400.3,427.4 392.7,431.8 392.7,425.8 400.3,421.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="379.5,424.2 392.7,431.8 392.7,425.8 379.5,418.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="387.1,413.8 400.3,421.4 392.7,425.8 379.5,418.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="437.3,402.8 401.3,423.6 401.3,404.8 437.3,384.0" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="387.5,415.6 401.3,423.6 401.3,404.8 387.5,396.8" style="fill:#f3f2ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="423.5,376.0 437.3,384.0 401.3,404.8 387.5,396.8" style="fill:#ffffff;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="437.3,394.8 401.3,415.6 401.3,413.2 437.3,392.4" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="401.3,423.6 390.9,429.6 390.9,416.0 401.3,410.0" style="fill:#d7d5cf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="377.1,421.6 390.9,429.6 390.9,416.0 377.1,408.0" style="fill:#eceae6;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="387.5,402.0 401.3,410.0 390.9,416.0 377.1,408.0" style="fill:#f7f6f3;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="378.0,415.0 389.8,421.8 389.8,416.6 378.0,409.8" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="399.9,416.8 392.3,421.2 392.3,416.4 399.9,412.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="518.4,450.0 548.2,467.2 426.3,537.6 396.5,520.4" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="531.6,457.6 436.7,512.4 436.7,508.4 531.6,453.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="424.2,505.2 436.7,512.4 436.7,508.4 424.2,501.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="519.1,446.4 531.6,453.6 436.7,508.4 424.2,501.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="475.1,498.6 447.4,514.6 447.4,506.2 475.1,490.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="430.1,504.6 447.4,514.6 447.4,506.2 430.1,496.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="457.8,480.2 475.1,490.2 447.4,506.2 430.1,496.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="536.4,454.0 442.2,508.4 442.2,484.0 536.4,429.6" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="424.2,498.0 442.2,508.4 442.2,484.0 424.2,473.6" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="518.4,419.2 536.4,429.6 442.2,484.0 424.2,473.6" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="525.3,459.6 525.3,436.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="514.2,466.0 514.2,443.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="503.2,472.4 503.2,449.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="492.1,478.8 492.1,456.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="481.0,485.2 481.0,462.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="469.9,491.6 469.9,468.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="458.8,498.0 458.8,475.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="447.7,504.4 447.7,481.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="536.4,453.6 442.2,508.0 442.2,506.0 536.4,451.6" style="fill:#c9c7c1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="436.0,520.8 424.9,527.2 424.9,519.2 436.0,512.8" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="408.2,517.6 424.9,527.2 424.9,519.2 408.2,509.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="419.3,503.2 436.0,512.8 424.9,519.2 408.2,509.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="439.8,514.6 420.4,525.8 420.4,502.6 439.8,491.4" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="403.1,515.8 420.4,525.8 420.4,502.6 403.1,492.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="422.5,481.4 439.8,491.4 420.4,502.6 403.1,492.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="438.7,490.8 429.0,496.4 429.0,492.4 438.7,486.8" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="413.8,487.6 429.0,496.4 429.0,492.4 413.8,483.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="423.5,478.0 438.7,486.8 429.0,492.4 413.8,483.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="404.7,504.0 418.6,512.0 418.6,504.0 404.7,496.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="403.6,515.9 419.5,525.1 419.5,522.3 403.6,513.1" style="fill:#262523;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="432.2,505.8 423.1,511.0 423.1,503.8 432.2,498.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="560.0,474.0 589.8,491.2 467.8,561.6 438.0,544.4" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="573.1,481.6 478.2,536.4 478.2,532.4 573.1,477.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="465.8,529.2 478.2,536.4 478.2,532.4 465.8,525.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="560.7,470.4 573.1,477.6 478.2,532.4 465.8,525.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="516.7,522.6 489.0,538.6 489.0,530.2 516.7,514.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="471.6,528.6 489.0,538.6 489.0,530.2 471.6,520.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="499.4,504.2 516.7,514.2 489.0,530.2 471.6,520.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="578.0,478.0 483.8,532.4 483.8,508.0 578.0,453.6" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="465.8,522.0 483.8,532.4 483.8,508.0 465.8,497.6" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="560.0,443.2 578.0,453.6 483.8,508.0 465.8,497.6" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="566.9,483.6 566.9,460.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="555.8,490.0 555.8,467.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="544.7,496.4 544.7,473.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="533.6,502.8 533.6,480.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="522.6,509.2 522.6,486.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="511.5,515.6 511.5,492.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="500.4,522.0 500.4,499.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="489.3,528.4 489.3,505.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="578.0,477.6 483.8,532.0 483.8,530.0 578.0,475.6" style="fill:#c9c7c1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="560.0,443.1 578.0,453.5 483.8,507.9 465.8,497.5" style="fill:rgba(243,146,0,0.16);stroke:#f39200;stroke-width:2.2;stroke-linejoin:round"></polygon>
+
+<polygon points="477.5,544.8 466.4,551.2 466.4,543.2 477.5,536.8" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="449.8,541.6 466.4,551.2 466.4,543.2 449.8,533.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="460.9,527.2 477.5,536.8 466.4,543.2 449.8,533.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="481.3,538.6 461.9,549.8 461.9,526.6 481.3,515.4" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="444.6,539.8 461.9,549.8 461.9,526.6 444.6,516.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="464.0,505.4 481.3,515.4 461.9,526.6 444.6,516.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="480.3,514.8 470.6,520.4 470.6,516.4 480.3,510.8" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="455.4,511.6 470.6,520.4 470.6,516.4 455.4,507.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="465.1,502.0 480.3,510.8 470.6,516.4 455.4,507.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="446.3,528.0 460.1,536.0 460.1,528.0 446.3,520.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="445.2,539.9 461.1,549.1 461.1,546.3 445.2,537.1" style="fill:#262523;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="473.7,529.8 464.7,535.0 464.7,527.8 473.7,522.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="601.5,498.0 631.3,515.2 509.4,585.6 479.6,568.4" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="614.7,505.6 519.8,560.4 519.8,556.4 614.7,501.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="507.3,553.2 519.8,560.4 519.8,556.4 507.3,549.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="602.2,494.4 614.7,501.6 519.8,556.4 507.3,549.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="558.2,546.6 530.5,562.6 530.5,554.2 558.2,538.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="513.2,552.6 530.5,562.6 530.5,554.2 513.2,544.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="540.9,528.2 558.2,538.2 530.5,554.2 513.2,544.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="619.6,502.0 525.3,556.4 525.3,532.0 619.6,477.6" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="507.3,546.0 525.3,556.4 525.3,532.0 507.3,521.6" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="601.5,467.2 619.6,477.6 525.3,532.0 507.3,521.6" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="608.5,507.6 608.5,484.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="597.4,514.0 597.4,491.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="586.3,520.4 586.3,497.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="575.2,526.8 575.2,504.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="564.1,533.2 564.1,510.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="553.0,539.6 553.0,516.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="542.0,546.0 542.0,523.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="530.9,552.4 530.9,529.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="619.6,501.6 525.3,556.0 525.3,554.0 619.6,499.6" style="fill:#c9c7c1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="519.1,568.8 508.0,575.2 508.0,567.2 519.1,560.8" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="491.4,565.6 508.0,575.2 508.0,567.2 491.4,557.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="502.5,551.2 519.1,560.8 508.0,567.2 491.4,557.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="522.9,562.6 503.5,573.8 503.5,550.6 522.9,539.4" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="486.2,563.8 503.5,573.8 503.5,550.6 486.2,540.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="505.6,529.4 522.9,539.4 503.5,550.6 486.2,540.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="521.9,538.8 512.2,544.4 512.2,540.4 521.9,534.8" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="496.9,535.6 512.2,544.4 512.2,540.4 496.9,531.6" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="506.6,526.0 521.9,534.8 512.2,540.4 496.9,531.6" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="487.9,552.0 501.7,560.0 501.7,552.0 487.9,544.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="486.7,563.9 502.7,573.1 502.7,570.3 486.7,561.1" style="fill:#262523;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="515.3,553.8 506.3,559.0 506.3,551.8 515.3,546.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="684.7,546.0 714.5,563.2 592.5,633.6 562.7,616.4" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="697.8,553.6 602.9,608.4 602.9,604.4 697.8,549.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="590.5,601.2 602.9,608.4 602.9,604.4 590.5,597.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="685.4,542.4 697.8,549.6 602.9,604.4 590.5,597.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="641.4,594.6 613.7,610.6 613.7,602.2 641.4,586.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="596.3,600.6 613.7,610.6 613.7,602.2 596.3,592.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="624.1,576.2 641.4,586.2 613.7,602.2 596.3,592.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="702.7,550.0 608.5,604.4 608.5,580.0 702.7,525.6" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="590.5,594.0 608.5,604.4 608.5,580.0 590.5,569.6" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="684.7,515.2 702.7,525.6 608.5,580.0 590.5,569.6" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="691.6,555.6 691.6,532.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="680.5,562.0 680.5,539.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="669.4,568.4 669.4,545.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="658.4,574.8 658.4,552.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="647.3,581.2 647.3,558.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="636.2,587.6 636.2,564.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="625.1,594.0 625.1,571.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="614.0,600.4 614.0,577.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="702.7,549.6 608.5,604.0 608.5,602.0 702.7,547.6" style="fill:#c9c7c1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="602.2,616.8 591.1,623.2 591.1,615.2 602.2,608.8" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="574.5,613.6 591.1,623.2 591.1,615.2 574.5,605.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="585.6,599.2 602.2,608.8 591.1,615.2 574.5,605.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="606.0,610.6 586.6,621.8 586.6,598.6 606.0,587.4" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="569.3,611.8 586.6,621.8 586.6,598.6 569.3,588.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="588.7,577.4 606.0,587.4 586.6,598.6 569.3,588.6" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="605.0,586.8 595.3,592.4 595.3,588.4 605.0,582.8" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="580.1,583.6 595.3,592.4 595.3,588.4 580.1,579.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="589.8,574.0 605.0,582.8 595.3,588.4 580.1,579.6" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="571.0,600.0 584.8,608.0 584.8,600.0 571.0,592.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="569.9,611.9 585.8,621.1 585.8,618.3 569.9,609.1" style="fill:#262523;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="598.4,601.8 589.4,607.0 589.4,599.8 598.4,594.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="767.8,594.0 797.6,611.2 675.7,681.6 645.9,664.4" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="781.0,601.6 686.1,656.4 686.1,652.4 781.0,597.6" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="673.6,649.2 686.1,656.4 686.1,652.4 673.6,645.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="768.5,590.4 781.0,597.6 686.1,652.4 673.6,645.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="724.5,642.6 696.8,658.6 696.8,650.2 724.5,634.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="679.5,648.6 696.8,658.6 696.8,650.2 679.5,640.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="707.2,624.2 724.5,634.2 696.8,650.2 679.5,640.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="785.8,598.0 691.6,652.4 691.6,628.0 785.8,573.6" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="673.6,642.0 691.6,652.4 691.6,628.0 673.6,617.6" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="767.8,563.2 785.8,573.6 691.6,628.0 673.6,617.6" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="774.7,603.6 774.7,580.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="763.7,610.0 763.7,587.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="752.6,616.4 752.6,593.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="741.5,622.8 741.5,600.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="730.4,629.2 730.4,606.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="719.3,635.6 719.3,612.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="708.2,642.0 708.2,619.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="697.1,648.4 697.1,625.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="785.8,597.6 691.6,652.0 691.6,650.0 785.8,595.6" style="fill:#c9c7c1;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="685.4,664.8 674.3,671.2 674.3,663.2 685.4,656.8" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="657.7,661.6 674.3,671.2 674.3,663.2 657.7,653.6" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="668.7,647.2 685.4,656.8 674.3,663.2 657.7,653.6" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="689.2,658.6 669.8,669.8 669.8,646.6 689.2,635.4" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="652.5,659.8 669.8,669.8 669.8,646.6 652.5,636.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="671.9,625.4 689.2,635.4 669.8,646.6 652.5,636.6" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="688.1,634.8 678.4,640.4 678.4,636.4 688.1,630.8" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="663.2,631.6 678.4,640.4 678.4,636.4 663.2,627.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="672.9,622.0 688.1,630.8 678.4,636.4 663.2,627.6" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="654.1,648.0 668.0,656.0 668.0,648.0 654.1,640.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="653.0,659.9 669.0,669.1 669.0,666.3 653.0,657.1" style="fill:#262523;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="681.6,649.8 672.6,655.0 672.6,647.8 681.6,642.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="659.0,707.2 783.7,779.2 760.2,792.8 635.5,720.8" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="672.9,718.4 654.9,728.8 654.9,720.8 672.9,710.4" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="645.2,723.2 654.9,728.8 654.9,720.8 645.2,715.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="663.2,704.8 672.9,710.4 654.9,720.8 645.2,715.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="678.1,717.4 660.8,727.4 660.8,704.2 678.1,694.2" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="641.4,716.2 660.8,727.4 660.8,704.2 641.4,693.0" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="658.7,683.0 678.1,694.2 660.8,704.2 641.4,693.0" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="677.1,694.8 661.8,703.6 661.8,699.6 677.1,690.8" style="fill:#d47f00;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="651.4,697.6 661.8,703.6 661.8,699.6 651.4,693.6" style="fill:#f39200;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="666.7,684.8 677.1,690.8 661.8,699.6 651.4,693.6" style="fill:#ffbb5c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="643.4,704.2 657.9,712.6 657.9,705.4 643.4,697.0" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="761.9,769.4 743.2,780.2 743.2,771.8 761.9,761.0" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="718.3,765.8 743.2,780.2 743.2,771.8 718.3,757.4" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="737.0,746.6 761.9,761.0 743.2,771.8 718.3,757.4" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="774.0,767.2 756.0,777.6 756.0,753.2 774.0,742.8" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="661.8,723.2 756.0,777.6 756.0,753.2 661.8,698.8" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="679.8,688.4 774.0,742.8 756.0,753.2 661.8,698.8" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="672.2,728.4 672.2,705.6" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="683.3,734.8 683.3,712.0" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="694.4,741.2 694.4,718.4" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="705.5,747.6 705.5,724.8" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="716.5,754.0 716.5,731.2" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="727.6,760.4 727.6,737.6" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="738.7,766.8 738.7,744.0" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="749.8,773.2 749.8,750.4" style="fill:none;stroke:#e1dfda;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="765.0,771.6 765.0,748.8" style="fill:none;stroke:#a8a6a0;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="308.5,599.2 337.6,616.0 217.0,685.6 187.9,668.8" style="fill:rgba(29,29,27,0.10);stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="321.0,615.2 311.3,620.8 311.3,612.8 321.0,607.2" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="294.6,611.2 311.3,620.8 311.3,612.8 294.6,603.2" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="304.3,597.6 321.0,607.2 311.3,612.8 294.6,603.2" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="326.2,608.2 306.8,619.4 306.8,596.2 326.2,585.0" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="289.4,609.4 306.8,619.4 306.8,596.2 289.4,586.2" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="308.8,575.0 326.2,585.0 306.8,596.2 289.4,586.2" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="314.7,590.4 305.7,595.6 305.7,591.6 314.7,586.4" style="fill:#232220;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="290.5,586.8 305.7,595.6 305.7,591.6 290.5,582.8" style="fill:#2f2e2c;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="299.5,577.6 314.7,586.4 305.7,591.6 290.5,582.8" style="fill:#4a4946;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="323.4,596.6 314.4,601.8 314.4,594.6 323.4,589.4" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="241.6,661.4 216.7,675.8 216.7,667.4 241.6,653.0" style="fill:#201f1e;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="199.4,665.8 216.7,675.8 216.7,667.4 199.4,657.4" style="fill:#2b2a28;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="224.3,643.0 241.6,653.0 216.7,667.4 199.4,657.4" style="fill:#3a3937;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="305.7,615.2 211.5,669.6 211.5,645.2 305.7,590.8" style="fill:#dcdad4;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="193.5,659.2 211.5,669.6 211.5,645.2 193.5,634.8" style="fill:#f1f0ec;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="287.7,580.4 305.7,590.8 211.5,645.2 193.5,634.8" style="fill:#fdfdfc;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="294.6,620.8 294.6,598.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="283.5,627.2 283.5,604.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="272.5,633.6 272.5,610.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="261.4,640.0 261.4,617.2" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="250.3,646.4 250.3,623.6" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="239.2,652.8 239.2,630.0" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="228.1,659.2 228.1,636.4" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="217.0,665.6 217.0,642.8" style="fill:none;stroke:#d3d1cb;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="202.5,663.6 202.5,640.8" style="fill:none;stroke:#a8a6a0;stroke-width:1;stroke-linejoin:round"></polygon>
+
+<polygon points="860.0,799.2 855.8,801.6 855.8,790.8 860.0,788.4" style="fill:#3c3b38;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="851.6,799.2 855.8,801.6 855.8,790.8 851.6,788.4" style="fill:#4a4945;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="855.8,786.0 860.0,788.4 855.8,790.8 851.6,788.4" style="fill:#5c5b57;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="855.1,792.8 798.3,825.6 798.3,823.6 855.1,790.8" style="fill:#a82a2a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="795.5,824.0 798.3,825.6 798.3,823.6 795.5,822.0" style="fill:#c93434;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="852.3,789.2 855.1,790.8 798.3,823.6 795.5,822.0" style="fill:#e5484d;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="841.2,800.8 830.2,807.2 830.2,805.2 841.2,798.8" style="fill:#dddbd5;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="827.4,805.6 830.2,807.2 830.2,805.2 827.4,803.6" style="fill:#f2f1ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="838.5,797.2 841.2,798.8 830.2,805.2 827.4,803.6" style="fill:#ffffff;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="816.3,815.2 805.2,821.6 805.2,819.6 816.3,813.2" style="fill:#dddbd5;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="802.5,820.0 805.2,821.6 805.2,819.6 802.5,818.0" style="fill:#f2f1ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="813.5,811.6 816.3,813.2 805.2,819.6 802.5,818.0" style="fill:#ffffff;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="822.5,856.0 798.3,870.0 798.3,846.8 822.5,832.8" style="fill:#dad8d2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="774.0,856.0 798.3,870.0 798.3,846.8 774.0,832.8" style="fill:#f2f1ee;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="798.3,818.8 822.5,832.8 798.3,846.8 774.0,832.8" style="fill:#3b3b38;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="777.4,847.6 794.8,857.6 794.8,849.6 777.4,839.6" style="fill:#a9bccb;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="133.9,272.0 129.7,274.4 129.7,264.8 133.9,262.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="125.6,272.0 129.7,274.4 129.7,264.8 125.6,262.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="129.7,260.0 133.9,262.4 129.7,264.8 125.6,262.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="153.3,262.4 129.7,276.0 129.7,253.6 153.3,240.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="106.2,262.4 129.7,276.0 129.7,253.6 106.2,240.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="129.7,226.4 153.3,240.0 129.7,253.6 106.2,240.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="145.0,240.0 129.7,248.8 129.7,237.6 145.0,228.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="114.5,240.0 129.7,248.8 129.7,237.6 114.5,228.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="129.7,220.0 145.0,228.8 129.7,237.6 114.5,228.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="23.1,336.0 18.9,338.4 18.9,328.8 23.1,326.4" style="fill:#76614a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="14.7,336.0 18.9,338.4 18.9,328.8 14.7,326.4" style="fill:#8a7256;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="18.9,324.0 23.1,326.4 18.9,328.8 14.7,326.4" style="fill:#9c8466;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="42.5,326.4 18.9,340.0 18.9,317.6 42.5,304.0" style="fill:#9ab47f;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="-4.7,326.4 18.9,340.0 18.9,317.6 -4.7,304.0" style="fill:#b2c995;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="18.9,290.4 42.5,304.0 18.9,317.6 -4.7,304.0" style="fill:#c7dbb0;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="34.1,304.0 18.9,312.8 18.9,301.6 34.1,292.8" style="fill:#a5bf8a;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="3.7,304.0 18.9,312.8 18.9,301.6 3.7,292.8" style="fill:#bdd2a2;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+<polygon points="18.9,284.0 34.1,292.8 18.9,301.6 3.7,292.8" style="fill:#d3e4bf;stroke:none;stroke-width:0;stroke-linejoin:round"></polygon>
+
+
+<text transform="matrix(0.866,0.5,0,1,531.4,408.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">01 BB</text>
+
+<text transform="matrix(0.866,0.5,0,1,572.9,432.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">02 BA</text>
+
+<text transform="matrix(0.866,0.5,0,1,614.5,456.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">03 ZA</text>
+
+<text transform="matrix(0.866,0.5,0,1,656.1,480.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">04 MI</text>
+
+<text transform="matrix(0.866,0.5,0,1,697.6,504.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">05 TV</text>
+
+<text transform="matrix(0.866,0.5,0,1,739.2,528.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">06 HE</text>
+
+<text transform="matrix(0.866,0.5,0,1,780.8,552.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">07 SL</text>
+
+<text transform="matrix(0.866,0.5,0,1,822.3,576.3)" style="font-family:Inter,sans-serif;font-size:6.5px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">08 SE</text>
+
+<text transform="matrix(0.866,0.5,0,1,309.7,291.6)" style="font-family:Inter,sans-serif;font-size:6px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">K1</text>
+
+<text transform="matrix(0.866,0.5,0,1,351.2,315.6)" style="font-family:Inter,sans-serif;font-size:6px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">K2</text>
+
+<text transform="matrix(0.866,0.5,0,1,392.8,339.6)" style="font-family:Inter,sans-serif;font-size:6px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">K3</text>
+
+<text transform="matrix(0.866,0.5,0,1,434.4,363.6)" style="font-family:Inter,sans-serif;font-size:6px;font-weight:700;fill:#ffffff;text-anchor:middle;letter-spacing:0.03em">K4</text>
+
+<text transform="matrix(0.866,0.5,0,1,318.0,274.5)" style="font-family:Inter,sans-serif;font-size:15px;font-weight:800;fill:#ffffff;text-anchor:start;letter-spacing:0.03em">Depot 5.0</text>
+
+<text transform="matrix(0.866,0.5,0,1,397.0,318.9)" style="font-family:Inter,sans-serif;font-size:8px;font-weight:700;fill:#ffb54d;text-anchor:start;letter-spacing:0.03em">BUDIMÍR</text>
+
+
+<ellipse cx="531.6" cy="397.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M531.6 397.6 C528.6 389.6 523.1 382.6 523.1 373.6 A8.5 8.5 0 1 1 540.1 373.6 C540.1 382.6 534.6 389.6 531.6 397.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="531.6" cy="373.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="573.1" cy="421.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M573.1 421.6 C570.1 413.6 564.6 406.6 564.6 397.6 A8.5 8.5 0 1 1 581.6 397.6 C581.6 406.6 576.1 413.6 573.1 421.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="573.1" cy="397.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="614.7" cy="445.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M614.7 445.6 C611.7 437.6 606.2 430.6 606.2 421.6 A8.5 8.5 0 1 1 623.2 421.6 C623.2 430.6 617.7 437.6 614.7 445.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="614.7" cy="421.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="656.3" cy="469.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M656.3 469.6 C653.3 461.6 647.8 454.6 647.8 445.6 A8.5 8.5 0 1 1 664.8 445.6 C664.8 454.6 659.3 461.6 656.3 469.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="656.3" cy="445.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="697.8" cy="493.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<circle cx="697.8" cy="469.6" r="16" style="fill:rgba(201,127,0,0.16);stroke:#c97f00;stroke-width:1.5"></circle>
+
+<path d="M697.8 493.6 C694.8 485.6 689.3 478.6 689.3 469.6 A8.5 8.5 0 1 1 706.3 469.6 C706.3 478.6 700.8 485.6 697.8 493.6 Z" style="fill:#c97f00;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="697.8" cy="469.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="739.4" cy="517.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M739.4 517.6 C736.4 509.6 730.9 502.6 730.9 493.6 A8.5 8.5 0 1 1 747.9 493.6 C747.9 502.6 742.4 509.6 739.4 517.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="739.4" cy="493.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="781.0" cy="541.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M781.0 541.6 C778.0 533.6 772.5 526.6 772.5 517.6 A8.5 8.5 0 1 1 789.5 517.6 C789.5 526.6 784.0 533.6 781.0 541.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="781.0" cy="517.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="822.5" cy="565.6" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M822.5 565.6 C819.5 557.6 814.0 550.6 814.0 541.6 A8.5 8.5 0 1 1 831.0 541.6 C831.0 550.6 825.5 557.6 822.5 565.6 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="822.5" cy="541.6" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="596.7" cy="280.0" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M596.7 280.0 C593.7 272.0 588.2 265.0 588.2 256.0 A8.5 8.5 0 1 1 605.2 256.0 C605.2 265.0 599.7 272.0 596.7 280.0 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="596.7" cy="256.0" r="3.4" style="fill:#ffffff"></circle>
+
+<ellipse cx="798.3" cy="829.2" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+
+<path d="M798.3 829.2 C795.3 821.2 789.8 814.2 789.8 805.2 A8.5 8.5 0 1 1 806.8 805.2 C806.8 814.2 801.3 821.2 798.3 829.2 Z" style="fill:#23874f;stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="798.3" cy="805.2" r="3.4" style="fill:#ffffff"></circle>
+
+
+<rect x="357.3" y="481.2" width="212" height="24" rx="12" style="fill:rgba(29,29,27,0.10)"></rect>
+<rect x="356.3" y="479.2" width="212" height="24" rx="12" style="fill:#ffffff;stroke:#f39200;stroke-width:1.6"></rect>
+<circle cx="368.3" cy="491.2" r="4" style="fill:#f39200"></circle>
+<text x="378.3" y="495.2" style="font-family:Inter,sans-serif;font-size:12px;font-weight:700;fill:#1d1d1b">KE-102LH · Bratislava · 64 %</text>
+
+<rect x="440.8" y="441.6" width="238" height="24" rx="12" style="fill:rgba(29,29,27,0.10)"></rect>
+<rect x="439.8" y="439.6" width="238" height="24" rx="12" style="fill:#ffffff;stroke:#e6e5e1;stroke-width:1"></rect>
+<circle cx="451.8" cy="451.6" r="4" style="fill:#c97f00"></circle>
+<text x="461.8" y="455.6" style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;fill:#1d1d1b">DOCK-SCN-05 · degradované · 86 %</text>
+
+<rect x="600.5" y="686.4" width="212" height="24" rx="12" style="fill:rgba(29,29,27,0.10)"></rect>
+<rect x="599.5" y="684.4" width="212" height="24" rx="12" style="fill:#ffffff;stroke:#e6e5e1;stroke-width:1"></rect>
+<circle cx="611.5" cy="696.4" r="4" style="fill:#2f5be9"></circle>
+<text x="621.5" y="700.4" style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;fill:#1d1d1b">KE-131PR · prichádza · 18:49</text>
+
+<rect x="145.1" y="592.8" width="186" height="24" rx="12" style="fill:rgba(29,29,27,0.10)"></rect>
+<rect x="144.1" y="590.8" width="186" height="24" rx="12" style="fill:#ffffff;stroke:#e6e5e1;stroke-width:1"></rect>
+<circle cx="156.1" cy="602.8" r="4" style="fill:#8a8984"></circle>
+<text x="166.1" y="606.8" style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;fill:#1d1d1b">KE-109LH · čaká na bránu</text>
+
+</svg>
+</div>
+
+<header class="d5-top" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:10px 12px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div role="group" aria-label="Sklad" style="display:flex;gap:4px;padding:4px;background:#f1f1ef;border-radius:12px">
+<button type="button" aria-pressed="true" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:0;border-radius:9px;background:#ffffff;box-shadow:0 1px 3px rgba(29,29,27,0.14);font-size:13px;font-weight:700;color:#1d1d1b;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a85f00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg>Budimír<span style="font-weight:500;color:#6b6b68">depo</span></button>
+<button type="button" aria-pressed="false" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:0;border-radius:9px;background:transparent;font-size:13px;font-weight:600;color:#5c5c58;white-space:nowrap">Ivanka pri Dunaji<span style="font-weight:500;color:#6b6b68">hub</span></button>
+</div>
+<span style="font-size:13px;font-weight:700;white-space:nowrap">5/8 brán obsadených</span>
+<label style="flex:1 1 200px;min-width:0;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid #e6e5e1;border-radius:10px;background:#fafaf8;color:#6b6b68">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hľadať</span>
+<input type="search" placeholder="Balík, ŠPZ, brána alebo zariadenie…" style="flex: 1 1 0%; min-width: 0px; border: 0px; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: rgb(29, 29, 27); outline: none;">
+<kbd style="font-family:inherit;font-size:11px;font-weight:600;color:#6b6b68;border:1px solid #e6e5e1;border-radius:6px;padding:1px 6px;background:#ffffff">/</kbd>
+</label>
+<div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:10px;background:#e2f5e9;white-space:nowrap">
+<span style="width:8px;height:8px;border-radius:50%;background:#23874f;box-shadow:0 0 0 3px rgba(35,135,79,0.18)"></span>
+<span style="font-size:14px;font-weight:800;color:#17603a">18:42</span>
+<span style="font-size:12px;font-weight:600;color:#17603a">večerná vlna · 30×</span>
+</div>
+<button type="button" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid #e6e5e1;border-radius:10px;background:#ffffff;font-size:13px;font-weight:700;color:#1d1d1b;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>Scenár (čo ak)</button>
+<button type="button" aria-label="Alarmy, 3 aktívne" style="position:relative;width:40px;height:40px;border:0;border-radius:10px;background:#f1f1ef;display:grid;place-items:center;color:#1d1d1b"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg><span style="position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:8px;background:#c93434;color:#ffffff;font-size:10px;font-weight:700;line-height:16px;text-align:center">3</span></button>
+</header>
+
+<section class="d5-kpi" aria-label="Ukazovatele">
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fff6eb;display:grid;place-items:center;flex:none;color:#a85f00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Balíky vo vlne</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">4 812</span><span style="font-size:12px;font-weight:700;color:#1d7a46">↑ 236</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">večerná · 15:30–22:00</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#e4ecff;display:grid;place-items:center;flex:none;color:#2f5be9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Kamióny v areáli</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">7</span><span style="font-size:12px;font-weight:600;color:#6b6b68">+1 prichádza</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">5 pri bránach · 1 čaká</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fdf1cf;display:grid;place-items:center;flex:none;color:#8a5800"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Čítanosť skenerov</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">97,6 %</span><span style="font-size:12px;font-weight:700;color:#8a5800">↓ 1,1</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">LD-05 klesá</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fde3e3;display:grid;place-items:center;flex:none;color:#c93434"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Alarmy</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">3</span><span style="font-size:12px;font-weight:600;color:#6b6b68">aktívne</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">kaskáda · smer · skener</div>
+</div>
+</div>
+</section>
+
+<div class="d5-cam" role="toolbar" aria-label="Kamera" style="display:flex;flex-direction:column;background:#ffffff;border-radius:14px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08);padding:4px 0;color:#1d1d1b">
+<button type="button" aria-label="Priblížiť" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+<button type="button" aria-label="Oddialiť" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<span style="height:1px;background:#e6e5e1;margin:4px 8px"></span>
+<button type="button" aria-label="Otočiť doľava" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
+<button type="button" aria-label="Otočiť doprava" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
+<button type="button" aria-label="Predvolený pohľad" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></button>
+<span style="height:1px;background:#e6e5e1;margin:4px 8px"></span>
+<button type="button" aria-label="Odkryť strechu" aria-pressed="false" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:#a85f00"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path></svg></button>
+</div>
+
+<aside class="d5-panel" aria-label="Detail kamióna KE-102LH" style="display:flex;flex-direction:column;gap:14px;padding:16px;background:#ffffff;border-radius:16px;box-shadow:0 12px 40px rgba(29,29,27,0.16)">
+<div style="display:flex;gap:12px;align-items:flex-start">
+<span style="width:44px;height:44px;border-radius:12px;background:#fff6eb;display:grid;place-items:center;flex:none;color:#a85f00"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span>
+<div style="flex:1;min-width:0">
+<div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a85f00">KAMIÓN · DIAĽKOVÝ</div>
+<div style="font-size:18px;font-weight:800;line-height:1.3">KE-102LH</div>
+<div style="font-size:12.5px;font-weight:500;color:#6b6b68">Budimír → Bratislava · brána LD-02</div>
+</div>
+<button type="button" aria-label="Zaostriť kameru" style="width:32px;height:32px;border:1px solid #e6e5e1;border-radius:9px;background:#ffffff;display:grid;place-items:center;color:#1d1d1b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M22 12h-4"></path><path d="M6 12H2"></path><path d="M12 6V2"></path><path d="M12 22v-4"></path></svg></button>
+<button type="button" aria-label="Zavrieť detail" style="width:32px;height:32px;border:1px solid #e6e5e1;border-radius:9px;background:#ffffff;display:grid;place-items:center;color:#1d1d1b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:12px;font-weight:700;color:#17603a;background:#e2f5e9;padding:5px 10px;border-radius:999px;white-space:nowrap">Nakladá sa</span>
+<span style="font-size:12.5px;font-weight:500;color:#6b6b68;white-space:nowrap">odchod 21:30 · o 2 h 48 min</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px;background:#fafaf8;border-radius:12px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="font-weight:600">Balíky</span><span style="font-weight:600;color:#5c5c58">1 284 / 2 000 ks · 64 %</span></div>
+<div style="height:6px;border-radius:3px;background:#ebe9e4;overflow:hidden"><div style="width:64%;height:100%;border-radius:3px;background:#f39200"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="font-weight:600">Hmotnosť</span><span style="font-weight:600;color:#5c5c58">9 870 / 24 000 kg · 41 %</span></div>
+<div style="height:6px;border-radius:3px;background:#ebe9e4;overflow:hidden"><div style="width:41%;height:100%;border-radius:3px;background:#8a8984"></div></div>
+</div>
+</div>
+<dl style="margin:0;display:grid;grid-template-columns:auto 1fr;font-size:12.5px">
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Brána</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9">LD-02 · otvorená</dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Vybavenie</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9">elektrická · vyrovnávací mostík</dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Chýbajúce balíky</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9"><a href="#" style="font-weight:700">37 zobraziť ›</a></dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Zlý smer</dt><dd style="margin:0;padding:6px 0;text-align:right;border-bottom:1px solid #efeee9"><span style="font-size:12px;font-weight:700;color:#a32727;background:#fde3e3;padding:3px 9px;border-radius:999px;white-space:nowrap">1 alarm · 18:39</span></dd>
+<dt style="padding:8px 0;color:#6b6b68">Kaskáda</dt><dd style="margin:0;padding:6px 0;text-align:right"><span style="font-size:12px;font-weight:700;color:#17603a;background:#e2f5e9;padding:3px 9px;border-radius:999px;white-space:nowrap">bez vplyvu na prechody</span></dd>
+</dl>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<a href="#" style="flex:1;display:flex;justify-content:center;align-items:center;height:40px;border-radius:10px;background:#f39200;color:#1d1d1b;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Nakládka pri bráne</a>
+<a href="#" style="flex:1;display:flex;justify-content:center;align-items:center;height:40px;border-radius:10px;border:1px solid #e6e5e1;color:#1d1d1b;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Presunúť bránu</a>
+</div>
+</aside>
+
+<section class="d5-list" aria-label="Brány, kamióny a zariadenia" style="display:flex;flex-direction:column;gap:8px;padding:12px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+<div role="tablist" aria-label="Zoznam" style="display:flex;gap:4px;padding:4px;background:#f1f1ef;border-radius:11px">
+<button type="button" role="tab" aria-selected="true" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:#ffffff;box-shadow:0 1px 3px rgba(29,29,27,0.14);font-size:12.5px;font-weight:700;color:#1d1d1b;white-space:nowrap">Brány <span style="color:#a85f00">5/8</span></button>
+<button type="button" role="tab" aria-selected="false" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;font-size:12.5px;font-weight:600;color:#5c5c58;white-space:nowrap">Kamióny 7</button>
+<button type="button" role="tab" aria-selected="false" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;font-size:12.5px;font-weight:600;color:#5c5c58;white-space:nowrap">Zariadenia 26</button>
+</div>
+<span style="font-size:12px;font-weight:500;color:#6b6b68">Budimír</span>
+</div>
+<div style="display:flex;flex-direction:column">
+
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:transparent">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">LD-01</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Banská Bystrica</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">KE-110LH</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#e2f5e9;color:#17603a">Nakladá sa</span></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:78%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">78 %</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:#fff6eb">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">LD-02</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bratislava</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">KE-102LH</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#e2f5e9;color:#17603a">Nakladá sa</span></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:64%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">64 %</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:transparent">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">LD-03</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Žilina</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">KE-117LH</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#efefec;color:#5c5c58">Čaká</span></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">0 %</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:transparent">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">LD-04</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Michalovce</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">—</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#efefec;color:#5c5c58">Voľná</span></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">—</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:transparent">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">LD-05</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Trebišov</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">KE-221TR</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#e4ecff;color:#2347c2">Vykladá sa</span><span title="Skener pri bráne degraduje" style="width:8px;height:8px;border-radius:50%;background:#c97f00;flex:none"></span></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:52%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">52 %</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px 2px;border-top:1px solid #efeee9;font-size:11.5px;font-weight:500;color:#5c5c58">
+<span style="display:flex;gap:12px;flex-wrap:wrap">
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#23874f"></span>online</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#c97f00"></span>degradované</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#c93434"></span>offline</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#7b5cd6"></span>údržba</span>
+</span>
+<a href="#" style="font-weight:700;white-space:nowrap">+ 3 ďalšie</a>
+</div>
+</section>
+
+<section class="d5-track" aria-label="Sledovanie balíka" style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="width:32px;height:32px;border-radius:9px;background:#fff6eb;display:grid;place-items:center;color:#a85f00;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<span style="font-size:14px;font-weight:800">Sledovanie balíka</span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;background:#f1f1ef;padding:3px 8px;border-radius:6px">DP261104K3B17</span>
+<span style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">6,4 kg · v kamióne KE-102LH</span>
+<span style="flex:1"></span>
+<a href="#" style="font-size:12.5px;font-weight:700;white-space:nowrap">Detail balíka ›</a>
+</div>
+<div style="position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
+<div style="position:absolute;left:10%;right:10%;top:13px;height:3px;border-radius:2px;background:#ebe9e4"></div>
+<div style="position:absolute;left:10%;width:60%;top:13px;height:3px;border-radius:2px;background:#f39200"></div>
+
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+
+<span style="width:28px;height:28px;border-radius:50%;background:#f39200;display:grid;place-items:center;color:#1d1d1b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+
+
+
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">Zvoz</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">16:05</span>
+</div>
+
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+
+<span style="width:28px;height:28px;border-radius:50%;background:#f39200;display:grid;place-items:center;color:#1d1d1b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+
+
+
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">Na páse</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">18:21</span>
+</div>
+
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+
+<span style="width:28px;height:28px;border-radius:50%;background:#f39200;display:grid;place-items:center;color:#1d1d1b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+
+
+
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">Vytriedený · BA</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">18:22</span>
+</div>
+
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+
+
+<span style="width:28px;height:28px;box-sizing:border-box;border-radius:50%;background:#ffffff;border:3px solid #f39200;box-shadow:0 0 0 5px rgba(243,146,0,0.18);display:grid;place-items:center"><span style="width:9px;height:9px;border-radius:50%;background:#f39200"></span></span>
+
+
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">Naložený · LD-02</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">18:37</span>
+</div>
+
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+
+
+
+<span style="width:28px;height:28px;border-radius:50%;background:#efefec;display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:#a8a7a2"></span></span>
+
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">Odchod</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">plán 21:30</span>
+</div>
+
+</div>
+</section>
+
+</div>
+</div></body></html>

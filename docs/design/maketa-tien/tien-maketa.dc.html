@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>Digitálny tieň – Budimír</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#a85f00}a:hover{color:#7a4500}
+button{font-family:inherit;cursor:pointer}
+.d5 *,.d5{box-sizing:border-box}
+.d5{position:relative;width:100%;height:900px;overflow:hidden;background:#f3f2ee;font-family:Inter,system-ui,sans-serif;color:#1d1d1b;font-feature-settings:"tnum" 1}
+.d5-rail{position:absolute;left:0;top:0;bottom:0;width:72px}
+.d5-scene{position:absolute;left:72px;top:0;right:0;bottom:0}
+.d5-top{position:absolute;left:88px;right:16px;top:16px}
+.d5-kpi{position:absolute;left:88px;top:100px;display:grid;grid-template-columns:repeat(4,214px);gap:12px}
+.d5-cam{position:absolute;right:16px;top:100px;width:44px}
+.d5-panel{position:absolute;right:72px;top:100px;width:360px}
+.d5-list{position:absolute;right:16px;bottom:16px;width:420px}
+.d5-track{position:absolute;left:88px;bottom:16px;width:620px;max-width:calc(100% - 560px)}
+@media (max-width:1380px){.d5-kpi{grid-template-columns:repeat(2,214px)}}
+@media (max-width:760px){
+.d5{height:auto;overflow:visible;display:flex;flex-direction:column}
+.d5-rail,.d5-cam{display:none}
+.d5-scene{position:relative;left:0;height:420px;order:1}
+.d5-top{order:0}.d5-kpi{order:2}.d5-panel{order:3}.d5-list{order:4}.d5-track{order:5}
+.d5-top,.d5-kpi,.d5-panel,.d5-list,.d5-track{position:static;width:auto;max-width:none;margin:12px}
+.d5-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</helmet>
+<div class="d5">
+
+<nav class="d5-rail" aria-label="Hlavná navigácia" style="background:#1d1d1b;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:#f39200;display:grid;place-items:center;margin-bottom:14px;color:#1d1d1b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<a href="#" aria-label="Dispečing" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg></a>
+<a href="#" aria-label="Digitálny tieň" aria-current="page" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#f39200;background:#3a3127"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg></a>
+<a href="#" aria-label="Flotila" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></a>
+<a href="#" aria-label="Nakládka" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg></a>
+<a href="#" aria-label="Kuriéri" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></a>
+<a href="#" aria-label="Tabuľa príchodov" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="15" x="2" y="7" rx="2"></rect><path d="m17 2-5 5-5-5"></path></svg></a>
+<a href="#" aria-label="Stav systému" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#9c9c97"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></a>
+<span style="flex:1"></span>
+<span title="Dispečer" style="width:36px;height:36px;border-radius:50%;background:#3a3127;color:#f39200;display:grid;place-items:center;font-size:12px;font-weight:700">DI</span>
+</nav>
+
+<div class="d5-scene">
+<svg width="100%" height="100%" viewBox="0 0 1368 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="3D pohľad na depo Budimír: hala s ôsmimi nakládkovými bránami, päť kamiónov pri bránach, kuriérske dodávky, dvor so vjazdovou bránou">
+<rect x="0" y="0" width="1368" height="900" style="fill:#f3f2ee"></rect>
+<sc-for list="{{shapes}}" as="s" hint-placeholder-count="20">
+<polygon points="{{s.pts}}" style="fill:{{s.fill}};stroke:{{s.stroke}};stroke-width:{{s.sw}};stroke-linejoin:round"></polygon>
+</sc-for>
+<sc-for list="{{texts}}" as="t" hint-placeholder-count="10">
+<text transform="{{t.tf}}" style="font-family:Inter,sans-serif;font-size:{{t.size}}px;font-weight:{{t.weight}};fill:{{t.color}};text-anchor:{{t.anchor}};letter-spacing:0.03em">{{t.str}}</text>
+</sc-for>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="10">
+<ellipse cx="{{p.X}}" cy="{{p.Y}}" rx="6" ry="2.4" style="fill:rgba(29,29,27,0.22)"></ellipse>
+<sc-if value="{{p.ring}}" hint-placeholder-val="{{ false }}">
+<circle cx="{{p.hx}}" cy="{{p.hy}}" r="16" style="fill:{{p.halo}};stroke:{{p.col}};stroke-width:1.5"></circle>
+</sc-if>
+<path d="{{p.d}}" style="fill:{{p.col}};stroke:#ffffff;stroke-width:1.6"></path>
+<circle cx="{{p.hx}}" cy="{{p.hy}}" r="3.4" style="fill:#ffffff"></circle>
+</sc-for>
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<rect x="{{c.sx}}" y="{{c.sy}}" width="{{c.w}}" height="24" rx="12" style="fill:rgba(29,29,27,0.10)"></rect>
+<rect x="{{c.rx}}" y="{{c.ry}}" width="{{c.w}}" height="24" rx="12" style="fill:#ffffff;stroke:{{c.stroke}};stroke-width:{{c.sw}}"></rect>
+<circle cx="{{c.dx}}" cy="{{c.dy}}" r="4" style="fill:{{c.dcol}}"></circle>
+<text x="{{c.tx}}" y="{{c.ty}}" style="font-family:Inter,sans-serif;font-size:12px;font-weight:{{c.weight}};fill:#1d1d1b">{{c.text}}</text>
+</sc-for>
+</svg>
+</div>
+
+<header class="d5-top" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:10px 12px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div role="group" aria-label="Sklad" style="display:flex;gap:4px;padding:4px;background:#f1f1ef;border-radius:12px">
+<button type="button" aria-pressed="true" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:0;border-radius:9px;background:#ffffff;box-shadow:0 1px 3px rgba(29,29,27,0.14);font-size:13px;font-weight:700;color:#1d1d1b;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a85f00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg>Budimír<span style="font-weight:500;color:#6b6b68">depo</span></button>
+<button type="button" aria-pressed="false" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:0;border-radius:9px;background:transparent;font-size:13px;font-weight:600;color:#5c5c58;white-space:nowrap">Ivanka pri Dunaji<span style="font-weight:500;color:#6b6b68">hub</span></button>
+</div>
+<span style="font-size:13px;font-weight:700;white-space:nowrap">5/8 brán obsadených</span>
+<label style="flex:1 1 200px;min-width:0;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid #e6e5e1;border-radius:10px;background:#fafaf8;color:#6b6b68">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hľadať</span>
+<input type="search" placeholder="Balík, ŠPZ, brána alebo zariadenie…" style="flex:1;min-width:0;border:0;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:#1d1d1b;outline:none">
+<kbd style="font-family:inherit;font-size:11px;font-weight:600;color:#6b6b68;border:1px solid #e6e5e1;border-radius:6px;padding:1px 6px;background:#ffffff">/</kbd>
+</label>
+<div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:10px;background:#e2f5e9;white-space:nowrap">
+<span style="width:8px;height:8px;border-radius:50%;background:#23874f;box-shadow:0 0 0 3px rgba(35,135,79,0.18)"></span>
+<span style="font-size:14px;font-weight:800;color:#17603a">18:42</span>
+<span style="font-size:12px;font-weight:600;color:#17603a">večerná vlna · 30×</span>
+</div>
+<button type="button" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid #e6e5e1;border-radius:10px;background:#ffffff;font-size:13px;font-weight:700;color:#1d1d1b;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>Scenár (čo ak)</button>
+<button type="button" aria-label="Alarmy, 3 aktívne" style="position:relative;width:40px;height:40px;border:0;border-radius:10px;background:#f1f1ef;display:grid;place-items:center;color:#1d1d1b"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg><span style="position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:8px;background:#c93434;color:#ffffff;font-size:10px;font-weight:700;line-height:16px;text-align:center">3</span></button>
+</header>
+
+<section class="d5-kpi" aria-label="Ukazovatele">
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fff6eb;display:grid;place-items:center;flex:none;color:#a85f00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Balíky vo vlne</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">4 812</span><span style="font-size:12px;font-weight:700;color:#1d7a46">↑ 236</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">večerná · 15:30–22:00</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#e4ecff;display:grid;place-items:center;flex:none;color:#2f5be9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Kamióny v areáli</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">7</span><span style="font-size:12px;font-weight:600;color:#6b6b68">+1 prichádza</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">5 pri bránach · 1 čaká</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fdf1cf;display:grid;place-items:center;flex:none;color:#8a5800"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Čítanosť skenerov</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">97,6 %</span><span style="font-size:12px;font-weight:700;color:#8a5800">↓ 1,1</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">LD-05 klesá</div>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<span style="width:40px;height:40px;border-radius:10px;background:#fde3e3;display:grid;place-items:center;flex:none;color:#c93434"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
+<div style="min-width:0">
+<div style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">Alarmy</div>
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:22px;font-weight:800">3</span><span style="font-size:12px;font-weight:600;color:#6b6b68">aktívne</span></div>
+<div style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">kaskáda · smer · skener</div>
+</div>
+</div>
+</section>
+
+<div class="d5-cam" role="toolbar" aria-label="Kamera" style="display:flex;flex-direction:column;background:#ffffff;border-radius:14px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08);padding:4px 0;color:#1d1d1b">
+<button type="button" aria-label="Priblížiť" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+<button type="button" aria-label="Oddialiť" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<span style="height:1px;background:#e6e5e1;margin:4px 8px"></span>
+<button type="button" aria-label="Otočiť doľava" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
+<button type="button" aria-label="Otočiť doprava" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
+<button type="button" aria-label="Predvolený pohľad" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:inherit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></button>
+<span style="height:1px;background:#e6e5e1;margin:4px 8px"></span>
+<button type="button" aria-label="Odkryť strechu" aria-pressed="{{roofOpen}}" style="height:40px;border:0;background:transparent;display:grid;place-items:center;color:#a85f00"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path></svg></button>
+</div>
+
+<aside class="d5-panel" aria-label="Detail kamióna KE-102LH" style="display:flex;flex-direction:column;gap:14px;padding:16px;background:#ffffff;border-radius:16px;box-shadow:0 12px 40px rgba(29,29,27,0.16)">
+<div style="display:flex;gap:12px;align-items:flex-start">
+<span style="width:44px;height:44px;border-radius:12px;background:#fff6eb;display:grid;place-items:center;flex:none;color:#a85f00"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span>
+<div style="flex:1;min-width:0">
+<div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a85f00">KAMIÓN · DIAĽKOVÝ</div>
+<div style="font-size:18px;font-weight:800;line-height:1.3">KE-102LH</div>
+<div style="font-size:12.5px;font-weight:500;color:#6b6b68">Budimír → Bratislava · brána LD-02</div>
+</div>
+<button type="button" aria-label="Zaostriť kameru" style="width:32px;height:32px;border:1px solid #e6e5e1;border-radius:9px;background:#ffffff;display:grid;place-items:center;color:#1d1d1b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M22 12h-4"></path><path d="M6 12H2"></path><path d="M12 6V2"></path><path d="M12 22v-4"></path></svg></button>
+<button type="button" aria-label="Zavrieť detail" style="width:32px;height:32px;border:1px solid #e6e5e1;border-radius:9px;background:#ffffff;display:grid;place-items:center;color:#1d1d1b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:12px;font-weight:700;color:#17603a;background:#e2f5e9;padding:5px 10px;border-radius:999px;white-space:nowrap">Nakladá sa</span>
+<span style="font-size:12.5px;font-weight:500;color:#6b6b68;white-space:nowrap">odchod 21:30 · o 2 h 48 min</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px;background:#fafaf8;border-radius:12px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="font-weight:600">Balíky</span><span style="font-weight:600;color:#5c5c58">1 284 / 2 000 ks · 64 %</span></div>
+<div style="height:6px;border-radius:3px;background:#ebe9e4;overflow:hidden"><div style="width:64%;height:100%;border-radius:3px;background:#f39200"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="font-weight:600">Hmotnosť</span><span style="font-weight:600;color:#5c5c58">9 870 / 24 000 kg · 41 %</span></div>
+<div style="height:6px;border-radius:3px;background:#ebe9e4;overflow:hidden"><div style="width:41%;height:100%;border-radius:3px;background:#8a8984"></div></div>
+</div>
+</div>
+<dl style="margin:0;display:grid;grid-template-columns:auto 1fr;font-size:12.5px">
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Brána</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9">LD-02 · otvorená</dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Vybavenie</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9">elektrická · vyrovnávací mostík</dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Chýbajúce balíky</dt><dd style="margin:0;padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #efeee9"><a href="#" style="font-weight:700">37 zobraziť ›</a></dd>
+<dt style="padding:8px 0;color:#6b6b68;border-bottom:1px solid #efeee9">Zlý smer</dt><dd style="margin:0;padding:6px 0;text-align:right;border-bottom:1px solid #efeee9"><span style="font-size:12px;font-weight:700;color:#a32727;background:#fde3e3;padding:3px 9px;border-radius:999px;white-space:nowrap">1 alarm · 18:39</span></dd>
+<dt style="padding:8px 0;color:#6b6b68">Kaskáda</dt><dd style="margin:0;padding:6px 0;text-align:right"><span style="font-size:12px;font-weight:700;color:#17603a;background:#e2f5e9;padding:3px 9px;border-radius:999px;white-space:nowrap">bez vplyvu na prechody</span></dd>
+</dl>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<a href="#" style="flex:1;display:flex;justify-content:center;align-items:center;height:40px;border-radius:10px;background:#f39200;color:#1d1d1b;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Nakládka pri bráne</a>
+<a href="#" style="flex:1;display:flex;justify-content:center;align-items:center;height:40px;border-radius:10px;border:1px solid #e6e5e1;color:#1d1d1b;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Presunúť bránu</a>
+</div>
+</aside>
+
+<section class="d5-list" aria-label="Brány, kamióny a zariadenia" style="display:flex;flex-direction:column;gap:8px;padding:12px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+<div role="tablist" aria-label="Zoznam" style="display:flex;gap:4px;padding:4px;background:#f1f1ef;border-radius:11px">
+<button type="button" role="tab" aria-selected="true" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:#ffffff;box-shadow:0 1px 3px rgba(29,29,27,0.14);font-size:12.5px;font-weight:700;color:#1d1d1b;white-space:nowrap">Brány <span style="color:#a85f00">5/8</span></button>
+<button type="button" role="tab" aria-selected="false" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;font-size:12.5px;font-weight:600;color:#5c5c58;white-space:nowrap">Kamióny 7</button>
+<button type="button" role="tab" aria-selected="false" style="height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;font-size:12.5px;font-weight:600;color:#5c5c58;white-space:nowrap">Zariadenia 26</button>
+</div>
+<span style="font-size:12px;font-weight:500;color:#6b6b68">Budimír</span>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<a href="#" style="display:grid;grid-template-columns:96px minmax(0,1fr) 96px 14px;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;text-decoration:none;color:#1d1d1b;background:{{r.bg}}">
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;font-weight:700">{{r.code}}</span><span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.dir}}</span></span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:12.5px;font-weight:600;white-space:nowrap">{{r.plate}}</span><span style="font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:{{r.tbg}};color:{{r.tfg}}">{{r.status}}</span><sc-if value="{{r.warn}}" hint-placeholder-val="{{ false }}"><span title="Skener pri bráne degraduje" style="width:8px;height:8px;border-radius:50%;background:#c97f00;flex:none"></span></sc-if></span>
+<span style="display:flex;align-items:center;gap:6px"><span style="flex:1;height:5px;border-radius:3px;background:#efefec;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:{{r.pct}}%"></span></span><span style="width:30px;text-align:right;font-size:11.5px;font-weight:700;color:#5c5c58">{{r.pctLabel}}</span></span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8984" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px 2px;border-top:1px solid #efeee9;font-size:11.5px;font-weight:500;color:#5c5c58">
+<span style="display:flex;gap:12px;flex-wrap:wrap">
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#23874f"></span>online</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#c97f00"></span>degradované</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#c93434"></span>offline</span>
+<span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#7b5cd6"></span>údržba</span>
+</span>
+<a href="#" style="font-weight:700;white-space:nowrap">+ 3 ďalšie</a>
+</div>
+</section>
+
+<section class="d5-track" aria-label="Sledovanie balíka" style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:#ffffff;border-radius:16px;box-shadow:0 1px 2px rgba(29,29,27,0.05),0 8px 24px rgba(29,29,27,0.08)">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="width:32px;height:32px;border-radius:9px;background:#fff6eb;display:grid;place-items:center;color:#a85f00;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<span style="font-size:14px;font-weight:800">Sledovanie balíka</span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;background:#f1f1ef;padding:3px 8px;border-radius:6px">DP261104K3B17</span>
+<span style="font-size:12px;font-weight:500;color:#6b6b68;white-space:nowrap">6,4 kg · v kamióne KE-102LH</span>
+<span style="flex:1"></span>
+<a href="#" style="font-size:12.5px;font-weight:700;white-space:nowrap">Detail balíka ›</a>
+</div>
+<div style="position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
+<div style="position:absolute;left:10%;right:10%;top:13px;height:3px;border-radius:2px;background:#ebe9e4"></div>
+<div style="position:absolute;left:10%;width:60%;top:13px;height:3px;border-radius:2px;background:#f39200"></div>
+<sc-for list="{{steps}}" as="st" hint-placeholder-count="5">
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+<sc-if value="{{st.done}}" hint-placeholder-val="{{ true }}">
+<span style="width:28px;height:28px;border-radius:50%;background:#f39200;display:grid;place-items:center;color:#1d1d1b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+</sc-if>
+<sc-if value="{{st.current}}" hint-placeholder-val="{{ false }}">
+<span style="width:28px;height:28px;box-sizing:border-box;border-radius:50%;background:#ffffff;border:3px solid #f39200;box-shadow:0 0 0 5px rgba(243,146,0,0.18);display:grid;place-items:center"><span style="width:9px;height:9px;border-radius:50%;background:#f39200"></span></span>
+</sc-if>
+<sc-if value="{{st.future}}" hint-placeholder-val="{{ false }}">
+<span style="width:28px;height:28px;border-radius:50%;background:#efefec;display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:#a8a7a2"></span></span>
+</sc-if>
+<span style="font-size:12.5px;font-weight:700;white-space:nowrap">{{st.label}}</span>
+<span style="font-size:11.5px;font-weight:500;color:#6b6b68;white-space:nowrap">{{st.time}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"roofOpen":{"editor":"boolean","default":false,"section":"Scéna"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const roofOpen = this.props.roofOpen ?? false;
+    const OX = 490, OY = 160, CX = 6.928, CY = 4, SZ = 8;
+    const f = (v) => v.toFixed(1);
+    const P = (x, y, z) => [OX + (x - y) * CX, OY + (x + y) * CY - z * SZ];
+    const fmt = (pts) => pts.map((q) => { const s = P(q[0], q[1], q[2]); return f(s[0]) + ',' + f(s[1]); }).join(' ');
+    const shapes = [];
+    const add = (pts, fill, stroke, sw) => shapes.push({ pts: fmt(pts), fill: fill || 'none', stroke: stroke || 'none', sw: sw || 0 });
+    const flat = (x0, x1, y0, y1, z, fill, stroke, sw) => add([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]], fill, stroke, sw);
+    const faceS = (x0, x1, y, z0, z1, fill) => add([[x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]], fill);
+    const faceE = (x, y0, y1, z0, z1, fill) => add([[x, y0, z0], [x, y1, z0], [x, y1, z1], [x, y0, z1]], fill);
+    const line = (a, b, stroke, sw) => add([a, b], 'none', stroke, sw);
+    const box = (x0, x1, y0, y1, z0, z1, c) => { faceE(x1, y0, y1, z0, z1, c[2]); faceS(x0, x1, y1, z0, z1, c[1]); flat(x0, x1, y0, y1, z1, c[0]); };
+    const shadow = (x0, x1, y0, y1, dx) => add([[x0 - 0.4, y0 - 0.4, 0], [x1 + 0.4 + dx, y0 - 0.4, 0], [x1 + 0.4 + dx, y1 + 0.4, 0], [x0 - 0.4, y1 + 0.4, 0]], 'rgba(29,29,27,0.10)');
+    const texts = [];
+    const textS = (x, y, z, str, size, weight, color, anchor) => { const s = P(x, y, z); texts.push({ str, tf: 'matrix(0.866,0.5,0,1,' + f(s[0]) + ',' + f(s[1]) + ')', size, weight, color, anchor: anchor || 'middle' }); };
+
+    const C = { ground: '#f3f2ee', grass: '#e2ead6', asphalt: '#e4e3de', apron: '#ecebe7', paint: '#eebd45', lane: '#ffffff', wallS: '#f8f7f4', wallE: '#d9d7d1', ribS: '#e6e4df', ribE: '#cdcbc5', roof: '#ebe9e4', roofRib: '#dfddd7', plinthS: '#d8d6d0', plinthE: '#c6c4be', brand: '#f39200', brandD: '#d47f00', ink: '#1d1d1b', doorShut: '#d4d2cc', slat: '#c4c2bc', doorOpen: '#3a3936', glass: '#a9bccb' };
+    const DARK = ['#3a3937', '#2b2a28', '#201f1e'];
+    const TRAILER = ['#fdfdfc', '#f1f0ec', '#dcdad4'];
+    const CAB_LH = ['#4a4946', '#2f2e2c', '#232220'];
+    const CAB_TR = ['#ffbb5c', '#f39200', '#d47f00'];
+    const CARD = ['#dcb17e', '#c99a66', '#b5864f'];
+    const BELT = ['#8a8883', '#6c6a65', '#5a5853'];
+    const tree = (x, y) => { box(x - 0.3, x + 0.3, y - 0.3, y + 0.3, 0, 1.2, ['#9c8466', '#8a7256', '#76614a']); box(x - 1.7, x + 1.7, y - 1.7, y + 1.7, 1.2, 4.0, ['#c7dbb0', '#b2c995', '#9ab47f']); box(x - 1.1, x + 1.1, y - 1.1, y + 1.1, 4.0, 5.4, ['#d3e4bf', '#bdd2a2', '#a5bf8a']); };
+
+    const LD = [
+      { n: '01', dir: 'BB', x: 40, truck: 'lh', open: true },
+      { n: '02', dir: 'BA', x: 46, truck: 'lh', open: true, sel: true },
+      { n: '03', dir: 'ZA', x: 52, truck: 'lh', open: false },
+      { n: '04', dir: 'MI', x: 58, truck: null, open: false, tele: true },
+      { n: '05', dir: 'TV', x: 64, truck: 'tr', open: true },
+      { n: '06', dir: 'HE', x: 70, truck: null, open: false },
+      { n: '07', dir: 'SL', x: 76, truck: 'tr', open: true },
+      { n: '08', dir: 'SE', x: 82, truck: null, open: false },
+    ];
+    const SB = [{ n: 'K1', x: 8, van: true }, { n: 'K2', x: 14, van: true }, { n: 'K3', x: 20, van: false }, { n: 'K4', x: 26, van: true }];
+    const H = roofOpen ? 2.6 : 11;
+
+    // ground, yard, markings
+    flat(-80, 200, -60, 160, 0, C.ground);
+    flat(-80, -8, -60, 160, 0, C.grass);
+    flat(-8, 200, 96, 160, 0, C.grass);
+    flat(-8, 200, -60, -10, 0, C.grass);
+    flat(124, 200, -10, 96, 0, C.grass);
+    flat(-8, 124, 34, 96, 0, C.asphalt);
+    flat(96, 124, -10, 34, 0, C.asphalt);
+    flat(-8, 96, -10, 0, 0, C.asphalt);
+    flat(0, 96, 34, 35.4, 0, C.apron);
+    for (let k = 0; k <= 8; k++) line([37 + 6 * k, 35.4, 0], [37 + 6 * k, 52.5, 0], C.paint, 2);
+    line([37, 52.5, 0], [85, 52.5, 0], C.paint, 2);
+    for (let k = 0; k <= 4; k++) line([5 + 6 * k, 35.4, 0], [5 + 6 * k, 43, 0], C.paint, 2);
+    line([5, 43, 0], [29, 43, 0], C.paint, 2);
+    for (let x = -6; x < 104; x += 6) line([x, 58, 0], [x + 3, 58, 0], C.lane, 3);
+    for (let k = 0; k <= 4; k++) line([36 + 7 * k, 66.5, 0], [36 + 7 * k, 86, 0], C.paint, 2);
+    line([36, 86, 0], [64, 86, 0], C.paint, 2);
+    line([-8, 96, 0], [124, 96, 0], '#d4d2cc', 2);
+    [[8, -14], [34, -16], [60, -14], [86, -16]].forEach((t) => tree(t[0], t[1]));
+
+    // hall
+    shadow(0, 96, 0, 34, 4);
+    if (roofOpen) {
+      flat(0.4, 95.6, 0.4, 33.6, 0.02, '#efeee9');
+      faceS(0, 96, 0.4, 0, 11, '#d6d4ce');
+      faceE(0.4, 0.4, 34, 0, 11, '#cac8c2');
+      flat(0, 96, 0, 0.4, 11, '#bdbbb5');
+      flat(0, 0.4, 0, 34, 11, '#bdbbb5');
+      for (let k = 0; k < 4; k++) flat(4 + 6.5 * k, 9.5 + 6.5 * k, 24.5, 32.5, 0.04, '#efe2cc');
+      box(33.6, 34.4, 17.2, 17.6, 0.9, 3.2, DARK);
+      box(6, 92, 17.8, 19.4, 0.9, 1.3, BELT);
+      for (let x = 7; x < 92; x += 1.4) line([x, 17.85, 1.31], [x, 19.35, 1.31], '#7a7873', 0.8);
+      [10, 15, 22, 27, 38, 49, 55, 61, 73, 86].forEach((x) => box(x - 0.45, x + 0.45, 18.1, 19.1, 1.3, 1.85, CARD));
+      box(33.6, 34.4, 19.6, 20, 0.9, 3.2, DARK);
+      box(33.6, 34.4, 17.2, 20, 3.2, 3.6, [C.brand, C.brand, C.brandD]);
+      box(17, 18.4, 19.4, 24.4, 0.85, 1.2, BELT);
+      LD.forEach((d) => { box(d.x - 0.7, d.x + 0.7, 19.4, 33, 0.85, 1.2, BELT); const o = (d.x * 3) % 5; box(d.x - 0.35, d.x + 0.35, 23 + o, 23.8 + o, 1.2, 1.65, CARD); });
+      for (let k = 0; k < 4; k++) { const x0 = 4 + 6.5 * k; box(x0 + 0.6, x0 + 2.4, 26, 28, 0.05, 0.9 + (k % 3) * 0.4, CARD); box(x0 + 2.8, x0 + 4.8, 25.5, 27.2, 0.05, 0.7, CARD); box(x0 + 1, x0 + 3, 29, 31.5, 0.05, 1.1, CARD); }
+      faceS(0, 96, 34, 0, H, C.wallS);
+      faceE(96, 0, 34, 0, H, C.wallE);
+      flat(0, 96, 33.6, 34, H, '#c9c7c1');
+      flat(95.6, 96, 0, 34, H, '#bdbbb5');
+    } else {
+      faceS(0, 96, 34, 0, H, C.wallS);
+      faceE(96, 0, 34, 0, H, C.wallE);
+    }
+    faceS(0, 96, 34, 0, 1.2, C.plinthS);
+    faceE(96, 0, 34, 0, 0.8, C.plinthE);
+    for (let x = 0.8; x < 96; x += 1.5) line([x, 34, 1.25], [x, 34, H - 0.06], C.ribS, 1);
+    for (let y = 0.8; y < 34; y += 1.5) line([96, y, 0.85], [96, y, H - 0.06], C.ribE, 1);
+    if (!roofOpen) {
+      faceS(0, 96, 34, 10, 11, C.brand);
+      faceE(96, 0, 34, 10, 11, C.brandD);
+      flat(0, 96, 0, 34, 11, C.roof);
+      for (let x = 3; x < 96; x += 4) line([x, 0.3, 11.01], [x, 33.7, 11.01], C.roofRib, 1.2);
+      flat(36, 39, 3, 31, 11.02, '#dde2e5');
+      flat(66, 69, 3, 31, 11.02, '#dde2e5');
+      box(18, 22.5, 8, 11.5, 11, 12.3, ['#f5f4f1', '#e3e1db', '#cfcdc7']);
+      box(78, 81, 20, 23, 11, 11.9, ['#f5f4f1', '#e3e1db', '#cfcdc7']);
+      line([0, 34, 11], [96, 34, 11], '#ffc46b', 1.2);
+      line([96, 34, 0], [96, 34, 11], '#c9c7c1', 1);
+    }
+    LD.forEach((d) => {
+      const top = Math.min(5.15, H);
+      faceS(d.x - 1.8, d.x + 1.8, 34.01, 1.15, top, C.brand);
+      faceS(d.x - 1.55, d.x + 1.55, 34.02, 1.2, Math.min(4.9, H), d.open ? C.doorOpen : C.doorShut);
+      if (!d.open) { for (let z = 1.6; z < Math.min(4.8, H); z += 0.45) line([d.x - 1.55, 34.03, z], [d.x + 1.55, 34.03, z], C.slat, 1); }
+      else { faceS(d.x - 1.3, d.x - 0.3, 34.03, 1.2, 2.0, CARD[1]); faceS(d.x - 0.2, d.x + 0.9, 34.03, 1.2, 1.7, CARD[0]); faceS(d.x - 1.0, d.x - 0.1, 34.03, 2.0, 2.55, CARD[2]); }
+      box(d.x - 1.75, d.x - 1.35, 34, 34.4, 0.5, 1.05, DARK);
+      box(d.x + 1.35, d.x + 1.75, 34, 34.4, 0.5, 1.05, DARK);
+      if (d.tele) box(d.x - 0.6, d.x + 0.6, 34, 35.1, 1.45, 1.85, ['#6d6b66', '#5a5853', '#4a4844']);
+      if (!roofOpen) { faceS(d.x - 1.7, d.x + 1.7, 34.02, 5.7, 6.75, C.ink); textS(d.x, 34.03, 5.98, d.n + ' ' + d.dir, 6.5, 700, '#ffffff'); }
+    });
+    SB.forEach((s) => {
+      faceS(s.x - 1.9, s.x + 1.9, 34.01, 0, Math.min(3.95, H), C.brand);
+      faceS(s.x - 1.65, s.x + 1.65, 34.02, 0.05, Math.min(3.7, H), s.van ? C.doorOpen : C.doorShut);
+      if (!s.van) { for (let z = 0.45; z < Math.min(3.6, H); z += 0.45) line([s.x - 1.65, 34.03, z], [s.x + 1.65, 34.03, z], C.slat, 1); }
+      line([s.x + 1.78, 34.04, 0.9], [s.x + 1.78, 34.04, Math.min(3.6, H)], '#5c5b57', 1);
+      if (!roofOpen) { faceS(s.x - 1.1, s.x + 1.1, 34.02, 4.35, 5.2, C.ink); textS(s.x, 34.03, 4.57, s.n, 6, 700, '#ffffff'); }
+    });
+    if (!roofOpen) {
+      faceS(5.2, 28, 34.02, 6.6, 9.2, C.ink);
+      faceS(6.2, 8.4, 34.03, 7.0, 8.8, C.brand);
+      textS(9.2, 34.03, 7.3, 'Depot 5.0', 15, 800, '#ffffff', 'start');
+      textS(20.6, 34.03, 7.45, 'BUDIMÍR', 8, 700, '#ffb54d', 'start');
+    }
+
+    // courier vans
+    SB.filter((s) => s.van).forEach((s) => {
+      const c = s.x;
+      shadow(c - 1.0, c + 1.0, 34.6, 41.3, 0.6);
+      box(c - 0.95, c + 0.95, 35.4, 36.5, 0, 0.75, DARK);
+      box(c - 0.95, c + 0.95, 39.9, 41.0, 0, 0.75, DARK);
+      box(c - 1.0, c + 1.0, 34.6, 39.8, 0.45, 2.8, ['#ffffff', '#f3f2ee', '#dcdad4']);
+      faceE(c + 1.0, 34.6, 39.8, 1.45, 1.75, C.brand);
+      box(c - 1.0, c + 1.0, 39.8, 41.3, 0.45, 2.15, ['#f7f6f3', '#eceae6', '#d7d5cf']);
+      faceS(c - 0.85, c + 0.85, 41.31, 1.35, 2.0, C.glass);
+      faceE(c + 1.0, 40.0, 41.1, 1.4, 2.0, C.glass);
+    });
+
+    // trucks at the docks
+    let selTop = null;
+    LD.filter((d) => d.truck).forEach((d) => {
+      const x = d.x;
+      shadow(x - 1.3, x + 1.3, 34.6, 51.4, 0.9);
+      box(x - 0.9, x + 0.9, 34.9, 48.6, 0.7, 1.2, DARK);
+      box(x - 1.25, x + 1.25, 43.4, 47.4, 0, 1.05, DARK);
+      box(x - 1.3, x + 1.3, 34.6, 48.2, 1.2, 4.25, TRAILER);
+      for (let y = 36.2; y < 48; y += 1.6) line([x + 1.3, y, 1.3], [x + 1.3, y, 4.15], '#d3d1cb', 1);
+      faceE(x + 1.3, 34.6, 48.2, 1.25, 1.5, '#c9c7c1');
+      if (d.sel) { flat(x - 1.3, x + 1.3, 34.6, 48.2, 4.26, 'rgba(243,146,0,0.16)', C.brand, 2.2); selTop = P(x, 50, 4.6); }
+      box(x - 1.2, x + 1.2, 49.0, 50.6, 0, 1.0, DARK);
+      const cab = d.truck === 'lh' ? CAB_LH : CAB_TR;
+      box(x - 1.25, x + 1.25, 48.5, 51.3, 0.55, 3.45, cab);
+      box(x - 1.1, x + 1.1, 48.5, 49.9, 3.45, 3.95, cab);
+      faceS(x - 1.0, x + 1.0, 51.31, 2.15, 3.15, C.glass);
+      faceS(x - 1.15, x + 1.15, 51.32, 0.6, 0.95, '#262523');
+      faceE(x + 1.25, 49.6, 50.9, 2.2, 3.1, C.glass);
+    });
+
+    // arriving truck on the lane (heading west), parked truck in the yard
+    shadow(81, 97.6, 56.6, 59.2, 0.6);
+    box(81.6, 83.0, 56.6, 59.2, 0, 1.0, DARK);
+    box(81, 83.8, 56.65, 59.15, 0.55, 3.45, CAB_TR);
+    box(82.3, 83.8, 56.8, 59.0, 3.45, 3.95, CAB_TR);
+    faceS(81.3, 83.4, 59.16, 2.2, 3.1, C.glass);
+    box(92.2, 95.8, 56.55, 59.25, 0, 1.05, DARK);
+    box(84, 97.6, 56.6, 59.2, 1.2, 4.25, TRAILER);
+    for (let x = 85.5; x < 97.4; x += 1.6) line([x, 59.2, 1.3], [x, 59.2, 4.15], '#e1dfda', 1);
+    line([97.6, 57.9, 1.3], [97.6, 57.9, 4.15], '#a8a6a0', 1);
+    const px = 43.5;
+    shadow(px - 1.3, px + 1.3, 68.4, 85, 0.8);
+    box(px - 1.2, px + 1.2, 69.1, 70.5, 0, 1.0, DARK);
+    box(px - 1.25, px + 1.25, 68.4, 71.2, 0.55, 3.45, CAB_LH);
+    box(px - 1.1, px + 1.1, 69.9, 71.2, 3.45, 3.95, CAB_LH);
+    faceE(px + 1.25, 68.8, 70.1, 2.2, 3.1, C.glass);
+    box(px - 1.25, px + 1.25, 80.6, 84.2, 0, 1.05, DARK);
+    box(px - 1.3, px + 1.3, 71.4, 85, 1.2, 4.25, TRAILER);
+    for (let y = 73; y < 85; y += 1.6) line([px + 1.3, y, 1.3], [px + 1.3, y, 4.15], '#d3d1cb', 1);
+    line([px, 85, 1.3], [px, 85, 4.15], '#a8a6a0', 1);
+
+    // entry gate (east end of the lane)
+    box(106, 106.6, 53.2, 53.8, 0, 1.35, ['#5c5b57', '#4a4945', '#3c3b38']);
+    box(106.1, 106.5, 53.8, 62, 1.05, 1.3, ['#e5484d', '#c93434', '#a82a2a']);
+    box(106.1, 106.5, 55.8, 57.4, 1.05, 1.3, ['#ffffff', '#f2f1ee', '#dddbd5']);
+    box(106.1, 106.5, 59.4, 61, 1.05, 1.3, ['#ffffff', '#f2f1ee', '#dddbd5']);
+    box(107.5, 111, 63, 66.5, 0, 2.9, ['#3b3b38', '#f2f1ee', '#dad8d2']);
+    faceS(108, 110.5, 66.51, 1.3, 2.3, C.glass);
+    [[-12, 40], [-12, 56]].forEach((t) => tree(t[0], t[1]));
+
+    // pins
+    const pins = [];
+    const pin = (x, y, z, tone, ring) => {
+      const s = P(x, y, z); const X = s[0], Y = s[1];
+      const col = { ok: '#23874f', warn: '#c97f00', danger: '#c93434', maint: '#7b5cd6' }[tone];
+      pins.push({ X: f(X), Y: f(Y), hx: f(X), hy: f(Y - 24), col, ring: !!ring, halo: 'rgba(201,127,0,0.16)',
+        d: 'M' + f(X) + ' ' + f(Y) + ' C' + f(X - 3) + ' ' + f(Y - 8) + ' ' + f(X - 8.5) + ' ' + f(Y - 15) + ' ' + f(X - 8.5) + ' ' + f(Y - 24) + ' A8.5 8.5 0 1 1 ' + f(X + 8.5) + ' ' + f(Y - 24) + ' C' + f(X + 8.5) + ' ' + f(Y - 15) + ' ' + f(X + 3) + ' ' + f(Y - 8) + ' ' + f(X) + ' ' + f(Y) + ' Z' });
+      return [X, Y - 24];
+    };
+    let warnHead = null;
+    LD.forEach((d, i) => { const h = roofOpen ? pin(d.x, 31.8, 2.4, i === 4 ? 'warn' : 'ok', i === 4) : pin(d.x, 34, 7.3, i === 4 ? 'warn' : 'ok', i === 4); if (i === 4) warnHead = h; });
+    pin(34, 18.6, roofOpen ? 3.7 : 11.3, 'ok');
+    pin(109, 64.5, 3.1, 'ok');
+
+    // floating chips
+    const chips = [];
+    const chip = (x, y, text, o) => {
+      const w = Math.round(text.length * 6.5 + 30); const left = o.align === 'left' ? x : o.align === 'right' ? x - w : x - w / 2; const top = y - 24;
+      chips.push({ rx: f(left), ry: f(top), sx: f(left + 1), sy: f(top + 2), w, tx: f(left + 22), ty: f(top + 16), dx: f(left + 12), dy: f(top + 12), text, stroke: o.stroke || '#e6e5e1', sw: o.sw || 1, dcol: o.dcol, weight: o.weight || 600 });
+    };
+    if (selTop) chip(selTop[0], selTop[1] - 4, 'KE-102LH · Bratislava · 64 %', { stroke: C.brand, sw: 1.6, dcol: C.brand, weight: 700 });
+    if (warnHead) chip(warnHead[0] - 20, warnHead[1] - 6, 'DOCK-SCN-05 · degradované · 86 %', { align: 'right', dcol: '#c97f00' });
+    const ar = P(89, 57.9, 4.9); chip(ar[0], ar[1], 'KE-131PR · prichádza · 18:49', { dcol: '#2f5be9' });
+    const pk = P(43.5, 80, 4.9); chip(pk[0], pk[1], 'KE-109LH · čaká na bránu', { dcol: '#8a8984' });
+
+    const tone = { ok: ['#e2f5e9', '#17603a'], info: ['#e4ecff', '#2347c2'], neutral: ['#efefec', '#5c5c58'] };
+    const rows = [
+      { code: 'LD-01', dir: 'Banská Bystrica', plate: 'KE-110LH', status: 'Nakladá sa', t: 'ok', pct: 78 },
+      { code: 'LD-02', dir: 'Bratislava', plate: 'KE-102LH', status: 'Nakladá sa', t: 'ok', pct: 64, sel: true },
+      { code: 'LD-03', dir: 'Žilina', plate: 'KE-117LH', status: 'Čaká', t: 'neutral', pct: 0 },
+      { code: 'LD-04', dir: 'Michalovce', plate: '—', status: 'Voľná', t: 'neutral', pct: null },
+      { code: 'LD-05', dir: 'Trebišov', plate: 'KE-221TR', status: 'Vykladá sa', t: 'info', pct: 52, warn: true },
+    ].map((r) => ({ ...r, bg: r.sel ? '#fff6eb' : 'transparent', tbg: tone[r.t][0], tfg: tone[r.t][1], warn: !!r.warn, pct: r.pct || 0, pctLabel: r.pct === null ? '—' : r.pct + ' %' }));
+
+    const steps = [
+      { label: 'Zvoz', time: '16:05', s: 'done' },
+      { label: 'Na páse', time: '18:21', s: 'done' },
+      { label: 'Vytriedený · BA', time: '18:22', s: 'done' },
+      { label: 'Naložený · LD-02', time: '18:37', s: 'current' },
+      { label: 'Odchod', time: 'plán 21:30', s: 'future' },
+    ].map((st) => ({ ...st, done: st.s === 'done', current: st.s === 'current', future: st.s === 'future' }));
+
+    return { roofOpen, shapes, texts, pins, chips, rows, steps };
+  }
+}
+</script>
+</body>
+</html>
