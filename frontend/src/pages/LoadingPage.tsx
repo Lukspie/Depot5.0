@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertOctagon, ScanBarcode } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { isApiError } from "../api/client";
 import { useDoors, useDoorView, useManualScan, type ManualScanResult, type ScanResult, type ScanRow } from "../api/wms";
 import { Badge, Button, Card, EmptyState, PageHeader, Progress, Spinner, StatusDot } from "../components/ui";
@@ -113,10 +114,13 @@ function ManualScan({ door }: { door: string }) {
 export function LoadingPage() {
   const doors = useDoors();
   // /loading?door=LD-02 (link from the digital shadow) wins over the remembered door
-  const [chosen, setChosen] = useState<string | null>(() => new URLSearchParams(window.location.search).get("door") ?? loadDoor());
+  const [params] = useSearchParams();
+  const [chosen, setChosen] = useState<string | null>(() => params.get("door") ?? loadDoor());
   // until the operator picks one: the first door where a truck is being loaded
   const fallback = (doors.data?.find((d) => d.trip && ["at_door", "loading"].includes(d.trip.status)) ?? doors.data?.[0])?.code;
-  const door = chosen ?? fallback ?? null;
+  // a door from the URL or the browser that does not exist (any more) falls back as well
+  const known = !doors.data || doors.data.some((d) => d.code === chosen);
+  const door = (known ? chosen : null) ?? fallback ?? null;
   const view = useDoorView(door);
   const qc = useQueryClient();
   const [live, setLive] = useState<LiveScan[]>([]);

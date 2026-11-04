@@ -44,6 +44,7 @@ export function TopBar({ depot, live, onSearch, onScenario }: Props) {
           >
             {d.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}
             {d.name}
+            {d.kind === "hub" && <span className="text-ink-muted hidden text-[11px] font-normal xl:inline">hub Bratislava</span>}
           </Link>
         ))}
       </div>

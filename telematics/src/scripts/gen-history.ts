@@ -60,7 +60,7 @@ mkdirSync(outDir, { recursive: true });
 // same real-road distances as the live simulator (Budimír depot, ADR-039)
 const DEPOT: LatLon = [48.79256, 21.3071];
 const DESTINATIONS: Record<string, LatLon> = {
-  BA: [48.1645, 17.1795], BB: [48.7363, 19.1462], ZA: [49.2232, 18.7394], MI: [48.7543, 21.9195],
+  BA: [48.19404, 17.22834], BB: [48.7363, 19.1462], ZA: [49.2232, 18.7394], MI: [48.7543, 21.9195],
   TV: [48.6286, 21.7178], HE: [48.9371, 21.9063], SL: [49.2986, 20.6866], SE: [48.6794, 17.3667],
 };
 const routes = buildRouteBook(RoadRouter.load(), DEPOT, DESTINATIONS);

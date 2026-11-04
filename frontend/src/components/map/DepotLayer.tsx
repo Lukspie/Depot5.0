@@ -27,7 +27,7 @@ export function DepotLayer({ layout, live }: Props) {
 
     const label = document.createElement("div");
     label.className = "dt-depot-label";
-    label.textContent = `${layout.depot.name}${layout.depot.kind === "hub" ? " · hub" : " · depo"}`;
+    label.textContent = `${layout.depot.name}${layout.depot.kind === "hub" ? " · hub Bratislava" : " · depo"}`;
     label.addEventListener("click", () => navigate(`/shadow?depot=${code}`));
     const marker = new maplibregl.Marker({ element: label, anchor: "top", offset: [0, 18] })
       .setLngLat([layout.depot.lon, layout.depot.lat])

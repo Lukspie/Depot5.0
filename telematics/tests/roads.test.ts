@@ -4,7 +4,7 @@ import { buildRouteBook, haversineKm, routeFor, travelMinutes, type LatLon } fro
 
 const router = RoadRouter.load();
 const BUDIMIR: LatLon = [48.79256, 21.3071];
-const BA_HUB: LatLon = [48.1645, 17.1795];
+const BA_HUB: LatLon = [48.19404, 17.22834]; // hub in Ivanka pri Dunaji (ADR-051)
 const KOSICE: LatLon = [48.7164, 21.2611];
 
 describe.skipIf(router === null)("offline road routing (OSM graph)", () => {

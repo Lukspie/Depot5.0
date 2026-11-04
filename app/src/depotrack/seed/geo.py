@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from depotrack.models import Depot, Direction, Door, Vehicle
 from depotrack.models.enums import DockEquipment, DoorKind
-from depotrack.seed.reference import LINEHAUL, TRANSIT
+from depotrack.seed.reference import HUB_RAMPS, LINEHAUL, TRANSIT
 
 ADDRESSES_FILE = Path(__file__).with_name("data") / "addresses.json.gz"
 
@@ -19,7 +19,6 @@ BUD = "BUD"
 HUB = "BAH"
 # the linehaul direction whose trucks drive to the hub
 HUB_DIRECTION = "BA"
-HUB_RAMPS = 6
 
 Address = tuple[str, str, str, float, float]  # street, number, postcode, lat, lon
 
@@ -56,15 +55,15 @@ def seed_geo(db: Session) -> None:
         else:
             direction.dest_lat, direction.dest_lon = d.lat, d.lon
     ba = by_code.get(HUB_DIRECTION)
-    for i in range(HUB_RAMPS):
+    for i, (x, y) in enumerate(HUB_RAMPS):
         db.add(
             Door(
                 code=f"BA-R{i + 1:02d}",
                 kind=DoorKind.LOADING_DOCK,
                 depot_id=hub.id,
                 direction_id=ba.id if ba else None,
-                position_x=-25.0 + i * 10.0,
-                position_y=-15.0,
+                position_x=x,
+                position_y=y,
                 dock_equipment=DockEquipment.DOCK_LEVELER,
             )
         )

@@ -13,6 +13,7 @@ from depotrack.models import Direction, Parcel
 from depotrack.models.enums import DirectionType, UserRole
 from depotrack.seed.generator import kosice_rajon
 from depotrack.seed.geo import addresses
+from depotrack.seed.reference import HUB_LAT, HUB_LAYOUT, HUB_LON, HUB_NAME, HUB_RAMPS
 from depotrack.services.operating_day import run_seed
 
 DAY = date(2026, 10, 23)
@@ -56,6 +57,11 @@ def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
     assert eq["LD-06"] == ("electric", "none")
     hub = user.get("/api/layout?depot=BAH").json()
     assert [d["code"] for d in hub["doors"]] == [f"BA-R0{i}" for i in range(1, 7)]
+    # the hub in Ivanka pri Dunaji from OSM (ADR-051): migration and seed give the same values
+    assert hub["depot"]["name"] == HUB_NAME
+    assert (hub["depot"]["lat"], hub["depot"]["lon"]) == (HUB_LAT, HUB_LON)
+    assert hub["layout"] == HUB_LAYOUT
+    assert [(d["x"], d["y"]) for d in hub["doors"]] == HUB_RAMPS
     assert user.get("/api/layout?depot=XXX").status_code == 404
 
 
@@ -99,7 +105,7 @@ def test_plan_tells_telematics_where_trucks_drive(client: TestClient) -> None:
     assert plan["depot"]["code"] == "BUD"
     dest = plan["destinations"]
     assert set(dest) == {"BB", "BA", "ZA", "MI", "TV", "HE", "SL", "SE"}
-    assert dest["BA"] == [pytest.approx(48.1645), pytest.approx(17.1795)]  # the hub, not the city
+    assert dest["BA"] == [pytest.approx(HUB_LAT), pytest.approx(HUB_LON)]  # the hub, not the city
 
 
 @pytest.mark.skipif(not addresses(), reason="address file not built")

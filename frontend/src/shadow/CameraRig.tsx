@@ -82,10 +82,14 @@ function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void;
     });
     // the first view is the facade with the doors (reference), not the whole yard; only once
     if (homeBox && !homed.current) {
-      homed.current = true;
-      // after the initial fit of <Bounds>
-      window.setTimeout(() => view(homeBox), 300);
+      // after the initial fit of <Bounds>; cancelled when the scene goes away (or re-planned)
+      const t = window.setTimeout(() => {
+        homed.current = true;
+        view(homeBox);
+      }, 300);
+      return () => window.clearTimeout(t);
     }
+    return undefined;
   }, [bounds, get, onReady, homeBox]);
   return null;
 }

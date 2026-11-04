@@ -187,6 +187,18 @@ DOORS = (
 )
 
 
+# The Bratislava hub of the carrier in Ivanka pri Dunaji (ADR-051): OSM way 52070792,
+# "Slovak Parcel Service | UPS", 167 x 54 m, long side ~94° from east (counter-clockwise).
+# rotationDeg is clockwise from east (map layer, ADR-040); ramps on the long north-east side.
+# The same values are in the Alembic migration e7f1c3a9b5d2 (existing databases).
+HUB_NAME = "Ivanka pri Dunaji"
+HUB_LAT, HUB_LON = 48.19404, 17.22834
+HUB_LAYOUT: dict[str, object] = {
+    "hall": {"width": 167, "depth": 54, "height": 12, "rotationDeg": 86.1},
+    "yardGate": [96, -44],
+}
+HUB_RAMPS: list[tuple[float, float]] = [(-55.0 + i * 22.0, -27.0) for i in range(6)]
+
 # Temporary door equipment until the team delivers the real Budimír layout (plan-doplnky 5c):
 # 2 main truck doors with a dock leveler, 3 on the platform with a telescopic conveyor, 3 plain
 # electric doors; courier doors are manual (rope). Codes not listed: electric, no equipment.

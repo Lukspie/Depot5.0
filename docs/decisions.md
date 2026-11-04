@@ -429,3 +429,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Senzor nikdy neposiela skeny. Preto nie je v čítanosti (KPI z `loading_scans`), v `device_metrics_minutely` ani v dátach pre prediktívnu údržbu (Fáza 6, `gen-history.ts` má pevný zoznam skenerov). Pokrýva to `telematics/tests/doors.test.ts`.
   - 3D: mostík je doska v 1 m medzere medzi návesom a fasádou, teleskopický pás sa pri otvorenej bráne vysunie do návesu. Ručná brána je zatiaľ len údaj v paneli (kuriérske plochy SB nie sú v stene haly).
 - **Dôsledok:** Model dát zodpovedá skutočnému depu a tieň ostáva tieňom: zobrazuje senzor, neriadi bránu. Stav brány sa dá ukázať aj počas poruchy senzora bez zavádzania.
+
+## ADR-051 Hub v Ivanke pri Dunaji z OpenStreetMap
+- **Kontext:** Diaľkové kamióny BA končia v hube prepravcu v Ivanke pri Dunaji. Doteraz bol hub schematická hala na odhadnutom mieste pri Bratislave (ADR-039).
+- **Rozhodnutie:**
+  - Skript `tools/osm/find_hub.py` (pyosmium, lokálny extrakt) hľadá v okolí Ivanky budovy a priemyselné plochy s „SPS“ alebo „Slovak Parcel Service“ v `name`, `operator` alebo `brand` a vypíše aj najväčšie sklady ako kandidátov.
+  - Našiel sa práve jeden objekt: way `52070792`, `building=warehouse`, „Slovak Parcel Service | UPS“, stred 48,19404 / 17,22834, 167 × 54 m, dlhá strana ~94° od východu.
+  - Hub `BAH` dostal názov **„Ivanka pri Dunaji“** (v UI s kontextom „hub Bratislava“, kód ostáva `BAH`), túto polohu, halu 167 × 54 × 12 m s `rotationDeg` 86,1 (v smere hodín od východu, ADR-040) a 6 rámp na dlhej strane.
+  - Rovnaké hodnoty sú v `seed/reference.py` (`HUB_*`, rampy vytvára seed) aj v Alembic migrácii `e7f1c3a9b5d2` (existujúce DB: sklad, rampy a cieľ smeru BA). Čistá aj existujúca DB tak skončia rovnako, overuje to `test_depots.py`.
+  - Najbližší uzol offline cestnej siete je 245 m od hubu, trasa Budimír → hub existuje (`roads.test.ts`). Generátor histórie pre ML používa novú polohu.
+- **Dôsledok:** Trasa a čas jazdy kamiónov BA sa trochu zmenia (hub je ďalej od mesta), simulácia ostáva deterministická. Ak sa budova v OSM zmení, stačí znova spustiť `find_hub.py` a upraviť konštanty aj migráciu.
