@@ -9,14 +9,16 @@ V kóde sa projekt volá `depotrack`.
 - Vysvetlenia po fázach: [docs/fazy/](docs/fazy/)
 - Doplnky k plánu: [docs/plan-doplnky.md](docs/plan-doplnky.md), vizuálny cieľ: [docs/design/](docs/design/)
 
-## Architektúra (4 kontajnery)
+## Architektúra
 
-| Služba | Technológia | Port |
+| Služba | Technológia | Kde beží |
 | --- | --- | --- |
-| `app` | Python 3.12, FastAPI. Hlavný backend, servíruje aj frontend (React) | 8000 |
-| `telematics` | Node.js 22 LTS, TypeScript, Fastify. Simulátor a telemetria | 8080 |
-| `db-wms` | PostgreSQL 16, obchodné dáta | 127.0.0.1:5433 |
-| `db-telemetry` | PostgreSQL 16, telemetria | 127.0.0.1:5434 |
+| `app` | Python 3.12, FastAPI. Hlavný backend, servíruje aj frontend (React) | kontajner, port 8000 |
+| `telematics` | Node.js 22 LTS, TypeScript, Fastify. Simulátor a telemetria | kontajner, port 8080 |
+| `db-wms` | PostgreSQL 16, obchodné dáta | kontajner, 127.0.0.1:5433 |
+| `db-telemetry` | PostgreSQL 16, telemetria | **Azure Database for PostgreSQL** (predvolené), alebo kontajner v profile `local` (127.0.0.1:5434) |
+
+Jedna databáza je v Azure (požiadavka učiteľa), druhá lokálne. Prečo práve telemetria a ako prepnúť, vysvetľuje ADR-056 a časť [Azure](#azure-db-telemetry-v-azure-database-for-postgresql).
 
 ## Spustenie
 
@@ -24,6 +26,8 @@ Potrebuješ Docker Desktop (alebo Docker Engine s Compose v2).
 
 ```bash
 cp .env.example .env          # pri prvom spustení; hodnoty change-me zmeň
+# Azure: doplň TELEMETRY_DATABASE_URL (časť Azure nižšie)
+# offline bez Azure: v .env nastav COMPOSE_PROFILES=local a TELEMETRY_DATABASE_URL= (prázdne)
 docker compose up --build
 ```
 
@@ -33,7 +37,51 @@ docker compose up --build
 | http://localhost:8000/api/docs | OpenAPI hlavného backendu |
 | http://localhost:8080/docs | Swagger telematiky |
 
-Databázy v DBeaveri: host `localhost`, port `5433` (wms) / `5434` (telemetry), meno a heslo podľa `.env`.
+Databázy v DBeaveri: host `localhost`, port `5433` (wms) / `5434` (telemetry v profile `local`), meno a heslo podľa `.env`. Azure DB: host `<server>.postgres.database.azure.com`, port 5432, SSL `require`.
+
+## Azure: db-telemetry v Azure Database for PostgreSQL
+
+Telemetria (skeny, GPS, merania, stav simulátora) beží v **Azure Database for PostgreSQL – Flexible Server**. Server si vytvoríš sám, telematika sa k nemu pripojí cez `TELEMETRY_DATABASE_URL`. Pri štarte si sama vytvorí tabuľky (migrácie `telematics/sql`, ADR-012).
+
+**Portál (portal.azure.com):**
+1. *Create a resource → Azure Database for PostgreSQL → Flexible server*.
+2. *Basics:*
+   - resource group napr. `rg-depot50`, server name napr. `dp-telemetry-<meno>`, region *Germany West Central* alebo *West Europe*,
+   - *PostgreSQL version* **16**,
+   - *Workload type* Development, *Compute + storage* **Burstable, Standard_B1ms**, 32 GiB,
+   - *Authentication* PostgreSQL authentication only, admin `telematics` a silné heslo.
+3. *Networking:* Public access, **Add current client IP address**. Ak ide o iný počítač, pridaj jeho verejnú IP. SSL (`require_secure_transport`) nechaj zapnuté.
+4. *Review + create*. Po vytvorení otvor *Databases → Add* a vytvor databázu `depotrack_telemetry`.
+
+**az CLI (to isté):**
+
+```bash
+az login
+az group create -n rg-depot50 -l germanywestcentral
+az postgres flexible-server create -g rg-depot50 -n dp-telemetry-<meno> -l germanywestcentral \
+  --tier Burstable --sku-name Standard_B1ms --storage-size 32 --version 16 \
+  --admin-user telematics --admin-password '<silne-heslo>' --public-access <tvoja-verejna-IP>
+az postgres flexible-server db create -g rg-depot50 -s dp-telemetry-<meno> -d depotrack_telemetry
+# ďalšia IP (napr. škola):
+az postgres flexible-server firewall-rule create -g rg-depot50 -n dp-telemetry-<meno> \
+  -r skola --start-ip-address <IP> --end-ip-address <IP>
+# keď sa nepoužíva (šetrí kredit): az postgres flexible-server stop -g rg-depot50 -n dp-telemetry-<meno>
+```
+
+**`.env`:**
+
+```bash
+TELEMETRY_DATABASE_URL=postgres://telematics:<heslo>@dp-telemetry-<meno>.postgres.database.azure.com:5432/depotrack_telemetry?sslmode=require
+COMPOSE_PROFILES=
+```
+
+Špeciálne znaky v hesle zakóduj (`@` → `%40`, `#` → `%23`). `sslmode=require` overí certifikát servera (Azure používa verejné CA). Len ak by overenie zlyhalo, `sslmode=no-verify` spojenie stále šifruje.
+
+Potom `docker compose up -d --build telematics app`. Na **http://localhost:8000/system** má telematika pri databáze *Azure Database for PostgreSQL · TLS · N ms* a stav *OK*.
+
+- Nová databáza znamená nový stav simulátora: simulácia začne od `SIM_START_TIME`. Známy stav dňa pripravíš situáciou (napr. `?situation=evening-peak`).
+- Prepnutie späť na offline: `COMPOSE_PROFILES=local`, `TELEMETRY_DATABASE_URL=` (prázdne), `docker compose up -d`.
+- Testy (vitest, pytest) Azure nepotrebujú, bežia proti pamäťovému úložisku a lokálnej db-wms.
 
 Zastavenie: `docker compose down`. Zmazanie dát: `docker compose down -v`.
 

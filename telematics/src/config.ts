@@ -1,6 +1,9 @@
 /** Configuration read from environment variables (see .env.example). */
 
 export interface DbConfig {
+  /** TELEMETRY_DATABASE_URL (e.g. Azure Database for PostgreSQL, sslmode=require); wins over the
+   * host fields, which then only describe the local db-telemetry container (ADR-056) */
+  url: string | null;
   host: string;
   port: number;
   database: string;
@@ -25,6 +28,8 @@ export interface SimConfig {
   degradedThreshold: number;
   /** SIM_CONTROLS_ENABLED=false (production): clock, reset, seed and device controls answer 403 */
   controlsEnabled: boolean;
+  /** what-if: a transit departure is late above this many minutes */
+  lateThresholdMin: number;
 }
 
 export interface Config {
@@ -64,18 +69,23 @@ export function loadConfig(): Config {
   const secret = required("WS_TICKET_SECRET");
   if (secret.length < 32) throw new Error("WS_TICKET_SECRET must have at least 32 characters");
   const startDate = optional("SIM_START_DATE", "");
+  const dbUrl = optional("TELEMETRY_DATABASE_URL", "").trim() || null;
+  if (dbUrl) new URL(dbUrl); // fail at start on a malformed URL
   const degraded = optional("SIM_DEGRADED_DEVICE", "DOCK-SCN-02");
   return {
     port: Number(optional("PORT", "8080")),
     logLevel: optional("LOG_LEVEL", "info"),
     allowedOrigins: list(optional("ALLOWED_ORIGINS", "http://localhost:8000")),
-    db: {
-      host: optional("TELEMETRY_DB_HOST", "db-telemetry"),
-      port: Number(optional("TELEMETRY_DB_PORT", "5432")),
-      database: required("TELEMETRY_DB_NAME"),
-      user: required("TELEMETRY_DB_USER"),
-      password: required("TELEMETRY_DB_PASSWORD"),
-    },
+    db: dbUrl
+      ? { url: dbUrl, host: new URL(dbUrl).hostname, port: Number(new URL(dbUrl).port || "5432"), database: "", user: "", password: "" }
+      : {
+          url: null,
+          host: optional("TELEMETRY_DB_HOST", "db-telemetry"),
+          port: Number(optional("TELEMETRY_DB_PORT", "5432")),
+          database: required("TELEMETRY_DB_NAME"),
+          user: required("TELEMETRY_DB_USER"),
+          password: required("TELEMETRY_DB_PASSWORD"),
+        },
     serviceToken: required("SERVICE_TOKEN"),
     wsTicketSecret: secret,
     appInternalUrl: optional("APP_INTERNAL_URL", "http://app:8000"),
@@ -92,6 +102,7 @@ export function loadConfig(): Config {
       externalDevices: list(optional("SIM_EXTERNAL_DEVICES", "")),
       degradedThreshold: Number(optional("DEVICE_DEGRADED_THRESHOLD", "0.92")),
       controlsEnabled: optional("SIM_CONTROLS_ENABLED", "true") !== "false",
+      lateThresholdMin: Number(optional("WHATIF_LATE_THRESHOLD_MIN", "15")),
     },
   };
 }

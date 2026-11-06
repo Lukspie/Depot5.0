@@ -11,6 +11,11 @@ const healthSchema = {
   properties: {
     status: { type: "string", enum: ["ok", "error"] },
     db: { type: "string", enum: ["ok", "unreachable"] },
+    // where db-telemetry runs (ADR-056) and how long the ping took
+    dbKind: { type: "string", enum: ["azure", "local", "external"] },
+    dbHost: { type: "string" },
+    dbSsl: { type: "boolean" },
+    dbLatencyMs: { type: "number" },
   },
 } as const;
 
@@ -36,12 +41,14 @@ export const healthRoutes: FastifyPluginAsync<{ db: Database }> = async (app, { 
       },
     },
     async (_req, reply) => {
+      const where = db.location ? { dbKind: db.location.kind, dbHost: db.location.host, dbSsl: db.location.ssl } : {};
+      const started = performance.now();
       try {
         await db.ping();
-        return { status: "ok", db: "ok" };
+        return { status: "ok", db: "ok", ...where, dbLatencyMs: Math.round(performance.now() - started) };
       } catch (err) {
         app.log.error({ err }, "db-telemetry health check failed");
-        return reply.code(503).send({ status: "error", db: "unreachable" });
+        return reply.code(503).send({ status: "error", db: "unreachable", ...where });
       }
     },
   );

@@ -16,6 +16,7 @@
 import { addDays, HOUR, localDate, localHhmm, localParts, MINUTE, operatingDay, operatingDayStart, TIME_ZONE, zonedToUtc } from "../clock/time.js";
 import type { SimClock } from "../clock/clock.js";
 import type { AppApi, CourierEventOut, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
+import { BufferedSink } from "../db/buffered.js";
 import type { DeviceRow, GateRow, GpsRow, HeartbeatRow, MetricRow, ScanRow, SensorRow, TelemetrySink } from "../db/telemetry.js";
 import type { Hub, WsEvent } from "../ws/hub.js";
 import {
@@ -32,7 +33,7 @@ import type { RoadRouter } from "./roads.js";
 import type { LatLon, RouteBook } from "./routes.js";
 import { buildScenario, type DayScenario, type TripSchedule } from "./scenario.js";
 import { dayScans } from "./dayevents.js";
-import { runWhatIf, validateInterventions, type Intervention, type WhatIfResult } from "./whatif.js";
+import { DEFAULT_LATE_THRESHOLD_MIN, runWhatIf, validateInterventions, type Intervention, type WhatIfResult } from "./whatif.js";
 import { situationTarget, type Situation } from "./situations.js";
 import { DEFAULT_READ_RATE, type ReadRateModel, type ScanEvent } from "./scanners.js";
 import { activeWindow, endLocation, executionAt, gateEvents, positionAt, startLocation, statusAt } from "./trips.js";
@@ -55,6 +56,8 @@ export interface EngineConfig {
   degradedThreshold: number;
   /** SIM_CONTROLS_ENABLED (default true): shown to the admin UI in the clock info */
   controlsEnabled?: boolean;
+  /** what-if: a transit departure is late above this many minutes (WHATIF_LATE_THRESHOLD_MIN, default 15) */
+  lateThresholdMin?: number;
   /** a situation loaded before the last restart (sim_state): its switches win over .env */
   situation?: { id: string; forceCascade: boolean; degradedDevice: string | null } | null;
 }
@@ -225,6 +228,8 @@ export class Engine {
   private replayTarget: number | null = null;
   /** scans queued for the app since start (a replay reports its share; the background flush drains the queue) */
   private forwardedScans = 0;
+  /** during a replay the telemetry rows are written in batches (Azure latency, ADR-056) */
+  private buffer: BufferedSink | null = null;
   private timers: NodeJS.Timeout[] = [];
   private readonly realNow: () => number;
   private seedValue: number;
@@ -554,6 +559,7 @@ export class Engine {
       model: this.readRateModel(),
       devices: [...this.devices.values()].filter((d) => this.simulated(d.row.code)).map((d) => d.row),
       now,
+      lateThresholdMin: this.deps.config.lateThresholdMin ?? DEFAULT_LATE_THRESHOLD_MIN,
     };
     const errors = validateInterventions(ctx, list);
     return errors.length > 0 ? { errors } : { result: runWhatIf(ctx, list) };
@@ -661,6 +667,11 @@ export class Engine {
 
   // ------------------------------------------------------------------ replay (phase 5d, ADR-053)
 
+  /** where telemetry rows go: the replay buffer, or db-telemetry directly */
+  private get sink(): TelemetrySink {
+    return this.buffer ?? this.deps.store;
+  }
+
   get replaying(): boolean {
     return this.replayTarget !== null;
   }
@@ -682,6 +693,7 @@ export class Engine {
     clock.pause();
     while (this.ticking) await new Promise((r) => setTimeout(r, 5));
     this.ticking = true;
+    this.buffer = new BufferedSink(this.deps.store);
     const from = this.lastT;
     const forwardedBefore = this.forwardedScans;
     let stepMs = 0;
@@ -703,6 +715,9 @@ export class Engine {
       }
       await this.persist();
     } finally {
+      const buffer = this.buffer;
+      this.buffer = null;
+      await this.safe("replay telemetry", () => buffer.flush());
       this.ticking = false;
       this.replayTarget = null;
       if (!wasPaused) clock.resume();
@@ -713,6 +728,7 @@ export class Engine {
 
   /** Send everything pending to the app now (waits for a running flush); throws if the app is down. */
   private async syncToApp(): Promise<void> {
+    await this.buffer?.flush();
     while (this.flushing) await new Promise((r) => setTimeout(r, 5));
     await this.flushTrips();
     if (this.pendingTrips.size > 0 || this.scanQueue.length > 0) throw new Error("app sync failed during replay");
@@ -1126,7 +1142,7 @@ export class Engine {
         gps.push({ plate, at: now, lat: pos.lat, lon: pos.lon, speedKmh: pos.speedKmh, heading: pos.heading });
       }
     }
-    await this.safe("gps", () => this.deps.store.insertGps(gps));
+    await this.safe("gps", () => this.sink.insertGps(gps));
   }
 
   // ------------------------------------------------------------------ devices
@@ -1179,7 +1195,7 @@ export class Engine {
         itemCounted: ev.itemCounted,
       });
     }
-    await this.safe("scans", () => this.deps.store.insertScans(rows));
+    await this.safe("scans", () => this.sink.insertScans(rows));
   }
 
   private async emitGate(rows: GateRow[]): Promise<void> {
@@ -1188,7 +1204,7 @@ export class Engine {
       if (this.replayTarget !== null) break;
       this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), device: "GATE-CAM-01" });
     }
-    await this.safe("gate", () => this.deps.store.insertGatePassages(rows));
+    await this.safe("gate", () => this.sink.insertGatePassages(rows));
   }
 
   private async emitSensors(from: number, now: number): Promise<void> {
@@ -1211,7 +1227,7 @@ export class Engine {
         rows.push({ at, sensor, value: Number(values[sensor].toFixed(2)) });
       }
     }
-    await this.safe("sensors", () => this.deps.store.insertSensorReadings(rows));
+    await this.safe("sensors", () => this.sink.insertSensorReadings(rows));
   }
 
   /** 0..1 progress through the current sorting wave, or null outside the waves. */
@@ -1232,7 +1248,7 @@ export class Engine {
         this.metrics.delete(key);
       }
     }
-    await this.safe("metrics", () => this.deps.store.upsertMetrics(done));
+    await this.safe("metrics", () => this.sink.upsertMetrics(done));
   }
 
   async heartbeats(): Promise<void> {
@@ -1243,7 +1259,7 @@ export class Engine {
       d.lastHeartbeat = this.realNow();
       rows.push({ deviceId: d.row.id, at, status: d.status === "offline" ? "online" : d.status });
     }
-    await this.safe("heartbeats", () => this.deps.store.insertHeartbeats(rows));
+    await this.safe("heartbeats", () => this.sink.insertHeartbeats(rows));
   }
 
   async monitorDevices(): Promise<void> {

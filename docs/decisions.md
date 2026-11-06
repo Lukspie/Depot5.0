@@ -503,3 +503,36 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Determinizmus** overujú testy (`situations.test.ts`): tá istá situácia na čistom aj na použitom engine (iný seed, 4 h behu) dá rovnaké skeny, dáta pre app aj KPI plánu. `calm-night` má v pláne 0 kaskád, `night-cascade` viac ako 0. Naživo dal `evening-peak` dvakrát za sebou rovnaký dashboard aj plán scenára.
 - **Meranie (6. 11. 2026, lokálna DB):** `evening-peak` 4–6 s, `calm-night` 9 s, `night-cascade` 10 s vrátane resetu. Štartovacia snímka (cache) zatiaľ nie je potrebná.
 - **Dôsledok:** Demo na obhajobe a screenshoty začnú zo známeho stavu jedným klikom alebo odkazom. Situácia prepíše aktuálny deň, preto sa v admine pýta potvrdenie.
+
+## ADR-056 db-telemetry v Azure Database for PostgreSQL, lokálny kontajner ako záloha
+- **Kontext:**
+  - Učiteľ požaduje jednu databázu v Azure, druhú podľa výberu.
+  - Zadanie (PROMPT §1) hovorí o presne 4 kontajneroch: 2 databázy a 2 backendy.
+- **Rozhodnutie:**
+  - **Do Azure ide db-telemetry**, nie db-wms:
+    - telemetria je simulovaná a obnoviteľná (situácia ju pripraví za pár sekúnd),
+    - neobsahuje osobné údaje zákazníkov (tie sú v db-wms),
+    - zapisuje sa dávkami, takže znesie latenciu siete,
+    - db-wms ostáva lokálne kvôli rýchlosti obrazoviek a testom (pytest potrebuje DB, ADR-015),
+    - výpadok Azure nezastaví WMS: nakládka, kontrola smeru a dispečing bežia ďalej.
+  - **Server:** Azure Database for PostgreSQL Flexible Server, Burstable B1ms, PostgreSQL 16, verejný prístup s firewallom na IP, TLS povinné. Server vytvára používateľ (portál alebo az CLI, README).
+  - **Pripojenie:** telematika číta `TELEMETRY_DATABASE_URL`. Keď je nastavená, má prednosť pred `TELEMETRY_DB_HOST/…`.
+    - `sslmode` sa z URL vyberie a prevedie na voľbu `ssl` pre node-postgres: `require` a `verify-*` overujú certifikát systémovými CA (Azure má verejné CA), `no-verify` len šifruje, `disable` bez TLS.
+    - Host `*.postgres.database.azure.com` bez `sslmode` dostane TLS automaticky.
+    - Hodnoty sú len v `.env`, v `.env.example` je placeholder.
+  - **Migrácie:**
+    - ten istý runner (ADR-012) beží pri štarte aj proti Azure,
+    - SQL súbory nepoužívajú rozšírenia ani funkcie, ktoré Azure musí povoliť (`azure.extensions`), takže netreba nič nastavovať.
+  - **Latencia:**
+    - živé hodiny zapisujú po tikoch ako doteraz (tik čaká na predchádzajúci, simulovaný čas sa nezdrží),
+    - replay a situácie (ADR-053) zbierajú riadky v `BufferedSink` a zapíšu ich raz za 10 simulovaných minút. Pri celom dni je to ~110 zápisov namiesto ~6 000,
+    - minútové metriky sa v bufferi sčítajú, lebo jeden `INSERT … ON CONFLICT DO UPDATE` nesmie dvakrát zasiahnuť ten istý riadok.
+  - **Záloha:** kontajner `db-telemetry` ostáva v compose profile `local`.
+    - `COMPOSE_PROFILES=local` a prázdne `TELEMETRY_DATABASE_URL` dajú 4 kontajnery ako doteraz (offline demo, test z čistého klonu),
+    - závislosť telematiky na ňom je `required: false`.
+  - **`/health` telematiky** vracia `dbKind` (`azure` / `local` / `external`), `dbHost`, `dbSsl` a `dbLatencyMs`. Stránka `/system` ich zobrazí.
+- **Dôsledok:**
+  - Predvolený režim má 3 kontajnery a 1 spravovanú databázu v Azure. Je to vedomá odchýlka od „4 kontajnerov“ podľa novej požiadavky učiteľa, počet databáz ostáva 2.
+  - Bez Azure (alebo pri výpadku internetu) sa prepne jednou zmenou v `.env`.
+  - Nová Azure DB začína s prázdnym stavom simulátora, deň sa pripraví situáciou.
+  - Azure účtuje server, kým beží, preto README ukazuje `az postgres flexible-server stop`.

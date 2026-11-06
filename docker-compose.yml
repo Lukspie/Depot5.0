@@ -1,5 +1,8 @@
-# Depot 5.0 (kód: depotrack) – presne 4 kontajnery: 2× databáza, 2× backend (Python, Node.js).
-# Frontend je zostavený v multi-stage builde `app` a servíruje ho `app`.
+# Depot 5.0 (kód: depotrack): 2× backend (Python, Node.js) + db-wms. Frontend je zostavený v multi-stage
+# builde `app` a servíruje ho `app`.
+# db-telemetry beží predvolene v Azure Database for PostgreSQL (TELEMETRY_DATABASE_URL, ADR-056).
+# Lokálny kontajner db-telemetry je záloha v profile `local` (offline demo, testy):
+#   COMPOSE_PROFILES=local a prázdne TELEMETRY_DATABASE_URL v .env  ->  4 kontajnery ako doteraz.
 name: depotrack
 
 services:
@@ -22,6 +25,8 @@ services:
     restart: unless-stopped
 
   db-telemetry:
+    # záloha / offline režim (ADR-056); predvolene je telemetria v Azure
+    profiles: ["local"]
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${TELEMETRY_DB_NAME:?nastav TELEMETRY_DB_NAME v .env}
@@ -45,6 +50,8 @@ services:
     environment:
       PORT: 8080
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Azure (alebo iný PostgreSQL) so sslmode=require; prázdne = lokálny kontajner db-telemetry
+      TELEMETRY_DATABASE_URL: ${TELEMETRY_DATABASE_URL:-}
       TELEMETRY_DB_HOST: db-telemetry
       TELEMETRY_DB_PORT: 5432
       TELEMETRY_DB_NAME: ${TELEMETRY_DB_NAME}
@@ -63,6 +70,7 @@ services:
       SIM_DEGRADATION_HOURS: ${SIM_DEGRADATION_HOURS:-6}
       SIM_EXTERNAL_DEVICES: ${SIM_EXTERNAL_DEVICES:-}
       SIM_CONTROLS_ENABLED: ${SIM_CONTROLS_ENABLED:-true}
+      WHATIF_LATE_THRESHOLD_MIN: ${WHATIF_LATE_THRESHOLD_MIN:-15}
       DEVICE_DEGRADED_THRESHOLD: ${DEVICE_DEGRADED_THRESHOLD:-0.92}
       GATE_RETENTION_DAYS: ${GATE_RETENTION_DAYS:-30}
     ports:
@@ -70,6 +78,8 @@ services:
     depends_on:
       db-telemetry:
         condition: service_healthy
+        # v Azure režime kontajner db-telemetry nebeží (profil local)
+        required: false
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

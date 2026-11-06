@@ -119,7 +119,7 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
         docks=docks,
         staged=state.staged,
         trucks=state.trucks,
-        alerts=[AlertOut.model_validate(a) for a in open_alerts(db, 30)],
+        alerts=[AlertOut.model_validate(a) for a in open_alerts(db, 30, clk.operating_day)],
     )
 
 

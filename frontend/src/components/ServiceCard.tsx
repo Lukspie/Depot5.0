@@ -24,6 +24,8 @@ function toneOf(q: UseQueryResult<unknown>, ok: boolean): Tone {
   return ok ? "ok" : "error";
 }
 
+const DB_KIND = { azure: "Azure Database for PostgreSQL", local: "lokálny kontajner", external: "externý PostgreSQL" } as const;
+
 export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Props) {
   const serviceTone = toneOf(hello, true);
   const dbTone = toneOf(health, health.data?.db === "ok");
@@ -46,11 +48,26 @@ export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Prop
         <dt className="text-ink-muted">Čas servera</dt>
         <dd>{hello.data ? new Date(hello.data.time).toLocaleTimeString("sk-SK") : "—"}</dd>
         <dt className="text-ink-muted">Databáza</dt>
-        <dd>
+        <dd className="flex flex-wrap items-center gap-2">
           <Badge tone={TONE[dbTone].tone} size="sm">
             {TONE[dbTone].label}
           </Badge>
+          {health.data?.dbKind && (
+            <span className="text-ink-muted text-xs">
+              {DB_KIND[health.data.dbKind]}
+              {health.data.dbSsl ? " · TLS" : ""}
+              {health.data.dbLatencyMs !== undefined ? ` · ${String(health.data.dbLatencyMs)} ms` : ""}
+            </span>
+          )}
         </dd>
+        {health.data?.dbHost && (
+          <>
+            <dt className="text-ink-muted">Server DB</dt>
+            <dd className="min-w-0 truncate font-mono text-xs" title={health.data.dbHost}>
+              {health.data.dbHost}
+            </dd>
+          </>
+        )}
       </dl>
 
       {hello.isError && (

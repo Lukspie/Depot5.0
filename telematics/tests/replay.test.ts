@@ -96,6 +96,21 @@ describe("replay (advance)", () => {
     expect(fast.app.calls[0]).toBe("trips");
   });
 
+  it("batches the telemetry writes (Azure latency, ADR-056): one write per sync, not per minute", async () => {
+    const { engine, store } = await makeEngine();
+    const scans = vi.spyOn(store, "insertScans");
+    const metrics = vi.spyOn(store, "upsertMetrics");
+    await engine.advance(START + 6 * HOUR);
+    // 359 simulated minutes, a sync every 10 minutes plus the final flush
+    expect(scans.mock.calls.length).toBeLessThanOrEqual(37);
+    expect(store.scans.length).toBeGreaterThan(500);
+    // the buffer merged the minute counters: no (device, minute) twice in one upsert
+    for (const [rows] of metrics.mock.calls) {
+      const keys = rows.map((r) => `${String(r.deviceId)}|${String(r.minute)}`);
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
   it("does not broadcast single scans, keeps the clock paused or running as before", async () => {
     const { engine, clock, hub } = await makeEngine();
     const publish = vi.spyOn(hub, "publish");

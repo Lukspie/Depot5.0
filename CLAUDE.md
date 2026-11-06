@@ -11,12 +11,14 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 - Vizuálny cieľ `/shadow`: schválená maketa `docs/design/maketa-tien/` (`tien-maketa.png`), nie `reference.png`
 - Stav projektu: `git log --oneline` (každá fáza = jeden commit `feat: phase N - …`)
 
-## Architektúra v skratke (presne 4 kontajnery, nič nepridávaj)
+## Architektúra v skratke (nič nepridávaj)
 | Služba | Stack | Port |
 | --- | --- | --- |
 | `app` | Python 3.12, FastAPI, SQLAlchemy 2, Alembic. Servíruje aj frontend (React, Vite, TS, Tailwind 4) | 8000 |
 | `telematics` | Node.js 22, TypeScript, Fastify, ws. Simulátor, sim. hodiny, ETA, WebSocket | 8080 |
-| `db-wms` / `db-telemetry` | PostgreSQL 16 | 5433 / 5434 |
+| `db-wms` / `db-telemetry` | PostgreSQL 16 | 5433 / Azure (5434 v profile `local`) |
+
+- **db-telemetry je predvolene v Azure Database for PostgreSQL** (`TELEMETRY_DATABASE_URL`, `sslmode=require`, ADR-056). Kontajner `db-telemetry` je záloha v compose profile `local` (`COMPOSE_PROFILES=local` + prázdne URL). Iné kontajnery nepridávaj.
 
 - `app` je zdroj pravdy pre balíky, jazdy a trasy. Telematika vykonáva a hlási (ADR-022, ADR-041).
 - Frontend volá oba backendy: REST + session cookie do `app`, WebSocket s ticketom do telematiky (ADR-027).
@@ -46,7 +48,7 @@ Proces depa je reálny, dáta sú simulované. Tento súbor si prečítaj na za�
 - **Simulátor za behu nevolá internet.** Determinizmus z Fázy 2 musí ostať. Nové náhodné rozhodnutia dostanú vlastný prúd `rngFor(seed, deň, …)`.
 - **Git:** commituj len lokálne, remote zatiaľ nie je nastavený (nepushuj).
 - **Test z čistého klonu bez volumes:**
-  - naklonuj repo do dočasného priečinka a skopíruj `.env.example` → `.env`,
+  - naklonuj repo do dočasného priečinka a skopíruj `.env.example` → `.env`, v ňom nastav `COMPOSE_PROFILES=local` a `TELEMETRY_DATABASE_URL=` (offline, bez Azure),
   - hlavný stack len zastav (`docker compose stop`), aby sa uvoľnili porty,
   - spusti `docker compose -p dtclean -f docker-compose.yml -f tmpfs.yml up -d --build`, kde `tmpfs.yml` (mimo repa) dá pre `db-wms` aj `db-telemetry` `volumes: !reset []` a `tmpfs: [/var/lib/postgresql/data]` a na najvyššej úrovni `volumes: !reset {}`,
   - na konci `docker compose -p dtclean … down` (bez `-v`, volumes nevznikli) a hlavný stack znova `up -d`.

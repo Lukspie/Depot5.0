@@ -3,12 +3,13 @@
 from collections import Counter
 from datetime import date, datetime
 
-from sqlalchemy import exists, func, select
+from sqlalchemy import ColumnElement, exists, func, select
 from sqlalchemy.orm import Session
 
 from depotrack.models import Alert, LoadingScan, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import ParcelStatus, ScanResult, TripKind, TripStatus
 from depotrack.schemas.wms import DashboardKpis, DirectionRow
+from depotrack.services.alerts import current_alerts
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.views import DONE, Lookup
 from depotrack.services.waves import current_wave, next_wave_start
@@ -16,11 +17,15 @@ from depotrack.services.waves import current_wave, next_wave_start
 WAITING = (ParcelStatus.COLLECTED, ParcelStatus.ON_BELT)
 
 
-def open_alerts(db: Session, limit: int = 50) -> list[Alert]:
+def open_alerts(db: Session, limit: int = 50, day: date | None = None) -> list[Alert]:
+    """Open alerts, newest first; with `day` only those of that operating day (and devices)."""
+    where: list[ColumnElement[bool]] = [Alert.acknowledged_at.is_(None)]
+    if day is not None:
+        where.append(current_alerts(day))
     return list(
         db.execute(
             select(Alert)
-            .where(Alert.acknowledged_at.is_(None))
+            .where(*where)
             .order_by(Alert.created_at.desc(), Alert.id.desc())
             .limit(limit)
         ).scalars()
@@ -109,8 +114,11 @@ def day_overview(
         trucks_on_site=len(on_site),
         read_rate=day_read_rate(db, day),
         unidentified=unidentified,
+        # only the current operating day: old alerts must not pile up in the KPI (phase 5d)
         open_alerts=db.execute(
-            select(func.count()).select_from(Alert).where(Alert.acknowledged_at.is_(None))
+            select(func.count())
+            .select_from(Alert)
+            .where(Alert.acknowledged_at.is_(None), current_alerts(day))
         ).scalar_one(),
         wave_kind=wave,
         parcels_wave=wave_parcels(db, day, wave) if wave else None,

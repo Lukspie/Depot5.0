@@ -24,8 +24,9 @@ export type Intervention =
   | { kind: "move_trip"; tripId: number; doorCode: string };
 
 export interface WhatIfKpis {
-  /** sum of departure delays of transit trucks (minutes, only late ones) */
+  /** sum of departure delays of transit trucks (minutes, every delay > 0) */
   transitDelayMin: number;
+  /** transit departures later than the threshold (default 15 min, WHATIF_LATE_THRESHOLD_MIN) */
   transitLate: number;
   /** (transit departure, night feeder) pairs at risk by the cascade rule */
   cascadeWarnings: number;
@@ -53,6 +54,8 @@ export interface TripOutcome {
 export interface WhatIfResult {
   from: string;
   to: string;
+  /** a transit departure counts as late above this many minutes */
+  lateThresholdMin: number;
   plan: WhatIfKpis;
   scenario: WhatIfKpis;
   /** trips whose time changed */
@@ -70,6 +73,8 @@ export interface WhatIfContext {
   model: ReadRateModel;
   devices: readonly { code: string; kind: string; doorCode: string | null }[];
   now: number;
+  /** default 15: the random operating delay of a few minutes is not "late" (faza-5d-diagnoza) */
+  lateThresholdMin?: number;
 }
 
 interface Day {
@@ -159,7 +164,9 @@ function simulate(ctx: WhatIfContext, list: readonly Intervention[]): Day {
 
 const eventTime = (s: TripSchedule | undefined): number | undefined => (s?.trip.kind === "inbound" ? s.arriveDepot : s?.departDepot);
 
-function kpis(day: Day, from: number, to: number, stillOpen: ReadonlySet<number>): WhatIfKpis {
+export const DEFAULT_LATE_THRESHOLD_MIN = 15;
+
+function kpis(day: Day, from: number, to: number, stillOpen: ReadonlySet<number>, lateThresholdMin: number): WhatIfKpis {
   const out: WhatIfKpis = { transitDelayMin: 0, transitLate: 0, cascadeWarnings: 0, unidentified: 0, wrongDirection: 0, wrongUndetected: 0 };
   const inbound = (code: string): PlanTrip | undefined => day.plan.trips.find((t) => t.kind === "inbound" && t.directionCode === code);
   for (const t of day.plan.trips) {
@@ -169,7 +176,7 @@ function kpis(day: Day, from: number, to: number, stillOpen: ReadonlySet<number>
     if (planned === null || dep === undefined || planned >= to) continue;
     const late = Math.max(0, Math.round((dep - planned) / MINUTE));
     out.transitDelayMin += late;
-    if (late > 0) out.transitLate++;
+    if (late > lateThresholdMin) out.transitLate++;
     for (const code of t.dependsOnLinehaul) {
       const feeder = inbound(code);
       const eta = feeder ? day.scenario.schedules.get(feeder.id)?.arriveDepot : undefined;
@@ -190,6 +197,7 @@ function kpis(day: Day, from: number, to: number, stillOpen: ReadonlySet<number>
 export function runWhatIf(ctx: WhatIfContext, list: readonly Intervention[]): WhatIfResult {
   const from = ctx.now;
   const to = operatingDayStart(addDays(ctx.plan.day, 1));
+  const threshold = ctx.lateThresholdMin ?? DEFAULT_LATE_THRESHOLD_MIN;
   const base = simulate(ctx, []);
   const scen = simulate(ctx, list);
   const notes: string[] = [];
@@ -251,8 +259,9 @@ export function runWhatIf(ctx: WhatIfContext, list: readonly Intervention[]): Wh
   return {
     from: new Date(from).toISOString(),
     to: new Date(to).toISOString(),
-    plan: kpis(base, from, to, stillOpen),
-    scenario: kpis(scen, from, to, stillOpen),
+    lateThresholdMin: threshold,
+    plan: kpis(base, from, to, stillOpen, threshold),
+    scenario: kpis(scen, from, to, stillOpen, threshold),
     trips,
     affected: { trips: [...affectedTrips].sort((a, b) => a - b), doors: [...doors].sort(), devices: [...devices].sort() },
     notes,

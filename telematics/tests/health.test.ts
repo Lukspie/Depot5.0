@@ -31,7 +31,7 @@ describe("system endpoints", () => {
   it("GET /health is 200 when the DB answers", async () => {
     const res = await (await make(okDb)).inject({ method: "GET", url: "/health" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: "ok", db: "ok" });
+    expect(res.json()).toMatchObject({ status: "ok", db: "ok" });
   });
 
   it("GET /health is 503 when the DB is down", async () => {

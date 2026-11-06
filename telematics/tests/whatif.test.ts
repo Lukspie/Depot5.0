@@ -212,6 +212,8 @@ describe("POST /sim/what-if", () => {
       const res = await run([iv]);
       expect(res.statusCode, `${kind}: ${res.body}`).toBe(200);
       const r = res.json<WhatIfResult>();
+      // a few minutes of random operating delay are not "late" (faza-5d-diagnoza)
+      expect(r.lateThresholdMin).toBe(15);
       if (kind === "delay") expect(r.affected.trips).toContain(ivs.delay.tripId);
       if (kind === "device_outage" || kind === "read_rate") {
         expect(r.affected.devices).toContain("DOCK-SCN-02");

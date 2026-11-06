@@ -452,3 +452,45 @@ def test_clean_reset_drops_maintenance_and_closes_old_alerts(
     assert db.execute(select(MaintenanceOrder)).first() is None
     kept = db.execute(select(Alert)).scalars().one()
     assert kept.message == "old" and kept.acknowledged_at == start and kept.acknowledged_by is None
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_old_alerts_are_closed_and_the_kpi_counts_only_the_current_day(
+    dispatcher: TestClient, db: Session
+) -> None:
+    """Alarm hygiene (phase 5d): loading an operating day closes trip and parcel alerts older
+    than the previous day; device alerts stay; the KPI counts the current day and devices only."""
+    from depotrack.models.enums import AlertSeverity
+
+    start = local(15, 0)
+
+    def alert(kind: AlertKind, ref: str, at: datetime) -> Alert:
+        a = Alert(
+            kind=kind,
+            severity=AlertSeverity.WARNING,
+            message=ref,
+            ref_type="x",
+            ref_id=ref,
+            created_at=at,
+        )
+        db.add(a)
+        return a
+
+    old = alert(AlertKind.WRONG_DIRECTION, "old", start - timedelta(days=3))
+    device = alert(AlertKind.DEVICE_OFFLINE, "device", start - timedelta(days=3))
+    yesterday = alert(AlertKind.CASCADE_DELAY, "yesterday", start - timedelta(hours=10))
+    today = alert(AlertKind.WRONG_DIRECTION, "today", start + timedelta(hours=1))
+    db.commit()
+
+    assert dispatcher.get(f"/internal/plan?day={DAY}", headers=TOKEN).status_code == 200
+    db.expire_all()
+    assert old.acknowledged_at is not None and old.acknowledged_by is None
+    assert (
+        device.acknowledged_at is None
+        and yesterday.acknowledged_at is None
+        and today.acknowledged_at is None
+    )
+
+    body = dispatcher.get("/api/dashboard").json()
+    assert body["kpis"]["openAlerts"] == 2  # today + the device, not yesterday's
+    assert {a["message"] for a in body["alerts"]} == {"today", "device"}

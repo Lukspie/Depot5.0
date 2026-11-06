@@ -74,7 +74,7 @@ function Results({ r }: { r: WhatIfResult }) {
           <tbody className="divide-line divide-y">
             {ROWS.map((row) => (
               <tr key={row.key}>
-                <td className="py-1.5">{row.label}</td>
+                <td className="py-1.5">{row.key === "transitLate" ? `${row.label} (> ${String(r.lateThresholdMin)} min)` : row.label}</td>
                 <td className="py-1.5 text-right tabular-nums">{r.plan[row.key]}</td>
                 <td className="py-1.5 text-right tabular-nums">{r.scenario[row.key]}</td>
                 <td className="py-1.5 text-right tabular-nums">

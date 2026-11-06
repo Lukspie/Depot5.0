@@ -20,6 +20,7 @@ from depotrack.models import (
 from depotrack.models.enums import DoorKind, ParcelStatus, TripStatus
 from depotrack.seed import seed_parcels, seed_reference, seed_users, seed_waves, step
 from depotrack.seed.geo import seed_geo
+from depotrack.services.alerts import close_stale_alerts
 from depotrack.services.couriers import build_courier_routes, reset_routes
 from depotrack.services.parcels import in_day, night_parcels_for
 from depotrack.services.trip_plan import OPERATING_DAY_START, build_trip_plan
@@ -40,6 +41,8 @@ def ensure_operating_day(db: Session, settings: Settings, day: date) -> None:
         lambda: night_parcels_for(db, day, settings.seed_random_seed),
     )
     step(db, f"couriers:{day.isoformat()}", lambda: build_courier_routes(db, day))
+    if close_stale_alerts(db, day):
+        db.commit()
 
 
 def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:

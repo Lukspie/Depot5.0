@@ -155,6 +155,7 @@ export interface WhatIfKpis {
 export interface WhatIfResult {
   from: string;
   to: string;
+  lateThresholdMin: number;
   plan: WhatIfKpis;
   scenario: WhatIfKpis;
   trips: {

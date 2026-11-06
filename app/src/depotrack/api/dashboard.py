@@ -45,7 +45,7 @@ def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
     look = Lookup(db)
     trips = sorted(trips_of(db, day), key=sort_key)
     kpis, rows = day_overview(db, day, trips, look, clk.sim_time)
-    alerts = open_alerts(db)
+    alerts = open_alerts(db, day=day)
     return DashboardOut(
         clock=clk,
         kpis=kpis,
@@ -111,7 +111,9 @@ def board(
         (t for t in trips if t.kind == TripKind.INBOUND), key=lambda t: _eta(t) or clk.sim_time
     )
     departures = sorted((t for t in trips if t.kind == TripKind.OUTBOUND), key=sort_key)
-    warnings = [a for a in open_alerts(db, 100) if a.kind == AlertKind.CASCADE_DELAY]
+    warnings = [
+        a for a in open_alerts(db, 100, clk.operating_day) if a.kind == AlertKind.CASCADE_DELAY
+    ]
 
     devices = telematics.devices()
     states = Counter(str(d.get("status")) for d in devices)

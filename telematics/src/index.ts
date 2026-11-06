@@ -82,6 +82,7 @@ const engine = new Engine({
     externalDevices: sim.externalDevices,
     degradedThreshold: sim.degradedThreshold,
     controlsEnabled: sim.controlsEnabled,
+    lateThresholdMin: sim.lateThresholdMin,
     situation,
   },
 });
