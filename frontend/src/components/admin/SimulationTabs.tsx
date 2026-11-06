@@ -75,6 +75,8 @@ const DEVICE_STATUS: Record<DeviceInfo["status"], string> = { online: "online", 
 
 export function DevicesTab() {
   const qc = useQueryClient();
+  // SIM_CONTROLS_ENABLED=false: device switches are simulation controls too (ADR-053)
+  const controls = useSimClock().info?.controlsEnabled !== false;
   const devices = useQuery({
     queryKey: ["telematics", "devices"],
     queryFn: () => telematics<{ devices: DeviceInfo[] }>("GET", "/devices"),
@@ -113,7 +115,8 @@ export function DevicesTab() {
       width: "12rem",
       align: "right",
       control: true,
-      render: (d) => (
+      render: (d) =>
+        !controls ? null : (
         <span className="inline-flex gap-2">
           {d.kind === "dock_scanner" && d.status === "degraded" && (
             <Button size="sm" variant="secondary" onClick={() => update.mutate({ code: d.code, repair: true })}>
@@ -161,6 +164,15 @@ const JUMPS = [
 const STEPS = [5, 15, 60];
 type JumpMode = "skip" | "replay";
 
+/** hours from `now` to the next local HH:MM (as the telematics jump computes it) */
+function hoursUntil(now: Date, hhmm: string, timeZone: string): number {
+  const local = now.toLocaleTimeString("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false });
+  const [h, m] = local.split(":").map(Number);
+  const [th, tm] = hhmm.split(":").map(Number);
+  const diff = ((th ?? 0) * 60 + (tm ?? 0) - ((h ?? 0) * 60 + (m ?? 0)) + 1440) % 1440 || 1440;
+  return diff / 60;
+}
+
 function resultText(c: ClockInfo): string {
   const base = `Simulovaný čas ${c.localTime}, deň ${dayLabel(c.operatingDay)}, ×${String(c.speed)}${c.paused ? ", pauza" : ""}`;
   if (!c.replay) return base;
@@ -185,12 +197,19 @@ export function SimulationTab() {
     onError: (err) =>
       setMessage(
         isApiError(err, 409)
-          ? "Práve beží pretáčanie, počkajte, kým skončí."
-          : "Akcia zlyhala – telematika nedostupná alebo chýba oprávnenie.",
+          ? "Práve beží pretáčanie alebo reset, počkajte, kým skončí."
+          : isApiError(err, 503)
+            ? "Pretáčanie sa zastavilo: WMS alebo prevádzkový deň nie je dostupný. Hodiny ostali na mieste zastavenia."
+            : "Akcia zlyhala – telematika nedostupná alebo chýba oprávnenie.",
       ),
   });
   const busy = act.isPending;
-  const jump = (to: string) => act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to, mode } });
+  const jump = (to: string) => {
+    // the next HH:MM can be almost a day ahead (e.g. the same time again): ask before a long replay
+    const hours = now ? hoursUntil(now, to, info?.timeZone ?? "Europe/Bratislava") : 0;
+    if (mode === "replay" && hours > 6 && !window.confirm(`Pretočiť s dátami ${hours.toFixed(1)} h simulácie? Môže to trvať desiatky sekúnd.`)) return;
+    act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to, mode } });
+  };
   const situations = useQuery({
     queryKey: ["sim-situations"],
     queryFn: () => telematics<SituationInfo[]>("GET", "/sim/situations"),

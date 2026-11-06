@@ -58,6 +58,13 @@ function optional(name: string, fallback: string): string {
   return value === undefined || value === "" ? fallback : value;
 }
 
+/** "true" / "false" (any case); anything else stops the start, so a typo cannot leave a switch on */
+function bool(name: string, fallback: boolean): boolean {
+  const raw = optional(name, String(fallback)).trim().toLowerCase();
+  if (raw !== "true" && raw !== "false") throw new Error(`${name} must be true or false, got "${raw}"`);
+  return raw === "true";
+}
+
 function list(value: string): string[] {
   return value
     .split(",")
@@ -101,7 +108,7 @@ export function loadConfig(): Config {
       degradationHours: Number(optional("SIM_DEGRADATION_HOURS", "6")),
       externalDevices: list(optional("SIM_EXTERNAL_DEVICES", "")),
       degradedThreshold: Number(optional("DEVICE_DEGRADED_THRESHOLD", "0.92")),
-      controlsEnabled: optional("SIM_CONTROLS_ENABLED", "true") !== "false",
+      controlsEnabled: bool("SIM_CONTROLS_ENABLED", true),
       lateThresholdMin: Number(optional("WHATIF_LATE_THRESHOLD_MIN", "15")),
     },
   };

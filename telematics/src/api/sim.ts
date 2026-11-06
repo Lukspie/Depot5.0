@@ -3,7 +3,7 @@
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import type { SimClock } from "../clock/clock.js";
 import { MAX_SPEED, MIN_SPEED } from "../clock/clock.js";
-import { ReplayBusyError, type Engine } from "../simulator/engine.js";
+import { ReplayBusyError, ReplayStoppedError, type Engine } from "../simulator/engine.js";
 import { MINUTE } from "../clock/time.js";
 import { loadSituations, type Situation } from "../simulator/situations.js";
 import type { Intervention } from "../simulator/whatif.js";
@@ -65,7 +65,15 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
     if (!controlsEnabled) await reply.code(403).send({ error: "simulation controls are disabled" });
   };
   const admin = [controlsGate, roleGuard(verifier, serviceToken, [])];
-  const replayBusy = (reply: FastifyReply) => reply.code(409).send({ error: "a replay is already running" });
+  const replayBusy = (reply: FastifyReply) => reply.code(409).send({ error: "the simulation is busy (replay or reset running)" });
+  // one place for the engine's mutex and a stopped replay, for every route of this plugin
+  app.setErrorHandler(async (err, _req, reply) => {
+    if (err instanceof ReplayBusyError) return replayBusy(reply);
+    if (err instanceof ReplayStoppedError) {
+      return reply.code(503).send({ error: err.message, stoppedAt: new Date(err.stoppedAt).toISOString(), ...engine.clockInfo() });
+    }
+    throw err;
+  });
   const staff = roleGuard(verifier, serviceToken, ["dispatcher", "security", "operator"]);
   const dispatcher = roleGuard(verifier, serviceToken, ["dispatcher"]);
   const secured = { security: [{ bearerAuth: [] }] };
@@ -79,7 +87,8 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
   app.post(
     "/sim/clock/pause",
     { preHandler: admin, schema: { tags: ["simulation"], summary: "Pozastaviť hodiny (admin)", ...secured, response: { 200: clockSchema } } },
-    () => {
+    (_req, reply) => {
+      if (engine.replaying) return replayBusy(reply);
       clock.pause();
       return engine.clockInfo();
     },
@@ -88,7 +97,8 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
   app.post(
     "/sim/clock/resume",
     { preHandler: admin, schema: { tags: ["simulation"], summary: "Spustiť hodiny (admin)", ...secured, response: { 200: clockSchema } } },
-    () => {
+    (_req, reply) => {
+      if (engine.replaying) return replayBusy(reply);
       clock.resume();
       return engine.clockInfo();
     },
@@ -110,7 +120,8 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
         response: { 200: clockSchema },
       },
     },
-    (req) => {
+    (req, reply) => {
+      if (engine.replaying) return replayBusy(reply);
       clock.setSpeed(req.body.speed);
       return engine.clockInfo();
     },

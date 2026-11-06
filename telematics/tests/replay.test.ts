@@ -3,7 +3,7 @@ import { buildApp, registerSimulation } from "../src/app.js";
 import { SimClock } from "../src/clock/clock.js";
 import { HOUR, MINUTE, operatingDayStart } from "../src/clock/time.js";
 import type { ScanRow } from "../src/db/telemetry.js";
-import { Engine, ReplayBusyError, type AdvanceResult } from "../src/simulator/engine.js";
+import { Engine, ReplayBusyError, ReplayStoppedError, type AdvanceResult } from "../src/simulator/engine.js";
 import { loadRoutes } from "../src/simulator/routes.js";
 import { Hub } from "../src/ws/hub.js";
 import { TicketVerifier } from "../src/ws/ticket.js";
@@ -123,6 +123,55 @@ describe("replay (advance)", () => {
     expect(clock.state().paused).toBe(false);
   });
 
+  it("the app never sees a trip departed before the scans that belong to it (review 5d-1)", async () => {
+    const { engine, app } = await makeEngine();
+    const doorOf = new Map<number, string | null>();
+    for (const day of [DAY, "2026-10-24"]) for (const t of app.planFor(day).trips) doorOf.set(t.id, t.doorCode);
+    const departedAt = new Map<number, number>(); // trip -> departure, once the app knows it
+    const violations: string[] = [];
+    const postTrips = app.postTripEvents.bind(app);
+    vi.spyOn(app, "postTripEvents").mockImplementation((simTime, trips) => {
+      for (const t of trips) if ((t.status === "departed" || t.status === "completed") && t.actualDeparture) departedAt.set(t.tripId, Date.parse(t.actualDeparture));
+      return postTrips(simTime, trips);
+    });
+    const postScans = app.postScans.bind(app);
+    vi.spyOn(app, "postScans").mockImplementation((scans) => {
+      for (const s of scans) {
+        if (!s.doorCode) continue;
+        for (const [trip, dep] of departedAt) {
+          if (doorOf.get(trip) === s.doorCode && dep > Date.parse(s.at)) violations.push(`${s.doorCode} ${s.at} after trip ${String(trip)} departed`);
+        }
+      }
+      return postScans(scans);
+    });
+    await engine.advance(START + 18 * HOUR); // evening and night departures, batches of 10 min
+    expect(departedAt.size).toBeGreaterThan(5);
+    expect(violations).toEqual([]);
+  });
+
+  it("waits for a slow load of the next operating day instead of losing its data", async () => {
+    const fast = await makeEngine();
+    await fast.engine.advance(START + 28 * HOUR); // over 15:00 into the next evening
+    const slow = await makeEngine();
+    const getPlan = slow.app.getPlan.bind(slow.app);
+    vi.spyOn(slow.app, "getPlan").mockImplementation(async (day) => {
+      if (day !== DAY) await new Promise((r) => setTimeout(r, 300));
+      return getPlan(day);
+    });
+    await slow.engine.advance(START + 28 * HOUR);
+    const nextDay = (rows: ScanRow[]) => rows.filter((r) => r.at >= START + 24 * HOUR).length;
+    expect(nextDay(fast.store.scans)).toBeGreaterThan(0);
+    expect(nextDay(slow.store.scans)).toBe(nextDay(fast.store.scans));
+    expect(sortedScans(slow.store.scans)).toEqual(sortedScans(fast.store.scans));
+  });
+
+  it("stops with an error (not silently) when the app is down during a replay", async () => {
+    const { engine, app } = await makeEngine();
+    app.down = true;
+    await expect(engine.advance(START + 2 * HOUR)).rejects.toBeInstanceOf(ReplayStoppedError);
+    expect(engine.replaying).toBe(false);
+  });
+
   it("refuses a second replay while one is running", async () => {
     const { engine } = await makeEngine();
     const first = engine.advance(START + 2 * HOUR);
@@ -176,15 +225,22 @@ describe("clock control API", () => {
       return original(simTime, trips);
     });
     const running = engine.advance(START + 2 * HOUR);
-    for (const [url, payload] of [
-      ["/sim/clock/step", { minutes: 5 }],
-      ["/sim/clock/jump", { to: "20:00" }],
-      ["/sim/reset", undefined],
-      ["/sim/restart-day", undefined],
+    for (const [method, url, payload] of [
+      ["POST", "/sim/clock/step", { minutes: 5 }],
+      ["POST", "/sim/clock/jump", { to: "20:00" }],
+      ["POST", "/sim/clock/jump", { to: "20:00", mode: "replay" }],
+      ["POST", "/sim/reset", undefined],
+      ["POST", "/sim/restart-day", undefined],
+      ["PUT", "/sim/seed", { seed: 7 }],
+      ["POST", "/sim/clock/pause", undefined],
+      ["PUT", "/sim/clock/speed", { speed: 120 }],
+      ["POST", "/sim/situations/evening-peak", undefined],
     ] as const) {
-      const res = await server.inject({ method: "POST", url, headers, ...(payload ? { payload } : {}) });
+      const res = await server.inject({ method, url, headers, ...(payload ? { payload } : {}) });
       expect(res.statusCode, url).toBe(409);
     }
+    // and the other way round: no replay while a reset runs
+    await expect(engine.restartDay()).rejects.toBeInstanceOf(ReplayBusyError);
     release();
     await running;
     await server.close();

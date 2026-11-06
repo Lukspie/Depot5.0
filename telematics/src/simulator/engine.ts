@@ -124,11 +124,24 @@ export interface AdvanceResult {
   syncMs: number;
 }
 
+/** A replay, day restart, seed change or reset is running: the API answers 409. */
 export class ReplayBusyError extends Error {
   constructor() {
-    super("a replay is already running");
+    super("the simulation is busy (replay or reset running)");
   }
 }
+
+/** A replay could not reach the app or load an operating day: it stops where it is (503). */
+export class ReplayStoppedError extends Error {
+  constructor(
+    message: string,
+    readonly stoppedAt: number,
+  ) {
+    super(message);
+  }
+}
+
+const FINISHED_TRIP = new Set(["departed", "completed", "cancelled"]);
 
 export interface ClockInfo {
   simTime: string;
@@ -208,7 +221,8 @@ const iso = (ms: number): string => new Date(ms).toISOString();
 
 export class Engine {
   private readonly days = new Map<string, DayState>();
-  private readonly loadingDays = new Set<string>();
+  /** operating days being loaded; a step waits for the load of its own day */
+  private readonly dayLoads = new Map<string, Promise<void>>();
   /** real time before which a failed day load is not retried */
   private readonly dayRetryAt = new Map<string, number>();
   private readonly reported = new Map<number, string>();
@@ -226,6 +240,8 @@ export class Engine {
   private flushing = false;
   /** target of the running replay (`advance`), null when the clock runs normally */
   private replayTarget: number | null = null;
+  /** mutual exclusion of replay, restart, seed, reset and situations */
+  private busy = false;
   /** scans queued for the app since start (a replay reports its share; the background flush drains the queue) */
   private forwardedScans = 0;
   /** during a replay the telemetry rows are written in batches (Azure latency, ADR-056) */
@@ -293,7 +309,7 @@ export class Engine {
       );
     };
     every(TICK_MS, () => this.tick());
-    every(1000, () => this.flushTrips());
+    every(1000, () => (this.replayTarget === null ? this.flushTrips() : undefined));
     every(1000, () => {
       this.deps.hub.publish("clock", "tick", this.clockInfo(), "clock");
     });
@@ -331,8 +347,10 @@ export class Engine {
 
   /** New seed = the current operating day starts again from 15:00 with the new scenario. */
   async setSeed(seed: number): Promise<void> {
-    this.seedValue = seed;
-    await this.restartDay();
+    await this.exclusive(async () => {
+      this.seedValue = seed;
+      await this.restartDayNow();
+    });
   }
 
   /**
@@ -341,6 +359,10 @@ export class Engine {
    * older open alerts. Maintenance windows, moved trips and the door states go with restartDay.
    */
   async cleanReset(): Promise<void> {
+    await this.exclusive(() => this.cleanResetNow());
+  }
+
+  private async cleanResetNow(): Promise<void> {
     this.seedValue = this.deps.config.envSeed;
     this.forceCascadeValue = this.deps.config.forceCascade;
     this.degradedDeviceValue = this.deps.config.degradedDevice;
@@ -353,23 +375,41 @@ export class Engine {
    * from 15:00 to its time. The switches stay until the next clean reset (also over a restart).
    */
   async loadSituation(s: Situation): Promise<AdvanceResult> {
-    if (this.replayTarget !== null) throw new ReplayBusyError();
+    return this.exclusive(() => this.loadSituationNow(s));
+  }
+
+  private async loadSituationNow(s: Situation): Promise<AdvanceResult> {
     this.seedValue = s.seed;
     this.forceCascadeValue = s.forceCascade ?? this.deps.config.forceCascade;
     this.degradedDeviceValue = s.degradedDevice === undefined ? this.deps.config.degradedDevice : s.degradedDevice;
     this.situationId = s.id;
     await this.cleanRestart();
-    return this.advance(situationTarget(this.deps.clock.now(), s));
+    return this.advanceNow(situationTarget(this.deps.clock.now(), s));
   }
 
   private async cleanRestart(): Promise<void> {
     for (const d of this.devices.values()) {
       if (!d.external && !d.row.enabled) await this.updateDevice(d.row.code, { enabled: true });
     }
-    await this.restartDay({ clean: true });
+    await this.restartDayNow({ clean: true });
   }
 
   async restartDay(opts: { clean?: boolean } = {}): Promise<void> {
+    await this.exclusive(() => this.restartDayNow(opts));
+  }
+
+  /** Restart without the mutex (callers hold it); no tick or flush runs during the reset. */
+  private async restartDayNow(opts: { clean?: boolean } = {}): Promise<void> {
+    while (this.ticking || this.flushing) await new Promise((r) => setTimeout(r, 5));
+    this.ticking = true;
+    try {
+      await this.restartDayInner(opts);
+    } finally {
+      this.ticking = false;
+    }
+  }
+
+  private async restartDayInner(opts: { clean?: boolean }): Promise<void> {
     const day = operatingDay(this.deps.clock.now());
     const start = operatingDayStart(day);
     // the app keeps parcel/trip states: they must be reset too, or the replay would differ
@@ -672,8 +712,19 @@ export class Engine {
     return this.buffer ?? this.deps.store;
   }
 
+  /** a replay, restart, seed change, clean reset or situation is running (API: 409) */
   get replaying(): boolean {
-    return this.replayTarget !== null;
+    return this.busy;
+  }
+
+  private async exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.busy) throw new ReplayBusyError();
+    this.busy = true;
+    try {
+      return await fn();
+    } finally {
+      this.busy = false;
+    }
   }
 
   /**
@@ -685,7 +736,10 @@ export class Engine {
    * as the live clock (the day is precomputed, the step size does not change it, ADR-023).
    */
   async advance(target: number): Promise<AdvanceResult> {
-    if (this.replayTarget !== null) throw new ReplayBusyError();
+    return this.exclusive(() => this.advanceNow(target));
+  }
+
+  private async advanceNow(target: number): Promise<AdvanceResult> {
     const started = this.realNow();
     this.replayTarget = target;
     const clock = this.deps.clock;
@@ -705,6 +759,8 @@ export class Engine {
         clock.set(t);
         const a = this.realNow();
         await this.step(t);
+        // the day of this minute must be loaded (a slow app would otherwise lose its data silently)
+        if (!this.days.has(operatingDay(t))) throw new ReplayStoppedError("operating day could not be loaded, replay stopped", t);
         stepMs += this.realNow() - a;
         if (t >= nextSync || t === target) {
           const b = this.realNow();
@@ -731,7 +787,9 @@ export class Engine {
     await this.buffer?.flush();
     while (this.flushing) await new Promise((r) => setTimeout(r, 5));
     await this.flushTrips();
-    if (this.pendingTrips.size > 0 || this.scanQueue.length > 0) throw new Error("app sync failed during replay");
+    if (this.pendingTrips.size > 0 || this.scanQueue.length > 0) {
+      throw new ReplayStoppedError("app unavailable, replay stopped", this.deps.clock.now());
+    }
   }
 
   // ------------------------------------------------------------------ tick
@@ -793,9 +851,16 @@ export class Engine {
   }
 
   async ensureDay(day: string): Promise<void> {
-    if (this.days.has(day) || this.loadingDays.has(day)) return;
+    if (this.days.has(day)) return;
+    const running = this.dayLoads.get(day);
+    if (running) return running;
     if ((this.dayRetryAt.get(day) ?? 0) > this.realNow()) return;
-    this.loadingDays.add(day);
+    const load = this.loadDay(day).finally(() => this.dayLoads.delete(day));
+    this.dayLoads.set(day, load);
+    return load;
+  }
+
+  private async loadDay(day: string): Promise<void> {
     try {
       const plan = await this.deps.app.getPlan(day);
       const book = typeof this.deps.routes === "function" ? this.deps.routes(plan) : this.deps.routes;
@@ -853,8 +918,6 @@ export class Engine {
     } catch (err) {
       this.dayRetryAt.set(day, this.realNow() + 5000);
       this.deps.log.warn({ day, err: String(err) }, "cannot load operating day yet (app unavailable?), retry in 5 s");
-    } finally {
-      this.loadingDays.delete(day);
     }
   }
 
@@ -943,19 +1006,22 @@ export class Engine {
     if (this.flushing) return;
     this.flushing = true;
     try {
-      if (this.pendingTrips.size > 0) {
-        const batch = [...this.pendingTrips.values()];
-        await this.deps.app.postTripEvents(iso(this.deps.clock.now()), batch);
-        for (const exec of batch) {
-          this.reported.set(exec.tripId, JSON.stringify(exec));
-          if (this.pendingTrips.get(exec.tripId) === exec) this.pendingTrips.delete(exec.tripId);
-        }
+      // The app attributes a scan to the trip loading at its door, so it must see a trip
+      // "loading" before its scans and "departed" only after them. Order: trips still open, then
+      // for each finished trip (by departure) the scans up to its departure and the trip, then
+      // the remaining scans (a batched replay has many of each, phase 5d review).
+      const batch = [...this.pendingTrips.values()];
+      const open = batch.filter((e) => !FINISHED_TRIP.has(e.status));
+      const done = batch
+        .filter((e) => FINISHED_TRIP.has(e.status))
+        .sort((a, b) => (a.actualDeparture ?? "").localeCompare(b.actualDeparture ?? ""));
+      await this.postTrips(open);
+      for (const exec of done) {
+        const dep = exec.actualDeparture === null ? Infinity : Date.parse(exec.actualDeparture);
+        await this.postScansWhere((s) => Date.parse(s.at) <= dep);
+        await this.postTrips([exec]);
       }
-      while (this.scanQueue.length > 0) {
-        const chunk = this.scanQueue.slice(0, 1000);
-        await this.deps.app.postScans(chunk);
-        this.scanQueue = this.scanQueue.slice(chunk.length);
-      }
+      await this.postScansWhere(() => true);
       await this.flushCouriers();
     } catch (err) {
       this.deps.log.warn(
@@ -968,6 +1034,26 @@ export class Engine {
       }
     } finally {
       this.flushing = false;
+    }
+  }
+
+  private async postTrips(batch: TripExecution[]): Promise<void> {
+    if (batch.length === 0) return;
+    await this.deps.app.postTripEvents(iso(this.deps.clock.now()), batch);
+    for (const exec of batch) {
+      this.reported.set(exec.tripId, JSON.stringify(exec));
+      if (this.pendingTrips.get(exec.tripId) === exec) this.pendingTrips.delete(exec.tripId);
+    }
+  }
+
+  /** Send the queued scans that match, in queue order and chunks of 1000; keep the others. */
+  private async postScansWhere(match: (s: ScanForward) => boolean): Promise<void> {
+    const send = this.scanQueue.filter(match);
+    for (let i = 0; i < send.length; i += 1000) {
+      const chunk = send.slice(i, i + 1000);
+      await this.deps.app.postScans(chunk);
+      const sent = new Set(chunk);
+      this.scanQueue = this.scanQueue.filter((x) => !sent.has(x));
     }
   }
 
