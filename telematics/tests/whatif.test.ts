@@ -185,11 +185,54 @@ describe("maintenance and plan reload (ADR-048)", () => {
 
 describe("POST /sim/what-if", () => {
   async function api(): Promise<FastifyInstance> {
-    const { engine, clock } = await makeEngine();
-    const app = await buildApp({ logLevel: "silent", allowedOrigins: ["http://localhost:8000"], db: { ping: () => Promise.resolve(), close: () => Promise.resolve() } });
-    await registerSimulation(app, { clock, engine, hub: new Hub(), verifier: new TicketVerifier(SECRET), serviceToken: SERVICE });
-    return app;
+    return (await apiWithEngine()).server;
   }
+  async function apiWithEngine(): Promise<Awaited<ReturnType<typeof makeEngine>> & { server: FastifyInstance }> {
+    const made = await makeEngine();
+    const server = await buildApp({ logLevel: "silent", allowedOrigins: ["http://localhost:8000"], db: { ping: () => Promise.resolve(), close: () => Promise.resolve() } });
+    await registerSimulation(server, { clock: made.clock, engine: made.engine, hub: new Hub(), verifier: new TicketVerifier(SECRET), serviceToken: SERVICE });
+    return { ...made, server };
+  }
+
+  // every variant of the body schema goes through HTTP at least once (the validation broke
+  // read_rate and move_trip while the engine tests passed, faza-5d-diagnoza.md)
+  it("accepts every intervention kind over HTTP, alone and together", async () => {
+    const { server: app, trip } = await apiWithEngine();
+    const headers = { authorization: `Bearer ${await ticket("dispatcher")}` };
+    const ba = trip("BA", "outbound");
+    const ivs = {
+      delay: { kind: "delay", tripId: trip("BA", "inbound").id, minutes: 240 },
+      device_outage: { kind: "device_outage", device: "DOCK-SCN-02" },
+      read_rate: { kind: "read_rate", device: "DOCK-SCN-02", rate: 0.3 },
+      extra_scanner: { kind: "extra_scanner", doorCode: "LD-02" },
+      move_trip: { kind: "move_trip", tripId: ba.id, doorCode: "LD-01" },
+    };
+    const run = (list: object[]) => app.inject({ method: "POST", url: "/sim/what-if", headers, payload: { interventions: list } });
+    for (const [kind, iv] of Object.entries(ivs)) {
+      const res = await run([iv]);
+      expect(res.statusCode, `${kind}: ${res.body}`).toBe(200);
+      const r = res.json<WhatIfResult>();
+      if (kind === "delay") expect(r.affected.trips).toContain(ivs.delay.tripId);
+      if (kind === "device_outage" || kind === "read_rate") {
+        expect(r.affected.devices).toContain("DOCK-SCN-02");
+        expect(r.scenario.unidentified).toBeGreaterThan(r.plan.unidentified);
+      }
+      if (kind === "extra_scanner") expect(r.affected.doors).toContain("LD-02");
+      if (kind === "move_trip") expect(r.affected.doors).toEqual(expect.arrayContaining(["LD-01", ba.doorCode ?? ""]));
+    }
+    expect((await run(Object.values(ivs))).statusCode).toBe(200);
+    // a missing required field of each kind is still rejected
+    for (const payload of [
+      { kind: "delay", tripId: 1 },
+      { kind: "device_outage" },
+      { kind: "read_rate", device: "DOCK-SCN-02" },
+      { kind: "extra_scanner" },
+      { kind: "move_trip", tripId: ba.id },
+    ]) {
+      expect((await run([payload])).statusCode, JSON.stringify(payload)).toBe(400);
+    }
+    await app.close();
+  });
 
   it("dispatcher runs a scenario, security cannot, the body is validated", async () => {
     const app = await api();

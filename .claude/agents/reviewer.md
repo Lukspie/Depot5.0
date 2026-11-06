@@ -28,10 +28,11 @@ Tvoja úloha je nájsť, čo by na obhajobe alebo v produkcii neobstálo. Súbor
 
 **Kvalita:**
 - Nová logika má testy, najmä kritické cesty (auth, RBAC, tokeny, kontrola smeru, kaskáda).
+- Každý variant API schémy (napr. každý `kind` zásahu, každá vetva tela) má aspoň jeden test cez HTTP (`app.inject`, `TestClient`), nielen test výpočtu. Validácia môže variant zahodiť, aj keď engine funguje (faza-5d-diagnoza).
 - Typy (mypy strict, strict TS), žiadne `any`/`# type: ignore` bez dôvodu.
 - UI texty po slovensky, kód a API chyby po anglicky, nové API v camelCase.
 - Prázdne stavy, načítavanie a výpadok WebSocketu sú v UI ošetrené. Použité sú komponenty z `components/ui`.
-- Pri vizuálnych zmenách otvor nové screenshoty a `docs/design/reference.png` a porovnaj **layout** (rozmiestnenie panelov, scéna cez celú plochu, uhol kamery), nielen jednotlivé komponenty.
+- Pri vizuálnych zmenách otvor nové screenshoty a referenciu (pre `/shadow` schválenú maketu `docs/design/maketa-tien/tien-maketa.png`, inak `docs/design/reference.png`) a porovnaj **layout** (rozmiestnenie panelov, scéna cez celú plochu, uhol kamery), nielen jednotlivé komponenty.
 - Nič mimo rozsahu z PROMPT §11 (regálové skladovanie, fakturácia, reálne SMS…).
 - 3D pohľad sa v UI a dokumentácii volá „digitálny tieň“, nie „digitálne dvojča“.
 

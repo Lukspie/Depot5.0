@@ -192,6 +192,7 @@ Problém: scenár „čo ak“ v praxi veľmi nefunguje. Testovať konkrétne si
    - „čistý reset dňa“: zmaže alarmy, okná údržby, presuny jázd a zásahy, vráti seed a začne deň znova.
 2. **Situácie**, teda pomenované deterministické predvoľby (seed + čas + vložené udalosti), načítané jedným klikom do pár sekúnd:
    - Večerná vlna – špička (18:30), Nočné kamióny s kaskádou (02:10), Ranné odchody (05:45), Kuriéri ráno (07:20), Degradácia skenera LD-05, Mimo vlny (10:00).
+   - **Pokojná noc (`calm-night`)**: v pláne nie je žiadna kaskáda (bez zaručenej poruchy), aby scenár ukázal, ako kaskáda vznikne (napr. meškanie nočného BA).
    - Dostupné v admine, cez API a cez URL (`?situation=evening-peak`), aby ich používal aj skript na screenshoty, e2e testy a demo na obhajobe.
    - Rovnaká situácia musí dať vždy rovnaké čísla (test).
 3. **Vkladanie incidentov do živej simulácie** (nie do what-if), na demo a testy:
@@ -207,7 +208,12 @@ Problém: scenár „čo ak“ v praxi veľmi nefunguje. Testovať konkrétne si
    - funguje v každom čase; keď v horizonte nie sú budúce jazdy, UI to jasne povie a ponúkne horizont ďalšieho dňa,
    - jazdu a zariadenie vyberáš zo zoznamu, nie písaním,
    - výsledok je tabuľka plán vs. scenár s rozdielom a zvýraznením v scéne,
-   - golden testy: každý typ zásahu v 2–3 situáciách s očakávaným smerom zmeny KPI.
+   - golden testy: každý typ zásahu v 2–3 situáciách s očakávaným smerom zmeny KPI,
+   - *hotfix pred krokom 1:* validácia `read_rate` a `move_trip` (400) opravená, HTTP test pre každý typ zásahu,
+   - **oneskorený prechod** je odchod viac ako 15 min po pláne. Prah je v konfigurácii, aby náhodné prevádzkové meškanie nenasýtilo KPI,
+   - panel ukazuje **rezervu do závislých odchodov** („rezerva 3 h 05 min“),
+   - **nové KPI:** meškanie diaľkových odchodov a balíky, ktoré nestihnú svoj odchod,
+   - **výber jazdy** ukazuje predikovaný čas (nočný BA ~06:05). Prebehnuté jazdy sa v zozname nezobrazujú.
 5. **Hygiena alarmov:**
    - deduplikácia a automatické uzatváranie vyriešených alarmov,
    - situácie štartujú bez starých alarmov,

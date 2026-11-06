@@ -176,13 +176,15 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
   const tripId = { type: "integer", minimum: 1 } as const;
   const device = { type: "string", minLength: 1, maxLength: 32 } as const;
   const door = { type: "string", minLength: 1, maxLength: 16 } as const;
+  // Branches are picked by `kind` (if/then), not by `oneOf`: Fastify's AJV runs with removeAdditional,
+  // so in a oneOf the `additionalProperties: false` of a non-matching branch strips fields (`rate`,
+  // `tripId`, `doorCode`) before the right branch is tried, and read_rate / move_trip never validated.
   const intervention = (kind: string, props: Record<string, object>) =>
     ({
-      type: "object",
-      required: ["kind", ...Object.keys(props)],
-      additionalProperties: false,
-      properties: { kind: { const: kind }, ...props },
+      if: { properties: { kind: { const: kind } } },
+      then: { required: Object.keys(props), additionalProperties: false, properties: { kind: { const: kind }, ...props } },
     }) as const;
+  const KINDS = ["delay", "device_outage", "read_rate", "extra_scanner", "move_trip"] as const;
   app.post<{ Body: { interventions: Intervention[] } }>(
     "/sim/what-if",
     {
@@ -201,7 +203,10 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
               minItems: 1,
               maxItems: 10,
               items: {
-                oneOf: [
+                type: "object",
+                required: ["kind"],
+                properties: { kind: { type: "string", enum: KINDS } },
+                allOf: [
                   intervention("delay", { tripId, minutes: { type: "integer", minimum: -120, maximum: 600 } }),
                   intervention("device_outage", { device }),
                   intervention("read_rate", { device, rate: { type: "number", minimum: 0, maximum: 1 } }),
