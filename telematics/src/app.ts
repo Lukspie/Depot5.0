@@ -11,6 +11,7 @@ import { simRoutes } from "./api/sim.js";
 import type { SimClock } from "./clock/clock.js";
 import type { Database } from "./db/pool.js";
 import type { Engine } from "./simulator/engine.js";
+import type { Situation } from "./simulator/situations.js";
 import type { Hub } from "./ws/hub.js";
 import type { TicketVerifier } from "./ws/ticket.js";
 
@@ -60,6 +61,7 @@ export interface SimulationDeps {
   verifier: TicketVerifier;
   serviceToken: string;
   controlsEnabled?: boolean;
+  situations?: Situation[];
 }
 
 /** Simulation, device and internal routes (need the running engine). */

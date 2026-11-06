@@ -69,6 +69,9 @@ export interface SimStateRow {
   envSeed: number;
   degradedDevice: string | null;
   degradationStartedAt: number | null;
+  /** loaded situation and its cascade switch (sql/007); null = the .env settings */
+  situation?: string | null;
+  forceCascade?: boolean | null;
 }
 
 /** Everything the simulator persists; an in-memory fake implements it in tests. */
@@ -242,6 +245,8 @@ export class PgTelemetry implements TelemetrySink {
       env_seed: number;
       degraded_device: string | null;
       degradation_started_at: Date | null;
+      situation: string | null;
+      force_cascade: boolean | null;
     }>("SELECT * FROM sim_state WHERE id = 1");
     const r = rows[0];
     if (!r) return null;
@@ -253,15 +258,17 @@ export class PgTelemetry implements TelemetrySink {
       envSeed: r.env_seed,
       degradedDevice: r.degraded_device,
       degradationStartedAt: r.degradation_started_at ? r.degradation_started_at.getTime() : null,
+      situation: r.situation,
+      forceCascade: r.force_cascade,
     };
   }
 
   async saveSimState(s: SimStateRow): Promise<void> {
     await this.pool.query(
-      `INSERT INTO sim_state (id, sim_time, speed, paused, seed, env_seed, degraded_device, degradation_started_at, updated_at)
-       VALUES (1, $1, $2, $3, $4, $5, $6, $7, now())
+      `INSERT INTO sim_state (id, sim_time, speed, paused, seed, env_seed, degraded_device, degradation_started_at, situation, force_cascade, updated_at)
+       VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, now())
        ON CONFLICT (id) DO UPDATE SET sim_time = $1, speed = $2, paused = $3, seed = $4, env_seed = $5,
-         degraded_device = $6, degradation_started_at = $7, updated_at = now()`,
+         degraded_device = $6, degradation_started_at = $7, situation = $8, force_cascade = $9, updated_at = now()`,
       [
         ts(s.simTime),
         s.speed,
@@ -270,6 +277,8 @@ export class PgTelemetry implements TelemetrySink {
         s.envSeed,
         s.degradedDevice,
         s.degradationStartedAt === null ? null : ts(s.degradationStartedAt),
+        s.situation ?? null,
+        s.forceCascade ?? null,
       ],
     );
   }

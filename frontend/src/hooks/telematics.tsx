@@ -48,6 +48,8 @@ export interface SimClockInfo {
   seed: number;
   /** false when SIM_CONTROLS_ENABLED=false (ADR-053) */
   controlsEnabled?: boolean;
+  /** loaded situation (ADR-054) */
+  situation?: string | null;
 }
 
 /**

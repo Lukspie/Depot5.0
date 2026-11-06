@@ -5,6 +5,7 @@ import type { SimClock } from "../clock/clock.js";
 import { MAX_SPEED, MIN_SPEED } from "../clock/clock.js";
 import { ReplayBusyError, type Engine } from "../simulator/engine.js";
 import { MINUTE } from "../clock/time.js";
+import { loadSituations, type Situation } from "../simulator/situations.js";
 import type { Intervention } from "../simulator/whatif.js";
 import type { TicketVerifier } from "../ws/ticket.js";
 import { roleGuard } from "./guards.js";
@@ -16,6 +17,8 @@ export interface SimRoutesDeps {
   serviceToken: string;
   /** SIM_CONTROLS_ENABLED: false in production, every control endpoint answers 403 (ADR-053) */
   controlsEnabled?: boolean;
+  /** named starting points (data/situations.json, ADR-054) */
+  situations?: Situation[];
 }
 
 const clockSchema = {
@@ -29,6 +32,7 @@ const clockSchema = {
     paused: { type: "boolean" },
     seed: { type: "integer" },
     controlsEnabled: { type: "boolean" },
+    situation: { type: ["string", "null"] },
   },
 } as const;
 
@@ -55,7 +59,7 @@ const advanceSchema = {
 /** longest replay in one request (a whole operating day) */
 const MAX_REPLAY_MIN = 24 * 60;
 
-export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock, engine, verifier, serviceToken, controlsEnabled = true }) => {
+export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock, engine, verifier, serviceToken, controlsEnabled = true, situations = loadSituations() }) => {
   // control endpoints: switched off as a whole in production, then admin only
   const controlsGate = async (_req: unknown, reply: FastifyReply): Promise<void> => {
     if (!controlsEnabled) await reply.code(403).send({ error: "simulation controls are disabled" });
@@ -212,6 +216,61 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
       if (engine.replaying) return replayBusy(reply);
       await engine.restartDay();
       return engine.clockInfo();
+    },
+  );
+
+  app.get(
+    "/sim/situations",
+    {
+      preHandler: staff,
+      schema: {
+        tags: ["simulation"],
+        summary: "Pomenované situácie na demo a testy (seed, čas, prepínače scenára, ADR-054)",
+        ...secured,
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                name: { type: "string" },
+                description: { type: "string" },
+                time: { type: "string" },
+                seed: { type: "integer" },
+                forceCascade: { type: "boolean" },
+                degradedDevice: { type: ["string", "null"] },
+              },
+            },
+          },
+        },
+      },
+    },
+    () => situations,
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/sim/situations/:id",
+    {
+      preHandler: admin,
+      schema: {
+        tags: ["simulation"],
+        summary: "Načítať situáciu: čistý reset s jej seedom a prepínačmi, potom pretočenie s dátami do jej času (admin)",
+        ...secured,
+        params: { type: "object", required: ["id"], properties: { id: { type: "string", pattern: "^[a-z0-9-]{1,40}$" } } },
+        response: { 200: advanceSchema },
+      },
+    },
+    async (req, reply) => {
+      const s = situations.find((x) => x.id === req.params.id);
+      if (!s) return reply.code(404).send({ error: "unknown situation" });
+      try {
+        const replay = await engine.loadSituation(s);
+        return { ...engine.clockInfo(), replay };
+      } catch (err) {
+        if (err instanceof ReplayBusyError) return replayBusy(reply);
+        throw err;
+      }
     },
   );
 

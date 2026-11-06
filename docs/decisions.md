@@ -487,3 +487,19 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 
   Úzke hrdlo pri lokálnej DB je ráno odosielanie do app (kuriérske udalosti, sledovanie a simulované SMS). Večer sú to kroky simulácie. Štartovacia snímka zatiaľ nie je potrebná. Pri db-telemetry v Azure treba zápisy počas replayu dávkovať (ADR-056).
 - **Dôsledok:** Situácia sa dá pripraviť za pár sekúnd s nadväzujúcimi dátami a deň sa dá kedykoľvek vrátiť do čistého stavu. Replay blokuje hodiny, kým beží, a WebSocket klienti za ten čas dostanú len zmenu času.
+
+## ADR-054 Situácie: pomenované deterministické štartovacie body (Fáza 5d)
+- **Kontext:** Demo, screenshoty a testy potrebujú konkrétny stav dňa (špička, nočná kaskáda, ranné odchody…) za pár sekúnd a zakaždým rovnaký.
+- **Rozhodnutie:**
+  - **Definície** sú v `telematics/data/situations.json`: id, slovenský názov a popis, čas, seed a voliteľne `forceCascade` a `degradedDevice`.
+  - **Situácie:**
+    - `evening-peak` (18:30), `night-cascade` (02:10), `morning-departures` (05:45), `couriers-morning` (07:20), `off-wave` (10:00),
+    - `calm-night` (23:30, `forceCascade: false`, v pláne bez kaskády, aby scenár „čo ak“ ukázal jej vznik),
+    - `scanner-ld05` (20:30, degradovaný `DOCK-SCN-05` namiesto `DOCK-SCN-02`).
+  - **Načítanie** `POST /sim/situations/{id}` (admin, `SIM_CONTROLS_ENABLED`) je čistý reset (ADR-053) s nastaveniami situácie, potom replay od 15:00 do jej času. `GET /sim/situations` vidí personál.
+  - **API je v telematike, nie v app** (odchýlka od plánu 5d): telematika vlastní hodiny, seed aj prepínače scenára a admin UI ju už volá priamo s ticketom (ADR-027).
+  - **Prepínače situácie** platia do ďalšieho čistého resetu a prežijú reštart kontajnera (`sim_state.situation`, `force_cascade`, migrácia `007`). Zmena `SIM_RANDOM_SEED` v `.env` ich zruší ako doteraz seed.
+  - **Odkaz** `?situation=<id>` na ľubovoľnej stránke: prihlásený admin situáciu načíta (`SituationLoader`), parameter zmizne z URL a skripty čakajú na `[data-situation="loaded"]`. Iná rola dostane len upozornenie.
+  - **Determinizmus** overujú testy (`situations.test.ts`): tá istá situácia na čistom aj na použitom engine (iný seed, 4 h behu) dá rovnaké skeny, dáta pre app aj KPI plánu. `calm-night` má v pláne 0 kaskád, `night-cascade` viac ako 0. Naživo dal `evening-peak` dvakrát za sebou rovnaký dashboard aj plán scenára.
+- **Meranie (6. 11. 2026, lokálna DB):** `evening-peak` 4–6 s, `calm-night` 9 s, `night-cascade` 10 s vrátane resetu. Štartovacia snímka (cache) zatiaľ nie je potrebná.
+- **Dôsledok:** Demo na obhajobe a screenshoty začnú zo známeho stavu jedným klikom alebo odkazom. Situácia prepíše aktuálny deň, preto sa v admine pýta potvrdenie.

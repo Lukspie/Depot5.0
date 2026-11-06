@@ -10,6 +10,7 @@ import { createDatabase } from "./db/pool.js";
 import { PgTelemetry } from "./db/telemetry.js";
 import { purgeGate } from "./jobs/retention.js";
 import { Engine, initialSimTime } from "./simulator/engine.js";
+import { loadSituations } from "./simulator/situations.js";
 import { RoadRouter } from "./simulator/roads.js";
 import { buildRouteBook, loadRoutes, type RouteBook } from "./simulator/routes.js";
 import { Hub } from "./ws/hub.js";
@@ -31,6 +32,8 @@ let restartForNewEnvSeed = false;
 let clockState;
 let seed: number;
 let degradationStartedAt: number | null;
+/** a situation loaded before the restart keeps its scenario switches (ADR-054) */
+let situation: { id: string; forceCascade: boolean; degradedDevice: string | null } | null = null;
 if (saved) {
   clockState = { simTime: saved.simTime, speed: saved.speed, paused: saved.paused };
   seed = saved.seed;
@@ -39,6 +42,8 @@ if (saved) {
     // SIM_RANDOM_SEED in .env changed since the last start: apply it
     seed = sim.seed;
     restartForNewEnvSeed = true;
+  } else if (saved.situation) {
+    situation = { id: saved.situation, forceCascade: saved.forceCascade ?? sim.forceCascade, degradedDevice: saved.degradedDevice };
   }
 } else {
   const simTime = initialSimTime(sim.startDate, sim.startTime, Date.now());
@@ -77,10 +82,19 @@ const engine = new Engine({
     externalDevices: sim.externalDevices,
     degradedThreshold: sim.degradedThreshold,
     controlsEnabled: sim.controlsEnabled,
+    situation,
   },
 });
 await engine.init();
-await registerSimulation(app, { clock, engine, hub, verifier, serviceToken: config.serviceToken, controlsEnabled: sim.controlsEnabled });
+await registerSimulation(app, {
+  clock,
+  engine,
+  hub,
+  verifier,
+  serviceToken: config.serviceToken,
+  controlsEnabled: sim.controlsEnabled,
+  situations: loadSituations(),
+});
 
 await app.listen({ host: "0.0.0.0", port: config.port });
 const wss = attachWebSocket(app.server, { hub, verifier, allowedOrigins: config.allowedOrigins, log: app.log });

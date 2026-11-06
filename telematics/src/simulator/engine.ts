@@ -33,6 +33,7 @@ import type { LatLon, RouteBook } from "./routes.js";
 import { buildScenario, type DayScenario, type TripSchedule } from "./scenario.js";
 import { dayScans } from "./dayevents.js";
 import { runWhatIf, validateInterventions, type Intervention, type WhatIfResult } from "./whatif.js";
+import { situationTarget, type Situation } from "./situations.js";
 import { DEFAULT_READ_RATE, type ReadRateModel, type ScanEvent } from "./scanners.js";
 import { activeWindow, endLocation, executionAt, gateEvents, positionAt, startLocation, statusAt } from "./trips.js";
 import type { Position, TripExecution } from "./types.js";
@@ -54,6 +55,8 @@ export interface EngineConfig {
   degradedThreshold: number;
   /** SIM_CONTROLS_ENABLED (default true): shown to the admin UI in the clock info */
   controlsEnabled?: boolean;
+  /** a situation loaded before the last restart (sim_state): its switches win over .env */
+  situation?: { id: string; forceCascade: boolean; degradedDevice: string | null } | null;
 }
 
 export interface EngineDeps {
@@ -133,6 +136,8 @@ export interface ClockInfo {
   paused: boolean;
   seed: number;
   controlsEnabled: boolean;
+  /** id of the loaded situation (ADR-054), null after a clean reset */
+  situation: string | null;
 }
 
 interface DayState {
@@ -223,6 +228,10 @@ export class Engine {
   private timers: NodeJS.Timeout[] = [];
   private readonly realNow: () => number;
   private seedValue: number;
+  /** scenario switches: .env, or the loaded situation (ADR-054) */
+  private forceCascadeValue: boolean;
+  private degradedDeviceValue: string | null;
+  private situationId: string | null;
   private degradationStartedAt: number | null;
   /** last reported state of every door sensor */
   private readonly doorStates = new Map<string, DoorEvent>();
@@ -235,6 +244,9 @@ export class Engine {
     this.realNow = deps.realNow ?? Date.now;
     this.lastT = deps.clock.now();
     this.seedValue = deps.config.seed;
+    this.forceCascadeValue = deps.config.situation?.forceCascade ?? deps.config.forceCascade;
+    this.degradedDeviceValue = deps.config.situation ? deps.config.situation.degradedDevice : deps.config.degradedDevice;
+    this.situationId = deps.config.situation?.id ?? null;
     this.degradationStartedAt = deps.config.degradationStartedAt;
     deps.hub.setSnapshot("clock", () => [this.clockEvent()]);
     deps.hub.setSnapshot("vehicles", () => this.vehicleSnapshot());
@@ -308,6 +320,7 @@ export class Engine {
       paused,
       seed: this.seedValue,
       controlsEnabled: this.deps.config.controlsEnabled ?? true,
+      situation: this.situationId,
     };
   }
 
@@ -324,6 +337,27 @@ export class Engine {
    */
   async cleanReset(): Promise<void> {
     this.seedValue = this.deps.config.envSeed;
+    this.forceCascadeValue = this.deps.config.forceCascade;
+    this.degradedDeviceValue = this.deps.config.degradedDevice;
+    this.situationId = null;
+    await this.cleanRestart();
+  }
+
+  /**
+   * Load a situation (ADR-054): a clean reset with its seed and scenario switches, then a replay
+   * from 15:00 to its time. The switches stay until the next clean reset (also over a restart).
+   */
+  async loadSituation(s: Situation): Promise<AdvanceResult> {
+    if (this.replayTarget !== null) throw new ReplayBusyError();
+    this.seedValue = s.seed;
+    this.forceCascadeValue = s.forceCascade ?? this.deps.config.forceCascade;
+    this.degradedDeviceValue = s.degradedDevice === undefined ? this.deps.config.degradedDevice : s.degradedDevice;
+    this.situationId = s.id;
+    await this.cleanRestart();
+    return this.advance(situationTarget(this.deps.clock.now(), s));
+  }
+
+  private async cleanRestart(): Promise<void> {
     for (const d of this.devices.values()) {
       if (!d.external && !d.row.enabled) await this.updateDevice(d.row.code, { enabled: true });
     }
@@ -351,7 +385,7 @@ export class Engine {
       d.lastScanAt = null;
       if (d.status === "maintenance") d.status = "online";
     }
-    if (this.deps.config.degradedDevice) this.degradationStartedAt = start + 30 * MINUTE;
+    this.degradationStartedAt = this.degradedDeviceValue ? start + 30 * MINUTE : null;
     this.deps.clock.set(start);
     this.lastT = start;
     await this.ensureDay(day);
@@ -426,7 +460,7 @@ export class Engine {
     const d = this.devices.get(code);
     if (!d) return;
     d.recent = [];
-    if (this.deps.config.degradedDevice !== code) return;
+    if (this.degradedDeviceValue !== code) return;
     const day = operatingDay(this.deps.clock.now());
     this.degradationStartedAt = operatingDayStart(addDays(day, 1)) + 30 * MINUTE;
     this.rebuildScans();
@@ -515,7 +549,7 @@ export class Engine {
       plan: state.plan,
       manifests: state.manifests,
       seed: this.seedValue,
-      forceCascade: this.deps.config.forceCascade,
+      forceCascade: this.forceCascadeValue,
       routes: state.book,
       model: this.readRateModel(),
       devices: [...this.devices.values()].filter((d) => this.simulated(d.row.code)).map((d) => d.row),
@@ -535,7 +569,7 @@ export class Engine {
       const plan = plans[i];
       if (!state || !plan) return;
       state.plan = plan;
-      state.scenario = buildScenario(plan, { seed: this.seedValue, forceCascade: this.deps.config.forceCascade, routes: state.book });
+      state.scenario = buildScenario(plan, { seed: this.seedValue, forceCascade: this.forceCascadeValue, routes: state.book });
     });
     this.rebuildScans(this.lastT);
     return days;
@@ -732,7 +766,7 @@ export class Engine {
   // ------------------------------------------------------------------ days / scenario
 
   private readRateModel(): ReadRateModel {
-    const dev = this.deps.config.degradedDevice;
+    const dev = this.degradedDeviceValue;
     return {
       ...DEFAULT_READ_RATE,
       degradation:
@@ -752,7 +786,7 @@ export class Engine {
       this.book = book;
       const scenario = buildScenario(plan, {
         seed: this.seedValue,
-        forceCascade: this.deps.config.forceCascade,
+        forceCascade: this.forceCascadeValue,
         routes: book,
       });
       const manifests = new Map<string, ManifestParcel[]>();
@@ -1260,8 +1294,10 @@ export class Engine {
         paused,
         seed: this.seedValue,
         envSeed: this.deps.config.envSeed,
-        degradedDevice: this.deps.config.degradedDevice,
+        degradedDevice: this.degradedDeviceValue,
         degradationStartedAt: this.degradationStartedAt,
+        situation: this.situationId,
+        forceCascade: this.situationId === null ? null : this.forceCascadeValue,
       }),
     );
   }

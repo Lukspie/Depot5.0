@@ -38,6 +38,22 @@ export async function telematics<T>(method: "GET" | "POST" | "PUT", path: string
   });
 }
 
+/** A named deterministic starting point for demos and tests (telematics data/situations.json, ADR-054). */
+export interface SituationInfo {
+  id: string;
+  name: string;
+  description: string;
+  time: string;
+  seed: number;
+  forceCascade?: boolean;
+  degradedDevice?: string | null;
+}
+
+/** Clean reset with the situation's settings and a replay to its time (admin; takes a few seconds). */
+export function loadSituation(id: string): Promise<ClockInfo> {
+  return telematics<ClockInfo>("POST", `/sim/situations/${encodeURIComponent(id)}`);
+}
+
 export interface DeviceInfo {
   code: string;
   depotCode: string;
@@ -62,6 +78,8 @@ export interface ClockInfo {
   seed: number;
   /** false when SIM_CONTROLS_ENABLED=false (production): the admin UI hides the controls */
   controlsEnabled?: boolean;
+  /** loaded situation (ADR-054), null after a clean reset */
+  situation?: string | null;
   /** a jump in replay mode or a step: what was simulated (ADR-053) */
   replay?: { from: string; to: string; minutes: number; scans: number; ms: number; stepMs: number; syncMs: number };
 }

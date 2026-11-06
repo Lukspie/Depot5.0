@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eraser, FastForward, Pause, Play, RotateCcw } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isApiError } from "../../api/client";
-import { telematics, type ClockInfo, type DeviceInfo } from "../../api/telematicsApi";
+import { telematics, type ClockInfo, type DeviceInfo, type SituationInfo } from "../../api/telematicsApi";
 import { useDirectionsAdmin, useUpdateDirection, type DirectionAdmin } from "../../api/wms";
 import { DIRECTION_TYPE, dayLabel } from "../../domain/labels";
 import { useSimClock } from "../../hooks/telematics";
@@ -191,6 +191,11 @@ export function SimulationTab() {
   });
   const busy = act.isPending;
   const jump = (to: string) => act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to, mode } });
+  const situations = useQuery({
+    queryKey: ["sim-situations"],
+    queryFn: () => telematics<SituationInfo[]>("GET", "/sim/situations"),
+    staleTime: Infinity,
+  });
 
   if (info?.controlsEnabled === false) {
     return (
@@ -224,6 +229,7 @@ export function SimulationTab() {
             ["Rýchlosť", info ? `×${String(info.speed)}` : "—"],
             ["Stav", info?.paused ? <Badge tone="warn">pauza</Badge> : <Badge tone="ok">beží</Badge>],
             ["Seed", info?.seed ?? "—"],
+            ["Situácia", situations.data?.find((s) => s.id === info?.situation)?.name ?? info?.situation ?? "—"],
           ]}
         />
         <div className="mt-4 flex flex-wrap gap-2">
@@ -247,6 +253,39 @@ export function SimulationTab() {
             </Button>
           ))}
         </div>
+      </Card>
+
+      <Card title="Situácie" className="lg:col-span-2">
+        <p className="text-ink-muted mb-3 text-sm">
+          Situácia je čistý reset s daným seedom a prepínačmi a pretočenie dňa s dátami do jej času. Rovnaká situácia dá vždy rovnaké čísla. Dá sa
+          otvoriť aj odkazom, napr. <code>/shadow?depot=BUD&amp;situation=evening-peak</code>.
+        </p>
+        {situations.isError && <p className="text-danger-600 text-sm">Telematika je nedostupná.</p>}
+        <ul className="divide-line divide-y">
+          {situations.data?.map((s) => (
+            <li key={s.id} className="flex flex-wrap items-center gap-3 py-2">
+              <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{s.time}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">
+                  {s.name} {info?.situation === s.id && <Badge tone="ok">načítaná</Badge>}
+                </span>
+                <span className="text-ink-muted block text-xs">{s.description}</span>
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  if (window.confirm(`Načítať situáciu „${s.name}“? Aktuálny deň sa vráti do čistého stavu a pretočí do ${s.time}.`)) {
+                    act.mutate({ method: "POST", path: `/sim/situations/${s.id}` });
+                  }
+                }}
+              >
+                Načítať
+              </Button>
+            </li>
+          ))}
+        </ul>
       </Card>
 
       <Card title="Skok v čase a reset">

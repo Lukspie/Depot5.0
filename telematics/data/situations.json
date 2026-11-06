@@ -1,0 +1,53 @@
+[
+  {
+    "id": "evening-peak",
+    "name": "Večerná vlna – špička",
+    "description": "18:30, kamióny pri bránach LD-01 až LD-03 nakladajú, po páse idú balíky, skener BA sa špiní.",
+    "time": "18:30",
+    "seed": 42
+  },
+  {
+    "id": "night-cascade",
+    "name": "Nočné kamióny s kaskádou",
+    "description": "02:10, nočný kamión z Bratislavy má poruchu a ohrozuje ranné prechody (kaskádové varovania).",
+    "time": "02:10",
+    "seed": 42
+  },
+  {
+    "id": "calm-night",
+    "name": "Pokojná noc",
+    "description": "23:30, bez zaručenej poruchy: v pláne nie je kaskáda. Scenár „čo ak“ ukáže, ako vznikne (napr. meškanie nočného BA).",
+    "time": "23:30",
+    "seed": 42,
+    "forceCascade": false
+  },
+  {
+    "id": "morning-departures",
+    "name": "Ranné odchody",
+    "description": "05:45, regionálne kamióny nakladajú na LD-04 až LD-08 a čakajú na meškajúci nočný kamión.",
+    "time": "05:45",
+    "seed": 42
+  },
+  {
+    "id": "couriers-morning",
+    "name": "Kuriéri ráno",
+    "description": "07:20, kuriéri nakladajú dodávky pri odstavných plochách, zákazníci dostávajú SMS so sledovaním.",
+    "time": "07:20",
+    "seed": 42
+  },
+  {
+    "id": "scanner-ld05",
+    "name": "Degradácia skenera LD-05",
+    "description": "20:30, skener brány LD-05 (Trebišov) od 15:30 stráca čítanosť, je oranžový a pribúdajú neidentifikované balíky.",
+    "time": "20:30",
+    "seed": 42,
+    "degradedDevice": "DOCK-SCN-05"
+  },
+  {
+    "id": "off-wave",
+    "name": "Mimo vlny",
+    "description": "10:00, deň po vlnách: brány sú voľné, kuriéri na trase, KPI ukazuje „mimo vlny“.",
+    "time": "10:00",
+    "seed": 42
+  }
+]

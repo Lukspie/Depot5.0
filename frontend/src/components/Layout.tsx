@@ -17,6 +17,7 @@ import { useLogout, useMe } from "../api/auth";
 import { canAccess, NAV, ROLE_LABEL } from "../auth/roles";
 import { useSimClock, useSocketStatus } from "../hooks/telematics";
 import { applyTheme, loadTheme, THEMES, type Theme } from "./ui/theme";
+import { SituationLoader } from "./SituationLoader";
 import { Logo } from "./ui";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -175,6 +176,7 @@ export function Layout() {
         </div>
         <main className={fullBleed ? "relative min-h-0 min-w-0 flex-1 md:px-4 md:pt-2 md:pb-4" : "min-w-0 flex-1 p-4 md:px-8 md:pt-2 md:pb-8"}>
           <Outlet />
+          <SituationLoader />
         </main>
       </div>
     </div>
