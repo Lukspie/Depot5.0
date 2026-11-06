@@ -23,6 +23,8 @@ export interface SimConfig {
   externalDevices: string[];
   /** rolling read rate below this = device "degraded" */
   degradedThreshold: number;
+  /** SIM_CONTROLS_ENABLED=false (production): clock, reset, seed and device controls answer 403 */
+  controlsEnabled: boolean;
 }
 
 export interface Config {
@@ -89,6 +91,7 @@ export function loadConfig(): Config {
       degradationHours: Number(optional("SIM_DEGRADATION_HOURS", "6")),
       externalDevices: list(optional("SIM_EXTERNAL_DEVICES", "")),
       degradedThreshold: Number(optional("DEVICE_DEGRADED_THRESHOLD", "0.92")),
+      controlsEnabled: optional("SIM_CONTROLS_ENABLED", "true") !== "false",
     },
   };
 }

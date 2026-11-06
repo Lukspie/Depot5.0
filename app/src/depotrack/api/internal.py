@@ -315,9 +315,10 @@ def courier_events(body: CourierEventsIn, db: DbSession, settings: SettingsDep) 
 
 
 @router.post("/days/{day}/reset")
-def reset_day(day: date, db: DbSession) -> dict[str, int]:
-    """Telematics replays the day from 15:00 (new seed / restart): undo its execution here."""
-    return reset_operating_day(db, day)
+def reset_day(day: date, db: DbSession, clean: Annotated[bool, Query()] = False) -> dict[str, int]:
+    """Telematics replays the day from 15:00 (new seed / restart): undo its execution here.
+    `clean=true` is the clean reset of the admin (ADR-053)."""
+    return reset_operating_day(db, day, clean=clean)
 
 
 @router.post("/alerts", response_model=AlertOut | None, response_model_by_alias=True)

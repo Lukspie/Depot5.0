@@ -143,7 +143,9 @@ def test_wave_boundaries(hhmm: str, wave: str | None, next_at: str | None) -> No
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
-def test_stale_trip_of_the_previous_day_does_not_block_the_door(viewer: TestClient, db: Session) -> None:
+def test_stale_trip_of_the_previous_day_does_not_block_the_door(
+    viewer: TestClient, db: Session
+) -> None:
     from sqlalchemy import select
 
     from depotrack.models import LoadingScan, Trip
@@ -174,5 +176,9 @@ def test_stale_trip_of_the_previous_day_does_not_block_the_door(viewer: TestClie
 
     ba = parcels_of(db, "BA")[0]
     send_scans(viewer, [dock_scan("LD-02", ba.barcode)])
-    scans = db.execute(select(LoadingScan.trip_id).where(LoadingScan.parcel_id == ba.id)).scalars().all()
+    scans = (
+        db.execute(select(LoadingScan.trip_id).where(LoadingScan.parcel_id == ba.id))
+        .scalars()
+        .all()
+    )
     assert scans == [today.id]

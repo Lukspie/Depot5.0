@@ -456,3 +456,34 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - GLTFLoader je v chunku `ShadowPage` (spolu so scénou v2 teraz 346 kB, gzip 108 kB), prihlasovacia stránka ani 2D obrazovky ho nesťahujú (docs/bundle.md).
   - Záťažový režim pri 1440 px má stále 60 fps.
   - Iný model sa dá vymeniť zmenou `models.ts` a súboru, bez zásahu do scény.
+
+## ADR-053 Ovládanie času: skok „preskočiť“ a „pretočiť s dátami“, krok +N, čistý reset (Fáza 5d)
+- **Kontext:**
+  - Testovať konkrétnu situáciu znamenalo čakať na 15:00 alebo skočiť bez dát. Skok podľa ADR-025 negeneruje skeny, prejazdy ani merania za preskočený úsek.
+  - Po dňoch testovania ostávali v systéme presuny jázd, údržba, vypnuté zariadenia, iný seed a stovky alarmov.
+  - V ostrom režime nemá nikto hodinami hýbať.
+- **Rozhodnutie:**
+  - **Dva režimy skoku:** `POST /sim/clock/jump {to: "HH:MM", mode}` na ľubovoľný čas.
+    - `mode=skip` (predvolený) je správanie z ADR-025.
+    - `mode=replay` zavolá `Engine.advance(cieľ)`: po simulovaných minútach volá ten istý `step` ako živé hodiny. Skeny, prejazdy a merania idú do db-telemetry. Jazdy a skeny idú do app každých 10 simulovaných minút, aby app videl jazdu „nakladá“ pred jej skenmi a „odišla“ až po nich.
+    - Počas replayu sa jednotlivé skeny a prejazdy neposielajú na WebSocket. Kanál `clock` ukazuje priebeh.
+  - **Krok** `POST /sim/clock/step {minutes}` (UI +5 / +15 / +60) je **tá istá metóda** `advance`. Test overuje, že step 60 a replay o 60 min dajú rovnaké skeny a že replay dá rovnaké skeny, jazdy aj dáta pre app ako živé hodiny po minútach. Deň je predpočítaný, takže veľkosť kroku ho nemení (ADR-023).
+  - Najdlhší replay je 24 h. Počas replayu odpovedajú zmeny hodín (skok, krok, reset, reštart dňa) kódom 409.
+  - **Čistý reset** `POST /sim/reset`:
+    - telematika: seed z `.env` (`SIM_RANDOM_SEED`), vypnuté zariadenia zapne a deň spustí od 15:00 (`restartDay` zruší údržbu, presuny jázd aj stav dverí),
+    - app (`/internal/days/{deň}/reset?clean=true`): okrem resetu dňa (ADR-033) zmaže `maintenance_orders` dňa a otvorené alarmy starších dní **uzavrie** systémovo (`acknowledged_at` = začiatok dňa, bez používateľa), takže audit ostane.
+    - Vložené incidenty pribudnú v kroku 3 (po odovzdaní).
+  - **`SIM_CONTROLS_ENABLED`** (predvolene `true`, v ostrom režime `false`):
+    - pri `false` vrátia všetky ovládacie endpointy telematiky (pauza, rýchlosť, skok, krok, seed, reštart, reset, zariadenia) **403**, aj so service tokenom,
+    - `GET /sim/clock` vracia `controlsEnabled` a admin UI ovládanie skryje,
+    - scenár „čo ak“ ostáva, lebo nič nezapisuje.
+- **Meranie (6. 11. 2026, lokálna db-telemetry, seed 42, deň 2027-02-24):**
+
+  | Úsek | Simulované | Reálne | z toho kroky (výpočet + db-telemetry) | odosielanie do app |
+  | --- | --- | --- | --- | --- |
+  | 15:00 → 18:30 | 210 min | 3,4 s | 2,3 s | 1,0 s |
+  | 18:30 → 02:10 | 460 min | 5,6 s | 3,3 s | 2,2 s |
+  | 02:10 → 10:00 | 470 min | 12,5 s | 3,7 s | 8,8 s |
+
+  Úzke hrdlo pri lokálnej DB je ráno odosielanie do app (kuriérske udalosti, sledovanie a simulované SMS). Večer sú to kroky simulácie. Štartovacia snímka zatiaľ nie je potrebná. Pri db-telemetry v Azure treba zápisy počas replayu dávkovať (ADR-056).
+- **Dôsledok:** Situácia sa dá pripraviť za pár sekúnd s nadväzujúcimi dátami a deň sa dá kedykoľvek vrátiť do čistého stavu. Replay blokuje hodiny, kým beží, a WebSocket klienti za ten čas dostanú len zmenu času.

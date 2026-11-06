@@ -59,6 +59,7 @@ export interface SimulationDeps {
   hub: Hub;
   verifier: TicketVerifier;
   serviceToken: string;
+  controlsEnabled?: boolean;
 }
 
 /** Simulation, device and internal routes (need the running engine). */

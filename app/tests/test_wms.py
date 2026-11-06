@@ -403,3 +403,52 @@ def test_day_reset_undoes_execution_for_a_replay(client: TestClient, db: Session
     # the evening wave can be closed again in the replay
     send_trip(client, ba_trip.id, "departed", local(22, 5))
     assert db.execute(select(Parcel).where(Parcel.status == "staged")).first() is not None
+
+
+def test_clean_reset_drops_maintenance_and_closes_old_alerts(
+    client: TestClient, db: Session, make_user: MakeUser
+) -> None:
+    """Clean reset (ADR-053): on top of the day reset, the day's maintenance orders go and the open
+    alerts of older days are closed by the system (kept for the audit)."""
+    from depotrack.models import MaintenanceOrder
+    from depotrack.models.enums import AlertSeverity
+
+    start = local(15, 0)
+    user = make_user("disp", UserRole.DISPATCHER)
+    old = Alert(
+        kind=AlertKind.CASCADE_DELAY,
+        severity=AlertSeverity.WARNING,
+        message="old",
+        ref_type="cascade",
+        ref_id="1:2",
+        created_at=start - timedelta(days=3),
+    )
+    today = Alert(
+        kind=AlertKind.OTHER,
+        severity=AlertSeverity.INFO,
+        message="today",
+        created_at=start + timedelta(hours=2),
+    )
+    db.add_all([old, today])
+    db.add(
+        MaintenanceOrder(
+            device_code="DOCK-SCN-02",
+            minutes=20,
+            until=start + timedelta(hours=1, minutes=20),
+            created_by=user.id,
+            created_at=start + timedelta(hours=1),
+        )
+    )
+    db.commit()
+
+    plain = client.post(f"/internal/days/{DAY}/reset", headers=TOKEN).json()
+    assert plain["alerts"] == 1 and plain["maintenanceOrders"] == 0 and plain["alertsClosed"] == 0
+    db.expire_all()
+    assert db.execute(select(MaintenanceOrder)).first() is not None
+
+    clean = client.post(f"/internal/days/{DAY}/reset?clean=true", headers=TOKEN).json()
+    assert clean["maintenanceOrders"] == 1 and clean["alertsClosed"] == 1
+    db.expire_all()
+    assert db.execute(select(MaintenanceOrder)).first() is None
+    kept = db.execute(select(Alert)).scalars().one()
+    assert kept.message == "old" and kept.acknowledged_at == start and kept.acknowledged_by is None

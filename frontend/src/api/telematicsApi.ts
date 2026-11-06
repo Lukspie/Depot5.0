@@ -60,4 +60,8 @@ export interface ClockInfo {
   speed: number;
   paused: boolean;
   seed: number;
+  /** false when SIM_CONTROLS_ENABLED=false (production): the admin UI hides the controls */
+  controlsEnabled?: boolean;
+  /** a jump in replay mode or a step: what was simulated (ADR-053) */
+  replay?: { from: string; to: string; minutes: number; scans: number; ms: number; stepMs: number; syncMs: number };
 }

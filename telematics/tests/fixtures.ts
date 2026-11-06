@@ -248,10 +248,12 @@ export class FakeApp implements AppApi {
   }
 
   readonly resets: string[] = [];
+  readonly cleanResets: string[] = [];
 
-  resetDay(day: string): Promise<void> {
+  resetDay(day: string, clean = false): Promise<void> {
     if (this.down) return Promise.reject(new Error("app down"));
     this.resets.push(day);
+    if (clean) this.cleanResets.push(day);
     return Promise.resolve();
   }
 

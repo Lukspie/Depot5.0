@@ -46,6 +46,8 @@ export interface SimClockInfo {
   speed: number;
   paused: boolean;
   seed: number;
+  /** false when SIM_CONTROLS_ENABLED=false (ADR-053) */
+  controlsEnabled?: boolean;
 }
 
 /**

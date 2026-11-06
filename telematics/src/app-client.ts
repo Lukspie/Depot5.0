@@ -61,8 +61,9 @@ export interface AppApi {
   getManifest(direction: string, day: string): Promise<ManifestParcel[]>;
   postTripEvents(simTime: string, trips: TripExecution[]): Promise<void>;
   postScans(scans: ScanForward[]): Promise<void>;
-  /** undo the execution of an operating day in the app (replay from 15:00) */
-  resetDay(day: string): Promise<void>;
+  /** undo the execution of an operating day in the app (replay from 15:00); `clean` also drops the
+   * day's maintenance orders and closes older open alerts (clean reset, ADR-053) */
+  resetDay(day: string, clean?: boolean): Promise<void>;
   postAlert(alert: AlertPayload): Promise<void>;
   /** courier routes for the parcels of an operating day (driven the next morning) */
   getCourierRoutes(day: string): Promise<CourierPlan>;
@@ -108,8 +109,8 @@ export class HttpAppApi implements AppApi {
     });
   }
 
-  async resetDay(day: string): Promise<void> {
-    await this.request(`/internal/days/${day}/reset`, { method: "POST" });
+  async resetDay(day: string, clean = false): Promise<void> {
+    await this.request(`/internal/days/${day}/reset${clean ? "?clean=true" : ""}`, { method: "POST" });
   }
 
   async postAlert(alert: AlertPayload): Promise<void> {

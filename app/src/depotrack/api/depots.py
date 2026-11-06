@@ -97,7 +97,8 @@ def depot_state(code: str, _: CurrentUser, db: DbSession) -> DepotState:
             Trip.depot_id == d.id,
             Trip.door_id.is_not(None),
             Trip.status.in_((TripStatus.AT_DOOR, TripStatus.LOADING)),
-            Trip.operating_day == day,  # trips of older days are stale (services.loading.active_trip_at)
+            # trips of older days are stale (services.loading.active_trip_at)
+            Trip.operating_day == day,
         )
     ).scalars()
     for t in rows:

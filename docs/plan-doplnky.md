@@ -177,6 +177,51 @@ Nemusí ísť o presnú kópiu. Podrobnejšie veci sa otvárajú v overlayi aleb
 - **Budimír:** skutočné rozloženie (poradie brán, ich typy, plochy, pás) dodá tím (Lukspie). Dovtedy ostáva súčasné, ale všetko je dátami v `/api/layout`, nič natvrdo.
 - **Bratislava:** hub SPS v **Ivanke pri Dunaji**. Tvar a rozmery haly skús zistiť z budov v OSM extrakte (`tools/osm`). Ak tam nie sú, ostane schematická hala.
 
+## Zmena plánu pred odovzdaním (6. 11. 2026, termín nedeľa 8. 11.)
+Poradie práce:
+1. **5d skrátená:**
+   - hotfix 400 *(hotové)*,
+   - krok 1 ovládanie času,
+   - krok 2 situácie vrátane `calm-night`,
+   - z kroku 5 len uzavretie starých alarmov a KPI alarmov len pre aktuálny deň,
+   - z kroku 4 len prah oneskoreného prechodu 15 min.
+2. **Azure:**
+   - db-telemetry pôjde do Azure Database for PostgreSQL Flexible Server (B1MS, PG 16). Server vytvorí používateľ, návod bude v README (portal aj az CLI, firewall, `sslmode=require`),
+   - telematika sa pripája cez `TELEMETRY_DATABASE_URL` so SSL a migračný runner (ADR-012) prejde aj proti Azure,
+   - kontajner db-telemetry ostane ako záloha v compose profile `local` (offline demo, testy). Predvolený režim je Azure (ADR-056),
+   - overiť: skeny pribúdajú, `/system` ukazuje Azure DB ako healthy, latencia nebrzdí simuláciu (dávky zápisov), testy bežia proti lokálnej DB.
+3. **Fáza 6 – ML** (PROMPT §8). Poradie je priorita a každá časť má časový limit. Ak sa nestihne, vznikne jednoduchšia verzia a zapíše sa.
+   1. **Predikcia meškania kamiónov:**
+      - HistGradientBoostingRegressor na histórii z `gen:history`, príznaky podľa §8,
+      - metrika MAE v minútach voči baseline (priemer na smer),
+      - inferencia v app plní `predicted_arrival` pre tabuľu ETA a kaskádu.
+   2. **Prediktívna údržba skenerov:**
+      - IsolationForest nad `device_metrics_minutely` (bez `door_sensor`),
+      - úloha každých 5 sim. minút, nad prahom alarm „klesajúca čítanosť, skontrolovať optiku“,
+      - musí zachytiť zaručenú degradáciu zo seedu (test),
+      - skóre rizika v paneli zariadenia v tieni.
+   3. **Brána (CV):**
+      - predtrénovaný YOLO (car/truck/bus) v ONNX a OCR ŠPZ nad onnxruntime (napr. RapidOCR), slovenská ŠPZ overená regexom, ak sa dá, bez torch v image app,
+      - `POST /api/gate/detect` (obrázok → typ, ŠPZ, istota → prejazd cez telematiku), `/gate` pre ochranku s uploadom, `ml/gate_video.py` na hostovi,
+      - licencie modelov (YOLO od Ultralytics je AGPL).
+   4. **IoT skener na nakládke (prototyp):**
+      - `ml/dock_scanner.py` na hostovi (webkamera alebo video): QR a čiarové kódy, počítanie krabíc prechodom cez čiaru, posiela skeny rovnakým API ako simulátor,
+      - skript na tlač štítkov balíkov dňa (PDF s QR).
+   - **Spoločné:**
+     - artefakty v `ml/artifacts` (`*.onnx`, `*.joblib` binary). Bez artefaktu app naštartuje a UI ukáže „model nedostupný“,
+     - tréning jedným príkazom, `ml/README.md` pre každý model (dáta, príznaky, metriky, obmedzenia),
+     - testy (načítanie modelov, inferencia cez HTTP, detekcia degradácie) a reviewer na konci.
+4. **Z 5b len** oprava poradia zastávok na `/courier` (85/92 hotových, ale „ďalšia“ je č. 2, ETA nesedia).
+5. **Nedeľa, minimálna Fáza 7:**
+   - `docs/architektura.md` (mermaid: služby, Azure, toky dát, bezpečnosť), `docs/api.md` (endpointy oboch backendov z OpenAPI), `docs/demo.md` (scenár obhajoby so situáciami),
+   - README a `docs/fazy/faza-6-ml.md`,
+   - kontrola z čistého klonu (bez mazania volumes) a screenshoty hlavných obrazoviek v situácii `evening-peak`.
+
+## Po odovzdaní
+- 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
+- 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
+- Fáza 5b okrem `/courier`: UX review všetkých obrazoviek, `/shadow` podľa makety, `/board` pri 390 px, nové screenshoty Fázy 4.
+
 ## Fáza 5d – Simulácia a testovanie (pred Fázou 5b)
 Problém: scenár „čo ak“ v praxi veľmi nefunguje. Testovať konkrétne situácie je pracné (čakanie na 15:00, skoky bez dát) a v areáli sa nahromadilo 260+ aktívnych alarmov (4. 11. 2026: 202 `wrong_direction` a 81 `cascade_delay` od 25. 10.).
 

@@ -76,10 +76,11 @@ const engine = new Engine({
     degradationHours: sim.degradationHours,
     externalDevices: sim.externalDevices,
     degradedThreshold: sim.degradedThreshold,
+    controlsEnabled: sim.controlsEnabled,
   },
 });
 await engine.init();
-await registerSimulation(app, { clock, engine, hub, verifier, serviceToken: config.serviceToken });
+await registerSimulation(app, { clock, engine, hub, verifier, serviceToken: config.serviceToken, controlsEnabled: sim.controlsEnabled });
 
 await app.listen({ host: "0.0.0.0", port: config.port });
 const wss = attachWebSocket(app.server, { hub, verifier, allowedOrigins: config.allowedOrigins, log: app.log });

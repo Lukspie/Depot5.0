@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { Eraser, FastForward, Pause, Play, RotateCcw } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { isApiError } from "../../api/client";
 import { telematics, type ClockInfo, type DeviceInfo } from "../../api/telematicsApi";
 import { useDirectionsAdmin, useUpdateDirection, type DirectionAdmin } from "../../api/wms";
 import { DIRECTION_TYPE, dayLabel } from "../../domain/labels";
@@ -153,24 +154,54 @@ export function DevicesTab() {
 const SPEEDS = [1, 10, 60, 300, 600];
 const JUMPS = [
   { to: "15:30", label: "15:30 večerná vlna" },
+  { to: "18:30", label: "18:30 špička" },
   { to: "01:00", label: "01:00 nočné kamióny" },
   { to: "06:00", label: "06:00 ranné odchody" },
 ];
+const STEPS = [5, 15, 60];
+type JumpMode = "skip" | "replay";
+
+function resultText(c: ClockInfo): string {
+  const base = `Simulovaný čas ${c.localTime}, deň ${dayLabel(c.operatingDay)}, ×${String(c.speed)}${c.paused ? ", pauza" : ""}`;
+  if (!c.replay) return base;
+  const secs = (c.replay.ms / 1000).toLocaleString("sk-SK", { maximumFractionDigits: 1 });
+  return `${base}. Dosimulovaných ${String(c.replay.minutes)} min za ${secs} s, ${c.replay.scans.toLocaleString("sk-SK")} skenov odoslaných do WMS.`;
+}
 
 export function SimulationTab() {
   const qc = useQueryClient();
   const { info, now } = useSimClock();
   const [seed, setSeed] = useState("");
+  const [jumpTo, setJumpTo] = useState("18:30");
+  const [mode, setMode] = useState<JumpMode>("replay");
   const [message, setMessage] = useState<string | null>(null);
   const act = useMutation({
     mutationFn: ({ method, path, body }: { method: "POST" | "PUT"; path: string; body?: unknown }) =>
       telematics<ClockInfo>(method, path, body),
     onSuccess: (c) => {
-      setMessage(`Simulovaný čas ${c.localTime}, deň ${dayLabel(c.operatingDay)}, ×${String(c.speed)}${c.paused ? ", pauza" : ""}`);
+      setMessage(resultText(c));
       void qc.invalidateQueries();
     },
-    onError: () => setMessage("Akcia zlyhala – telematika nedostupná alebo chýba oprávnenie."),
+    onError: (err) =>
+      setMessage(
+        isApiError(err, 409)
+          ? "Práve beží pretáčanie, počkajte, kým skončí."
+          : "Akcia zlyhala – telematika nedostupná alebo chýba oprávnenie.",
+      ),
   });
+  const busy = act.isPending;
+  const jump = (to: string) => act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to, mode } });
+
+  if (info?.controlsEnabled === false) {
+    return (
+      <Card title="Simulácia">
+        <p className="text-ink-muted text-sm">
+          Ovládanie simulácie je v tomto prostredí vypnuté (<code>SIM_CONTROLS_ENABLED=false</code>). Čas beží sám, scenár „čo ak“ v digitálnom tieni
+          funguje ďalej.
+        </p>
+      </Card>
+    );
+  }
 
   function applySeed(e: FormEvent) {
     e.preventDefault();
@@ -218,16 +249,55 @@ export function SimulationTab() {
         </div>
       </Card>
 
-      <Card title="Skok v čase a scenár">
-        <div className="mb-5 flex flex-wrap gap-2">
+      <Card title="Skok v čase a reset">
+        <div className="mb-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Režim skoku">
+          {(
+            [
+              ["replay", "Pretočiť s dátami"],
+              ["skip", "Preskočiť (bez dát)"],
+            ] as const
+          ).map(([m, label]) => (
+            <Button key={m} size="sm" role="radio" aria-checked={mode === m} variant={mode === m ? "primary" : "secondary"} onClick={() => setMode(m)}>
+              {label}
+            </Button>
+          ))}
+        </div>
+        <form
+          className="mb-3 flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (jumpTo) jump(jumpTo);
+          }}
+        >
+          <input
+            type="time"
+            value={jumpTo}
+            onChange={(e) => setJumpTo(e.target.value)}
+            aria-label="Skok na čas"
+            className="border-line focus:border-brand-500 w-32 rounded-xl border px-3 py-2 text-sm tabular-nums outline-none"
+          />
+          <Button type="submit" icon={<FastForward size={16} />} disabled={busy || !jumpTo}>
+            {busy ? "Pretáčam…" : "Skočiť"}
+          </Button>
+        </form>
+        <div className="mb-3 flex flex-wrap gap-2">
           {JUMPS.map((j) => (
-            <Button key={j.to} variant="secondary" onClick={() => act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to: j.to } })}>
+            <Button key={j.to} size="sm" variant="secondary" disabled={busy} onClick={() => jump(j.to)}>
               {j.label}
             </Button>
           ))}
         </div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-ink-muted text-sm">Krok s dátami:</span>
+          {STEPS.map((m) => (
+            <Button key={m} size="sm" variant="secondary" disabled={busy} onClick={() => act.mutate({ method: "POST", path: "/sim/clock/step", body: { minutes: m } })}>
+              +{m} min
+            </Button>
+          ))}
+        </div>
         <p className="text-ink-muted mb-4 text-sm">
-          Skok preskočí skeny a prejazdy v preskočenom čase. Pre súvislé dáta zrýchlite hodiny.
+          „Pretočiť s dátami“ rýchlo dosimuluje preskočený úsek: skeny, prejazdy aj alarmy nadväzujú. „Preskočiť“ je rýchlejšie, ale za preskočený úsek
+          chýbajú dáta.
         </p>
         <form onSubmit={applySeed} className="mb-4 flex flex-wrap items-center gap-2">
           <input
@@ -251,8 +321,28 @@ export function SimulationTab() {
           }}
         >
           Deň znova od 15:00
+        </Button>{" "}
+        <Button
+          variant="danger"
+          icon={<Eraser size={16} />}
+          disabled={busy}
+          onClick={() => {
+            if (
+              window.confirm(
+                "Čistý reset dňa? Seed sa vráti na hodnotu z .env, vypnuté zariadenia sa zapnú, zmaže sa údržba, presuny jázd a alarmy dňa, staršie alarmy sa uzavrú. Deň začne od 15:00.",
+              )
+            ) {
+              act.mutate({ method: "POST", path: "/sim/reset" });
+            }
+          }}
+        >
+          Čistý reset dňa
         </Button>
-        {message && <p className="bg-canvas mt-4 rounded-xl px-3 py-2 text-sm">{message}</p>}
+        {message && (
+          <p className="bg-canvas mt-4 rounded-xl px-3 py-2 text-sm" role="status">
+            {message}
+          </p>
+        )}
       </Card>
     </div>
   );

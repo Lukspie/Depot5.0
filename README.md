@@ -99,11 +99,16 @@ vydá `POST /api/auth/ws-ticket` po prihlásení a platí 60 s.
 | čas, rýchlosť, seed | `GET /sim/clock` (verejné) |
 | pauza / pokračovanie | `POST /sim/clock/pause`, `POST /sim/clock/resume` |
 | rýchlosť | `PUT /sim/clock/speed {"speed": 600}` |
-| skok (večerná vlna, nočné kamióny, ranné odchody) | `POST /sim/clock/jump {"to": "15:30" \| "01:00" \| "06:00"}` |
+| skok na ľubovoľný čas, bez dát (preskočí) | `POST /sim/clock/jump {"to": "18:30"}` |
+| skok s dátami (rýchlo dosimuluje úsek, ADR-053) | `POST /sim/clock/jump {"to": "18:30", "mode": "replay"}` |
+| krok o N minút s dátami (+5 / +15 / +60) | `POST /sim/clock/step {"minutes": 15}` |
+| čistý reset dňa (seed z .env, bez údržby, presunov a alarmov dňa) | `POST /sim/reset` |
 | zmena seedu (deň znova od 15:00) | `PUT /sim/seed {"seed": 7}` |
 | deň znova od 15:00 | `POST /sim/restart-day` |
 | prehľad scenára (meškania, porucha) | `GET /sim/scenario` |
 | vypnúť / zapnúť / opraviť zariadenie | `PUT /sim/devices/DOCK-SCN-05 {"enabled": false}`, `{"repair": true}` |
+
+Ovládanie simulácie je len pre admina. **V ostrom režime nastav `SIM_CONTROLS_ENABLED=false`**: všetky ovládacie endpointy vrátia 403 a admin UI ich skryje. Scenár „čo ak“ funguje ďalej.
 
 Príklad s curl je v [docs/fazy/faza-2-telematika.md](docs/fazy/faza-2-telematika.md#ako-to-overiť).
 

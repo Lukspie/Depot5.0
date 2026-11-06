@@ -1,9 +1,10 @@
-/** Simulation control: clock (pause, speed, jump), random seed, devices, scenario summary. */
+/** Simulation control: clock (pause, speed, jump, replay, step), reset, random seed, devices, what-if. */
 
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import type { SimClock } from "../clock/clock.js";
 import { MAX_SPEED, MIN_SPEED } from "../clock/clock.js";
-import type { Engine } from "../simulator/engine.js";
+import { ReplayBusyError, type Engine } from "../simulator/engine.js";
+import { MINUTE } from "../clock/time.js";
 import type { Intervention } from "../simulator/whatif.js";
 import type { TicketVerifier } from "../ws/ticket.js";
 import { roleGuard } from "./guards.js";
@@ -13,6 +14,8 @@ export interface SimRoutesDeps {
   engine: Engine;
   verifier: TicketVerifier;
   serviceToken: string;
+  /** SIM_CONTROLS_ENABLED: false in production, every control endpoint answers 403 (ADR-053) */
+  controlsEnabled?: boolean;
 }
 
 const clockSchema = {
@@ -25,11 +28,40 @@ const clockSchema = {
     speed: { type: "number" },
     paused: { type: "boolean" },
     seed: { type: "integer" },
+    controlsEnabled: { type: "boolean" },
   },
 } as const;
 
-export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock, engine, verifier, serviceToken }) => {
-  const admin = roleGuard(verifier, serviceToken, []);
+/** clock + what a replay did (jump in replay mode, step) */
+const advanceSchema = {
+  type: "object",
+  properties: {
+    ...clockSchema.properties,
+    replay: {
+      type: "object",
+      properties: {
+        from: { type: "string" },
+        to: { type: "string" },
+        minutes: { type: "integer" },
+        scans: { type: "integer" },
+        ms: { type: "number" },
+        stepMs: { type: "number" },
+        syncMs: { type: "number" },
+      },
+    },
+  },
+} as const;
+
+/** longest replay in one request (a whole operating day) */
+const MAX_REPLAY_MIN = 24 * 60;
+
+export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock, engine, verifier, serviceToken, controlsEnabled = true }) => {
+  // control endpoints: switched off as a whole in production, then admin only
+  const controlsGate = async (_req: unknown, reply: FastifyReply): Promise<void> => {
+    if (!controlsEnabled) await reply.code(403).send({ error: "simulation controls are disabled" });
+  };
+  const admin = [controlsGate, roleGuard(verifier, serviceToken, [])];
+  const replayBusy = (reply: FastifyReply) => reply.code(409).send({ error: "a replay is already running" });
   const staff = roleGuard(verifier, serviceToken, ["dispatcher", "security", "operator"]);
   const dispatcher = roleGuard(verifier, serviceToken, ["dispatcher"]);
   const secured = { security: [{ bearerAuth: [] }] };
@@ -80,25 +112,68 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
     },
   );
 
-  app.post<{ Body: { to: string } }>(
+  app.post<{ Body: { to: string; mode?: "skip" | "replay" } }>(
     "/sim/clock/jump",
     {
       preHandler: admin,
       schema: {
         tags: ["simulation"],
-        summary: "Skok vpred na najbližší čas HH:MM, napr. 15:30 večerná vlna, 01:00 nočné kamióny, 06:00 ranné odchody (admin)",
+        summary:
+          "Skok vpred na najbližší čas HH:MM. mode=skip preskočí úsek bez dát (ADR-025), mode=replay ho rýchlo dosimuluje so skenmi, prejazdmi a alarmami (ADR-053, admin)",
         ...secured,
         body: {
           type: "object",
           required: ["to"],
-          properties: { to: { type: "string", pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" } },
+          additionalProperties: false,
+          properties: {
+            to: { type: "string", pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+            mode: { type: "string", enum: ["skip", "replay"], default: "skip" },
+          },
         },
-        response: { 200: clockSchema },
+        response: { 200: advanceSchema },
       },
     },
-    (req) => {
-      clock.jumpTo(req.body.to);
-      return engine.clockInfo();
+    async (req, reply) => {
+      if (req.body.mode !== "replay") {
+        if (engine.replaying) return replayBusy(reply);
+        clock.jumpTo(req.body.to);
+        return engine.clockInfo();
+      }
+      try {
+        const replay = await engine.advance(clock.targetOf(req.body.to));
+        return { ...engine.clockInfo(), replay };
+      } catch (err) {
+        if (err instanceof ReplayBusyError) return replayBusy(reply);
+        throw err;
+      }
+    },
+  );
+
+  app.post<{ Body: { minutes: number } }>(
+    "/sim/clock/step",
+    {
+      preHandler: admin,
+      schema: {
+        tags: ["simulation"],
+        summary: "Krok o N simulovaných minút s dátami, napr. +5 / +15 / +60 (rovnaký kód ako skok v režime replay, admin)",
+        ...secured,
+        body: {
+          type: "object",
+          required: ["minutes"],
+          additionalProperties: false,
+          properties: { minutes: { type: "integer", minimum: 1, maximum: MAX_REPLAY_MIN } },
+        },
+        response: { 200: advanceSchema },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const replay = await engine.advance(clock.now() + req.body.minutes * MINUTE);
+        return { ...engine.clockInfo(), replay };
+      } catch (err) {
+        if (err instanceof ReplayBusyError) return replayBusy(reply);
+        throw err;
+      }
     },
   );
 
@@ -133,8 +208,28 @@ export const simRoutes: FastifyPluginAsync<SimRoutesDeps> = async (app, { clock,
   app.post(
     "/sim/restart-day",
     { preHandler: admin, schema: { tags: ["simulation"], summary: "Prehrať aktuálny prevádzkový deň znova od 15:00 (admin)", ...secured } },
-    async () => {
+    async (_req, reply) => {
+      if (engine.replaying) return replayBusy(reply);
       await engine.restartDay();
+      return engine.clockInfo();
+    },
+  );
+
+  app.post(
+    "/sim/reset",
+    {
+      preHandler: admin,
+      schema: {
+        tags: ["simulation"],
+        summary:
+          "Čistý reset dňa: seed z .env, zapnuté zariadenia, bez údržby, presunov jázd a alarmov dňa, staršie alarmy uzavreté, deň od 15:00 (admin)",
+        ...secured,
+        response: { 200: clockSchema },
+      },
+    },
+    async (_req, reply) => {
+      if (engine.replaying) return replayBusy(reply);
+      await engine.cleanReset();
       return engine.clockInfo();
     },
   );

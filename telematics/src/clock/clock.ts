@@ -86,9 +86,14 @@ export class SimClock {
     this.emit("jump");
   }
 
-  /** Jump forward to the next local `HH:MM` (e.g. "01:00" during the evening = tonight). */
+  /** The next local `HH:MM` from now (e.g. "01:00" during the evening = tonight). */
+  targetOf(hhmm: string): number {
+    return nextOccurrence(this.now(), hhmm);
+  }
+
+  /** Jump forward to the next local `HH:MM` without simulating the interval (ADR-025). */
   jumpTo(hhmm: string): number {
-    const target = nextOccurrence(this.now(), hhmm);
+    const target = this.targetOf(hhmm);
     this.set(target);
     return target;
   }

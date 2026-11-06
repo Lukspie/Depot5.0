@@ -52,6 +52,8 @@ export interface EngineConfig {
   degradationHours: number;
   externalDevices: string[];
   degradedThreshold: number;
+  /** SIM_CONTROLS_ENABLED (default true): shown to the admin UI in the clock info */
+  controlsEnabled?: boolean;
 }
 
 export interface EngineDeps {
@@ -103,6 +105,25 @@ export interface DeviceInfo {
   lastHeartbeatAgoS: number | null;
 }
 
+/** Result of a replay (`advance`): how much was simulated and where the real time went. */
+export interface AdvanceResult {
+  from: string;
+  to: string;
+  minutes: number;
+  /** scans forwarded to the app */
+  scans: number;
+  /** real milliseconds: total, simulation steps (incl. db-telemetry), sync to the app */
+  ms: number;
+  stepMs: number;
+  syncMs: number;
+}
+
+export class ReplayBusyError extends Error {
+  constructor() {
+    super("a replay is already running");
+  }
+}
+
 export interface ClockInfo {
   simTime: string;
   localTime: string;
@@ -111,6 +132,7 @@ export interface ClockInfo {
   speed: number;
   paused: boolean;
   seed: number;
+  controlsEnabled: boolean;
 }
 
 interface DayState {
@@ -163,6 +185,8 @@ export interface VehicleEventData {
 
 const TICK_MS = 250;
 const FAST_FORWARD_MS = 15 * MINUTE;
+/** a replay sends trips and scans to the app this often (simulated time) */
+const REPLAY_SYNC_MS = 10 * MINUTE;
 const HEARTBEAT_MS = 10_000;
 const OFFLINE_AFTER_MS = 30_000;
 const ROLLING_MS = 30 * MINUTE;
@@ -192,6 +216,10 @@ export class Engine {
   private lastT: number;
   private ticking = false;
   private flushing = false;
+  /** target of the running replay (`advance`), null when the clock runs normally */
+  private replayTarget: number | null = null;
+  /** scans queued for the app since start (a replay reports its share; the background flush drains the queue) */
+  private forwardedScans = 0;
   private timers: NodeJS.Timeout[] = [];
   private readonly realNow: () => number;
   private seedValue: number;
@@ -279,6 +307,7 @@ export class Engine {
       speed,
       paused,
       seed: this.seedValue,
+      controlsEnabled: this.deps.config.controlsEnabled ?? true,
     };
   }
 
@@ -288,11 +317,24 @@ export class Engine {
     await this.restartDay();
   }
 
-  async restartDay(): Promise<void> {
+  /**
+   * Clean reset (phase 5d, ADR-053): the seed from .env, every switched-off device on again, and the
+   * operating day from 15:00 with the app also dropping the day's maintenance orders and closing
+   * older open alerts. Maintenance windows, moved trips and the door states go with restartDay.
+   */
+  async cleanReset(): Promise<void> {
+    this.seedValue = this.deps.config.envSeed;
+    for (const d of this.devices.values()) {
+      if (!d.external && !d.row.enabled) await this.updateDevice(d.row.code, { enabled: true });
+    }
+    await this.restartDay({ clean: true });
+  }
+
+  async restartDay(opts: { clean?: boolean } = {}): Promise<void> {
     const day = operatingDay(this.deps.clock.now());
     const start = operatingDayStart(day);
     // the app keeps parcel/trip states: they must be reset too, or the replay would differ
-    await this.deps.app.resetDay(day);
+    await this.deps.app.resetDay(day, opts.clean ?? false);
     this.pendingTrips.clear();
     this.reported.clear();
     await this.deps.store.deleteSince(start);
@@ -581,6 +623,65 @@ export class Engine {
     const book = this.book ?? (typeof this.deps.routes === "function" ? null : this.deps.routes);
     if (!book) return null;
     return { depot: book.depot, routes: book.routes };
+  }
+
+  // ------------------------------------------------------------------ replay (phase 5d, ADR-053)
+
+  get replaying(): boolean {
+    return this.replayTarget !== null;
+  }
+
+  /**
+   * Simulate every minute from now to `target` as fast as possible, with all data: scans, gate
+   * passages and sensor readings go to db-telemetry, trips and scans to the app every 10 simulated
+   * minutes (the app must see a trip loading before its scans and departed after them). Single
+   * scans are not broadcast on the WebSocket; the clock channel shows the progress. A "+N min" step
+   * and a jump in replay mode are both this method, so they give the same data as each other and
+   * as the live clock (the day is precomputed, the step size does not change it, ADR-023).
+   */
+  async advance(target: number): Promise<AdvanceResult> {
+    if (this.replayTarget !== null) throw new ReplayBusyError();
+    const started = this.realNow();
+    this.replayTarget = target;
+    const clock = this.deps.clock;
+    const wasPaused = clock.state().paused;
+    clock.pause();
+    while (this.ticking) await new Promise((r) => setTimeout(r, 5));
+    this.ticking = true;
+    const from = this.lastT;
+    const forwardedBefore = this.forwardedScans;
+    let stepMs = 0;
+    let syncMs = 0;
+    try {
+      let nextSync = from + REPLAY_SYNC_MS;
+      for (let t = from; t < target; ) {
+        t = Math.min(target, t + MINUTE);
+        clock.set(t);
+        const a = this.realNow();
+        await this.step(t);
+        stepMs += this.realNow() - a;
+        if (t >= nextSync || t === target) {
+          const b = this.realNow();
+          await this.syncToApp();
+          syncMs += this.realNow() - b;
+          nextSync = t + REPLAY_SYNC_MS;
+        }
+      }
+      await this.persist();
+    } finally {
+      this.ticking = false;
+      this.replayTarget = null;
+      if (!wasPaused) clock.resume();
+    }
+    const scans = this.forwardedScans - forwardedBefore;
+    return { from: iso(from), to: iso(target), minutes: Math.round((target - from) / MINUTE), scans, ms: this.realNow() - started, stepMs, syncMs };
+  }
+
+  /** Send everything pending to the app now (waits for a running flush); throws if the app is down. */
+  private async syncToApp(): Promise<void> {
+    while (this.flushing) await new Promise((r) => setTimeout(r, 5));
+    await this.flushTrips();
+    if (this.pendingTrips.size > 0 || this.scanQueue.length > 0) throw new Error("app sync failed during replay");
   }
 
   // ------------------------------------------------------------------ tick
@@ -1017,6 +1118,7 @@ export class Engine {
       });
       d.recent.push({ at: ev.at, ok: ev.readOk });
       if (d.row.kind === "dock_scanner" || d.row.kind === "line_scanner") {
+        this.forwardedScans++;
         this.scanQueue.push({
           device: ev.device,
           doorCode: d.row.kind === "dock_scanner" ? d.row.doorCode : null,
@@ -1032,7 +1134,8 @@ export class Engine {
       if (ev.itemCounted) m.items++;
       if (ev.readOk) m.readsOk++;
       this.metrics.set(mkey, m);
-      this.deps.hub.publish("devices", "scan", {
+      // a replay does not flood the WebSocket with every scan of the skipped interval
+      if (this.replayTarget === null) this.deps.hub.publish("devices", "scan", {
         device: ev.device,
         doorCode: d.row.doorCode,
         at: iso(ev.at),
@@ -1048,6 +1151,7 @@ export class Engine {
   private async emitGate(rows: GateRow[]): Promise<void> {
     if (rows.length === 0) return;
     for (const g of rows) {
+      if (this.replayTarget !== null) break;
       this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), device: "GATE-CAM-01" });
     }
     await this.safe("gate", () => this.deps.store.insertGatePassages(rows));
