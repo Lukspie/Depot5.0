@@ -50,6 +50,8 @@ class TripBrief(CamelModel):
     actual_arrival: datetime | None
     actual_departure: datetime | None
     predicted_arrival: datetime | None
+    # "ml" (delay model before the trip) or "telematics" (position during it), ADR-057
+    predicted_by: str | None = None
     # positive = late (arrival for inbound, departure for outbound)
     delay_min: int | None
     load: LoadStats | None = None

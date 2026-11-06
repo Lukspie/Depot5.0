@@ -41,6 +41,8 @@ class Settings(BaseSettings):
 
     # cascade warning: night truck ETA + sorting buffer > transit departure
     cascade_buffer_min: int = 30
+    # trained models (ml/artifacts, copied into the image; ADR-057)
+    ml_artifacts_dir: str = "/app/ml/artifacts"
 
     # browser origins allowed to send state-changing requests (CSRF check, ADR-014)
     app_allowed_origins: str = "http://localhost:8000,http://localhost:5173"

@@ -86,6 +86,7 @@ def reset_operating_day(db: Session, day: date, *, clean: bool = False) -> dict[
             actual_arrival=None,
             actual_departure=None,
             predicted_arrival=None,
+            predicted_by=None,
             door_id=default_dock,
         )
         .execution_options(synchronize_session=False)

@@ -7,5 +7,7 @@
 **/.pytest_cache
 .git
 .env
-ml
+# ml: only the trained artifacts go into the app image (ADR-057)
+ml/*
+!ml/artifacts
 docs

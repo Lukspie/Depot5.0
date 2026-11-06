@@ -46,6 +46,8 @@ export interface TripBrief {
   actualArrival: string | null;
   actualDeparture: string | null;
   predictedArrival: string | null;
+  /** "ml" before the trip, "telematics" during it (ADR-057) */
+  predictedBy?: string | null;
   delayMin: number | null;
   load: LoadStats | null;
 }

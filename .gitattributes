@@ -5,3 +5,4 @@
 *.joblib binary
 *.pt binary
 *.glb binary
+*.onnx binary

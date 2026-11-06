@@ -28,6 +28,8 @@ COPY app/tests ./tests
 COPY contracts ./contracts
 COPY app/alembic.ini ./
 COPY app/alembic ./alembic
+# trained ML models (phase 6, ADR-057); the app starts without them ("model nedostupný")
+COPY ml/artifacts ./ml/artifacts
 RUN pip install --no-deps .
 
 COPY --from=frontend /build/dist ./static

@@ -3,7 +3,7 @@ telematics being briefly unavailable must not break business requests."""
 
 import logging
 import time
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 import httpx
@@ -32,6 +32,30 @@ def broadcast_many(channel: str, type_: str, events: list[dict[str, Any]]) -> No
         ).raise_for_status()
     except httpx.HTTPError as exc:
         log.warning("broadcast to telematics failed: %s", exc)
+
+
+_weather_cache: tuple[float, dict[str, str]] | None = None
+
+
+def weather_of(day: date) -> str | None:
+    """Simulated weather of an operating day (telematics scenario, a delay model feature).
+    None if telematics is unreachable or the day is not loaded. Cached 30 s."""
+    global _weather_cache
+    now = time.monotonic()
+    if not _weather_cache or now - _weather_cache[0] > 30.0:
+        try:
+            resp = httpx.get(
+                f"{get_settings().telematics_internal_url}/sim/scenario",
+                headers=_headers(),
+                timeout=_TIMEOUT,
+            )
+            resp.raise_for_status()
+            days = resp.json()["days"]
+            _weather_cache = (now, {str(d["day"]): str(d["weather"]) for d in days})
+        except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
+            log.warning("cannot read the scenario weather: %s", exc)
+            return None
+    return _weather_cache[1].get(day.isoformat())
 
 
 _devices_cache: tuple[float, list[dict[str, Any]]] | None = None

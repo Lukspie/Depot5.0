@@ -22,6 +22,10 @@ dependencies = [
     "tzdata>=2024.1",
     "pyjwt>=2.9,<3",
     "httpx>=0.27,<1",
+    # phase 6 ML (ADR-057): the artifacts are pickled, training runs in this image with the same versions
+    "scikit-learn==1.9.1",
+    "joblib>=1.4,<2",
+    "numpy>=1.26,<3",
 ]
 
 [project.optional-dependencies]
@@ -56,5 +60,5 @@ mypy_path = "src"
 
 [[tool.mypy.overrides]]
 # no type information shipped
-module = ["apscheduler.*"]
+module = ["apscheduler.*", "sklearn.*", "joblib.*"]
 ignore_missing_imports = true

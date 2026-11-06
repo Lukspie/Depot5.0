@@ -536,3 +536,25 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Bez Azure (alebo pri výpadku internetu) sa prepne jednou zmenou v `.env`.
   - Nová Azure DB začína s prázdnym stavom simulátora, deň sa pripraví situáciou.
   - Azure účtuje server, kým beží, preto README ukazuje `az postgres flexible-server stop`.
+
+## ADR-057 ML v app: scikit-learn, tréning v image app, artefakty v repozitári (Fáza 6)
+- **Kontext:**
+  - PROMPT §8 chce modely v `app`, tréning v `ml/` a artefakty v `ml/artifacts/`.
+  - Modely scikit-learn sa ukladajú ako pickle (joblib) a načítať ich vie spoľahlivo len tá istá verzia knižnice.
+  - Telematika pozná odhad príchodu až počas jazdy. Pred odjazdom nemá tabuľa ETA čo ukázať okrem plánu.
+- **Rozhodnutie:**
+  - **Nové závislosti app:** `scikit-learn==1.9.1` (pevná verzia), `joblib`, `numpy`. Torch ani ťažké CV knižnice do image nepatria (ADR-013, CV v ďalších ADR).
+  - **Tréning beží v image app** (`docker compose run … app python ml/train_delay.py`), takže verzia knižnice a kódovanie príznakov sú rovnaké ako pri inferencii. Kódovanie je jedno (`depotrack/ml/delay.py`) a importuje ho aj tréningový skript.
+  - **Artefakty** (`*.joblib`, `*.onnx`) sú v gite ako binárne a do image ich kopíruje `Dockerfile` (`.dockerignore` púšťa len `ml/artifacts`).
+    - Ak artefakt chýba alebo nesedí verzia scikit-learn, app naštartuje bez modelu, `GET /api/ml/status` vráti `available: false` a `/system` ukáže „model nedostupný“.
+    - Načítavajú sa len vlastné artefakty z repozitára, nikdy súbory od používateľa (pickle je spustiteľný kód).
+  - **Predikcia meškania:**
+    - `HistGradientBoostingRegressor` (`loss=absolute_error`), MAE 6,14 min oproti 7,19 min pri baseline,
+    - úloha `ml_job` v APScheduleri beží každých 5 reálnych sekúnd a koná, keď prejde 5 simulovaných minút,
+    - plánovaným príjazdom doplní `predicted_arrival` s `trips.predicted_by = "ml"` (Alembic `f2a6c8e4d1b7`) a prepočíta kaskádu,
+    - telematika (`predicted_by = "telematics"`) má prednosť a jej prázdny odhad ML neprepíše, kým jazda nepríde,
+    - simulované počasie berie app z `GET /sim/scenario` (cache 30 s).
+- **Dôsledok:**
+  - Tabuľa ETA a kaskáda majú odhad aj pred odjazdom kamióna. Po pretrénovaní treba `docker compose build app`.
+  - Image app je väčší o scikit-learn (~40 MB).
+  - Model sa učí na simulovanej histórii (ml/README.md, obmedzenia).

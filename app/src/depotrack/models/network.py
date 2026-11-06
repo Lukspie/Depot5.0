@@ -129,6 +129,8 @@ class Trip(Base):
     planned_arrival: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     actual_arrival: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     predicted_arrival: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # "ml" before the trip (delay model), "telematics" during it (position); ADR-057
+    predicted_by: Mapped[str | None] = mapped_column(String(16))
     planned_departure: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     actual_departure: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[TripStatus] = mapped_column(

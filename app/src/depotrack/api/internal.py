@@ -49,6 +49,7 @@ from depotrack.services.alerts import AlertChange, alert_event, resolve_alert, u
 from depotrack.services.cascade import evaluate_cascade
 from depotrack.services.couriers import complete_stop, load_parcel, routes_of_day, staging_bay
 from depotrack.services.loading import line_scan, loading_dock, process_scan, scan_event
+from depotrack.services.ml_eta import ML, TELEMATICS
 from depotrack.services.operating_day import ensure_operating_day, reset_operating_day
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.trip_plan import operating_day_of
@@ -164,7 +165,13 @@ def trip_events(
         trip.status = ev.status
         trip.actual_arrival = ev.actual_arrival
         trip.actual_departure = ev.actual_departure
-        trip.predicted_arrival = ev.predicted_arrival
+        if ev.predicted_arrival is not None:
+            trip.predicted_arrival = ev.predicted_arrival
+            trip.predicted_by = TELEMATICS
+        elif trip.predicted_by != ML or ev.actual_arrival is not None:
+            # keep the ML prediction until telematics has its own or the truck arrived (ADR-057)
+            trip.predicted_arrival = None
+            trip.predicted_by = None
         touched.append(trip)
     db.flush()
 

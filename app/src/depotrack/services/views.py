@@ -76,6 +76,7 @@ def trip_brief(
         actual_arrival=trip.actual_arrival,
         actual_departure=trip.actual_departure,
         predicted_arrival=trip.predicted_arrival,
+        predicted_by=trip.predicted_by,
         delay_min=delay_minutes(trip, now),
         load=load,
     )
