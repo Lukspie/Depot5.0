@@ -182,6 +182,14 @@ Commituj po častiach, nepushuj. Po každej časti mi daj krátke zhrnutie a pok
 
 Azure server (Azure for Students, región Austria East podľa politiky povolených regiónov, Burstable B1ms v bezplatnej ponuke) vytvoril člen tímu ručne v portáli. Agent k nemu pristupuje len cez `TELEMETRY_DATABASE_URL` v `.env`, ktorý nie je v repozitári.
 
+### Fáza 7b – demo (7. 11.)
+Posledné úpravy pred odovzdaním. Tím zadal 5 bodov v poradí priority, po každom bode commit a reviewer po bodoch 1, 2 a na konci:
+1. **Brána:** model len odporúča (typ vozidla, ŠPZ), identitu určí databáza vozového parku a povolených ŠPZ, pri neistote rozhodne ochranka. Front rozhodnutí na `/gate`, audit (kto, kedy, prečo), mix prejazdov zo simulátora, poctivé vyhodnotenie modelu.
+2. **Kuriér:** `/courier` ako mobilná appka (rám telefónu na PC), simulovaný Bluetooth skener spárovaný s dodávkou, typy doručenia (osobne s časovým oknom, schránka, box), poradie zastávok s oknami, oprava neaktívneho „Doručené“ pred nakládkou, prístup z telefónu v rovnakej Wi-Fi.
+3. **Dispečeri:** 3 účty po zmenách. 4. **Ranná nakládka** od 6:30, dodávky stoja v areáli v tieni aj vo Flotile. 5. **Layouty skladov** (ak ostane čas).
+
+Vzniklo ADR-061 až 063, body 1–4 sú hotové. Bod 5 tím presunul po odovzdanie. Agent v OSM našiel kandidáta na sklad Žilina, ale budovu nehádal. Reviewer zachytil napríklad to, že vytlačená ŠPZ bez vozidla otvorila bránu, a meranie trás len na 16 trasách namiesto všetkých 648. Obe chyby sú opravené (ADR-061, ADR-062).
+
 ## 6. Čo rozhodol a opravil tím (príklady)
 
 | Situácia | Čo urobil tím |
@@ -198,7 +206,7 @@ Azure server (Azure for Students, región Austria East podľa politiky povolený
 
 ## 7. Kontrola kvality
 
-- **Automatické testy:** 148 testov hlavného backendu (pytest) a 120 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript).
+- **Automatické testy:** 171 testov hlavného backendu (pytest) a 123 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript). Stav k 7. 11. 2026 po Fáze 7b.
 - **Hooks:** lint po každej úprave, typecheck a testy pred koncom každej odpovede agenta.
 - **Reviewer:** po každej fáze. Našiel napríklad rozsah dôveryhodných proxy, ktorý by umožnil obísť limit prihlásení, skeny prichádzajúce do WMS až po odchode kamióna, model meškania bez zimných dát alebo chybný štart simulácie na novej Azure DB. Všetky blokujúce nálezy sú opravené.
 - **Test z čistého klonu** pred odovzdaním a ručné overenie hlavných scenárov v aplikácii.

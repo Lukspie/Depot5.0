@@ -245,7 +245,7 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
   - Satelitné snímky tímu v `docs/design/` zatiaľ nie sú.
   - Žilina v OSM (`python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf 49.16,18.62,49.28,18.86`, 7. 11. 2026):
     - jediný objekt s „Slovak Parcel Service“ je **areál** way `810621382` (`landuse=industrial`, stred 49,18727 / 18,84900, 160 × 108 m),
-    - v areáli leží celá jediná budova: way `321455829` (`building=industrial`, bez názvu, stred 49,18703 / 18,84911, 127 × 33 m, 2 919 m², dlhá strana ~73°). Je to **hlavný kandidát** na halu skladu, či ide o sklad SPS a na ktorej strane sú rampy, overí satelitná snímka,
+    - v areáli leží celá jediná budova: way `321455829` (`building=industrial`, bez názvu, stred 49,18703 / 18,84911, 127 × 33 m, 2 919 m², dlhá strana ~73°). Je to **kandidát na halu skladu**. Podľa tímu (satelitná snímka): **rampy na západnej dlhej strane, administratívna časť na južnom konci**,
     - ostatné veľké budovy v oblasti (napr. `810621390` ~0,3 km juhovýchodne, haly 3–4 km severozápadne) nie sú v areáli SPS a za kandidátov ich nepovažujeme.
 - 7b bod 2: kratšie trasy kuriérov pri oknách (okná ponúkať podľa plánovanej trasy, alebo 2-opt na pozadí). Dnes +82 % km a väčšina návratov po 15:00 (ADR-062).
 - Fáza 5b okrem `/courier`: UX review všetkých obrazoviek, `/shadow` podľa makety, `/board` pri 390 px, nové screenshoty Fázy 4.
