@@ -61,6 +61,10 @@ export interface CourierStop {
   predictedEta: string | null;
   deliveredAt: string | null;
   outcome: StopOutcome | null;
+  /** ADR-062 */
+  deliveryType: "handover" | "mailbox" | "locker";
+  windowFrom: string | null;
+  windowTo: string | null;
 }
 
 export interface CourierRouteBrief {
@@ -77,6 +81,8 @@ export interface CourierRouteBrief {
   delivered: number;
   failed: number;
   loaded: number;
+  stagingBay: string | null;
+  plannedDeparture: string | null;
 }
 
 export interface CourierRoute extends CourierRouteBrief {
@@ -116,6 +122,20 @@ export function useFinishStop() {
       sendJson<CourierStop>("POST", `/api/courier/stops/${String(stopId)}`, {
         outcome,
       }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["courier"] }),
+  });
+}
+
+export interface ScanResult {
+  action: "loaded" | "selected" | "done";
+  stop: CourierStop;
+}
+
+/** The Bluetooth scanner paired with the van (simulated): loads before the departure, then selects. */
+export function useCourierScan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (barcode: string) => sendJson<ScanResult>("POST", "/api/courier/scan", { barcode }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["courier"] }),
   });
 }

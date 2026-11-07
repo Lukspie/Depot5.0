@@ -3,15 +3,16 @@
 Courier kurier0N drives district KE-0N with van KE-30NKR. The route of operating day D is driven
 on the morning of D+1 (still inside operating day D, which ends at 15:00): from 07:00 the courier
 scans the parcels into the van at staging bay SB-0N, leaves Budimír at ~07:30 and visits the
-stops in nearest-neighbour order. Stops = the district's parcels of day D.
+stops in the order of services/routing.py (handover windows, mailboxes and lockers fill the gaps,
+ADR-062). Stops = the district's parcels of day D.
 
-The planned ETAs here are a rough estimate (straight line × road factor). Telematics drives the
-real route on the street graph and reports what happens (POST /internal/events/couriers):
+The planned ETAs here are a rough estimate (straight line × road factor, waiting for windows).
+Telematics drives the real route on the street graph and reports what happens
+(POST /internal/events/couriers):
 parcel loaded -> out_for_delivery + tracking link (SMS), departed, delivered / failed, returned.
 The courier can also finish a stop by hand on /courier.
 """
 
-import math
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
@@ -37,36 +38,11 @@ from depotrack.models import (
 from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, StopOutcome, UserRole
 from depotrack.services import tracking
 from depotrack.services.parcels import LOADABLE, in_day
+from depotrack.services.routing import Stop, Visit, plan_tour
 
 LOADING_START = time(7, 0)
 DEPARTURE = time(7, 30)
-PLAN_SPEED_KMH = 28.0
-ROAD_FACTOR = 1.35  # street distance vs. straight line
-SERVICE_MIN = 4.0
 COURIER_USERNAME = re.compile(r"^kurier(\d{2})$")
-
-
-def km(a: tuple[float, float], b: tuple[float, float]) -> float:
-    dlat = math.radians(b[0] - a[0])
-    dlon = math.radians(b[1] - a[1])
-    h = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(a[0])) * math.cos(math.radians(b[0])) * math.sin(dlon / 2) ** 2
-    )
-    return 2 * 6371.0 * math.asin(math.sqrt(h))
-
-
-def nearest_neighbour(start: tuple[float, float], parcels: list[Parcel]) -> list[Parcel]:
-    """Greedy tour: always drive to the closest remaining stop (ties broken by barcode)."""
-    left = sorted(parcels, key=lambda p: p.barcode)
-    order: list[Parcel] = []
-    here = start
-    while left:
-        nxt = min(left, key=lambda p: (km(here, (p.lat, p.lon)), p.barcode))
-        order.append(nxt)
-        left.remove(nxt)
-        here = (nxt.lat, nxt.lon)
-    return order
 
 
 def delivery_date(day: date) -> date:
@@ -130,16 +106,60 @@ def build_courier_routes(db: Session, day: date) -> list[CourierRoute]:
         )
         db.add(route)
         db.flush()
-        t = datetime.combine(when, DEPARTURE, TZ)
-        here = (depot.lat, depot.lon)
-        for seq, p in enumerate(nearest_neighbour(here, parcels), start=1):
-            t += timedelta(minutes=km(here, (p.lat, p.lon)) * ROAD_FACTOR / PLAN_SPEED_KMH * 60)
-            db.add(RouteStop(route_id=route.id, parcel_id=p.id, sequence=seq, planned_eta=t))
-            t += timedelta(minutes=SERVICE_MIN)
-            here = (p.lat, p.lon)
+        by_barcode = {p.barcode: p for p in parcels}
+        for seq, v in enumerate(_tour(depot, when, parcels), start=1):
+            p = by_barcode[v.stop.key]
+            db.add(RouteStop(route_id=route.id, parcel_id=p.id, sequence=seq, planned_eta=v.eta))
         routes.append(route)
     db.flush()
     return routes
+
+
+def _tour(depot: Depot, when: date, parcels: list[Parcel]) -> list[Visit]:
+    stops = [
+        Stop(
+            p.barcode,
+            p.lat,
+            p.lon,
+            p.delivery_type,
+            (datetime.combine(when, p.window_from, TZ), datetime.combine(when, p.window_to, TZ))
+            if p.window_from and p.window_to
+            else None,
+        )
+        for p in parcels
+    ]
+    return plan_tour((depot.lat, depot.lon), datetime.combine(when, DEPARTURE, TZ), stops)
+
+
+def replan_routes(db: Session, day: date) -> int:
+    """Routes built before ADR-062 (nearest neighbour) get the window-aware order, if nothing of
+    them happened yet (not departed, no stop finished). Seed step, idempotent per day."""
+    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+    changed = 0
+    for route in routes_of_day(db, day):
+        if route.departed_at is not None:
+            continue
+        rows = list(
+            db.execute(
+                select(RouteStop, Parcel)
+                .join(Parcel, RouteStop.parcel_id == Parcel.id)
+                .where(RouteStop.route_id == route.id)
+            ).tuples()
+        )
+        if any(s.outcome is not None for s, _ in rows):
+            continue
+        by_barcode = {p.barcode: s for s, p in rows}
+        # two passes: the (route, sequence) pairs are unique
+        for s, _ in rows:
+            s.sequence = -s.sequence
+        db.flush()
+        for seq, v in enumerate(_tour(depot, route.date, [p for _, p in rows]), start=1):
+            stop = by_barcode[v.stop.key]
+            stop.sequence = seq
+            stop.planned_eta = v.eta
+        db.flush()
+        changed += 1
+    return changed
 
 
 def routes_of_day(db: Session, day: date) -> list[CourierRoute]:

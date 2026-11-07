@@ -1,95 +1,83 @@
 /**
- * Courier screen /courier (ADR-011): mobile-first list of today's stops with big
- * "Doručené" / "Nezastihnutý" buttons, plus the same map component as /fleet and /track.
- * Admin and dispatcher can pick a courier (?courier=kurier03); only the courier (and admin) can
- * finish a stop.
+ * Courier app /courier (ADR-011, phase 7b ADR-062): a mobile app. On a phone it fills the screen,
+ * on a desktop it sits in a phone frame (~390 × 844) in the middle. Bottom navigation: stops, map,
+ * scanner. The Bluetooth scanner paired with the van is simulated: before the departure a scan
+ * loads the parcel into the van, later it selects the stop of the parcel and shows it on the map.
+ * Admin and dispatcher look at a courier's app (?courier=kurier03); only the courier (and admin)
+ * can finish a stop or scan.
  */
 
-import { CheckCircle2, ChevronDown, MapPin, Package, PackageX, Truck, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
-import { useMe } from "../api/auth";
+import {
+  ArrowLeft,
+  Bluetooth,
+  BluetoothOff,
+  Boxes,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  ListChecks,
+  LogOut,
+  Mailbox,
+  Map as MapIcon,
+  Package,
+  PackageCheck,
+  ScanLine,
+  UserRound,
+  XCircle,
+} from "lucide-react";
+import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Link, useSearchParams } from "react-router";
+import { useLogout, useMe } from "../api/auth";
 import { isApiError } from "../api/client";
-import { useCourierRoute, useCourierRoutes, useFinishStop, type CourierRoute, type CourierStop } from "../api/delivery";
+import { useCourierRoute, useCourierRoutes, useCourierScan, useFinishStop, type CourierRoute, type CourierStop } from "../api/delivery";
 import { MapView } from "../components/map/MapView";
 import { FitBounds, HOME_ICON, PointMarkers, VAN_ICON, type MapPoint } from "../components/map/Overlays";
-import { Badge, Button, Card, EmptyState, PageHeader, Progress, Spinner, Tabs } from "../components/ui";
-import { hhmm, PARCEL_STATUS } from "../domain/labels";
+import { RouteLine } from "../components/map/RouteLine";
+import { Badge, Button, EmptyState, Progress, Spinner, type Tone } from "../components/ui";
+import { hhmm } from "../domain/labels";
+
+type Tab = "stops" | "map" | "scan";
+
+const KIND: Record<CourierStop["deliveryType"], { label: string; icon: ReactNode }> = {
+  handover: { label: "Osobné odovzdanie", icon: <UserRound size={14} /> },
+  mailbox: { label: "Do schránky", icon: <Mailbox size={14} /> },
+  locker: { label: "Výdajný box", icon: <Boxes size={14} /> },
+};
 
 function eta(s: CourierStop): string | null {
   return s.predictedEta ?? s.plannedEta;
 }
 
-function routeState(r: CourierRoute): {
-  label: string;
-  tone: "ok" | "info" | "neutral" | "warn";
-} {
-  if (r.returnedAt) return { label: "Späť v depe", tone: "neutral" };
-  if (r.departedAt) return { label: "Na trase", tone: "info" };
-  if (r.loaded > 0) return { label: "Nakladá", tone: "ok" };
-  return { label: "Pred nakládkou", tone: "neutral" };
+/** "Stihneš / nestihneš okno" of a personal handover by the current ETA. */
+function windowState(s: CourierStop): { label: string; tone: Tone } | null {
+  const e = eta(s);
+  if (s.deliveryType !== "handover" || !s.windowFrom || !s.windowTo || !e || s.outcome) return null;
+  const t = Date.parse(e);
+  if (t > Date.parse(s.windowTo)) return { label: "nestihneš okno", tone: "danger" };
+  if (t < Date.parse(s.windowFrom)) return { label: "počkáš na okno", tone: "info" };
+  if (Date.parse(s.windowTo) - t < 15 * 60_000) return { label: "tesne stihneš", tone: "warn" };
+  return { label: "stihneš okno", tone: "ok" };
 }
 
-function NextStop({ stop, canAct }: { stop: CourierStop; canAct: boolean }) {
-  const finish = useFinishStop();
-  const inVan = stop.parcelStatus === "out_for_delivery";
-  const error = finish.error;
+function KindBadge({ s }: { s: CourierStop }) {
+  const k = KIND[s.deliveryType];
   return (
-    <Card className="border-brand-500 border-2">
-      <div className="text-brand-700 text-[11px] font-semibold tracking-wider uppercase">Ďalšia zastávka</div>
-      <div className="mt-1 flex items-start gap-3">
-        <div className="bg-brand-500 text-on-brand flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-bold tabular-nums">
-          {stop.sequence}
-        </div>
-        <div className="min-w-0">
-          <div className="text-lg leading-tight font-semibold">{stop.address}</div>
-          <div className="text-ink-muted text-sm">{stop.recipientName}</div>
-          <div className="text-ink-muted mt-1 flex flex-wrap gap-x-3 text-xs">
-            <span className="font-mono">{stop.barcode}</span>
-            <span>{stop.weightKg.toFixed(1)} kg</span>
-            <span>ETA {hhmm(eta(stop))}</span>
-          </div>
-        </div>
-      </div>
-      {canAct && (
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Button
-            size="lg"
-            className="bg-ok-600 hover:bg-ok-600 text-white hover:opacity-90"
-            icon={<CheckCircle2 size={20} />}
-            disabled={!inVan || finish.isPending}
-            onClick={() => finish.mutate({ stopId: stop.id, outcome: "delivered" })}
-          >
-            Doručené
-          </Button>
-          <Button
-            size="lg"
-            variant="secondary"
-            className="text-danger-600 border-danger-600"
-            icon={<XCircle size={20} />}
-            disabled={!inVan || finish.isPending}
-            onClick={() => finish.mutate({ stopId: stop.id, outcome: "failed" })}
-          >
-            Nezastihnutý
-          </Button>
-        </div>
+    <span className="text-ink-muted inline-flex items-center gap-1 text-xs">
+      {k.icon}
+      {k.label}
+      {s.deliveryType === "handover" && s.windowFrom && s.windowTo && (
+        <span className="tabular-nums">
+          {" "}
+          {hhmm(s.windowFrom)}–{hhmm(s.windowTo)}
+        </span>
       )}
-      {!inVan && <p className="text-ink-muted mt-3 text-sm">Balík ešte nie je naskenovaný v dodávke.</p>}
-      {error && (
-        <p className="text-danger-600 mt-3 text-sm">
-          {isApiError(error, 409)
-            ? "Zastávka je už uzavretá alebo balík nie je v dodávke."
-            : "Nepodarilo sa uložiť, skúste znova."}
-        </p>
-      )}
-    </Card>
+    </span>
   );
 }
 
 /**
  * Open stops split at the last finished one: the next stop is the first open one after it; open
- * stops before it were skipped (e.g. events lost while the simulator restarted) and must not be
- * shown as "next" with an ETA from the past (phase 5b fix).
+ * stops before it were skipped and must not be shown as "next" with an ETA from the past (5b fix).
  */
 function splitStops(stops: CourierStop[]): { upcoming: CourierStop[]; skipped: CourierStop[]; done: CourierStop[] } {
   const done = stops.filter((s) => s.outcome !== null);
@@ -98,15 +86,113 @@ function splitStops(stops: CourierStop[]): { upcoming: CourierStop[]; skipped: C
   return { upcoming: open.filter((s) => s.sequence > lastDone), skipped: open.filter((s) => s.sequence < lastDone), done };
 }
 
+/** The stop to show: the one picked by a scan (while open), else the next on the route. */
+function currentStop(route: CourierRoute, selected: number | null): CourierStop | undefined {
+  const picked = route.stopList.find((s) => s.id === selected && s.outcome === null);
+  return picked ?? splitStops(route.stopList).upcoming[0];
+}
+
+function loadingPhase(r: CourierRoute): boolean {
+  return !r.departedAt && r.loaded < r.stops;
+}
+
+// ------------------------------------------------------------------ stops tab
+
+function LoadingCard({ route, onScan }: { route: CourierRoute; onScan?: () => void }) {
+  return (
+    <section className="bg-brand-50 border-brand-500 rounded-2xl border-2 p-4">
+      <div className="text-brand-700 text-[11px] font-semibold tracking-wider uppercase">Nakládka</div>
+      <div className="mt-1 text-lg leading-tight font-semibold">
+        Státie {route.stagingBay ?? "—"} · odchod {hhmm(route.plannedDeparture)}
+      </div>
+      <div className="mt-3 mb-1 flex justify-between text-sm">
+        <span className="text-ink-muted">V dodávke</span>
+        <span className="font-semibold tabular-nums">
+          {route.loaded} / {route.stops}
+        </span>
+      </div>
+      <Progress value={route.loaded} max={route.stops} tone="brand" />
+      <p className="text-ink-muted mt-3 text-sm">Naskenujte balíky skenerom pri nakládke. Doručovať sa dá po odchode z depa.</p>
+      {onScan && (
+        <Button size="lg" className="mt-3 w-full" icon={<ScanLine size={20} />} onClick={onScan}>
+          Otvoriť skener
+        </Button>
+      )}
+    </section>
+  );
+}
+
+function NextStop({ stop, canAct, picked, first }: { stop: CourierStop; canAct: boolean; picked: boolean; first: boolean }) {
+  const finish = useFinishStop();
+  const w = windowState(stop);
+  return (
+    <section className="bg-surface border-brand-500 rounded-2xl border-2 p-4">
+      <div className="text-brand-700 flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase">
+        <span>{picked ? "Vybraná skenom" : first ? "Prvá zastávka po odchode" : "Ďalšia zastávka"}</span>
+        {w && <Badge tone={w.tone} size="sm">{w.label}</Badge>}
+      </div>
+      <div className="mt-1 flex items-start gap-3">
+        <div className="bg-brand-500 text-on-brand flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-bold tabular-nums">
+          {stop.sequence}
+        </div>
+        <div className="min-w-0">
+          <div className="text-lg leading-tight font-semibold">{stop.address}</div>
+          <div className="text-ink-muted text-sm">{stop.recipientName}</div>
+          <div className="mt-1">
+            <KindBadge s={stop} />
+          </div>
+          <div className="text-ink-muted mt-1 flex flex-wrap gap-x-3 text-xs">
+            <span className="font-mono">{stop.barcode}</span>
+            <span>{stop.weightKg.toFixed(1)} kg</span>
+            <span className="flex items-center gap-1">
+              <Clock size={12} /> ETA {hhmm(eta(stop))}
+            </span>
+          </div>
+        </div>
+      </div>
+      {canAct && (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Button
+            size="lg"
+            className="bg-ok-600 hover:bg-ok-600 py-4 text-white hover:opacity-90"
+            icon={<CheckCircle2 size={22} />}
+            disabled={finish.isPending}
+            onClick={() => finish.mutate({ stopId: stop.id, outcome: "delivered" })}
+          >
+            Doručené
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="text-danger-600 border-danger-600 py-4"
+            icon={<XCircle size={22} />}
+            disabled={finish.isPending || stop.deliveryType !== "handover"}
+            title={stop.deliveryType !== "handover" ? "Schránka a box nepotrebujú zákazníka doma" : undefined}
+            onClick={() => finish.mutate({ stopId: stop.id, outcome: "failed" })}
+          >
+            Nezastihnutý
+          </Button>
+        </div>
+      )}
+      {finish.error && (
+        <p className="text-danger-600 mt-3 text-sm">
+          {isApiError(finish.error, 409) ? "Zastávka je už uzavretá alebo balík nie je v dodávke." : "Nepodarilo sa uložiť, skúste znova."}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function StopRow({ s, skipped = false }: { s: CourierStop; skipped?: boolean }) {
+  const w = windowState(s);
   return (
     <li className="flex items-center gap-3 py-2.5">
-      <span className="bg-neutral-100 text-ink flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold tabular-nums">
+      <span className="text-ink flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-sm font-semibold tabular-nums">
         {s.sequence}
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{s.address}</div>
-        <div className="text-ink-muted truncate text-xs">{s.recipientName}</div>
+        <KindBadge s={s} />
       </div>
       <div className="shrink-0 text-right">
         {s.outcome ? (
@@ -118,81 +204,91 @@ function StopRow({ s, skipped = false }: { s: CourierStop; skipped?: boolean }) 
             vynechaná
           </Badge>
         ) : (
-          <span className="text-sm tabular-nums">{hhmm(eta(s))}</span>
+          <>
+            <div className="text-sm tabular-nums">{hhmm(eta(s))}</div>
+            {w && w.tone !== "ok" && <div className={`text-[11px] ${w.tone === "danger" ? "text-danger-600" : "text-ink-muted"}`}>{w.label}</div>}
+          </>
         )}
       </div>
     </li>
   );
 }
 
-function StopsList({ route, canAct }: { route: CourierRoute; canAct: boolean }) {
+function StopsTab({ route, canAct, selected, onScan }: { route: CourierRoute; canAct: boolean; selected: number | null; onScan?: () => void }) {
   const [showDone, setShowDone] = useState(false);
   const { upcoming, skipped, done } = splitStops(route.stopList);
-  const [next, ...rest] = upcoming;
+  const current = currentStop(route, selected);
+  const rest = upcoming.filter((s) => s.id !== current?.id);
+  const loading = loadingPhase(route);
+  const inVan = current?.parcelStatus === "out_for_delivery";
   return (
-    <div className="space-y-4">
-      {next ? (
-        <NextStop stop={next} canAct={canAct} />
-      ) : (
-        <Card>
+    <div className="space-y-3 p-3">
+      {loading && <LoadingCard route={route} onScan={onScan} />}
+      {current && (!loading || inVan) && (
+        <NextStop stop={current} canAct={canAct && inVan && route.departedAt !== null} picked={current.id === selected} first={!route.departedAt} />
+      )}
+      {!current && (
+        <div className="bg-surface rounded-2xl p-4">
           <EmptyState
             icon={<CheckCircle2 size={20} />}
             title={skipped.length ? "Trasa je prejdená" : "Všetky zastávky sú hotové"}
-            description={skipped.length ? "Zostali vynechané zastávky (nižšie). Doručte ich alebo ich označte." : "Vráťte sa do depa Budimír."}
+            description={skipped.length ? "Zostali vynechané zastávky (nižšie)." : "Vráťte sa do depa Budimír."}
           />
-        </Card>
+        </div>
       )}
       {rest.length > 0 && (
-        <Card title={`Ďalšie zastávky (${String(rest.length)})`}>
-          <ul className="divide-line -my-2 divide-y">
+        <section className="bg-surface rounded-2xl px-4 py-2">
+          <h3 className="text-ink-muted pt-2 text-xs font-semibold tracking-wider uppercase">
+            {loading ? "Poradie zastávok" : "Ďalšie zastávky"} ({rest.length})
+          </h3>
+          <ul className="divide-line divide-y">
             {rest.map((s) => (
               <StopRow key={s.id} s={s} />
             ))}
           </ul>
-        </Card>
+        </section>
       )}
       {skipped.length > 0 && (
-        <Card title={`Vynechané (${String(skipped.length)})`} subtitle="Zastávky pred poslednou hotovou, ktoré nemajú výsledok.">
-          <ul className="divide-line -my-2 divide-y">
+        <section className="bg-surface rounded-2xl px-4 py-2">
+          <h3 className="text-ink-muted pt-2 text-xs font-semibold tracking-wider uppercase">Vynechané ({skipped.length})</h3>
+          <ul className="divide-line divide-y">
             {skipped.map((s) => (
               <StopRow key={s.id} s={s} skipped />
             ))}
           </ul>
-        </Card>
+        </section>
       )}
       {done.length > 0 && (
-        <Card
-          title={`Hotové (${String(done.length)})`}
-          actions={
-            <button
-              type="button"
-              className="text-ink-muted flex items-center gap-1 text-sm"
-              onClick={() => setShowDone(!showDone)}
-            >
-              {showDone ? "Skryť" : "Zobraziť"}
-              <ChevronDown size={16} className={showDone ? "rotate-180" : ""} />
-            </button>
-          }
-        >
+        <section className="bg-surface rounded-2xl px-4 py-2">
+          <button type="button" className="flex w-full items-center justify-between py-2 text-sm" aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
+            <span className="text-ink-muted text-xs font-semibold tracking-wider uppercase">Hotové ({done.length})</span>
+            <ChevronDown size={16} className={showDone ? "rotate-180" : ""} />
+          </button>
           {showDone && (
-            <ul className="divide-line -my-2 divide-y">
+            <ul className="divide-line divide-y">
               {[...done].reverse().map((s) => (
                 <StopRow key={s.id} s={s} />
               ))}
             </ul>
           )}
-        </Card>
+        </section>
       )}
     </div>
   );
 }
 
-function RouteMap({ route }: { route: CourierRoute }) {
-  // the next stop (brand colour) first, then the rest; skipped ones at the end
+// ------------------------------------------------------------------ map tab
+
+function MapTab({ route, selected }: { route: CourierRoute; selected: number | null }) {
+  const current = currentStop(route, selected);
   const open = useMemo(() => {
     const { upcoming, skipped } = splitStops(route.stopList);
-    return [...upcoming, ...skipped];
-  }, [route.stopList]);
+    const list = [...upcoming, ...skipped];
+    return current ? [current, ...list.filter((s) => s.id !== current.id)] : list;
+  }, [route.stopList, current]);
+  const start: [number, number] = route.vehicle ? [route.vehicle.lat, route.vehicle.lon] : [route.depot.lat, route.depot.lon];
+  // orientation line: from the van (or the depot) through the next stops in order
+  const line = useMemo((): [number, number][] => [start, ...open.slice(0, 10).map((s): [number, number] => [s.lat, s.lon])], [start[0], start[1], open]); // eslint-disable-line react-hooks/exhaustive-deps
   const points: MapPoint[] = useMemo(() => {
     const list: MapPoint[] = open.map((s, i) => ({
       id: `s${String(s.id)}`,
@@ -203,48 +299,149 @@ function RouteMap({ route }: { route: CourierRoute }) {
       color: i === 0 ? "var(--color-brand-500)" : "var(--color-neutral-600)",
       title: `${String(s.sequence)}. ${s.address}`,
     }));
-    list.push({
-      id: "depot",
-      ...route.depot,
-      icon: HOME_ICON,
-      color: "var(--color-chrome)",
-      title: "Depo Budimír",
-    });
+    list.push({ id: "depot", ...route.depot, icon: HOME_ICON, color: "var(--color-chrome)", title: "Depo Budimír" });
     if (route.vehicle)
-      list.push({
-        id: "van",
-        lat: route.vehicle.lat,
-        lon: route.vehicle.lon,
-        icon: VAN_ICON,
-        color: "var(--color-info-600)",
-        title: route.vehiclePlate,
-      });
+      list.push({ id: "van", lat: route.vehicle.lat, lon: route.vehicle.lon, icon: VAN_ICON, color: "var(--color-info-600)", title: route.vehiclePlate });
     return list;
   }, [open, route.depot, route.vehicle, route.vehiclePlate]);
-  const fit = open.slice(0, 12).map((s): [number, number] => [s.lat, s.lon]);
-  if (route.vehicle) fit.push([route.vehicle.lat, route.vehicle.lon]);
+  const fit: [number, number][] = current ? [start, [current.lat, current.lon]] : line;
+  const w = current ? windowState(current) : null;
   return (
-    <Card flush className="overflow-hidden">
-      <div className="h-[60vh] min-h-80">
-        <MapView pitch={35}>
-          <PointMarkers points={points} />
-          <FitBounds points={fit} fitKey={String(route.id)} />
-        </MapView>
-      </div>
-      <p className="text-ink-muted px-4 py-2.5 text-xs">Zobrazených {open.length} otvorených zastávok, oranžová je najbližšia.</p>
-    </Card>
+    <div className="relative h-full min-h-[24rem]">
+      <MapView pitch={35} className="absolute inset-0">
+        <RouteLine points={line} />
+        <PointMarkers points={points} />
+        <FitBounds points={fit} fitKey={`${String(route.id)}-${String(current?.id ?? 0)}`} />
+      </MapView>
+      {current && (
+        <div className="bg-surface shadow-float absolute inset-x-3 bottom-9 rounded-2xl p-3">
+          <div className="flex items-start gap-3">
+            <div className="bg-brand-500 text-on-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold tabular-nums">{current.sequence}</div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold">{current.address}</div>
+              <KindBadge s={current} />
+            </div>
+            <div className="shrink-0 text-right">
+              <div className="text-sm font-semibold tabular-nums">{hhmm(eta(current))}</div>
+              {w && <Badge tone={w.tone} size="sm">{w.label}</Badge>}
+            </div>
+          </div>
+          <p className="text-ink-muted mt-2 text-[11px]">Čiara je orientačné poradie ďalších zastávok, nie cesta po uliciach.</p>
+        </div>
+      )}
+    </div>
   );
 }
+
+// ------------------------------------------------------------------ scanner tab
+
+function ScanTab({ route, canAct, onPicked }: { route: CourierRoute; canAct: boolean; onPicked: (stopId: number) => void }) {
+  const [connected, setConnected] = useState(true);
+  const [code, setCode] = useState("");
+  const [log, setLog] = useState<{ text: string; tone: Tone }[]>([]);
+  const scan = useCourierScan();
+  const input = useRef<HTMLInputElement>(null);
+  const loading = loadingPhase(route);
+
+  const run = (barcode: string) => {
+    scan.mutate(barcode, {
+      onSuccess: (r) => {
+        const msg =
+          r.action === "loaded"
+            ? `Naložené ${r.stop.barcode} → zastávka ${String(r.stop.sequence)}`
+            : r.action === "done"
+              ? `${r.stop.barcode}: zastávka ${String(r.stop.sequence)} je už vybavená`
+              : `${r.stop.barcode}: zastávka ${String(r.stop.sequence)} na mape`;
+        setLog((l) => [{ text: msg, tone: (r.action === "done" ? "neutral" : "ok") as Tone }, ...l].slice(0, 6));
+        if (r.action === "selected") onPicked(r.stop.id);
+      },
+      onError: (err) => {
+        const text = isApiError(err, 404) ? `${barcode}: nie je na vašej dnešnej trase` : `${barcode}: sken sa nepodarilo uložiť`;
+        setLog((l) => [{ text, tone: "danger" as Tone }, ...l].slice(0, 6));
+      },
+    });
+    setCode("");
+    input.current?.focus();
+  };
+  // a simulated scan: during loading the next parcel not yet in the van, then the next open stop
+  const simulated = loading
+    ? route.stopList.find((s) => s.parcelStatus !== "out_for_delivery" && s.outcome === null)
+    : splitStops(route.stopList).upcoming[0];
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (code.trim().length >= 3) run(code.trim());
+  };
+
+  return (
+    <div className="space-y-3 p-3">
+      <section className="bg-surface rounded-2xl p-4">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${connected ? "bg-info-100 text-info-600" : "bg-neutral-100 text-neutral-600"}`}>
+            {connected ? <Bluetooth size={22} /> : <BluetoothOff size={22} />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold">{connected ? "Skener pripojený" : "Skener odpojený"}</div>
+            <div className="text-ink-muted text-sm">Spárovaný s vozidlom {route.vehiclePlate} (simulácia)</div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => setConnected(!connected)}>
+            {connected ? "Odpojiť" : "Pripojiť"}
+          </Button>
+        </div>
+      </section>
+
+      {loading && <LoadingCard route={route} />}
+
+      <section className="bg-surface rounded-2xl p-4">
+        <h3 className="font-semibold">{loading ? "Nakládka: sken balíka do dodávky" : "Sken balíka v dodávke"}</h3>
+        <p className="text-ink-muted mt-1 text-sm">
+          {loading ? "Každý sken naloží balík a zákazník dostane SMS s odkazom na sledovanie." : "Sken vyberie zastávku balíka a ukáže ju na mape."}
+        </p>
+        <Button
+          size="lg"
+          className="mt-3 w-full py-4"
+          icon={<ScanLine size={22} />}
+          disabled={!canAct || !connected || !simulated || scan.isPending}
+          onClick={() => simulated && run(simulated.barcode)}
+        >
+          {simulated ? `Simulovať sken ${simulated.barcode}` : "Nič na skenovanie"}
+        </Button>
+        <form onSubmit={submit} className="mt-3 flex gap-2">
+          <input
+            ref={input}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="alebo zadať čiarový kód"
+            aria-label="Čiarový kód"
+            autoComplete="off"
+            disabled={!canAct || !connected}
+            className="border-line bg-surface focus:border-brand-500 focus:ring-brand-100 min-w-0 flex-1 rounded-xl border px-3 py-3 font-mono text-sm outline-none focus:ring-4"
+          />
+          <Button type="submit" variant="secondary" disabled={!canAct || !connected || code.trim().length < 3}>
+            OK
+          </Button>
+        </form>
+        {!canAct && <p className="text-ink-muted mt-2 text-xs">Skenovať môže len kuriér tejto trasy.</p>}
+      </section>
+
+      {log.length > 0 && (
+        <ul className="bg-surface divide-line divide-y rounded-2xl px-4 py-1 text-sm">
+          {log.map((l, i) => (
+            <li key={i} className={`py-2 ${l.tone === "danger" ? "text-danger-600" : l.tone === "ok" ? "text-ink" : "text-ink-muted"}`}>
+              {l.text}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ shell
 
 function CourierPicker({ value, onChange }: { value: string | null; onChange: (v: string) => void }) {
   const routes = useCourierRoutes(true);
   return (
-    <select
-      className="border-line bg-surface rounded-xl border px-3 py-2 text-sm"
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value)}
-      aria-label="Kuriér"
-    >
+    <select className="border-line bg-surface rounded-xl border px-3 py-2 text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)} aria-label="Kuriér">
       <option value="" disabled>
         Vyber kuriéra…
       </option>
@@ -257,107 +454,150 @@ function CourierPicker({ value, onChange }: { value: string | null; onChange: (v
   );
 }
 
+/** On a phone the whole screen, on a desktop a phone frame in the middle. */
+function PhoneFrame({ children, above }: { children: ReactNode; above?: ReactNode }) {
+  return (
+    <div className="bg-canvas md:flex md:min-h-dvh md:flex-col md:items-center md:justify-center md:gap-3 md:py-6">
+      {above && <div className="hidden w-[390px] items-center justify-between gap-2 md:flex">{above}</div>}
+      <div className="bg-canvas flex h-dvh w-full flex-col overflow-hidden md:h-[844px] md:max-h-[calc(100dvh-5rem)] md:w-[390px] md:rounded-[2.75rem] md:border-[10px] md:border-neutral-900 md:shadow-2xl">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function BottomNav({ tab, onChange, open }: { tab: Tab; onChange: (t: Tab) => void; open: number }) {
+  const items: { id: Tab; label: string; icon: ReactNode }[] = [
+    { id: "stops", label: "Zastávky", icon: <ListChecks size={22} /> },
+    { id: "map", label: "Mapa", icon: <MapIcon size={22} /> },
+    { id: "scan", label: "Skener", icon: <ScanLine size={22} /> },
+  ];
+  return (
+    <nav className="bg-surface border-line grid shrink-0 grid-cols-3 border-t pb-[env(safe-area-inset-bottom)]" aria-label="Kuriér">
+      {items.map((i) => (
+        <button
+          key={i.id}
+          type="button"
+          aria-current={tab === i.id ? "page" : undefined}
+          onClick={() => onChange(i.id)}
+          className={`relative flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium ${tab === i.id ? "text-brand-700" : "text-ink-muted"}`}
+        >
+          {i.icon}
+          {i.label}
+          {i.id === "stops" && open > 0 && (
+            <span className="bg-brand-500 text-on-brand absolute top-1.5 left-1/2 ml-2 rounded-full px-1.5 text-[10px] leading-4 tabular-nums">{open}</span>
+          )}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 export function CourierPage() {
   const me = useMe();
+  const logout = useLogout();
   const role = me.data?.role;
   const isCourier = role === "courier";
   const [params, setParams] = useSearchParams();
   const chosen = isCourier ? null : (params.get("courier") ?? "kurier01");
   const route = useCourierRoute(chosen);
-  const [tab, setTab] = useState<"stops" | "map">("stops");
+  const [tab, setTab] = useState<Tab>("stops");
+  const [selected, setSelected] = useState<number | null>(null);
   const canAct = isCourier || role === "admin";
 
-  const header = (
-    <PageHeader
-      title="Moje zastávky"
-      subtitle={isCourier ? "Dnešná trasa a doručenie" : "Pohľad na trasu kuriéra"}
-      actions={
-        !isCourier ? <CourierPicker value={chosen} onChange={(c) => setParams({ courier: c }, { replace: true })} /> : undefined
-      }
-    />
+  const above = !isCourier ? (
+    <>
+      <Link to="/" className="text-ink-muted flex items-center gap-1 text-sm">
+        <ArrowLeft size={16} /> Späť
+      </Link>
+      <CourierPicker value={chosen} onChange={(c) => setParams({ courier: c }, { replace: true })} />
+    </>
+  ) : (
+    <span className="text-ink-muted text-sm">Mobilná aplikácia kuriéra · na telefóne cez http://&lt;IP počítača&gt;:8000/courier</span>
   );
 
-  if (route.isPending) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        {header}
-        <Spinner label="Načítavam trasu…" className="py-16" />
-      </div>
-    );
-  }
-  if (route.isError || !route.data) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        {header}
-        <Card>
-          <EmptyState
-            icon={<Package size={20} />}
-            title={isApiError(route.error, 404) ? "Dnes nemáte pridelenú trasu" : "Trasu sa nepodarilo načítať"}
-            description="Trasa sa vytvára pre balíky prevádzkového dňa a jazdí sa ráno od 7:30."
-          />
-        </Card>
-      </div>
-    );
-  }
   const r = route.data;
-  const state = routeState(r);
-  const finished = r.delivered + r.failed;
-  return (
-    <div className="mx-auto max-w-2xl">
-      {header}
-      <Card className="mb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="bg-brand-100 text-brand-700 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-              <Truck size={22} />
-            </div>
-            <div className="min-w-0">
-              <div className="truncate font-semibold">
-                {r.districtCode} · {r.districtName}
-              </div>
-              <div className="text-ink-muted truncate text-sm">
-                {r.courierName} · {r.vehiclePlate}
-              </div>
-            </div>
-          </div>
-          <Badge tone={state.tone}>{state.label}</Badge>
+  const finished = r ? r.delivered + r.failed : 0;
+  const header = (
+    <header className="bg-chrome text-chrome-ink shrink-0 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{r ? `${r.districtCode} · ${r.districtName}` : "Moje zastávky"}</div>
+          <div className="truncate text-xs opacity-75">{r ? `${r.courierName} · ${r.vehiclePlate}` : (me.data?.full_name ?? "")}</div>
         </div>
-        <div className="mt-4">
-          <div className="mb-1 flex justify-between text-sm">
-            <span className="text-ink-muted">Hotové zastávky</span>
-            <span className="font-medium tabular-nums">
-              {finished} / {r.stops}
+        <div className="flex shrink-0 items-center gap-2">
+          {r && (
+            <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px]" title="Bluetooth skener spárovaný s vozidlom">
+              <Bluetooth size={12} /> {r.vehiclePlate}
+            </span>
+          )}
+          {isCourier && (
+            <button type="button" aria-label="Odhlásiť" className="rounded-full p-1.5 hover:bg-white/10" onClick={() => logout.mutate()}>
+              <LogOut size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+      {r && (
+        <div className="mt-2.5">
+          <div className="mb-1 flex justify-between text-xs opacity-80">
+            <span>
+              {r.returnedAt ? "Späť v depe" : r.departedAt ? `Na trase od ${hhmm(r.departedAt)}` : loadingPhase(r) ? "Nakládka" : "Naložené, pred odchodom"}
+            </span>
+            <span className="tabular-nums">
+              {finished} / {r.stops} hotových
             </span>
           </div>
           <Progress value={finished} max={r.stops} tone="ok" />
-          <div className="text-ink-muted mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-            <span className="flex items-center gap-1">
-              <CheckCircle2 size={13} /> doručené {r.delivered}
-            </span>
-            <span className="flex items-center gap-1">
-              <PackageX size={13} /> nezastihnutí {r.failed}
-            </span>
-            <span className="flex items-center gap-1">
-              <MapPin size={13} /> v dodávke {r.loaded - finished}
-            </span>
-            {r.departedAt && <span>odchod {hhmm(r.departedAt)}</span>}
-          </div>
         </div>
-      </Card>
-      <Tabs
-        items={[
-          { id: "stops", label: "Zastávky", count: r.stops - finished },
-          { id: "map", label: "Mapa" },
-        ]}
-        active={tab}
-        onChange={setTab}
-        className="mb-4"
+      )}
+    </header>
+  );
+
+  let body: ReactNode;
+  if (route.isPending) body = <Spinner label="Načítavam trasu…" className="py-16" />;
+  else if (route.isError || !r)
+    body = (
+      <div className="p-4">
+        <EmptyState
+          icon={<Package size={20} />}
+          title={isApiError(route.error, 404) ? "Dnes nemáte pridelenú trasu" : "Trasu sa nepodarilo načítať"}
+          description="Trasa sa vytvára pre balíky prevádzkového dňa, nakladá sa od 7:00 a jazdí od 7:30."
+        />
+      </div>
+    );
+  else if (tab === "stops") body = <StopsTab route={r} canAct={canAct} selected={selected} onScan={canAct ? () => setTab("scan") : undefined} />;
+  else if (tab === "map") body = <MapTab route={r} selected={selected} />;
+  else
+    body = (
+      <ScanTab
+        route={r}
+        canAct={canAct}
+        onPicked={(id) => {
+          setSelected(id);
+          setTab("map");
+        }}
       />
-      {tab === "stops" ? <StopsList route={r} canAct={canAct} /> : <RouteMap route={r} />}
-      <p className="text-ink-muted mt-4 text-center text-xs">
-        Stav balíka: {PARCEL_STATUS.out_for_delivery.label.toLowerCase()} = naskenovaný v dodávke; „Doručené“ zneplatní zákazníkov
-        odkaz na sledovanie.
-      </p>
-    </div>
+    );
+
+  return (
+    <PhoneFrame above={above}>
+      {header}
+      {!isCourier && (
+        <div className="bg-surface border-line flex items-center justify-between gap-2 border-b px-3 py-2 md:hidden">
+          <Link to="/" className="text-ink-muted flex items-center gap-1 text-sm">
+            <ArrowLeft size={16} /> Späť
+          </Link>
+          <CourierPicker value={chosen} onChange={(c) => setParams({ courier: c }, { replace: true })} />
+        </div>
+      )}
+      <main className={`min-h-0 flex-1 ${tab === "map" ? "overflow-hidden" : "overflow-y-auto"}`}>{body}</main>
+      {r && (
+        <div className="text-ink-muted bg-canvas flex shrink-0 items-center justify-center gap-1 py-1 text-[10px]">
+          <PackageCheck size={11} /> v dodávke {Math.max(0, r.loaded - finished)} · doručené {r.delivered} · nezastihnutí {r.failed}
+        </div>
+      )}
+      <BottomNav tab={tab} onChange={setTab} open={r ? r.stops - finished : 0} />
+    </PhoneFrame>
   );
 }

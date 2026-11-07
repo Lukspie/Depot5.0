@@ -110,7 +110,7 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň: 3D hala naživo s plávajúcimi panelmi, brány so senzormi, panely zariadení a kamiónov, hľadanie balíka, scenár „čo ak“ a akcie (dispečer) |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
 | http://localhost:8000/gate | ochranka, admin | Brána: fotka vozidla → typ a ŠPZ (model), rozhodnutie pravidiel, front „Čaká na ochranku“ (povoliť / zamietnuť s dôvodom, overiť kamión), audit prejazdov, povolené externé ŠPZ |
-| http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
+| http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Mobilná appka kuriéra (na PC v ráme telefónu): nakládka, simulovaný Bluetooth skener, zastávky s typom doručenia a oknom, mapa, „Doručené“ / „Nezastihnutý“. Na telefóne cez `http://<IP PC>:8000/courier` ([docs/demo.md](docs/demo.md)) |
 | http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
 | http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia, simulované SMS |
 | http://localhost:8000/system | všetci | Stav systému a živý WebSocket |

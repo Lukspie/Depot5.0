@@ -19,6 +19,9 @@ export interface CourierPlanStop {
   barcode: string;
   lat: number;
   lon: number;
+  /** ADR-062: handover (customer at home, the courier waits for the window) | mailbox | locker */
+  deliveryType?: string;
+  windowFrom?: string | null;
 }
 
 export interface CourierPlanRoute {
@@ -117,8 +120,13 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
         legStart.push(t);
         t = Math.round(t + minutes * MINUTE);
         legEnd.push(t);
+        // a personal handover is not before its window: the van waits at the address
+        const windowFrom = stop.windowFrom ? Date.parse(stop.windowFrom) : null;
+        if (windowFrom !== null && t < windowFrom) t = windowFrom;
         const arrive = t;
-        const ok = rng.chance(SUCCESS_RATE);
+        // mailbox and locker need nobody at home; the number is drawn anyway (same RNG sequence)
+        const reached = rng.chance(SUCCESS_RATE);
+        const ok = stop.deliveryType === "mailbox" || stop.deliveryType === "locker" ? true : reached;
         // a failed attempt (nobody home) is quicker
         const dwell = ok ? dwellMinutes(rng.next()) : 1.5 + rng.next();
         t = Math.round(t + dwell * MINUTE);

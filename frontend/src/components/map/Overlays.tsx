@@ -60,7 +60,9 @@ export function PointMarkers({ points, onSelect }: { points: MapPoint[]; onSelec
       }
       entry.marker.setLngLat([p.lon, p.lat]);
       const el = entry.el;
-      el.className = p.variant === "dot" ? "dt-dot" : "dt-pin";
+      // classList, not className: maplibre's own "maplibregl-marker" class positions the element
+      el.classList.toggle("dt-dot", p.variant === "dot");
+      el.classList.toggle("dt-pin", p.variant !== "dot");
       el.innerHTML =
         p.variant === "dot" ? `<span>${p.label ?? ""}</span>` : `<span class="dt-pin-body">${p.icon ?? p.label ?? ""}</span>`;
       el.style.setProperty("--pin", p.color ?? "var(--color-brand-500)");

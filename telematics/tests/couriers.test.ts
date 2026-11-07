@@ -172,3 +172,34 @@ describe("engine: courier rounds", () => {
     expect(app.courierEvents.every((e) => Date.parse(e.at) <= clock.now())).toBe(true);
   });
 });
+
+describe("couriers: delivery windows (ADR-062)", () => {
+  it("waits for a handover window, a mailbox needs nobody at home, the RNG sequence stays", () => {
+    const plain = makeCourierPlan(DAY);
+    const route = plain.routes[0];
+    if (!route) throw new Error("no route");
+    const late = new Date(zonedToUtc(NEXT, "11:00")).toISOString();
+    const windows = {
+      ...plain,
+      routes: [
+        {
+          ...route,
+          stops: route.stops.map((s, i) =>
+            i === 0 ? { ...s, deliveryType: "handover", windowFrom: late } : { ...s, deliveryType: "mailbox", windowFrom: null },
+          ),
+        },
+        ...plain.routes.slice(1),
+      ],
+    };
+    const [a] = buildCourierSchedules(windows, { seed: 42, router: null });
+    const [b] = buildCourierSchedules(plain, { seed: 42, router: null });
+    if (!a || !b) throw new Error("no schedule");
+    expect(a.visits[0]?.arrive).toBe(zonedToUtc(NEXT, "11:00"));
+    expect(a.visits.slice(1).every((v) => v.outcome === "delivered")).toBe(true);
+    // the same draws: the error of the ETAs is identical, only times and outcomes moved
+    expect(a.visits.map((v) => v.etaBias)).toEqual(b.visits.map((v) => v.etaBias));
+    // waiting at the first address: the van stands there, not on the road
+    const waiting = courierStateAt(a, zonedToUtc(NEXT, "10:30"));
+    expect(waiting.pos.moving).toBe(false);
+  });
+});

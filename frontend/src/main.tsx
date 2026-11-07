@@ -66,6 +66,17 @@ createRoot(root).render(
               </Suspense>
             }
           />
+          {/* courier mobile app: its own chrome (phone frame on a desktop), phase 7b */}
+          <Route
+            path="/courier"
+            element={
+              <RequireAuth roles={["courier", "dispatcher"]}>
+                <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
+                  <CourierPage />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
           <Route
             element={
               <RequireAuth>
@@ -111,16 +122,6 @@ createRoot(root).render(
                 <RequireAuth roles={["security"]}>
                   <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
                     <GatePage />
-                  </Suspense>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="courier"
-              element={
-                <RequireAuth roles={["courier", "dispatcher"]}>
-                  <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
-                    <CourierPage />
                   </Suspense>
                 </RequireAuth>
               }

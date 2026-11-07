@@ -4,13 +4,14 @@ A courier sees only their own route. Admin and dispatcher may look at any courie
 (?courier=kurier03); finishing a stop is for the route's courier (and admin).
 """
 
-from datetime import date
-from typing import Annotated
+from datetime import date, datetime, time
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
 from depotrack.core.clock import TZ
+from depotrack.core.config import get_settings
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.models import CourierRoute, Depot, Direction, Parcel, RouteStop, User, Vehicle
 from depotrack.models.enums import EventSource, ParcelStatus, StopOutcome, UserRole
@@ -18,12 +19,14 @@ from depotrack.schemas.delivery import (
     CourierRouteBrief,
     CourierRouteOut,
     CourierStopOut,
+    ScanIn,
+    ScanOut,
     StopResultIn,
     TrackPoint,
     VehiclePosition,
 )
 from depotrack.services import telematics
-from depotrack.services.couriers import complete_stop
+from depotrack.services.couriers import DEPARTURE, complete_stop, load_parcel, staging_bay
 
 router = APIRouter(prefix="/api/courier", tags=["courier"])
 
@@ -50,7 +53,11 @@ def _stops(db: DbSession, route: CourierRoute) -> list[tuple[RouteStop, Parcel]]
     ]
 
 
-def _stop_out(s: RouteStop, p: Parcel) -> CourierStopOut:
+def _window(day: date, t: time | None) -> datetime | None:
+    return datetime.combine(day, t, TZ) if t is not None else None
+
+
+def _stop_out(s: RouteStop, p: Parcel, day: date) -> CourierStopOut:
     return CourierStopOut(
         id=s.id,
         sequence=s.sequence,
@@ -66,6 +73,9 @@ def _stop_out(s: RouteStop, p: Parcel) -> CourierStopOut:
         predicted_eta=s.predicted_eta,
         delivered_at=s.delivered_at,
         outcome=s.outcome,
+        delivery_type=p.delivery_type,
+        window_from=_window(day, p.window_from),
+        window_to=_window(day, p.window_to),
     )
 
 
@@ -89,6 +99,8 @@ def _brief(
         delivered=sum(1 for s, _ in stops if s.outcome == StopOutcome.DELIVERED),
         failed=sum(1 for s, _ in stops if s.outcome == StopOutcome.FAILED),
         loaded=sum(1 for _, p in stops if p.status in IN_VAN),
+        staging_bay=bay.code if (bay := staging_bay(db, route.rajon_direction_id)) else None,
+        planned_departure=datetime.combine(route.date, DEPARTURE, TZ),
     )
 
 
@@ -146,7 +158,7 @@ def my_route(
             else None
         ),
         depot=TrackPoint(lat=depot.lat, lon=depot.lon),
-        stop_list=[_stop_out(s, p) for s, p in stops],
+        stop_list=[_stop_out(s, p, route.date) for s, p in stops],
     )
 
 
@@ -178,4 +190,48 @@ def finish_stop(stop_id: int, body: StopResultIn, user: Courier, db: DbSession) 
         user_id=user.id,
     )
     db.commit()
-    return _stop_out(stop, parcel)
+    return _stop_out(stop, parcel, route.date)
+
+
+@router.post(
+    "/scan",
+    response_model=ScanOut,
+    response_model_by_alias=True,
+    responses={404: {"description": "Not a parcel of your route today"}},
+)
+def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
+    """The Bluetooth scanner paired with the van (simulated on /courier): before the departure a
+    scan loads the parcel into the van (out_for_delivery + tracking SMS), later it selects the
+    stop of the parcel, so the app shows it on the map."""
+    route = db.execute(
+        select(CourierRoute).where(
+            CourierRoute.courier_user_id == user.id, CourierRoute.date == today()
+        )
+    ).scalar_one_or_none()
+    row = (
+        db.execute(
+            select(RouteStop, Parcel)
+            .join(Parcel, RouteStop.parcel_id == Parcel.id)
+            .where(RouteStop.route_id == route.id, Parcel.barcode == body.barcode.strip().upper())
+        ).first()
+        if route
+        else None
+    )
+    if route is None or row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Parcel is not on your route today")
+    stop, parcel = row
+    action: Literal["loaded", "selected", "done"] = "selected"
+    if stop.outcome is not None:
+        action = "done"
+    elif parcel.status not in IN_VAN:
+        load_parcel(
+            db,
+            get_settings(),
+            route=route,
+            stop=stop,
+            at=telematics.sim_now(),
+            door=staging_bay(db, route.rajon_direction_id),
+        )
+        db.commit()
+        action = "loaded"
+    return ScanOut(action=action, stop=_stop_out(stop, parcel, route.date))

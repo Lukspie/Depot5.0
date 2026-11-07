@@ -639,3 +639,30 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Kamión bez prečítanej ŠPZ nečaká na bráne (nakládka by meškala), ale ochranka ho musí dodatočne overiť.
   - Prahy istoty sú odhad. Na reálnych záberoch ich treba nastaviť (napr. podiel zastavení za deň oproti chybám).
   - Povolené ŠPZ sú v simulátore zopakované ako konštanty (`ALLOWED_EXTERNAL`), lebo simulátor za behu nečíta app.
+
+## ADR-062 Kuriér: mobilná appka, typy doručenia s časovými oknami, skener spárovaný s vozidlom
+- **Kontext:**
+  - `/courier` bol zoznam zastávok v layoute aplikácie a poradie bolo nearest neighbour bez ohľadu na zákazníka.
+  - Zadanie 7b chce mobilnú appku, simulovaný Bluetooth skener, tri typy doručenia (osobné odovzdanie s oknom, schránka, výdajný box) a poradie, ktoré okná rešpektuje.
+  - Pred nakládkou bolo „Doručené“ neaktívne s textom „Balík ešte nie je naskenovaný“, čo vyzeralo ako chyba.
+- **Rozhodnutie:**
+  - **Appka:** `/courier` má vlastný rám mimo layoutu. Na telefóne je na celú obrazovku, od 768 px v ráme telefónu 390 × 844 v strede. Spodná navigácia: Zastávky, Mapa, Skener. Pred odchodom ukazuje kartu nakládky (státie, odchod, x / N v dodávke) a „Doručené“ je až po odchode.
+  - **Skener:** `POST /api/courier/scan` (kuriér trasy, admin). Pred odchodom sken naloží balík (`out_for_delivery` a SMS so sledovaním, ten istý kód ako simulátor), potom vyberie zastávku a appka ju ukáže na mape. Bluetooth spojenie je simulované (spárované s ŠPZ dodávky, dá sa odpojiť). Skutočný BT skener v režime klávesnice píše do poľa „zadať čiarový kód“.
+  - **Typy doručenia:** stĺpce `delivery_type`, `window_from`, `window_to` pri balíku. Profil je pevne daný čiarovým kódom (md5): 60 % osobné odovzdanie s 3 h oknom (08–11, 10–13, 12–15), 25 % schránka, 15 % box. Rovnaký vzorec je v migrácii pre staré balíky a test overí, že SQL a Python dajú to isté. Box stojí pri adrese, lebo skutočné polohy boxov nemáme.
+  - **Poradie zastávok:** time-oriented nearest neighbour (Solomon 1987). Ďalšia zastávka minimalizuje 0,7 × jazda + 0,7 × čakanie na okno + 0,1 × minúty do konca okna. Schránka a box sa rátajú ako 240 min rezervy, takže vypĺňajú medzery.
+    - Meranie na 16 skutočných trasách z DB (80–100 zastávok, 791 osobných odovzdaní):
+
+      | | zmeškané okná | km spolu | najdlhšia trasa vrátane čakania |
+      | --- | --- | --- | --- |
+      | nearest neighbour (Fáza 4) | 547 / 791 (69 %) | 660 | 666 min |
+      | time-oriented NN (7b) | **0 / 791** | 1 206 (+83 %) | 526 min |
+
+    - Okná sú náhodné a nezávislé od polohy, preto trasa prechádza obvod viackrát a km rastú. V praxi by dopravca ponúkal okná podľa plánovanej trasy. 2 h okná sme skúšali tiež: najlepšia varianta mala 0,5 % zmeškaných, ale trasy do ~10 h. Iteratívne zlepšovanie (2-opt) by v Pythone pri seede trvalo sekundy na trasu, preto len konštrukčná heuristika O(n²).
+    - Trasy už vytvorené pred zmenou dostanú nové poradie krokom seedu `courier-windows:<deň>` a pri resete dňa, ak sa na nich ešte nič nestalo.
+  - **Simulátor:** plán kuriérov nesie `deliveryType` a `windowFrom`. Pri osobnom odovzdaní dodávka čaká pri adrese na začiatok okna, schránka a box sa doručia vždy. Náhodné číslo sa ťahá aj tak, takže postupnosť RNG ostáva (test porovná chyby ETA).
+  - **ETA a okno:** appka porovná ETA (predikcia telematiky, inak plán) s oknom: „stihneš okno“, „tesne stihneš“ (< 15 min), „počkáš na okno“, „nestihneš okno“.
+  - **LAN:** CSRF kontrola pustí aj požiadavku s `Origin` rovným adrese, z ktorej prišla (scheme + Host), takže appka funguje z telefónu na `http://<IP PC>:8000/courier` bez úprav `.env` (postup v docs/demo.md).
+- **Dôsledok:**
+  - Kuriér vidí, čo má robiť v každej fáze dňa (nakládka, trasa, okno zákazníka).
+  - Trasy sú dlhšie v km. Je to cena za okná, nie chyba heuristiky. Zmerané a uvedené vyššie.
+  - Mapa ukazuje orientačnú čiaru cez ďalšie zastávky, nie cestu po uliciach. Tú pozná len telematika a appka ju nevolá, aby na telefóne stačil prístup k app.

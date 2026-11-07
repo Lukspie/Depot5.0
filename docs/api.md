@@ -32,6 +32,7 @@ Základná adresa: `http://localhost:8000`. 48 ciest.
 | courier | GET | `/api/courier/route` | My Route |
 | courier | GET | `/api/courier/routes` | Routes |
 | courier | POST | `/api/courier/stops/{stop_id}` | Finish Stop |
+| courier | POST | `/api/courier/scan` | Skener spárovaný s dodávkou: pred odchodom naloží balík, potom vyberie zastávku (ADR-062) |
 | dashboard | GET | `/api/alerts` | List Alerts |
 | dashboard | GET | `/api/board` | Board |
 | dashboard | GET | `/api/dashboard` | Dashboard |

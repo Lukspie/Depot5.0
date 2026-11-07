@@ -170,6 +170,9 @@ class CourierPlanStop(CamelModel):
     barcode: str
     lat: float
     lon: float
+    # ADR-062: a handover waits for the start of its window; mailbox / locker need nobody at home
+    delivery_type: str = "handover"
+    window_from: datetime | None = None
 
 
 class CourierPlanRoute(CamelModel):

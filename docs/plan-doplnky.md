@@ -228,7 +228,7 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
    - na `/gate` front rozhodnutí pre ochranku, každé rozhodnutie ide do auditu (kto, kedy, prečo),
    - simulátor generuje mix prejazdov (dodávky, kamióny, občas neznáme auto),
    - testy cez HTTP pre každú vetvu, ADR, vyhodnotenie na našich fotkách v `ml/README.md` (správne / spolu pre typ a ŠPZ) a obmedzenia bez prikrášľovania.
-2. **Kuriér – mobilná aplikácia:**
+2. **Kuriér – mobilná aplikácia** *(hotové, ADR-062)*:
    - `/courier` na desktope v ráme telefónu (~390 × 844) v strede, na telefóne na celú obrazovku, spodná navigácia (Zastávky / Mapa / Skener), veľké tlačidlá, mapa s ďalšou zastávkou a trasou,
    - simulovaný Bluetooth skener spárovaný s vozidlom („Skener pripojený · KE-301KR“). Sken balíka v dodávke vyberie ďalšiu zastávku a ukáže ju na mape,
    - typ doručenia: osobné odovzdanie (časové okno), do schránky, do výdajného boxu (seed ~60 / 25 / 15 %). Poradie rešpektuje okná osobných odovzdaní, boxy a schránky vypĺňajú medzery (heuristika lepšia ako nearest neighbor), ETA a „stihneš / nestihneš okno“, ADR,

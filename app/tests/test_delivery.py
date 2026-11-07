@@ -7,7 +7,7 @@ import re
 from collections import Counter
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 
 import pytest
@@ -31,8 +31,8 @@ from depotrack.models.enums import DirectionType, ParcelStatus, UserRole
 from depotrack.seed.generator import kosice_rajon
 from depotrack.seed.geo import addresses
 from depotrack.services import telematics
-from depotrack.services.couriers import km
 from depotrack.services.operating_day import reset_operating_day, run_seed
+from depotrack.services.routing import Stop, delivery_profile, nearest_neighbour_tour, plan_tour
 
 DAY = date(2026, 10, 23)
 DELIVERY = DAY + timedelta(days=1)
@@ -126,7 +126,7 @@ def courier_login(client: TestClient, username: str = "kurier01") -> None:
 
 
 @pytest.mark.usefixtures("seeded")
-def test_every_district_gets_a_nearest_neighbour_route(db: Session) -> None:
+def test_every_district_gets_a_route_that_keeps_the_windows(db: Session) -> None:
     routes = list(db.execute(select(CourierRoute)).scalars())
     assert len(routes) == 8
     assert {r.date for r in routes} == {DELIVERY}
@@ -136,7 +136,6 @@ def test_every_district_gets_a_nearest_neighbour_route(db: Session) -> None:
             select(Direction).where(Direction.type == DirectionType.LOCAL)
         ).scalars()
     }
-    depot = (48.79256, 21.30710)
     for r in routes:
         rows = db.execute(
             select(RouteStop, Parcel)
@@ -147,13 +146,88 @@ def test_every_district_gets_a_nearest_neighbour_route(db: Session) -> None:
         assert [s.sequence for s, _ in rows] == list(range(1, len(rows) + 1))
         assert r.rajon_direction_id in local
         assert all(p.direction_id == r.rajon_direction_id for _, p in rows)
-        # the first stop is the one closest to the depot
-        first = rows[0][1]
-        assert km(depot, (first.lat, first.lon)) == pytest.approx(
-            min(km(depot, (p.lat, p.lon)) for _, p in rows)
-        )
         etas = [s.planned_eta for s, _ in rows]
         assert etas == sorted(etas)
+        # a personal handover is planned inside its window (ADR-062)
+        for s, p in rows:
+            if p.delivery_type == "handover":
+                assert s.planned_eta is not None and p.window_from and p.window_to
+                local_eta = s.planned_eta.astimezone(TZ).time()
+                assert p.window_from <= local_eta <= p.window_to, (p.barcode, local_eta)
+
+
+@pytest.mark.usefixtures("seeded")
+def test_delivery_types_are_mixed_about_60_25_15(db: Session) -> None:
+    kinds = Counter(db.execute(select(Parcel.delivery_type)).scalars())
+    total = sum(kinds.values())
+    assert set(kinds) == {"handover", "mailbox", "locker"}
+    assert 0.5 < kinds["handover"] / total < 0.7
+    assert 0.15 < kinds["mailbox"] / total < 0.35
+    assert 0.07 < kinds["locker"] / total < 0.23
+    windows = set(
+        db.execute(
+            select(Parcel.window_from, Parcel.window_to).where(Parcel.delivery_type == "handover")
+        ).tuples()
+    )
+    assert windows == {(time(8), time(11)), (time(10), time(13)), (time(12), time(15))}
+    assert (
+        db.execute(
+            select(Parcel.id).where(
+                Parcel.delivery_type != "handover", Parcel.window_from.is_not(None)
+            )
+        ).first()
+        is None
+    )
+
+
+@pytest.mark.usefixtures("seeded")
+def test_migration_fills_the_same_profile_as_python(db: Session) -> None:
+    import importlib.util
+    from pathlib import Path
+
+    from sqlalchemy import text
+
+    path = next(Path(__file__).parents[1].glob("alembic/versions/*_delivery_windows.py"))
+    spec = importlib.util.spec_from_file_location("delivery_windows", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    db.execute(text("UPDATE parcels SET delivery_type = 'x', window_from = NULL, window_to = NULL"))
+    db.execute(text(module.FILL))
+    db.commit()
+    rows = db.execute(
+        select(Parcel.barcode, Parcel.delivery_type, Parcel.window_from, Parcel.window_to)
+    ).all()
+    assert rows and all(tuple(r[1:]) == delivery_profile(r[0]) for r in rows)
+
+
+def test_window_heuristic_beats_nearest_neighbour_on_windows() -> None:
+    """Synthetic district: random places and windows. The phase 4 order misses most windows."""
+    import random
+
+    rng = random.Random(7)
+    when = DELIVERY
+    stops = []
+    for i in range(80):
+        kind, a, b = delivery_profile(f"DP-TEST-{i:03d}")
+        window = (datetime.combine(when, a, TZ), datetime.combine(when, b, TZ)) if a and b else None
+        stops.append(
+            Stop(
+                f"{i:03d}",
+                48.72 + rng.uniform(-0.03, 0.03),
+                21.25 + rng.uniform(-0.05, 0.05),
+                kind,
+                window,
+            )
+        )
+    depot = (48.79256, 21.30710)
+    depart = datetime.combine(when, time(7, 30), TZ)
+    nn = nearest_neighbour_tour(depot, depart, stops)
+    ours = plan_tour(depot, depart, stops)
+    late = lambda tour: sum(1 for v in tour if v.late_min > 0)  # noqa: E731
+    assert sorted(v.stop.key for v in ours) == sorted(s.key for s in stops)
+    assert late(ours) == 0 < late(nn)
+    assert plan_tour(depot, depart, stops) == ours  # deterministic
 
 
 @pytest.mark.usefixtures("seeded")
@@ -483,6 +557,47 @@ def test_courier_screen_rbac(
     client.post("/api/auth/login", json={"username": "disp", "password": "spravne-heslo-123"})
     assert client.get("/api/courier/route?courier=kurier03").json()["districtCode"] == "KE-03"
     assert client.post("/api/courier/stops/1", json={"outcome": "delivered"}).status_code == 403
+
+
+@pytest.mark.usefixtures("seeded")
+def test_paired_scanner_loads_before_departure_then_selects_the_stop(
+    client: TestClient, db: Session, at: SetTime
+) -> None:
+    mine, other = courier_plan(client)[0], courier_plan(client)[1]
+    at("07:05")
+    courier_login(client, "kurier01")
+    route = client.get("/api/courier/route").json()
+    assert route["stagingBay"] == "SB-01" and route["loaded"] == 0
+    assert route["plannedDeparture"].startswith(f"{DELIVERY.isoformat()}T07:30")
+    stop = route["stopList"][0]
+    assert stop["deliveryType"] in {"handover", "mailbox", "locker"}
+    if stop["deliveryType"] == "handover":
+        assert stop["windowFrom"] < stop["windowTo"]
+    else:
+        assert stop["windowFrom"] is None
+
+    barcode = mine["stops"][0]["barcode"]
+    first = client.post("/api/courier/scan", json={"barcode": barcode.lower()})
+    assert first.status_code == 200, first.text
+    assert first.json()["action"] == "loaded"
+    assert first.json()["stop"]["parcelStatus"] == "out_for_delivery"
+    assert token_of(db, barcode)  # the customer got the tracking SMS
+    again = client.post("/api/courier/scan", json={"barcode": barcode}).json()
+    assert again["action"] == "selected" and again["stop"]["id"] == mine["stops"][0]["stopId"]
+    assert client.get("/api/courier/route").json()["loaded"] == 1
+
+    foreign = client.post("/api/courier/scan", json={"barcode": other["stops"][0]["barcode"]})
+    assert foreign.status_code == 404
+    assert client.post("/api/courier/scan", json={"barcode": "DP000"}).status_code == 404
+
+    client.post(f"/api/courier/stops/{mine['stops'][0]['stopId']}", json={"outcome": "delivered"})
+    assert client.post("/api/courier/scan", json={"barcode": barcode}).json()["action"] == "done"
+
+    client.post("/api/auth/logout")
+    client.post(
+        "/api/auth/login", json={"username": "dispecer", "password": "dispatcher-test-heslo"}
+    )
+    assert client.post("/api/courier/scan", json={"barcode": barcode}).status_code == 403
 
 
 # ------------------------------------------------------------------ admin notifications, reset

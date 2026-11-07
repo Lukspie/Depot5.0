@@ -46,6 +46,7 @@ from depotrack.seed.reference import (
     USERS,
     VEHICLES,
 )
+from depotrack.services.routing import delivery_columns
 
 log = logging.getLogger(__name__)
 
@@ -185,6 +186,7 @@ def seed_parcels(db: Session, day: date, count: int, random_seed: int) -> None:
             "status": ParcelStatus.COLLECTED,
             "sender": p.sender,
             "created_at": p.collected_at,
+            **delivery_columns(p.barcode),
         }
         for p in specs
     ]

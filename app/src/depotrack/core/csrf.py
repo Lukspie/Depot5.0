@@ -3,6 +3,10 @@ coming from a browser must carry an allowed Origin header.
 
 Requests without Origin (curl, service-to-service calls) are let through: CSRF is a browser attack
 and browsers always send Origin on cross-site POST/PUT/PATCH/DELETE.
+
+A same-origin request (Origin = the scheme and Host the page was loaded from) is allowed too, so
+the app works from a phone in the same Wi-Fi (http://<IP of the PC>:8000) without listing the IP.
+A cross-site attacker cannot make the browser send its own origin together with our Host.
 """
 
 from starlette.requests import Request
@@ -26,6 +30,7 @@ class OriginCheckMiddleware:
                 and request.url.path.startswith("/api/")
                 and origin is not None
                 and origin not in self.allowed_origins
+                and origin != f"{request.url.scheme}://{request.headers.get('host', '')}"
             ):
                 response: Response = JSONResponse({"detail": "Origin not allowed"}, status_code=403)
                 await response(scope, receive, send)

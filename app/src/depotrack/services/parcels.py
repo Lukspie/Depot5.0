@@ -24,6 +24,7 @@ from depotrack.seed.reference import (
     SENDERS,
     TRANSIT,
 )
+from depotrack.services.routing import delivery_columns
 
 # parcels that can still be loaded onto a truck
 LOADABLE = (ParcelStatus.COLLECTED, ParcelStatus.ON_BELT, ParcelStatus.SORTED, ParcelStatus.STAGED)
@@ -83,9 +84,10 @@ def night_parcels_for(db: Session, day: date, random_seed: int) -> int:
                 code, town, postcode = kosice_rajon(lat, lon), "Košice", postcode or "040 01"
             weight = parcel_weight(rng)
             length, width, height = parcel_dimensions(rng, weight)
+            barcode = f"{BARCODE_PREFIX}{day_code}N{feeder.code}{i:03d}"
             rows.append(
                 {
-                    "barcode": f"{BARCODE_PREFIX}{day_code}N{feeder.code}{i:03d}",
+                    "barcode": barcode,
                     "weight_kg": weight,
                     "length_cm": length,
                     "width_cm": width,
@@ -98,6 +100,7 @@ def night_parcels_for(db: Session, day: date, random_seed: int) -> int:
                     "status": ParcelStatus.COLLECTED,
                     "sender": rng.choice(SENDERS),
                     "created_at": registered,
+                    **delivery_columns(barcode),
                 }
             )
             specs.append(registered)

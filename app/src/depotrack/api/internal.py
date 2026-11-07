@@ -2,13 +2,14 @@
 parcels: telematics reads the plan and manifests here and reports how the trips are executed."""
 
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
+from depotrack.core.clock import TZ
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.rbac import DbSession
 from depotrack.core.service_auth import require_service_token
@@ -292,7 +293,15 @@ def courier_plan(
                 staging_bay=bay.code if bay else None,
                 stops=[
                     CourierPlanStop(
-                        stop_id=st.id, sequence=st.sequence, barcode=p.barcode, lat=p.lat, lon=p.lon
+                        stop_id=st.id,
+                        sequence=st.sequence,
+                        barcode=p.barcode,
+                        lat=p.lat,
+                        lon=p.lon,
+                        delivery_type=p.delivery_type,
+                        window_from=datetime.combine(route.date, p.window_from, TZ)
+                        if p.window_from
+                        else None,
                     )
                     for st, p in stops
                 ],

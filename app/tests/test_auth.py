@@ -107,6 +107,20 @@ def test_foreign_origin_is_blocked_for_state_changing_requests(
     assert ok.status_code == 200
 
 
+
+def test_same_origin_from_the_lan_is_allowed(client: TestClient, make_user: MakeUser) -> None:
+    """A phone in the same Wi-Fi opens http://<IP of the PC>:8000: Origin equals the Host."""
+    make_user("jana")
+    body = {"username": "jana", "password": TEST_PASSWORD}
+    lan = {"Origin": "http://192.168.1.20:8000", "Host": "192.168.1.20:8000"}
+    assert client.post("/api/auth/login", json=body, headers=lan).status_code == 200
+    # another site pretending: its Origin does not match the Host the request went to
+    spoof = {"Origin": "http://evil.example", "Host": "192.168.1.20:8000"}
+    assert client.post("/api/auth/login", json=body, headers=spoof).status_code == 403
+    other_port = {"Origin": "http://192.168.1.20:9999", "Host": "192.168.1.20:8000"}
+    assert client.post("/api/auth/login", json=body, headers=other_port).status_code == 403
+
+
 def test_login_is_rate_limited(client: TestClient, make_user: MakeUser) -> None:
     make_user("jana")
     settings = get_settings()

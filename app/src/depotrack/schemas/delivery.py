@@ -3,6 +3,8 @@
 from datetime import date, datetime
 from typing import Literal
 
+from pydantic import Field
+
 from depotrack.models.enums import ParcelStatus, StopOutcome
 from depotrack.schemas.internal import CamelModel
 
@@ -60,6 +62,10 @@ class CourierStopOut(CamelModel):
     predicted_eta: datetime | None
     delivered_at: datetime | None
     outcome: StopOutcome | None
+    # ADR-062: handover (window, customer at home) | mailbox | locker
+    delivery_type: str
+    window_from: datetime | None
+    window_to: datetime | None
 
 
 class VehiclePosition(CamelModel):
@@ -83,6 +89,9 @@ class CourierRouteBrief(CamelModel):
     delivered: int
     failed: int
     loaded: int
+    # loading at the staging bay before the departure (phase 7b)
+    staging_bay: str | None = None
+    planned_departure: datetime | None = None
 
 
 class CourierRouteOut(CourierRouteBrief):
@@ -93,6 +102,17 @@ class CourierRouteOut(CourierRouteBrief):
 
 class StopResultIn(CamelModel):
     outcome: StopOutcome
+
+
+class ScanIn(CamelModel):
+    barcode: str = Field(min_length=3, max_length=32)
+
+
+class ScanOut(CamelModel):
+    """What the scan did: loaded the parcel into the van, or selected its stop (already in)."""
+
+    action: Literal["loaded", "selected", "done"]
+    stop: CourierStopOut
 
 
 # ------------------------------------------------------------------ admin: simulated SMS

@@ -1,8 +1,18 @@
 """Parcels, their timeline, loading scans, customer tracking tokens and simulated SMS."""
 
-from datetime import datetime
+from datetime import datetime, time
 
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    Time,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from depotrack.models.base import Base, pg_enum, utcnow_column
@@ -27,6 +37,10 @@ class Parcel(Base):
     status: Mapped[ParcelStatus] = mapped_column(pg_enum(ParcelStatus, "parcel_status"))
     sender: Mapped[str] = mapped_column(String(120))
     created_at: Mapped[datetime] = utcnow_column()
+    # handover (customer at home, window) | mailbox | locker (ADR-062)
+    delivery_type: Mapped[str] = mapped_column(String(8), server_default="handover")
+    window_from: Mapped[time | None] = mapped_column(Time)
+    window_to: Mapped[time | None] = mapped_column(Time)
 
 
 class ParcelEvent(Base):
