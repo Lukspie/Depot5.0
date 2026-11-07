@@ -495,7 +495,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Situácie:**
     - `evening-peak` (18:30), `night-cascade` (02:10), `morning-departures` (05:45), `couriers-morning` (07:20), `off-wave` (10:00),
     - `calm-night` (23:30, `forceCascade: false`, v pláne bez kaskády, aby scenár „čo ak“ ukázal jej vznik),
-    - `scanner-ld05` (20:30, degradovaný `DOCK-SCN-05` namiesto `DOCK-SCN-02`).
+    - `scanner-ld05` (06:00, ranná nakládka pri LD-05, degradovaný `DOCK-SCN-05` namiesto `DOCK-SCN-02`).
   - **Načítanie** `POST /sim/situations/{id}` (admin, `SIM_CONTROLS_ENABLED`) je čistý reset (ADR-053) s nastaveniami situácie, potom replay od 15:00 do jej času. `GET /sim/situations` vidí personál.
   - **API je v telematike, nie v app** (odchýlka od plánu 5d): telematika vlastní hodiny, seed aj prepínače scenára a admin UI ju už volá priamo s ticketom (ADR-027).
   - **Prepínače situácie** platia do ďalšieho čistého resetu a prežijú reštart kontajnera (`sim_state.situation`, `force_cascade`, migrácia `007`). Zmena `SIM_RANDOM_SEED` v `.env` ich zruší ako doteraz seed.
@@ -558,3 +558,21 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Tabuľa ETA a kaskáda majú odhad aj pred odjazdom kamióna. Po pretrénovaní treba `docker compose build app`.
   - Image app je väčší o scikit-learn (~40 MB).
   - Model sa učí na simulovanej histórii (ml/README.md, obmedzenia).
+
+## ADR-058 Prediktívna údržba skenerov: IsolationForest nad 10-min bucket-mi z telematiky
+- **Kontext:**
+  - PROMPT §8.4: `IsolationForest` nad minútovými metrikami skenerov, úloha každých 5 simulovaných minút, alarm „klesajúca čítanosť, skontrolovať optiku“.
+  - Zaručená degradácia zo seedu musí byť zachytená.
+  - Metriky sú v db-telemetry, ktorá môže byť v Azure (ADR-056) a ku ktorej app nemá prístup.
+- **Rozhodnutie:**
+  - **Zdroj dát:** app berie 10-minútové bucket-y z `GET /devices/{kód}/metrics` telematiky (service token). Tréning sčíta minútovú históriu do rovnakých bucket-ov, aby sa príznaky počítali rovnako (`depotrack/ml/scanner.py`).
+  - **Príznaky:** z-skóre čítanosti za 30 min a 2 h pod referenčnými 95 % (binomická štandardná chyba podľa počtu položiek). Verzie so surovou čítanosťou a počtom položiek degradáciu zo seedu pri živom objeme nechytili (ml/README.md, iterácie).
+  - **Generátor histórie** má rovnaký objem ako živý simulátor (~1 položka/min na bránu, predtým 2,2). Inak by model a prah sedeli na iné dáta než v prevádzke.
+  - **Učenie:** iba zdravé bucket-y, bez označení, teda nesupervidovaná detekcia ako v zadaní. Prah je 98. percentil zdravých skóre pri čítanosti pod mediánom. Lepšia než bežná čítanosť riziko nezvyšuje.
+  - **Perzistencia:** alarm až pri 2 po sebe idúcich bucket-och nad prahom (`ScannerModel.alarm`). Rovnaké pravidlo platí v tréningovom vyhodnotení.
+  - **Alarm:** `scanner_degradation` s `ref_type=device`. Otvára sa pri riziku 100 % a zatvára systémovo pod 50 % (hysterézia). Dnes ho nevytvára nič iné, takže nekoliduje s alarmami telematiky (`device_offline`).
+  - **Riziko** sa drží v pamäti procesu app a `GET /api/ml/scanners` (dispečer, ochranka) ho dáva panelu zariadenia v tieni.
+- **Dôsledok:**
+  - V teste zachytí 10 z 10 epizód s 0,54 % falošných alarmov na zdravých bucket-och. Degradáciu zo seedu chytí v jej prvej večernej vlne okolo 20:45 (test).
+  - Hodnotí len skenery brán, skener linky má iný objem a nie je v histórii.
+  - Ak telematika nebeží, skóre sa neaktualizuje a alarm ostane v poslednom stave.

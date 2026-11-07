@@ -38,8 +38,8 @@
   {
     "id": "scanner-ld05",
     "name": "Degradácia skenera LD-05",
-    "description": "20:30, skener brány LD-05 (Trebišov) od 15:30 stráca čítanosť, je oranžový a pribúdajú neidentifikované balíky.",
-    "time": "20:30",
+    "description": "06:00, ranná nakládka Trebišova na LD-05 (čaká na meškajúci nočný BA): skener od 15:30 stratil čítanosť (0,97 → 0,85), ML hlási riziko 100 % a alarm „skontrolovať optiku“.",
+    "time": "06:00",
     "seed": 42,
     "degradedDevice": "DOCK-SCN-05"
   },

@@ -9,9 +9,11 @@ from depotrack.core.config import get_settings
 from depotrack.core.db import get_session_factory
 from depotrack.core.sessions import purge_expired_sessions
 from depotrack.ml.delay import delay_model
+from depotrack.ml.scanner import scanner_model
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
 from depotrack.services.ml_eta import refresh_ml_eta
+from depotrack.services.ml_scanner import score_scanners
 from depotrack.services.trip_plan import operating_day_of
 
 log = logging.getLogger(__name__)
@@ -29,12 +31,23 @@ _last_ml_run: datetime | None = None
 
 
 def ml_job() -> None:
-    """Every 5 simulated minutes: ML arrival prediction of the planned trips (ADR-057)."""
+    """Every 5 simulated minutes: scanner risk scores (ADR-058) and the ML arrival prediction
+    of the planned trips (ADR-057)."""
     global _last_ml_run
     now = telematics.sim_now()
     if _last_ml_run is not None and timedelta(0) <= now - _last_ml_run < ML_EVERY:
         return
     _last_ml_run = now
+    scanners = scanner_model()
+    if scanners is not None:
+        with get_session_factory()() as db:
+            alerts = score_scanners(
+                db, scanners, telematics.devices(), telematics.device_metrics, now
+            )
+            db.commit()
+            scanner_events = [alert_event(c.alert) for c in alerts if c.created]
+        if scanner_events:
+            telematics.broadcast_many("alerts", "alert", scanner_events)
     model = delay_model()
     if model is None:
         return

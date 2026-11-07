@@ -58,6 +58,22 @@ def weather_of(day: date) -> str | None:
     return _weather_cache[1].get(day.isoformat())
 
 
+def device_metrics(code: str, hours: int = 2) -> list[dict[str, Any]] | None:
+    """10-minute buckets of a device ({at, items, readRate}); None if telematics is unreachable."""
+    try:
+        resp = httpx.get(
+            f"{get_settings().telematics_internal_url}/devices/{code}/metrics",
+            params={"hours": hours},
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return list(resp.json()["buckets"])
+    except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
+        log.warning("cannot read metrics of %s: %s", code, exc)
+        return None
+
+
 _devices_cache: tuple[float, list[dict[str, Any]]] | None = None
 
 

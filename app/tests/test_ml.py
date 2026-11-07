@@ -140,3 +140,88 @@ def test_ml_eta_for_planned_trips_until_telematics_predicts(
     assert t is not None and t.predicted_by == TELEMATICS
     refresh_ml_eta(db, model, night.operating_day, "clear", local(19, 5), timedelta(minutes=30))
     assert t.predicted_by == TELEMATICS
+
+
+# ---------------------------------------------------------- predictive maintenance (ADR-058)
+
+
+def _wave(rates: list[float], items: int = 10) -> list[dict[str, object]]:
+    """Telematics buckets of a dock scanner: ~1 item/min as in the live simulator; the read counts
+    carry the rounding over, so the mean read rate is exact."""
+    out, carry = [], 0.0
+    for i, r in enumerate(rates):
+        exact = items * r + carry
+        ok = int(exact)
+        carry = exact - ok
+        out.append({"at": f"b{i}", "items": items, "readRate": ok / items})
+    return out
+
+
+def _first_alarm(model: object, rates: list[float]) -> int | None:
+    from depotrack.ml.scanner import ScannerModel
+    from depotrack.services.ml_scanner import to_buckets
+
+    assert isinstance(model, ScannerModel)
+    buckets = to_buckets(_wave(rates))
+    return next((i for i in range(1, len(buckets) + 1) if model.alarm(buckets[:i])), None)
+
+
+def test_the_guaranteed_degradation_of_the_seed_is_caught() -> None:
+    """SIM_DEGRADED_DEVICE loses read rate 0.97 -> 0.85 in 6 h from 15:30 (ADR-024): the evening
+    wave of its dock (17:05-21:15, 25 buckets) must raise the alert; healthy scanners never do."""
+    from depotrack.ml.scanner import scanner_model
+
+    model = scanner_model()
+    assert model is not None, "ml/artifacts/scanner_model.joblib missing: run ml/train_scanner.py"
+    evening = [0.97 - 0.12 * (95 + 10 * i) / 360 for i in range(25)]
+    hit = _first_alarm(model, evening)
+    assert hit is not None and 6 <= hit <= 25, hit  # not in the first hour, within the wave
+    for healthy in (0.97, 0.95, 0.94, 0.93):
+        noise = [
+            healthy + (0.02 if i % 3 == 0 else -0.02 if i % 3 == 1 else 0.0) for i in range(36)
+        ]
+        assert _first_alarm(model, noise) is None, healthy
+    # a scanner reading better than usual is unusual, but not at risk
+    assert _first_alarm(model, [1.0] * 36) is None
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_scanner_job_opens_and_closes_the_alert(db: Session) -> None:
+    from depotrack.ml.scanner import scanner_model
+    from depotrack.models import Alert
+    from depotrack.models.enums import AlertKind
+    from depotrack.services.ml_scanner import LATEST, score_scanners
+
+    model = scanner_model()
+    assert model is not None
+    devices = [
+        {"code": "DOCK-SCN-02", "kind": "dock_scanner", "doorCode": "LD-02"},
+        {"code": "DOCK-SCN-05", "kind": "dock_scanner", "doorCode": "LD-05"},
+        {"code": "DOOR-SNS-02", "kind": "door_sensor", "doorCode": "LD-02"},
+    ]
+    bad = _wave([0.96] * 4 + [0.80] * 8, items=22)  # optics clearly dirty
+    good = _wave([0.96] * 12, items=22)
+    metrics = {"DOCK-SCN-02": bad, "DOCK-SCN-05": good}
+    changes = score_scanners(db, model, devices, lambda code: metrics.get(code), local(21, 0))
+    db.commit()
+    assert [c.alert.ref_id for c in changes] == ["DOCK-SCN-02"]
+    alert = db.query(Alert).filter(Alert.kind == AlertKind.SCANNER_DEGRADATION).one()
+    assert "LD-02" in alert.message and "optiku" in alert.message
+    assert LATEST["DOCK-SCN-02"].alarm and LATEST["DOCK-SCN-02"].risk == 1.0
+    assert not LATEST["DOCK-SCN-05"].alarm and "DOOR-SNS-02" not in LATEST
+    # the optics were cleaned: the risk falls and the alert closes (system, no user)
+    metrics["DOCK-SCN-02"] = good
+    score_scanners(db, model, devices, lambda code: metrics.get(code), local(22, 0))
+    db.commit()
+    db.refresh(alert)
+    assert alert.acknowledged_at is not None and alert.acknowledged_by is None
+
+
+def test_scanner_risks_endpoint_roles(client: TestClient, make_user: MakeUser) -> None:
+    make_user("guard2", UserRole.SECURITY)
+    login(client, "guard2")
+    body = client.get("/api/ml/scanners").json()
+    assert body["available"] is True and body["threshold"] > 0
+    make_user("op2", UserRole.OPERATOR)
+    login(client, "op2")
+    assert client.get("/api/ml/scanners").status_code == 403

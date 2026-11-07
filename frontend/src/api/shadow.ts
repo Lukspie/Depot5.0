@@ -108,6 +108,26 @@ export interface MaintenanceOrder {
   until: string;
 }
 
+/** Predictive maintenance (phase 6, ADR-058): latest risk of every dock scanner from the app. */
+export interface ScannerRisk {
+  device: string;
+  doorCode: string | null;
+  risk: number | null;
+  alarm: boolean;
+  /** read rate over 30 min / 2 h */
+  rateShort: number | null;
+  rateLong: number | null;
+  at: string;
+}
+
+export function useScannerRisks() {
+  return useQuery({
+    queryKey: ["ml", "scanners"],
+    queryFn: () => getJson<{ available: boolean; threshold: number | null; scanners: ScannerRisk[] }>("/api/ml/scanners"),
+    refetchInterval: 15_000,
+  });
+}
+
 export function useMoveTrip() {
   const qc = useQueryClient();
   return useMutation({

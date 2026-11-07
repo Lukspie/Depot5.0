@@ -33,7 +33,8 @@ const DOCK_SCANNERS = [...LINEHAUL, ...TRANSIT].map((d, i) => ({
   code: d.code,
   // linehaul docks load in the evening, transit docks in the morning
   window: i < LINEHAUL.length ? (["17:05", "21:15"] as const) : (["03:05", "05:35"] as const),
-  perMinute: i < LINEHAUL.length ? 2.2 : 1.6,
+  // the same volume as the live simulator: ~230 parcels in 4 h at a linehaul dock, ~165 in 2.5 h at a transit dock
+  perMinute: i < LINEHAUL.length ? 1.0 : 1.1,
 }));
 
 function arg(name: string, fallback: string): string {

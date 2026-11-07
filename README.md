@@ -157,7 +157,7 @@ vydá `POST /api/auth/ws-ticket` po prihlásení a platí 60 s.
 | prehľad scenára (meškania, porucha) | `GET /sim/scenario` |
 | vypnúť / zapnúť / opraviť zariadenie | `PUT /sim/devices/DOCK-SCN-05 {"enabled": false}`, `{"repair": true}` |
 
-**Situácie na demo:** `evening-peak` (18:30), `night-cascade` (02:10), `calm-night` (23:30, bez kaskády v pláne), `morning-departures` (05:45), `couriers-morning` (07:20), `scanner-ld05` (20:30), `off-wave` (10:00). Načítajú sa v *Administrácia → Simulácia → Situácie* alebo odkazom pre admina, napr. http://localhost:8000/shadow?depot=BUD&situation=evening-peak. Rovnaká situácia dá vždy rovnaké čísla.
+**Situácie na demo:** `evening-peak` (18:30), `night-cascade` (02:10), `calm-night` (23:30, bez kaskády v pláne), `morning-departures` (05:45), `couriers-morning` (07:20), `scanner-ld05` (06:00), `off-wave` (10:00). Načítajú sa v *Administrácia → Simulácia → Situácie* alebo odkazom pre admina, napr. http://localhost:8000/shadow?depot=BUD&situation=evening-peak. Rovnaká situácia dá vždy rovnaké čísla.
 
 Ovládanie simulácie je len pre admina. **V ostrom režime nastav `SIM_CONTROLS_ENABLED=false`**: všetky ovládacie endpointy vrátia 403 a admin UI ich skryje. Scenár „čo ak“ funguje ďalej.
 

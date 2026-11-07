@@ -1,0 +1,18 @@
+{
+  "model": "IsolationForest(n_estimators=300) on healthy 10-min buckets",
+  "features": [
+    "z_30m",
+    "z_2h"
+  ],
+  "testDays": 45,
+  "trainBuckets": 17497,
+  "threshold": 0.6697,
+  "healthyRate": 0.9574,
+  "bucketRecall": 0.603,
+  "bucketPrecision": 0.88,
+  "falseAlarmRate": 0.0054,
+  "episodes": 10,
+  "episodesDetected": 10,
+  "medianDetectionDelayH": 24.4,
+  "sklearn": "1.9.1"
+}

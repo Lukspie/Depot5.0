@@ -1,6 +1,7 @@
 """Train the truck delay model (phase 6, PROMPT §8.3, ADR-057).
 
-Data:   ml/data/trips_history.csv  (cd telematics && npm run gen:history -- --days 180 --out ../ml/data)
+Data:   ml/data/trips_history.csv
+        (cd telematics && npm run gen:history -- --days 180 --out ../ml/data)
 Output: ml/artifacts/delay_model.joblib + delay_model.json (metrics)
 
 Runs inside the app image, so training and inference use the same scikit-learn and the same
@@ -67,7 +68,10 @@ def model() -> HistGradientBoostingRegressor:
 
 def main() -> None:
     if not DATA.exists():
-        sys.exit(f"missing {DATA}: run `npm run gen:history -- --days 180 --out ../ml/data` in telematics")
+        sys.exit(
+            f"missing {DATA}: in telematics run "
+            "`npm run gen:history -- --days 180 --out ../ml/data`"
+        )
     days, rows, y_all = load()
     directions = tuple(sorted({r.direction for r in rows}))
     x_all = encode(rows, directions)
@@ -101,7 +105,7 @@ def main() -> None:
     metrics = {
         "model": "HistGradientBoostingRegressor(loss=absolute_error)",
         "features": list(FEATURES),
-        "trainDays": int(len({d for d, t in zip(days, train, strict=True) if t})),
+        "trainDays": len({d for d, t in zip(days, train, strict=True) if t}),
         "testDays": TEST_DAYS,
         "rowsTrain": int(train.sum()),
         "rowsTest": int(test.sum()),
@@ -113,8 +117,18 @@ def main() -> None:
         "sklearn": sklearn.__version__,
     }
     OUT.mkdir(exist_ok=True)
-    joblib.dump({"model": final, "directions": list(directions), "metrics": metrics, "sklearn": sklearn.__version__}, OUT / ARTIFACT)
-    (OUT / "delay_model.json").write_text(json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    joblib.dump(
+        {
+            "model": final,
+            "directions": list(directions),
+            "metrics": metrics,
+            "sklearn": sklearn.__version__,
+        },
+        OUT / ARTIFACT,
+    )
+    (OUT / "delay_model.json").write_text(
+        json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     print(json.dumps(metrics, indent=2))
 
 

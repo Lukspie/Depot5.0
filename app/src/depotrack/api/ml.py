@@ -7,11 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.ml.delay import delay_model, model_card
+from depotrack.ml.scanner import scanner_model
 from depotrack.models import Trip, User
 from depotrack.models.enums import TripKind, UserRole
 from depotrack.schemas.internal import CamelModel
 from depotrack.services import telematics
 from depotrack.services.ml_eta import features, predict_delay
+from depotrack.services.ml_scanner import LATEST
 
 router = APIRouter(prefix="/api/ml", tags=["ml"])
 
@@ -19,6 +21,23 @@ Staff = Annotated[
     User, Depends(require_role(UserRole.DISPATCHER, UserRole.OPERATOR, UserRole.SECURITY))
 ]
 Dispatcher = Annotated[User, Depends(require_role(UserRole.DISPATCHER))]
+Viewer = Annotated[User, Depends(require_role(UserRole.DISPATCHER, UserRole.SECURITY))]
+
+
+class ScannerRiskOut(CamelModel):
+    device: str
+    door_code: str | None
+    risk: float | None
+    alarm: bool
+    rate_short: float | None  # read rate over the last 30 min
+    rate_long: float | None  # over the last 2 h
+    at: datetime
+
+
+class ScannerRisksOut(CamelModel):
+    available: bool
+    threshold: float | None
+    scanners: list[ScannerRiskOut]
 
 
 class ModelStatus(CamelModel):
@@ -55,6 +74,12 @@ def ml_status(_: Staff) -> MlStatusOut:
                 available=delay_model() is not None,
                 metrics=model_card("delay_model"),
             ),
+            ModelStatus(
+                name="scanner",
+                title="Prediktívna údržba skenerov",
+                available=scanner_model() is not None,
+                metrics=model_card("scanner_model"),
+            ),
         ]
     )
 
@@ -87,4 +112,26 @@ def predict_trip_delay(
         features=f.__dict__,
         predicted_by=trip.predicted_by,
         current_prediction=trip.predicted_arrival,
+    )
+
+
+@router.get("/scanners", response_model=ScannerRisksOut, response_model_by_alias=True)
+def scanner_risks(_: Viewer) -> ScannerRisksOut:
+    """Latest risk score of every dock scanner (digital shadow device panel, ADR-058)."""
+    model = scanner_model()
+    return ScannerRisksOut(
+        available=model is not None,
+        threshold=model.threshold if model else None,
+        scanners=[
+            ScannerRiskOut(
+                device=r.device,
+                door_code=r.door_code,
+                risk=None if r.risk is None else round(r.risk, 3),
+                alarm=r.alarm,
+                rate_short=r.rate_30m,
+                rate_long=r.rate_2h,
+                at=r.at,
+            )
+            for r in sorted(LATEST.values(), key=lambda x: x.device)
+        ],
     )

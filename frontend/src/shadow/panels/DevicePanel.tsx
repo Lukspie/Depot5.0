@@ -1,7 +1,7 @@
 import { ScanLine } from "lucide-react";
-import { useDeviceMetrics } from "../../api/shadow";
+import { useDeviceMetrics, useScannerRisks } from "../../api/shadow";
 import type { Alert } from "../../api/wms";
-import { Badge, KeyValue, SidePanel, StatusDot, type Tone } from "../../components/ui";
+import { Badge, KeyValue, Progress, SidePanel, StatusDot, type Tone } from "../../components/ui";
 import { hhmmss } from "../../domain/labels";
 import { useShadowStore, type LiveScan } from "../store";
 import { useCanAct } from "../permissions";
@@ -9,6 +9,23 @@ import { AlertList, Maintenance } from "./Actions";
 import { Sparkline } from "./Sparkline";
 
 const EMPTY: LiveScan[] = [];
+
+/** IsolationForest risk of a dock scanner: 0 % = like a healthy one, 100 % = alert (ADR-058). */
+function RiskValue({ code, kind }: { code: string; kind: string | undefined }) {
+  const q = useScannerRisks();
+  if (kind !== "dock_scanner") return <span className="text-ink-muted">len skenery brán</span>;
+  if (q.data && !q.data.available) return <span className="text-ink-muted">model nedostupný</span>;
+  const r = q.data?.scanners.find((s) => s.device === code);
+  if (!r) return <span className="text-ink-muted">—</span>;
+  if (r.risk === null) return <span className="text-ink-muted">bez prevádzky</span>;
+  const pct = Math.round(r.risk * 100);
+  return (
+    <span className="flex min-w-32 items-center gap-2">
+      <Progress className="w-20" value={pct} max={100} tone={r.alarm ? "danger" : pct >= 50 ? "warn" : "ok"} />
+      <span className={`tabular-nums ${r.alarm ? "text-danger-600 font-semibold" : ""}`}>{pct} %</span>
+    </span>
+  );
+}
 const STATUS: Record<string, { label: string; tone: Tone }> = {
   online: { label: "Online", tone: "ok" },
   degraded: { label: "Degradované", tone: "warn" },
@@ -52,7 +69,7 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
           ["Čítanosť za smenu (8 h)", counted > 0 ? `${((read / counted) * 100).toFixed(1)} %` : "—"],
           ["Spočítané / prečítané", `${counted.toLocaleString("sk-SK")} / ${read.toLocaleString("sk-SK")}`],
           ["Neidentifikované", (counted - read).toLocaleString("sk-SK")],
-          ["Riziko poruchy", <span key="r" className="text-ink-muted">model príde vo Fáze 6</span>],
+          ["Riziko poruchy (ML)", <RiskValue key="r" code={code} kind={d?.kind} />],
         ]}
       />
       <AlertList alerts={alerts.filter((a) => a.refType === "device" && a.refId === code)} canAct={canAct} />
