@@ -596,3 +596,14 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Dôsledok:**
   - Žiadna AGPL ani torch závislosť, jedna fotka trvá na CPU ~1 s.
   - Presnosť na reálnych fotkách brány nie je overená. Syntetická ŠPZ a CC0 fotka návesu prešli (ml/README.md).
+
+## ADR-060 IoT skener na nakládke: OpenCV na hostovi, bez dotrénovania YOLO
+- **Kontext:** PROMPT §8.2 chce prototyp skenera, ktorý z videa alebo webkamery počíta krabice a číta kódy a posiela `device_scan_events` rovnakým API ako simulátor. YOLO môže byť „prípadne doladené“. Vlastné označené snímky krabíc nemáme a čas pred odovzdaním je obmedzený.
+- **Rozhodnutie:**
+  - `ml/dock_scanner.py` beží na hostovi (ADR-013) a obsahuje len OpenCV a numpy. Krabice hľadá odčítaním pozadia (MOG2) a sledovaním ťažísk a počíta ich prechodom cez čiaru. Kódy číta `cv2.QRCodeDetector` a `cv2.barcode` (pyzbar netreba). **YOLO na krabice sa nedotrénovalo** (jednoduchšia verzia podľa pravidiel Fázy 6).
+  - Skeny idú do telematiky na existujúci `POST /devices/{kód}/scans` so service tokenom, heartbeat na `POST /devices/{kód}/heartbeat`. Zariadenie má byť v `SIM_EXTERNAL_DEVICES`, aby ho simulátor negeneroval.
+  - `ml/labels.py` vytlačí štítky reálnych balíkov jazdy, ktorá pri bráne nakladá (QR cez OpenCV, PDF cez Pillow).
+  - `ml/depot_client.py` je spoločný klient skriptov na hostovi, len so štandardnou knižnicou.
+- **Dôsledok:**
+  - Demo s krabicami a webkamerou ukazuje celý tok: reálny sken, kontrola smeru, nakládka vo WMS, čítanosť a prediktívna údržba.
+  - Počítanie spoľahlivo funguje pri pevnej kamere a krabiciach jednej za druhou. Na hustý pás by bolo treba detektor (YOLO dotrénované na krabice), to je ďalší rozvoj.

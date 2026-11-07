@@ -156,6 +156,32 @@ python ml/download_gate_models.py     # ml/artifacts/yolox_tiny.onnx (19 MB)
   - tabuľka musí mať aspoň ~60 px na výšku,
   - image app narástol na ~1,7 GB (OpenCV, onnxruntime).
 
-## 4. IoT skener na nakládke
+## 4. IoT skener na nakládke (prototyp)
 
-*(Pripravuje sa.)*
+**Na obhajobe:** webkamera (alebo mobil ako IP kamera) nad „pásom“ a krabice s vytlačenými štítkami.
+
+```bash
+pip install -r ml/requirements-host.txt
+# 1. štítky reálnych balíkov, ktoré sa práve nakladajú pri bráne (najprv situácia, napr. morning-departures)
+DEPOT_PASSWORD=<heslo dispečera> python ml/labels.py --door LD-06 --count 16 --out labels.pdf
+# 2. skener brány LD-06; v .env SIM_EXTERNAL_DEVICES=DOCK-SCN-06, aby ho nesimuloval simulátor
+SERVICE_TOKEN=<z .env> python ml/dock_scanner.py --device DOCK-SCN-06 --camera 0 --show
+# skúška bez systému: python ml/dock_scanner.py video.mp4 --dry-run
+```
+
+- **Úloha:** reálne „IoT zariadenie“ namiesto simulovaného skenera. Spočíta krabice, prečíta ich kódy a pošle skeny rovnakým API ako simulátor.
+- **Postup** (`ml/dock_scanner.py`, OpenCV na hostovi, nič netreba trénovať):
+  1. **Počítanie krabíc:** odčítanie pozadia (MOG2), uzavretie dier po štítku (25 × 25), kontúry od 1 % plochy obrazu, vnorené rámiky sa zlúčia. Ťažiská sa sledujú medzi snímkami (najbližší sused). Krabica, ktorú bolo vidieť aspoň 3 snímky a prejde čiarou (predvolene 60 % výšky), je jedna položka.
+  2. **Kódy:** `cv2.QRCodeDetector` (viac QR naraz) a `cv2.barcode` (EAN, Code128…) v každej snímke. Kód sa priradí krabici, v ktorej rámiku leží. Pri prechode čiarou platí najčastejší kód, inak je krabica nečitateľná.
+  3. **Sken:** `POST /devices/{kód}/scans` v telematike (`{barcode, readOk, itemCounted: true}`, service token), heartbeat každých 10 s. Telematika ho spracuje ako simulovaný sken: kontrola smeru a nakládka vo WMS, alarm zlého smeru, čítanosť zariadenia, minútové metriky pre prediktívnu údržbu.
+- **YOLO na krabice sme nedotrénovali** (PROMPT §8.2 to pripúšťa). Nemáme vlastné označené snímky a odčítanie pozadia pri pevnej kamere a jednej dráhe stačí. Obmedzenia sú v ADR-060.
+- **Štítky** (`ml/labels.py`): stránky A4 s 8 štítkami (QR kód čiarového kódu, text, brána, smer, hmotnosť). Balíky berie z `GET /api/shadow/doors/{brána}`, čo sú chýbajúce balíky jazdy, ktorá pri bráne práve nakladá. QR sa generuje cez OpenCV a PDF cez Pillow, nové závislosti netreba.
+- **Overenie (7. 11. 2026):**
+  - syntetické video 6 krabíc (4 s QR, 2 bez kódu): 6 spočítaných, 4 prečítané,
+  - naživo v situácii `morning-departures` pri LD-06 (smer HE): 5 krabíc, z toho 4 so štítkami reálnych balíkov. Spočítaných 5, prečítané 4 a vo WMS kleslo „chýba naložiť“ z 32 na 28 a všetky 4 balíky sú naložené,
+  - prvá verzia rátala krabicu so štítkom dvakrát (štítok rozdelil kontúru). Opravilo to uzavretie dier, zlúčenie vnorených rámikov a minimálny vek stopy.
+- **Obmedzenia:**
+  - pevná kamera a pokojné pozadie (MOG2 sa učí pozadie prvé sekundy),
+  - krabice idú jedna po druhej, dve dotýkajúce sa sa zlejú do jednej,
+  - kód musí byť na snímke dosť veľký (QR ~80 px a viac),
+  - test na skutočnom páse a s reálnou kamerou ešte nebol, ostáva na demo s krabicami.
