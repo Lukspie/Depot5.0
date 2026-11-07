@@ -31,8 +31,8 @@
   {
     "id": "couriers-morning",
     "name": "Kuriéri ráno",
-    "description": "07:20, kuriéri nakladajú dodávky pri odstavných plochách, zákazníci dostávajú SMS so sledovaním.",
-    "time": "07:20",
+    "description": "06:55, kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli, zákazníci dostávajú SMS so sledovaním. Odchod okolo 7:30.",
+    "time": "06:55",
     "seed": 42
   },
   {

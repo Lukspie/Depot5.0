@@ -493,7 +493,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Rozhodnutie:**
   - **Definície** sú v `telematics/data/situations.json`: id, slovenský názov a popis, čas, seed a voliteľne `forceCascade` a `degradedDevice`.
   - **Situácie:**
-    - `evening-peak` (18:30), `night-cascade` (02:10), `morning-departures` (05:45), `couriers-morning` (07:20), `off-wave` (10:00),
+    - `evening-peak` (18:30), `night-cascade` (02:10), `morning-departures` (05:45), `couriers-morning` (06:55, do 7b 07:20), `off-wave` (10:00),
     - `calm-night` (23:30, `forceCascade: false`, v pláne bez kaskády, aby scenár „čo ak“ ukázal jej vznik),
     - `scanner-ld05` (06:00, ranná nakládka pri LD-05, degradovaný `DOCK-SCN-05` namiesto `DOCK-SCN-02`).
   - **Načítanie** `POST /sim/situations/{id}` (admin, `SIM_CONTROLS_ENABLED`) je čistý reset (ADR-053) s nastaveniami situácie, potom replay od 15:00 do jej času. `GET /sim/situations` vidí personál.
@@ -647,7 +647,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Pred nakládkou bolo „Doručené“ neaktívne s textom „Balík ešte nie je naskenovaný“, čo vyzeralo ako chyba.
 - **Rozhodnutie:**
   - **Appka:** `/courier` má vlastný rám mimo layoutu. Na telefóne je na celú obrazovku, od 768 px v ráme telefónu 390 × 844 v strede. Spodná navigácia: Zastávky, Mapa, Skener. Pred odchodom ukazuje kartu nakládky (státie, odchod, x / N v dodávke) a „Doručené“ je až po odchode.
-  - **Skener:** `POST /api/courier/scan` (len kuriér trasy). Od 07:00 do odchodu sken naloží balík (`out_for_delivery` a SMS so sledovaním, ten istý kód ako simulátor), potom vyberie zastávku a appka ju ukáže na mape. Naloženie mimo tohto času vráti 409 (balík ešte na páse v noci nesmie poslať zákazníkovi SMS „kuriér je na ceste“). Bluetooth spojenie je simulované (spárované s ŠPZ dodávky, dá sa odpojiť). Skutočný BT skener v režime klávesnice píše do poľa „zadať čiarový kód“.
+  - **Skener:** `POST /api/courier/scan` (len kuriér trasy). Od 06:30 do odchodu sken naloží balík (`out_for_delivery` a SMS so sledovaním, ten istý kód ako simulátor), potom vyberie zastávku a appka ju ukáže na mape. Naloženie mimo tohto času vráti 409 (balík ešte na páse v noci nesmie poslať zákazníkovi SMS „kuriér je na ceste“). Bluetooth spojenie je simulované (spárované s ŠPZ dodávky, dá sa odpojiť). Skutočný BT skener v režime klávesnice píše do poľa „zadať čiarový kód“.
   - **Typy doručenia:** stĺpce `delivery_type`, `window_from`, `window_to` pri balíku. Profil je pevne daný čiarovým kódom (md5): 60 % osobné odovzdanie s 3 h oknom (08–11, 10–13, 12–15), 25 % schránka, 15 % box. Rovnaký vzorec je v migrácii pre staré balíky a test overí, že SQL a Python dajú to isté. Box stojí pri adrese, lebo skutočné polohy boxov nemáme.
   - **Poradie zastávok:** time-oriented nearest neighbour (Solomon 1987). Ďalšia zastávka minimalizuje 0,7 × jazda + 0,7 × čakanie na okno + 0,1 × minúty do konca okna. Schránka a box sa rátajú ako 240 min rezervy, takže vypĺňajú medzery.
     - Meranie na všetkých 648 trasách v DB (80–100 zastávok, 34 011 osobných odovzdaní), skript `tools/measure_routes.py`. Fáza 4 je nearest neighbour bez čakania, okno zmešká aj príchodom pred jeho začiatkom (zákazník ešte nie je doma):

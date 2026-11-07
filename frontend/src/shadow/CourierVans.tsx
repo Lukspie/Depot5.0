@@ -18,8 +18,9 @@ function PrimitiveVan() {
 }
 
 /**
- * Courier vans being loaded (morning, ADR-041) stand outside the south wall behind their staging
- * bay (KE-0N -> SB-0N). Positions come from the telematics "vehicles" channel, not from the plan.
+ * Courier vans parked in the yard and being loaded (from 06:30, ADR-041, phase 7b) stand outside
+ * the south wall behind their staging bay (KE-0N -> SB-0N) until they leave. Positions come from
+ * the telematics "vehicles" channel, not from the plan.
  */
 export function CourierVans({ layout }: { layout: DepotLayout }) {
   const vans = useShadowStore((s) => s.vans);

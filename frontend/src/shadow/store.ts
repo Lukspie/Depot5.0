@@ -83,7 +83,8 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
   doors: {},
   vans: {},
   van: (p) => {
-    const here = p.kind === "van" && p.status === "loading";
+    // in the yard: parked overnight, loading in the morning (phase 7b), until it leaves
+    const here = p.kind === "van" && (p.status === "loading" || p.status === "parked");
     const known = p.plate in get().vans;
     if (here === known) return; // only changes reach React (positions arrive every second)
     set((s) => {

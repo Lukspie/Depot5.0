@@ -27,9 +27,10 @@ describe("courier rounds", () => {
     expect(courierEvents(a)).not.toEqual(courierEvents(c));
   });
 
-  it("loads from 07:00, leaves ~07:30, stays 2–6 min per stop, comes back", () => {
+  it("loads from 06:30, leaves ~07:30, stays 2–6 min per stop, comes back", () => {
     for (const s of buildCourierSchedules(plan, { seed: 42, router: null })) {
-      expect(s.loadStart).toBeGreaterThanOrEqual(zonedToUtc(NEXT, "07:00"));
+      expect(s.loadStart).toBeGreaterThanOrEqual(zonedToUtc(NEXT, "06:30"));
+      expect(s.loadStart).toBeLessThanOrEqual(zonedToUtc(NEXT, "06:35"));
       expect(Math.max(...s.loadAt)).toBeLessThan(s.depart);
       expect(s.depart).toBeGreaterThanOrEqual(zonedToUtc(NEXT, "07:30"));
       expect(s.depart).toBeLessThanOrEqual(zonedToUtc(NEXT, "07:36"));
@@ -55,10 +56,18 @@ describe("courier rounds", () => {
     expect(ok).toBeLessThan(SUCCESS_RATE + 0.05);
   });
 
-  it("van state: loading in the depot, driving between stops, standing at a stop", () => {
-    const [s] = buildCourierSchedules(plan, { seed: 42, router: null });
-    if (!s) throw new Error("no schedule");
-    expect(courierStateAt(s, s.loadStart + MINUTE).status).toBe("loading");
+  it("van state: parked and loading in the yard, driving between stops, standing at a stop", () => {
+    const [s, other] = buildCourierSchedules(plan, { seed: 42, router: null });
+    if (!s || !other) throw new Error("no schedule");
+    // overnight and while loading the van stands at its own place in the yard, not on the depot point
+    const night = courierStateAt(s, s.loadStart - 60 * MINUTE);
+    expect(night.status).toBe("parked");
+    expect(night.pos).toMatchObject({ lat: s.parking[0], lon: s.parking[1], moving: false });
+    expect(s.parking).not.toEqual(other.parking);
+    expect(Math.abs(s.parking[0] - s.depot[0]) + Math.abs(s.parking[1] - s.depot[1])).toBeLessThan(0.002);
+    const loading = courierStateAt(s, s.loadStart + MINUTE);
+    expect(loading.status).toBe("loading");
+    expect(loading.pos).toMatchObject({ lat: s.parking[0], lon: s.parking[1] });
     const firstLeg = (must(s.legStart[0]) + must(s.legEnd[0])) / 2;
     const driving = courierStateAt(s, firstLeg);
     expect(driving.status).toBe("en_route");
@@ -67,7 +76,7 @@ describe("courier rounds", () => {
     const at = courierStateAt(s, (v.arrive + v.leave) / 2);
     expect(at.status).toBe("at_stop");
     expect(at.pos).toMatchObject({ lat: must(s.route.stops[0]).lat, lon: must(s.route.stops[0]).lon, moving: false });
-    expect(courierStateAt(s, s.returnAt + MINUTE).status).toBeNull();
+    expect(courierStateAt(s, s.returnAt + MINUTE).status).toBe("parked");
   });
 
   it("ETA error shrinks as the van gets closer", () => {
@@ -97,7 +106,7 @@ describe("courier rounds", () => {
 describe("engine: courier rounds", () => {
   it("reports loaded/departed/delivered/returned with ETAs and shows the vans", async () => {
     const start = operatingDayStart(DAY);
-    const clock = new SimClock({ simTime: zonedToUtc(NEXT, "06:50"), speed: 60, paused: true }, () => 0);
+    const clock = new SimClock({ simTime: zonedToUtc(NEXT, "06:20"), speed: 60, paused: true }, () => 0);
     const app = new FakeApp();
     const hub = new Hub();
     const engine = new Engine({

@@ -2,7 +2,7 @@
 
 Courier kurier0N drives district KE-0N with van KE-30NKR. The route of operating day D is driven
 on the morning of D+1 (inside operating day D, which ends at 15:00; with delivery windows many
-vans come back after 15:00, ADR-062): from 07:00 the courier
+vans come back after 15:00, ADR-062): from 06:30 the courier
 scans the parcels into the van at staging bay SB-0N, leaves Budimír at ~07:30 and visits the
 stops in the order of services/routing.py (handover windows, mailboxes and lockers fill the gaps,
 ADR-062). Stops = the district's parcels of day D.
@@ -41,7 +41,7 @@ from depotrack.services import tracking
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.routing import Stop, Visit, plan_tour
 
-LOADING_START = time(7, 0)
+LOADING_START = time(6, 30)
 DEPARTURE = time(7, 30)
 COURIER_USERNAME = re.compile(r"^kurier(\d{2})$")
 

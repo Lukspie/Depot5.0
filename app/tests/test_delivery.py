@@ -580,7 +580,7 @@ def test_paired_scanner_loads_before_departure_then_selects_the_stop(
 
     barcode = mine["stops"][0]["barcode"]
     # at night the parcel is still on the belts: no loading, no SMS to the customer
-    at("06:30")
+    at("06:10")
     assert client.post("/api/courier/scan", json={"barcode": barcode}).status_code == 409
     at("07:05")
     first = client.post("/api/courier/scan", json={"barcode": barcode.lower()})

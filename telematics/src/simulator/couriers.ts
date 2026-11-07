@@ -71,6 +71,8 @@ export interface CourierSchedule {
   legs: Polyline[];
   legStart: number[];
   legEnd: number[];
+  /** where the van stands in the depot yard overnight and while it is loaded (phase 7b) */
+  parking: LatLon;
   depot: LatLon;
 }
 
@@ -102,8 +104,9 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
     .map((route) => {
       const rng = rngFor(opts.seed, plan.day, "courier", route.districtCode);
       const traffic = rng.float(CITY_FACTOR[0], CITY_FACTOR[1]);
-      const loadStart = zonedToUtc(route.date, "07:00") + rng.int(0, 5) * MINUTE;
-      const spacing = (25 * MINUTE) / route.stops.length;
+      // phase 7b: loading at the staging bay from 06:30, the departure stays at ~07:30
+      const loadStart = zonedToUtc(route.date, "06:30") + rng.int(0, 5) * MINUTE;
+      const spacing = (50 * MINUTE) / route.stops.length;
       const loadAt = route.stops.map((_, i) => Math.round(loadStart + i * spacing));
       const depart = zonedToUtc(route.date, "07:30") + rng.int(0, 6) * MINUTE;
 
@@ -145,7 +148,7 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
       legStart.push(t);
       t = Math.round(t + back.minutes * MINUTE);
       legEnd.push(t);
-      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot };
+      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot, parking: parkingSpot(depot, route) };
     });
 }
 
@@ -164,7 +167,18 @@ export function courierEvents(schedules: CourierSchedule[]): CourierEvent[] {
   return out.sort((a, b) => a.at - b.at || a.routeId - b.routeId);
 }
 
-export type CourierStatus = "loading" | "en_route" | "at_stop" | "returning" | null;
+export type CourierStatus = "parked" | "loading" | "en_route" | "at_stop" | "returning" | null;
+
+/**
+ * The van's own place in the depot yard, in a row south of the depot point, ~9 m apart by its
+ * district number (KE-03 -> 3rd place). Not surveyed geometry: the map and the shadow only need
+ * the vans next to each other instead of on one point.
+ */
+export function parkingSpot(depot: LatLon, route: Pick<CourierPlanRoute, "districtCode" | "routeId">): LatLon {
+  const n = Number.parseInt(route.districtCode.slice(-2), 10);
+  const place = Number.isFinite(n) ? n : (route.routeId % 8) + 1;
+  return [depot[0] - 0.0004, depot[1] + 0.0004 + (place - 4.5) * 0.00012];
+}
 
 export interface CourierState {
   pos: Position;
@@ -180,8 +194,8 @@ function parked(at: LatLon): Position {
 /** Where the van is at `t` and what it does. */
 export function courierStateAt(s: CourierSchedule, t: number): CourierState {
   const done = s.visits.filter((v) => v.leave <= t).length;
-  if (t < s.loadStart || t >= s.returnAt) return { pos: parked(s.depot), status: null, done };
-  if (t < s.depart) return { pos: parked(s.depot), status: "loading", done };
+  if (t < s.loadStart || t >= s.returnAt) return { pos: parked(s.parking), status: "parked", done };
+  if (t < s.depart) return { pos: parked(s.parking), status: "loading", done };
   for (let i = 0; i < s.legs.length; i++) {
     const start = s.legStart[i] ?? 0;
     const end = s.legEnd[i] ?? 0;

@@ -377,7 +377,7 @@ function ScanTab({
         const text = isApiError(err, 404)
           ? `${barcode}: nie je na vašej dnešnej trase`
           : isApiError(err, 409)
-            ? `${barcode}: teraz sa nenakladá (nakládka od 7:00 do odchodu)`
+            ? `${barcode}: teraz sa nenakladá (nakládka od 6:30 do odchodu)`
             : `${barcode}: sken sa nepodarilo uložiť`;
         setLog((l) => [{ text, tone: "danger" as Tone }, ...l].slice(0, 6));
       },
@@ -594,7 +594,7 @@ export function CourierPage() {
         <EmptyState
           icon={<Package size={20} />}
           title={isApiError(route.error, 404) ? "Dnes nemáte pridelenú trasu" : "Trasu sa nepodarilo načítať"}
-          description="Trasa sa vytvára pre balíky prevádzkového dňa, nakladá sa od 7:00 a jazdí od 7:30."
+          description="Trasa sa vytvára pre balíky prevádzkového dňa, nakladá sa od 6:30 a jazdí od 7:30."
         />
       </div>
     );
