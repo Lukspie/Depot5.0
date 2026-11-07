@@ -536,6 +536,12 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Bez Azure (alebo pri výpadku internetu) sa prepne jednou zmenou v `.env`.
   - Nová Azure DB začína s prázdnym stavom simulátora, deň sa pripraví situáciou.
   - Azure účtuje server, kým beží, preto README ukazuje `az postgres flexible-server stop`.
+- **Overenie (7. 11. 2026, server `depotrack-tel-aispu`, B1ms, PG 16):**
+  - všetkých 7 migrácií `001`–`007` prebehlo pri štarte na prázdnej Azure DB,
+  - `/health` hlási `azure`, TLS, ping 19 ms,
+  - živé hodiny držia nastavených 30×,
+  - situácie s replayom: `evening-peak` 3,4 s (zápisy do Azure 0,1 s), `night-cascade` 7,5 s (zápisy 0,3 s). Väčšinu času zaberie posielanie do app (WMS), nie Azure,
+  - skeny a minútové metriky v Azure pribúdajú a dashboard ich zobrazuje.
 
 ## ADR-057 ML v app: scikit-learn, tréning v image app, artefakty v repozitári (Fáza 6)
 - **Kontext:**

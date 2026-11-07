@@ -179,18 +179,18 @@ Nemusí ísť o presnú kópiu. Podrobnejšie veci sa otvárajú v overlayi aleb
 
 ## Zmena plánu pred odovzdaním (6. 11. 2026, termín nedeľa 8. 11.)
 Poradie práce:
-1. **5d skrátená:**
+1. **5d skrátená** *(hotové: hotfix, krok 1, krok 2, alarmy, prah 15 min)*:
    - hotfix 400 *(hotové)*,
    - krok 1 ovládanie času,
    - krok 2 situácie vrátane `calm-night`,
    - z kroku 5 len uzavretie starých alarmov a KPI alarmov len pre aktuálny deň,
    - z kroku 4 len prah oneskoreného prechodu 15 min.
-2. **Azure:**
+2. **Azure** *(hotové a overené 7. 11. 2026, ADR-056)*:
    - db-telemetry pôjde do Azure Database for PostgreSQL Flexible Server (B1MS, PG 16). Server vytvorí používateľ, návod bude v README (portal aj az CLI, firewall, `sslmode=require`),
    - telematika sa pripája cez `TELEMETRY_DATABASE_URL` so SSL a migračný runner (ADR-012) prejde aj proti Azure,
    - kontajner db-telemetry ostane ako záloha v compose profile `local` (offline demo, testy). Predvolený režim je Azure (ADR-056),
    - overiť: skeny pribúdajú, `/system` ukazuje Azure DB ako healthy, latencia nebrzdí simuláciu (dávky zápisov), testy bežia proti lokálnej DB.
-3. **Fáza 6 – ML** (PROMPT §8). Poradie je priorita a každá časť má časový limit. Ak sa nestihne, vznikne jednoduchšia verzia a zapíše sa.
+3. **Fáza 6 – ML** (PROMPT §8) *(hotové všetky 4 časti, ADR-057 až 060, ml/README.md)*. Poradie je priorita a každá časť má časový limit. Ak sa nestihne, vznikne jednoduchšia verzia a zapíše sa.
    1. **Predikcia meškania kamiónov:**
       - HistGradientBoostingRegressor na histórii z `gen:history`, príznaky podľa §8,
       - metrika MAE v minútach voči baseline (priemer na smer),
@@ -211,7 +211,7 @@ Poradie práce:
      - artefakty v `ml/artifacts` (`*.onnx`, `*.joblib` binary). Bez artefaktu app naštartuje a UI ukáže „model nedostupný“,
      - tréning jedným príkazom, `ml/README.md` pre každý model (dáta, príznaky, metriky, obmedzenia),
      - testy (načítanie modelov, inferencia cez HTTP, detekcia degradácie) a reviewer na konci.
-4. **Z 5b len** oprava poradia zastávok na `/courier` (85/92 hotových, ale „ďalšia“ je č. 2, ETA nesedia).
+4. **Z 5b len** *(hotové)* oprava poradia zastávok na `/courier` (85/92 hotových, ale „ďalšia“ je č. 2, ETA nesedia).
 5. **Nedeľa, minimálna Fáza 7:**
    - `docs/architektura.md` (mermaid: služby, Azure, toky dát, bezpečnosť), `docs/api.md` (endpointy oboch backendov z OpenAPI), `docs/demo.md` (scenár obhajoby so situáciami),
    - README a `docs/fazy/faza-6-ml.md`,
