@@ -154,10 +154,8 @@ Do kroku 4 zapíš do plan-doplnky:
 Do kroku 2 pridaj situáciu calm-night bez kaskád v pláne, nech scenár ukáže vznik kaskády.
 ```
 
-### Termín odovzdania: Azure, Fáza 6 (ML) a minimálna Fáza 7 (6.–7. 11.)
-Kvôli termínu tím zúžil rozsah. Pribudla aj požiadavka vyučujúceho na jednu databázu v Azure.
+### Fáza 6 (ML) a minimálna Fáza 7
 ```
-Termín je v nedeľu. Mení sa plán, zapíš ho do docs/plan-doplnky.md:
 - 5d: dokonči len hotfix 400, krok 1 (ovládanie času), krok 2 (situácie vrátane calm-night) a z kroku 5 len uzavretie starých alarmov a KPI len pre aktuálny deň. Kroky 3, 4 (okrem prahu 15 min) a 6 presuň do „Po odovzdaní“.
 - Potom Azure, potom Fáza 6, v nedeľu minimálna Fáza 7. Z 5b len oprava poradia zastávok na /courier. Zvyšok 5b presuň do „Po odovzdaní“.
 
