@@ -24,10 +24,42 @@ from depotrack.ml.delay import artifacts_dir
 log = logging.getLogger(__name__)
 
 DETECTOR = "yolox_tiny.onnx"
+# COCO has one class "truck" for vans, pickups and lorries: a MobileNetV2 (ImageNet) on the crop of
+# each vehicle tells them apart (ADR-059). ImageNet class name -> gate vehicle type.
+CLASSIFIER = "mobilenetv2-12.onnx"
+LABELS = "imagenet_classes.txt"
+FINE = {
+    "moving van": "van",
+    "minivan": "van",
+    "police van": "van",
+    "ambulance": "van",
+    "trailer truck": "truck",
+    "tow truck": "truck",
+    "garbage truck": "truck",
+    "fire engine": "truck",
+    # high-roof delivery vans (Sprinter, Transit) look like these to ImageNet; at a parcel depot
+    # they are vans, real buses are "school bus" / "trolleybus"
+    "recreational vehicle": "van",
+    "minibus": "van",
+    "school bus": "bus",
+    "trolleybus": "bus",
+    "pickup": "car",
+    "beach wagon": "car",
+    "cab": "car",
+    "convertible": "car",
+    "jeep": "car",
+    "limousine": "car",
+    "sports car": "car",
+    "racer": "car",
+    "Model T": "car",
+}
+FINE_MIN = 0.3  # summed probability of one type needed to override the detector's class
+MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 INPUT = 416
 STRIDES = (8, 16, 32)
 # COCO class id -> gate vehicle type (the same words the simulator uses: truck, car, bus)
-VEHICLES = {2: "car", 3: "car", 5: "bus", 7: "truck"}
+VEHICLES = {2: "car", 3: "car", 5: "bus", 7: "truck"}  # refined by the classifier below
 MIN_SCORE = 0.35
 NMS_IOU = 0.45
 PLATE = re.compile(r"([A-Z]{2})([0-9]{3})([A-Z]{2})")
@@ -50,6 +82,7 @@ class Vehicle:
     type: str
     confidence: float
     box: tuple[int, int, int, int]  # x1, y1, x2, y2 in image pixels
+    detail: str | None = None  # ImageNet class that decided the type, e.g. "moving van"
 
 
 @dataclass(frozen=True)
@@ -112,9 +145,15 @@ def _nms(boxes: np.ndarray[Any, Any], scores: np.ndarray[Any, Any]) -> list[int]
 
 
 class GateModels:
-    def __init__(self, detector: Any, ocr: Any) -> None:
+    def __init__(
+        self, detector: Any, ocr: Any, classifier: Any = None, labels: list[str] | None = None
+    ) -> None:
         self.detector = detector
         self.ocr = ocr
+        self.classifier = classifier
+        # indices of the ImageNet classes that name a vehicle type
+        self.fine = {i: FINE[n] for i, n in enumerate(labels or []) if n in FINE}
+        self._labels = labels or []
         grids, strides = [], []
         for s in STRIDES:
             n = INPUT // s
@@ -152,8 +191,32 @@ class GateModels:
             for i in kept
         ]
 
+    def refine(self, bgr: np.ndarray[Any, np.dtype[np.uint8]], v: Vehicle) -> Vehicle:
+        """Van, lorry, bus or car from the crop of one detected vehicle (MobileNetV2, ImageNet)."""
+        x1, y1, x2, y2 = v.box
+        if self.classifier is None or not self.fine or x2 - x1 < 24 or y2 - y1 < 24:
+            return v
+        rgb = np.asarray(
+            Image.fromarray(bgr[y1:y2, x1:x2, ::-1]).resize((224, 224), Image.Resampling.BILINEAR)
+        )
+        blob = ((rgb.astype(np.float32) / 255 - MEAN) / STD).transpose(2, 0, 1)[None]
+        logits = self.classifier.run(None, {self.classifier.get_inputs()[0].name: blob})[0][0]
+        p = np.exp(logits - logits.max())
+        p /= p.sum()
+        by_type: dict[str, float] = {}
+        for i, t in self.fine.items():
+            by_type[t] = by_type.get(t, 0.0) + float(p[i])
+        kind, prob = max(by_type.items(), key=lambda kv: kv[1])
+        if prob < FINE_MIN:
+            return v
+        top = max((i for i, t in self.fine.items() if t == kind), key=lambda i: p[i])
+        return Vehicle(kind, v.confidence, v.box, self._label(top))
+
+    def _label(self, index: int) -> str:
+        return self._labels[index] if index < len(self._labels) else ""
+
     def read(self, bgr: np.ndarray[Any, np.dtype[np.uint8]]) -> GateReading:
-        vehicles = self.detect(bgr)
+        vehicles = [self.refine(bgr, v) for v in self.detect(bgr)]
         crop = bgr
         if vehicles:
             x1, y1, x2, y2 = max(
@@ -187,7 +250,16 @@ def load_gate_models() -> GateModels | None:
         from rapidocr_onnxruntime import RapidOCR
 
         detector = onnxruntime.InferenceSession(str(file), providers=["CPUExecutionProvider"])
-        return GateModels(detector, RapidOCR())
+        cls_file, labels_file = artifacts_dir() / CLASSIFIER, artifacts_dir() / LABELS
+        classifier, labels = None, None
+        if cls_file.exists() and labels_file.exists():
+            classifier = onnxruntime.InferenceSession(
+                str(cls_file), providers=["CPUExecutionProvider"]
+            )
+            labels = labels_file.read_text(encoding="utf-8").splitlines()
+        else:
+            log.warning("vehicle type classifier not found, the detector's classes only")
+        return GateModels(detector, RapidOCR(), classifier, labels)
     except Exception:
         log.exception("cannot load the gate models")
         return None

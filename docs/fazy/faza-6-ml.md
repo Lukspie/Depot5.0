@@ -25,6 +25,7 @@ Poradie časti zodpovedá priorite zo zadania. Každá má vlastný commit.
    - Riziko je v paneli zariadenia v tieni, alarm „klesajúca čítanosť, skontrolovať optiku“.
 3. **Brána (CV)** (§8.1, ADR-059).
    - YOLOX-Tiny (Apache-2.0) a RapidOCR na onnxruntime, bez torch a bez AGPL.
+   - Dodávku od kamióna odlíši MobileNetV2 (ImageNet) na výreze vozidla, lebo COCO má pre obe jednu triedu.
    - Slovenská ŠPZ sa overí regexom s opravou zámen OCR.
    - `POST /api/gate/detect` zapíše prejazd a neznáma ŠPZ spustí alarm.
    - Obrazovka `/gate` pre ochranku, `ml/gate_video.py` pre video.
@@ -72,4 +73,4 @@ Poradie časti zodpovedá priorite zo zadania. Každá má vlastný commit.
 - *Prečo prvá verzia nevedela o snehu?* História pokrývala máj až november. Review to odhalilo a teraz má 400 dní s pevným koncom a test mení vždy len jeden príznak.
 - *Koľko falošných alarmov dá údržba skenerov?* 0,49 % zdravých 10-min bucket-ov, teda pri 8 skeneroch zhruba 1 za deň. Alarm vyžaduje 2 bucket-y po sebe a zatvára sa s hysteréziou.
 - *Čo ak model chýba?* App naštartuje a `/system` aj panel ukážu „model nedostupný“. ETA potom dáva len telematika a brána vráti 503.
-- *Je brána presná?* Na CC0 fotke návesu nájde kamión s istotou 0,86 a syntetickú ŠPZ prečíta s istotou 0,96. Na reálnych fotkách z brány SPS to overené nie je.
+- *Je brána presná?* Na CC0 fotke návesu nájde kamión s istotou 0,86, Ford Transit aj dodávku kuriéra označí ako dodávku a syntetickú ŠPZ prečíta s istotou 0,96. Na reálnych fotkách z brány SPS to overené nie je.

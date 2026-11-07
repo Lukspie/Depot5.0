@@ -6,7 +6,7 @@ import { Badge, Button, Card } from "../components/ui";
 import { useChannel } from "../hooks/telematics";
 
 interface GateResult {
-  vehicles: { type: string; confidence: number; box: [number, number, number, number] }[];
+  vehicles: { type: string; confidence: number; box: [number, number, number, number]; detail?: string | null }[];
   vehicleType: string | null;
   plate: string | null;
   plateConfidence: number | null;

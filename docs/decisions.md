@@ -591,6 +591,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Ultralytics YOLO je AGPL-3.0, takže pri prevádzke ako sieťová služba by sme museli zverejniť zdrojový kód celej aplikácie.
 - **Rozhodnutie:**
   - **Detekcia:** predtrénovaný **YOLOX-Tiny** (Apache-2.0) v ONNX od autorov, triedy COCO car, motorcycle, bus, truck.
+  - **Typ vozidla:** COCO dáva dodávku aj kamión do triedy `truck` (vysokú dodávku často do `bus`). Výrez každého vozidla preto klasifikuje predtrénovaný **MobileNetV2** (ImageNet, ONNX Model Zoo, Apache-2.0). Pravdepodobnosti tried sa sčítajú podľa typu (`moving van`, `minivan`, `minibus`, `recreational vehicle` → `van`, `trailer truck` → `truck` …) a typ s ≥ 0,3 prepíše detektor. Bez súboru klasifikátora ostanú triedy detektora.
   - **ŠPZ:** **RapidOCR** (`rapidocr-onnxruntime`, modely PaddleOCR, Apache-2.0) a slovenský regex `AA-123BB` s opravou typických zámen podľa pozície (najviac 2, v strede aspoň 2 skutočné číslice).
   - Oboje beží na onnxruntime (CPU) v app. Dotrénovanie sa nerobí, lebo nemáme vlastné fotky.
   - **Image:** pribudli `onnxruntime`, `rapidocr-onnxruntime`, `pillow` a systémové `libgl1`, `libglib2.0-0t64` pre OpenCV. Image app narástol z ~0,85 GB na ~1,7 GB. Torch v ňom nie je.
@@ -602,7 +603,8 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Licencie** sú v `ml/artifacts/LICENSES.md`. Testovacia fotka je CC0 (Wikimedia Commons).
 - **Dôsledok:**
   - Žiadna AGPL ani torch závislosť, jedna fotka trvá na CPU ~1 s.
-  - Presnosť na reálnych fotkách brány nie je overená. Syntetická ŠPZ a CC0 fotka návesu prešli (ml/README.md).
+  - Presnosť na reálnych fotkách brány nie je overená. Syntetická ŠPZ, CC0 fotka návesu (kamión) a Fordu Transit (dodávka) prešli (ml/README.md).
+  - Mapovanie `minibus` → dodávka je predpoklad pre depo kuriérov. Pri skutočnom minibuse sa typ pomýli, ale prejazd ani ŠPZ to neovplyvní.
 
 ## ADR-060 IoT skener na nakládke: OpenCV na hostovi, bez dotrénovania YOLO
 - **Kontext:** PROMPT §8.2 chce prototyp skenera, ktorý z videa alebo webkamery počíta krabice a číta kódy a posiela `device_scan_events` rovnakým API ako simulátor. YOLO môže byť „prípadne doladené“. Vlastné označené snímky krabíc nemáme a čas pred odovzdaním je obmedzený.

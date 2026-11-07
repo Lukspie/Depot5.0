@@ -2,6 +2,7 @@
 
 tests/data/gate_truck_cc0.jpg: "Semi-trailer truck Severgazprom" by Georg Pik, Wikimedia Commons,
 CC0 1.0 (public domain dedication), scaled to 960 px.
+tests/data/gate_van_cc0.jpg: "Ford Transit T8 002", Wikimedia Commons, CC0 1.0, scaled to 960 px.
 """
 
 from io import BytesIO
@@ -24,6 +25,7 @@ from test_wms import at_time, seeded
 __all__ = ["at_time", "seeded"]
 
 TRUCK = (Path(__file__).parent / "data" / "gate_truck_cc0.jpg").read_bytes()
+VAN = (Path(__file__).parent / "data" / "gate_van_cc0.jpg").read_bytes()
 
 
 def plate_image(text: str) -> bytes:
@@ -84,6 +86,7 @@ def test_truck_photo_detected_and_recorded(
     assert res.status_code == 200, res.text
     body = res.json()
     assert body["vehicleType"] == "truck" and body["vehicles"][0]["confidence"] > 0.5
+    assert body["vehicles"][0]["detail"] == "trailer truck"
     assert body["plate"] is None and body["expected"] is False  # Russian lettering, no SK plate
     assert body["recorded"] is True
     assert passages == [
@@ -95,6 +98,16 @@ def test_truck_photo_detected_and_recorded(
             "expected": False,
         }
     ]
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_delivery_van_is_a_van_not_a_truck(
+    guard: TestClient, passages: list[dict[str, Any]]
+) -> None:
+    # COCO calls a Transit "bus" or "truck"; the ImageNet classifier on the crop makes it a van
+    body = detect(guard, VAN).json()
+    assert body["vehicleType"] == "van", body["vehicles"]
+    assert passages[-1]["vehicleType"] == "van"
 
 
 @pytest.mark.usefixtures("seeded", "at_time")

@@ -25,6 +25,7 @@ class VehicleOut(CamelModel):
     type: str
     confidence: float
     box: tuple[int, int, int, int]
+    detail: str | None = None  # ImageNet class of the type classifier, e.g. "moving van"
 
 
 class GateDetectOut(CamelModel):
@@ -123,7 +124,8 @@ def _process(
             )
     return GateDetectOut(
         vehicles=[
-            VehicleOut(type=v.type, confidence=v.confidence, box=v.box) for v in reading.vehicles
+            VehicleOut(type=v.type, confidence=v.confidence, box=v.box, detail=v.detail)
+            for v in reading.vehicles
         ],
         vehicle_type=vehicle_type,
         plate=reading.plate,
