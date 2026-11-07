@@ -43,6 +43,18 @@ export interface ScanForward {
   readOk: boolean;
 }
 
+/** A simulated gate passage for the decision rules in the app (POST /internal/events/gate, ADR-061). */
+export interface GateForward {
+  /** idempotency key: a resent batch is not stored twice */
+  key: string;
+  at: string;
+  direction: "in" | "out";
+  vehicleType: string;
+  vehicleConfidence: number | null;
+  plate: string | null;
+  plateConfidence: number | null;
+}
+
 /** Courier execution reported to the app (POST /internal/events/couriers). */
 export interface CourierEventOut {
   routeId: number;
@@ -68,6 +80,7 @@ export interface AppApi {
   /** courier routes for the parcels of an operating day (driven the next morning) */
   getCourierRoutes(day: string): Promise<CourierPlan>;
   postCourierEvents(simTime: string, events: CourierEventOut[], etas: StopEtaOut[]): Promise<void>;
+  postGatePassages(passages: GateForward[]): Promise<void>;
 }
 
 export class HttpAppApi implements AppApi {
@@ -126,5 +139,9 @@ export class HttpAppApi implements AppApi {
       method: "POST",
       body: JSON.stringify({ simTime, events, etas }),
     });
+  }
+
+  async postGatePassages(passages: GateForward[]): Promise<void> {
+    await this.request("/internal/events/gate", { method: "POST", body: JSON.stringify({ passages }) });
   }
 }

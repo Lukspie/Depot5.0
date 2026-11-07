@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     cascade_buffer_min: int = 30
     # trained models (ml/artifacts, copied into the image; ADR-057)
     ml_artifacts_dir: str = "/app/ml/artifacts"
+    # gate (ADR-061): below these the rules never decide alone, security does
+    gate_min_vehicle_confidence: float = 0.5
+    gate_min_plate_confidence: float = 0.8
 
     # browser origins allowed to send state-changing requests (CSRF check, ADR-014)
     app_allowed_origins: str = "http://localhost:8000,http://localhost:5173"

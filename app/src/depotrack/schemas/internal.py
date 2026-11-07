@@ -109,6 +109,28 @@ class ScanEventsOut(CamelModel):
     results: dict[str, int]
 
 
+class GatePassageIn(CamelModel):
+    """A simulated gate camera passage (telematics, ADR-061); `key` makes a resend harmless."""
+
+    key: str = Field(max_length=80)
+    at: AwareDatetime
+    direction: Literal["in", "out"]
+    vehicle_type: Literal["car", "van", "truck", "bus"] | None
+    vehicle_confidence: float | None = Field(default=None, ge=0, le=1)
+    plate: str | None = Field(default=None, max_length=16)
+    plate_confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class GateEventsIn(CamelModel):
+    passages: list[GatePassageIn] = Field(max_length=2000)
+
+
+class GateEventsOut(CamelModel):
+    stored: int
+    duplicates: int
+    decisions: dict[str, int]
+
+
 class AlertIn(CamelModel):
     kind: AlertKind
     severity: AlertSeverity

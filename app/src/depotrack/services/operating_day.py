@@ -18,10 +18,18 @@ from depotrack.models import (
     Trip,
 )
 from depotrack.models.enums import DoorKind, ParcelStatus, TripStatus
-from depotrack.seed import seed_parcels, seed_reference, seed_users, seed_waves, step
+from depotrack.seed import (
+    seed_gate_plates,
+    seed_parcels,
+    seed_reference,
+    seed_users,
+    seed_waves,
+    step,
+)
 from depotrack.seed.geo import seed_geo
 from depotrack.services.alerts import close_stale_alerts
 from depotrack.services.couriers import build_courier_routes, reset_routes
+from depotrack.services.gate import close_stale_events, delete_day
 from depotrack.services.parcels import in_day, night_parcels_for
 from depotrack.services.trip_plan import OPERATING_DAY_START, build_trip_plan
 
@@ -41,7 +49,7 @@ def ensure_operating_day(db: Session, settings: Settings, day: date) -> None:
         lambda: night_parcels_for(db, day, settings.seed_random_seed),
     )
     step(db, f"couriers:{day.isoformat()}", lambda: build_courier_routes(db, day))
-    if close_stale_alerts(db, day):
+    if close_stale_alerts(db, day) + close_stale_events(db, day):
         db.commit()
 
 
@@ -50,6 +58,7 @@ def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
     step(db, "reference:v1", lambda: seed_reference(db))
     step(db, "users:v1", lambda: seed_users(db, settings))
     step(db, "geo:v1", lambda: seed_geo(db))
+    step(db, "gate-plates:v1", lambda: seed_gate_plates(db))
     ensure_operating_day(db, settings, day)
 
 
@@ -94,6 +103,7 @@ def reset_operating_day(db: Session, day: date, *, clean: bool = False) -> dict[
     end = start + timedelta(days=1)
     # only this day: alerts of later days (already simulated) stay for the audit
     alerts = db.execute(delete(Alert).where(Alert.created_at >= start, Alert.created_at < end))
+    gate = delete_day(db, start, end)
     maintenance = closed = 0
     if clean:
         maintenance = _rowcount(
@@ -122,6 +132,7 @@ def reset_operating_day(db: Session, day: date, *, clean: bool = False) -> dict[
         "courierRoutes": routes,
         "maintenanceOrders": maintenance,
         "alertsClosed": closed,
+        "gateEvents": gate,
     }
 
 

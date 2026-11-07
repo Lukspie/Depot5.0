@@ -20,6 +20,7 @@ from depotrack.models import (
     Depot,
     Direction,
     Door,
+    GateAllowedPlate,
     Parcel,
     ParcelEvent,
     SeedMeta,
@@ -37,7 +38,14 @@ from depotrack.models.enums import (
     WaveKind,
 )
 from depotrack.seed.generator import generate_parcels
-from depotrack.seed.reference import DIRECTIONS, DOOR_EQUIPMENT, DOORS, USERS, VEHICLES
+from depotrack.seed.reference import (
+    ALLOWED_PLATES,
+    DIRECTIONS,
+    DOOR_EQUIPMENT,
+    DOORS,
+    USERS,
+    VEHICLES,
+)
 
 log = logging.getLogger(__name__)
 
@@ -103,6 +111,10 @@ def seed_reference(db: Session) -> None:
                 capacity_parcels=v.capacity_parcels,
             )
         )
+
+
+def seed_gate_plates(db: Session) -> None:
+    db.add_all(GateAllowedPlate(plate=p, holder=h) for p, h in ALLOWED_PLATES)
 
 
 def _role_password(settings: Settings, role: UserRole) -> str:

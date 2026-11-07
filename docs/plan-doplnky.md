@@ -217,6 +217,27 @@ Poradie práce:
    - README a `docs/fazy/faza-6-ml.md`,
    - kontrola z čistého klonu (bez mazania volumes) a screenshoty hlavných obrazoviek v situácii `evening-peak`.
 
+## Fáza 7b – demo (7. 11. 2026, pred odovzdaním)
+Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci. Čo sa nestihne kvalitne, ide do „Po odovzdaní“.
+1. **Brána – rozhodovanie** (ML odporúča, pravidlá rozhodujú, pri neistote rozhodne človek) *(hotové, ADR-061)*:
+   - identitu vozidla neurčuje obraz. Model určí typ (osobné, dodávka, kamión), OCR prečíta ŠPZ a identitu rozhodne porovnanie s vozovým parkom (`vehicles`) a so zoznamom povolených externých ŠPZ,
+   - kuriérska dodávka so známou ŠPZ → prejazd automaticky,
+   - kamión so známou ŠPZ → prejazd. S neznámou alebo neprečítanou ŠPZ → prejazd povolený, ale vznikne príznak „overiť“, ktorý ochranka potvrdí a tým zruší,
+   - osobné vozidlo, ktorého ŠPZ nie je v DB → zamietnuté, čaká na rozhodnutie ochranky (povoliť / zamietnuť, s poznámkou),
+   - nízka istota modelu alebo OCR (prahy v konfigurácii) → vždy rozhodne ochranka,
+   - na `/gate` front rozhodnutí pre ochranku, každé rozhodnutie ide do auditu (kto, kedy, prečo),
+   - simulátor generuje mix prejazdov (dodávky, kamióny, občas neznáme auto),
+   - testy cez HTTP pre každú vetvu, ADR, vyhodnotenie na našich fotkách v `ml/README.md` (správne / spolu pre typ a ŠPZ) a obmedzenia bez prikrášľovania.
+2. **Kuriér – mobilná aplikácia:**
+   - `/courier` na desktope v ráme telefónu (~390 × 844) v strede, na telefóne na celú obrazovku, spodná navigácia (Zastávky / Mapa / Skener), veľké tlačidlá, mapa s ďalšou zastávkou a trasou,
+   - simulovaný Bluetooth skener spárovaný s vozidlom („Skener pripojený · KE-301KR“). Sken balíka v dodávke vyberie ďalšiu zastávku a ukáže ju na mape,
+   - typ doručenia: osobné odovzdanie (časové okno), do schránky, do výdajného boxu (seed ~60 / 25 / 15 %). Poradie rešpektuje okná osobných odovzdaní, boxy a schránky vypĺňajú medzery (heuristika lepšia ako nearest neighbor), ETA a „stihneš / nestihneš okno“, ADR,
+   - oprava: pred nakládkou UI ukáže stav nakládky, nie neaktívne „Doručené“,
+   - appka sa otvorí na telefóne v rovnakej Wi-Fi (`http://<IP PC>:8000/courier`): origin, cookies a CSRF pre LAN, postup v `docs/demo.md`.
+3. **Dispečeri:** 3 dispečerské účty v seede (mená, smena ranná / poobedná / nočná), viditeľné v admine, heslá z `.env`.
+4. **Ranná nakládka:** kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli depa v tieni aj na mape Flotily a potom vyrážajú. Kamióny ako doteraz.
+5. **Layouty skladov** (ak ostane čas): Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
+
 ## Po odovzdaní
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).

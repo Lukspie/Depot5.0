@@ -15,7 +15,7 @@
 
 import { addDays, HOUR, localDate, localHhmm, localParts, MINUTE, operatingDay, operatingDayStart, TIME_ZONE, zonedToUtc } from "../clock/time.js";
 import type { SimClock } from "../clock/clock.js";
-import type { AppApi, CourierEventOut, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
+import type { AppApi, CourierEventOut, GateForward, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
 import { BufferedSink } from "../db/buffered.js";
 import type { DeviceRow, GateRow, GpsRow, HeartbeatRow, MetricRow, ScanRow, SensorRow, TelemetrySink } from "../db/telemetry.js";
 import type { Hub, WsEvent } from "../ws/hub.js";
@@ -28,6 +28,7 @@ import {
   type CourierEvent,
   type CourierSchedule,
 } from "./couriers.js";
+import { gateMix } from "./gatemix.js";
 import { rngFor } from "./rng.js";
 import type { RoadRouter } from "./roads.js";
 import type { LatLon, RouteBook } from "./routes.js";
@@ -231,6 +232,8 @@ export class Engine {
   private scanQueue: ScanForward[] = [];
   /** courier events and the latest ETA predictions per route, waiting for the app */
   private courierQueue: CourierEventOut[] = [];
+  /** simulated gate passages for the decision rules in the app (ADR-061) */
+  private gateQueue: GateForward[] = [];
   private readonly pendingEtas = new Map<number, StopEtaOut[]>();
   private readonly devices = new Map<string, DeviceRuntime>();
   private readonly vehicles = new Map<string, VehicleState>();
@@ -421,6 +424,7 @@ export class Engine {
     this.metrics.clear();
     this.scanQueue = [];
     this.courierQueue = [];
+    this.gateQueue = [];
     this.pendingEtas.clear();
     // maintenance windows are in simulated time: the replayed day starts without them
     this.maintenanceUntil.clear();
@@ -980,7 +984,7 @@ export class Engine {
         expected: false,
       });
     }
-    state.gate = gate.sort((a, b) => a.at - b.at);
+    state.gate = gateMix(gate, state.couriers, plan.day, this.seedValue).sort((a, b) => a.at - b.at);
   }
 
   /** Recompute future scans after the read-rate model or the plan changed. */
@@ -1031,6 +1035,7 @@ export class Engine {
       }
       await this.postScansWhere(() => true);
       await this.flushCouriers();
+      await this.flushGate();
     } catch (err) {
       this.deps.log.warn(
         { err: String(err), trips: this.pendingTrips.size, scans: this.scanQueue.length },
@@ -1062,6 +1067,14 @@ export class Engine {
       await this.deps.app.postScans(chunk);
       const sent = new Set(chunk);
       this.scanQueue = this.scanQueue.filter((x) => !sent.has(x));
+    }
+  }
+
+  private async flushGate(): Promise<void> {
+    while (this.gateQueue.length > 0) {
+      const batch = this.gateQueue.slice(0, 1000);
+      await this.deps.app.postGatePassages(batch);
+      this.gateQueue = this.gateQueue.slice(batch.length);
     }
   }
 
@@ -1296,12 +1309,27 @@ export class Engine {
    * simulated one, at the simulated time. */
   async recordGatePassage(p: Omit<GateRow, "at" | "snapshotPath">): Promise<GateRow> {
     const row: GateRow = { ...p, at: this.deps.clock.now(), snapshotPath: null };
-    await this.emitGate([row]);
+    await this.emitGate([row], false);
     return row;
   }
 
-  private async emitGate(rows: GateRow[]): Promise<void> {
+  private async emitGate(rows: GateRow[], forward = true): Promise<void> {
     if (rows.length === 0) return;
+    if (forward) {
+      for (const g of rows) {
+        const at = iso(g.at);
+        this.gateQueue.push({
+          key: `${at}:${g.direction}:${g.plate ?? g.vehicleType}`,
+          at,
+          direction: g.direction,
+          vehicleType: g.vehicleType,
+          vehicleConfidence: g.vehicleConfidence ?? null,
+          plate: g.plate,
+          plateConfidence: g.plateConfidence,
+        });
+      }
+      if (this.gateQueue.length > MAX_SCAN_QUEUE) this.gateQueue = this.gateQueue.slice(-MAX_SCAN_QUEUE);
+    }
     for (const g of rows) {
       if (this.replayTarget !== null) break;
       this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), device: "GATE-CAM-01" });

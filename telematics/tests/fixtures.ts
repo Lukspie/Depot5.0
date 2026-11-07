@@ -5,6 +5,7 @@ import type {
   AlertPayload,
   AppApi,
   CourierEventOut,
+  GateForward,
   ManifestParcel,
   PlanWithLocal,
   ScanForward,
@@ -217,6 +218,7 @@ export class FakeApp implements AppApi {
   readonly tripEvents: { simTime: string; trips: TripExecution[] }[] = [];
   readonly scans: ScanForward[] = [];
   readonly alerts: AlertPayload[] = [];
+  readonly gate: GateForward[] = [];
   /** order of calls, to check that trips are sent before scans */
   readonly calls: string[] = [];
   down = false;
@@ -288,6 +290,13 @@ export class FakeApp implements AppApi {
     this.calls.push("couriers");
     this.courierEvents.push(...events);
     if (etas.length) this.etas.push(etas);
+    return Promise.resolve();
+  }
+
+  postGatePassages(passages: GateForward[]): Promise<void> {
+    if (this.down) return Promise.reject(new Error("app down"));
+    this.calls.push("gate");
+    this.gate.push(...passages);
     return Promise.resolve();
   }
   /** latest reported state per trip */

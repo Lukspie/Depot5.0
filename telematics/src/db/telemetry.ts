@@ -53,6 +53,8 @@ export interface GateRow {
   plateConfidence: number | null;
   snapshotPath: string | null;
   expected: boolean;
+  /** confidence of the vehicle type model; goes to the app for the decision, not stored here */
+  vehicleConfidence?: number | null;
 }
 
 export interface SensorRow {

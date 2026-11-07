@@ -89,6 +89,9 @@ def test_truck_photo_detected_and_recorded(
     assert body["vehicles"][0]["detail"] == "trailer truck"
     assert body["plate"] is None and body["expected"] is False  # Russian lettering, no SK plate
     assert body["recorded"] is True
+    # a lorry without a readable plate passes, security verifies it later (ADR-061)
+    assert (body["decision"], body["reason"]) == ("pass_verify", "truck_no_plate")
+    assert body["eventId"] is not None
     assert passages == [
         {
             "direction": "in",
@@ -111,7 +114,7 @@ def test_delivery_van_is_a_van_not_a_truck(
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
-def test_fleet_plate_is_expected_unknown_plate_raises_an_alert(
+def test_fleet_plate_passes_unknown_plate_waits_for_security(
     guard: TestClient, db: Session, passages: list[dict[str, Any]]
 ) -> None:
     fleet = db.execute(select(Vehicle).order_by(Vehicle.id)).scalars().first()
@@ -119,12 +122,15 @@ def test_fleet_plate_is_expected_unknown_plate_raises_an_alert(
     known = detect(guard, plate_image(fleet.plate), "image/png", direction="out").json()
     assert known["plate"] == fleet.plate and known["expected"] is True
     assert known["fleetKind"] == str(fleet.kind) and passages[-1]["direction"] == "out"
+    assert known["decision"] == "auto_pass"
     assert db.execute(select(Alert).where(Alert.kind == AlertKind.OTHER)).first() is None
 
     stranger = detect(guard, plate_image("ZA-999XY"), "image/png").json()
     assert stranger["plate"] == "ZA-999XY" and stranger["expected"] is False
-    alert = db.execute(select(Alert).where(Alert.ref_type == "plate")).scalar_one()
-    assert "ZA-999XY" in alert.message
+    # no vehicle in the picture and an unknown plate: security decides
+    assert (stranger["decision"], stranger["reason"]) == ("hold", "unknown_plate")
+    alert = db.execute(select(Alert).where(Alert.ref_type == "gate")).scalar_one()
+    assert "ZA-999XY" in alert.message and alert.ref_id == str(stranger["eventId"])
     # record=false only reads, nothing goes to telematics
     before = len(passages)
     assert (
@@ -132,6 +138,7 @@ def test_fleet_plate_is_expected_unknown_plate_raises_an_alert(
         is False
     )
     assert len(passages) == before
+    assert len(guard.get("/api/gate/queue").json()) == 1
 
 
 @pytest.mark.usefixtures("seeded", "at_time")

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from conftest import alembic_config
 from depotrack.core.config import get_settings
+from depotrack.core.db import get_engine
 from depotrack.core.security import verify_password
 from depotrack.models import Direction, Door, Parcel, ParcelEvent, User, Vehicle, Wave
 from depotrack.models.enums import DirectionType, DoorKind, UserRole
@@ -92,3 +93,6 @@ def test_migrations_downgrade_and_upgrade() -> None:
     cfg = alembic_config()
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
+    # the enum types now have new OIDs: pooled connections keep statements psycopg prepared
+    # with the old ones ("cache lookup failed for type" in later tests)
+    get_engine().dispose()

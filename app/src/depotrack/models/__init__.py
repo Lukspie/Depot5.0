@@ -4,6 +4,7 @@ from depotrack.models.alerts import Alert, SeedMeta
 from depotrack.models.auth import User, UserSession
 from depotrack.models.base import Base
 from depotrack.models.delivery import CourierRoute, RouteStop
+from depotrack.models.gate import GateAllowedPlate, GateAudit, GateEvent
 from depotrack.models.maintenance import MaintenanceOrder
 from depotrack.models.network import Depot, Direction, Door, Trip, Vehicle, Wave
 from depotrack.models.parcels import (
@@ -22,6 +23,9 @@ __all__ = [
     "Depot",
     "Direction",
     "Door",
+    "GateAllowedPlate",
+    "GateAudit",
+    "GateEvent",
     "LoadingScan",
     "MaintenanceOrder",
     "Parcel",

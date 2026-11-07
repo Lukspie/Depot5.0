@@ -237,6 +237,15 @@ VEHICLES = (
 )
 
 
+# external vehicles allowed in without asking security (ADR-061); fictional holders. The
+# simulator sends passages of these plates too (telematics/src/simulator/gatemix.ts).
+ALLOWED_PLATES = [
+    ("BA-512ZT", "Zmluvný dopravca – Tatra Trans (návesy BA)"),
+    ("KE-640SV", "Servis brán a rámp – DokServis"),
+    ("PO-215CL", "Upratovacia služba – Čistota Prešov"),
+]
+
+
 @dataclass(frozen=True)
 class UserDef:
     username: str

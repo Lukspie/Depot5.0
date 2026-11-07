@@ -616,3 +616,25 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
 - **Dôsledok:**
   - Demo s krabicami a webkamerou ukazuje celý tok: reálny sken, kontrola smeru, nakládka vo WMS, čítanosť a prediktívna údržba.
   - Počítanie spoľahlivo funguje pri pevnej kamere a krabiciach jednej za druhou. Na hustý pás by bolo treba detektor (YOLO dotrénované na krabice), to je ďalší rozvoj.
+
+## ADR-061 Brána: model odporúča, pravidlá rozhodujú, pri neistote ochranka
+- **Kontext:**
+  - Fáza 6 brány len zapisovala prejazd a pri neznámej ŠPZ otvorila alarm. Nikto nerozhodoval, či vozidlo smie dnu.
+  - Model typu vozidla je overený na 3 fotkách a OCR len na syntetických tabuľkách (ml/README.md). Identitu vozidla z obrazu určiť nevieme a nemáme.
+- **Rozhodnutie:**
+  - **Identitu určí ŠPZ v databáze:** vozový park (`vehicles`) a nová tabuľka povolených externých ŠPZ (`gate_allowed_plates`, s platnosťou, spravuje ochranka). Obraz dá len typ vozidla a text ŠPZ.
+  - **Pravidlá** (`services/gate.py`, v tomto poradí):
+    1. nízka istota typu (< `GATE_MIN_VEHICLE_CONFIDENCE`, 0,5) alebo čítania ŠPZ (< `GATE_MIN_PLATE_CONFIDENCE`, 0,8) → **zastaviť, rozhodne ochranka**, aj pri známej ŠPZ,
+    2. ŠPZ vozového parku (kamión aj dodávka kuriéra) alebo povolená ŠPZ → **prejazd**,
+    3. výjazd vozidla, ktoré za posledných 24 h vošlo s povolením → **prejazd**,
+    4. kamión s neznámou alebo neprečítanou ŠPZ → **prejazd s príznakom „overiť“**, ochranka ho potvrdí,
+    5. iné vozidlo s neznámou alebo neprečítanou ŠPZ → **zastaviť, rozhodne ochranka** (povoliť / zamietnuť, dôvod je povinný).
+  - **Audit:** `gate_events` drží stav prejazdu, `gate_audit` každé rozhodnutie (pravidlá aj človek: kto, kedy v simulovanom čase, prečo). Zastavené vozidlo otvorí alarm pre dispečing, rozhodnutie ochranky ho zavrie.
+  - **Simulátor** posiela svoje prejazdy do app (`POST /internal/events/gate`, dávky po 1 s, idempotentný kľúč) a rozhodnú ich tie isté pravidlá ako fotku z kamery. Mix dňa (`gatemix.ts`, vlastný prúd RNG `gate-mix`): kamióny flotily, dodávky kuriérov ráno von a poobede späť, jedno povolené externé vozidlo, každý druhý večer neznámy kamión, občas ŠPZ s nízkou istotou a 2–4 neznáme autá.
+  - Prejazd z kamery app rozhodne sama a telematika ho späť neposiela. Otvorené rozhodnutia starších dní uzavrie systém pri načítaní dňa (ako alarmy), reset dňa prejazdy dňa zmaže a replay ich pošle znova.
+  - **UI `/gate`:** front „Čaká na ochranku“, prejazdy dňa s auditom, správa povolených ŠPZ.
+- **Dôsledok:**
+  - Chyba modelu nepustí cudzie auto: bez ŠPZ v databáze sa auto bez človeka nedostane dnu a nízka istota ide vždy k ochranke.
+  - Kamión bez prečítanej ŠPZ nečaká na bráne (nakládka by meškala), ale ochranka ho musí dodatočne overiť.
+  - Prahy istoty sú odhad. Na reálnych záberoch ich treba nastaviť (napr. podiel zastavení za deň oproti chybám).
+  - Povolené ŠPZ sú v simulátore zopakované ako konštanty (`ALLOWED_EXTERNAL`), lebo simulátor za behu nečíta app.

@@ -34,6 +34,8 @@ from depotrack.schemas.internal import (
     CourierPlanOut,
     CourierPlanRoute,
     CourierPlanStop,
+    GateEventsIn,
+    GateEventsOut,
     ManifestOut,
     ManifestParcel,
     PlanDepot,
@@ -44,6 +46,7 @@ from depotrack.schemas.internal import (
     TripEventsIn,
     TripEventsOut,
 )
+from depotrack.services import gate as gate_rules
 from depotrack.services import telematics
 from depotrack.services.alerts import AlertChange, alert_event, resolve_alert, upsert_alert
 from depotrack.services.cascade import evaluate_cascade
@@ -225,6 +228,39 @@ def scan_events(body: ScanEventsIn, db: DbSession, background: BackgroundTasks) 
         background.add_task(telematics.broadcast_many, "devices", "loading_scan", events)
     _broadcast_alerts(background, alerts)
     return ScanEventsOut(processed=sum(results.values()), skipped=skipped, results=dict(results))
+
+
+@router.post("/events/gate", response_model=GateEventsOut, response_model_by_alias=True)
+def gate_events(body: GateEventsIn, db: DbSession, background: BackgroundTasks) -> GateEventsOut:
+    """Simulated gate passages: the same rules as the camera decide them (ADR-061)."""
+    decisions: Counter[str] = Counter()
+    duplicates = 0
+    alerts: list[AlertChange] = []
+    for p in body.passages:
+        stored = gate_rules.record(
+            db,
+            gate_rules.Reading(
+                direction=p.direction,
+                vehicle_type=p.vehicle_type,
+                vehicle_confidence=p.vehicle_confidence,
+                plate=p.plate,
+                plate_confidence=p.plate_confidence,
+            ),
+            at=p.at,
+            source="sim",
+            external_key=p.key,
+        )
+        if stored is None:
+            duplicates += 1
+            continue
+        decisions[stored[0].decision] += 1
+        if stored[1] is not None:
+            alerts.append(stored[1])
+    db.commit()
+    _broadcast_alerts(background, alerts)
+    return GateEventsOut(
+        stored=sum(decisions.values()), duplicates=duplicates, decisions=dict(decisions)
+    )
 
 
 @router.get("/courier-routes", response_model=CourierPlanOut, response_model_by_alias=True)

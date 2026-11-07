@@ -9,7 +9,7 @@
 
 import { createWriteStream, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { addDays, localDate, localParts, MINUTE, zonedToUtc } from "../clock/time.js";
+import { addDays, localParts, MINUTE, zonedToUtc } from "../clock/time.js";
 import { arrivalDelay, departureDelay, weatherFor } from "../simulator/delays.js";
 import { rngFor } from "../simulator/rng.js";
 import { RoadRouter } from "../simulator/roads.js";

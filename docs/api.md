@@ -43,7 +43,13 @@ Základná adresa: `http://localhost:8000`. 48 ciest.
 | fleet | GET | `/api/fleet/vehicles/{plate}` | Vehicle Detail |
 | fleet | GET | `/api/parcels` | Search Parcels |
 | fleet | GET | `/api/parcels/{parcel_id}` | Parcel Detail |
-| gate | POST | `/api/gate/detect` | Detect |
+| gate | POST | `/api/gate/detect` | Fotka → typ, ŠPZ, rozhodnutie pravidiel, prejazd (ADR-059, 061) |
+| gate | GET | `/api/gate/queue` | Front rozhodnutí ochranky (zastavené vozidlá, kamióny na overenie) |
+| gate | GET | `/api/gate/events` | Prejazdy dňa s rozhodnutím a auditom |
+| gate | POST | `/api/gate/events/{event_id}/decision` | Ochranka: povoliť / zamietnuť (s dôvodom), overiť |
+| gate | GET | `/api/gate/allowed-plates` | Povolené externé ŠPZ |
+| gate | POST | `/api/gate/allowed-plates` | Pridať povolenú ŠPZ |
+| gate | DELETE | `/api/gate/allowed-plates/{plate_id}` | Odobrať povolenú ŠPZ |
 | internal | GET | `/internal/courier-routes` | Courier Plan |
 | internal | GET | `/internal/manifest` | Get Manifest |
 | internal | GET | `/internal/plan` | Get Plan |
@@ -79,6 +85,7 @@ Základná adresa: `http://localhost:8080`. 27 ciest. WebSocket: `ws://localhost
 | internal | GET | `/internal/vehicles/{plate}` | Aktuálna poloha vozidla (volá app) |
 | internal | POST | `/internal/broadcast` | Rozoslať udalosť klientom WebSocketu (volá app) |
 | internal | POST | `/internal/devices/{code}/maintenance` | Zariadenie označené na údržbu vo WMS (volá app) |
+| internal | POST | `/internal/events/gate` | Simulované prejazdy brány do app, rozhodnú ich pravidlá (ADR-061) |
 | internal | POST | `/internal/gate/passages` | Prejazd z reálnej kamery brány (CV v app, ADR-059) |
 | internal | POST | `/internal/plan/reload` | Plán sa zmenil (jazda na inú bránu): načítať ho znova (volá app) |
 | simulation | GET | `/routes` | Trasy kamiónov po reálnych cestách (pre mapu) |
