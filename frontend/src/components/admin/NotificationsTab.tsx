@@ -80,7 +80,7 @@ export function NotificationsTab() {
         rows={notes.data}
         loading={notes.isPending}
         rowKey={(n) => n.id}
-        empty="Zatiaľ žiadne SMS – pošlú sa ráno pri nakládke kuriérov (od 7:00)."
+        empty="Zatiaľ žiadne SMS – pošlú sa ráno pri nakládke kuriérov (od 6:30)."
       />
     </Card>
   );

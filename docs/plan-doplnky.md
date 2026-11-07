@@ -243,8 +243,10 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
 - 7b bod 5: layouty skladov Budimír, Ivanka pri Dunaji a Žilina (rampy, státia, parkovanie dodávok v tieni aj vo Flotile).
   - Satelitné snímky tímu v `docs/design/` zatiaľ nie sú.
-  - Žilina v OSM (`find_hub.py` s oblasťou Žiliny, 7. 11. 2026): jediný objekt s „Slovak Parcel Service“ je **areál** way `810621382` (`landuse=industrial`, stred 49,18727 / 18,84900, 160 × 108 m, dlhá strana ~73°), nie budova. Budovu skladu v ňom OSM neoznačuje, preto ju nehádame.
-  - Ďalšie veľké objekty bez názvu: way `810621390` (`landuse=industrial`, 49,18586 / 18,85292, 142 × 133 m, ~0,3 km juhovýchodne od areálu SPS) a budovy `206741473`, `98316332`, `156170978` (3,6–9,4 ha, 3–4 km severozápadne). Ani jeden nie je označený ako SPS. Tím vyberie budovu v areáli `810621382` podľa satelitnej snímky.
+  - Žilina v OSM (`python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf 49.16,18.62,49.28,18.86`, 7. 11. 2026):
+    - jediný objekt s „Slovak Parcel Service“ je **areál** way `810621382` (`landuse=industrial`, stred 49,18727 / 18,84900, 160 × 108 m),
+    - v areáli leží celá jediná budova: way `321455829` (`building=industrial`, bez názvu, stred 49,18703 / 18,84911, 127 × 33 m, 2 919 m², dlhá strana ~73°). Je to **hlavný kandidát** na halu skladu, či ide o sklad SPS a na ktorej strane sú rampy, overí satelitná snímka,
+    - ostatné veľké budovy v oblasti (napr. `810621390` ~0,3 km juhovýchodne, haly 3–4 km severozápadne) nie sú v areáli SPS a za kandidátov ich nepovažujeme.
 - 7b bod 2: kratšie trasy kuriérov pri oknách (okná ponúkať podľa plánovanej trasy, alebo 2-opt na pozadí). Dnes +82 % km a väčšina návratov po 15:00 (ADR-062).
 - Fáza 5b okrem `/courier`: UX review všetkých obrazoviek, `/shadow` podľa makety, `/board` pri 390 px, nové screenshoty Fázy 4.
 

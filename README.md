@@ -121,7 +121,7 @@ Téma (Oranžová / Modrá) sa prepína v hornej lište.
 
 Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, `/fleet?plate=KE-102LH` vybrané vozidlo.
 
-Sledovanie zásielky: kuriéri nakladajú ráno od 7:00 (v admine *Simulácia → skok na 06:00*). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
+Sledovanie zásielky: kuriéri nakladajú ráno od 6:30 (v admine situácia *Kuriéri ráno*, 06:55). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
 
 Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji.
@@ -159,7 +159,7 @@ vydá `POST /api/auth/ws-ticket` po prihlásení a platí 60 s.
 | prehľad scenára (meškania, porucha) | `GET /sim/scenario` |
 | vypnúť / zapnúť / opraviť zariadenie | `PUT /sim/devices/DOCK-SCN-05 {"enabled": false}`, `{"repair": true}` |
 
-**Situácie na demo:** `evening-peak` (18:30), `night-cascade` (02:10), `calm-night` (23:30, bez kaskády v pláne), `morning-departures` (05:45), `couriers-morning` (07:20), `scanner-ld05` (06:00), `off-wave` (10:00). Načítajú sa v *Administrácia → Simulácia → Situácie* alebo odkazom pre admina, napr. http://localhost:8000/shadow?depot=BUD&situation=evening-peak. Rovnaká situácia dá vždy rovnaké čísla.
+**Situácie na demo:** `evening-peak` (18:30), `night-cascade` (02:10), `calm-night` (23:30, bez kaskády v pláne), `morning-departures` (05:45), `couriers-morning` (06:55), `scanner-ld05` (06:00), `off-wave` (10:00). Načítajú sa v *Administrácia → Simulácia → Situácie* alebo odkazom pre admina, napr. http://localhost:8000/shadow?depot=BUD&situation=evening-peak. Rovnaká situácia dá vždy rovnaké čísla.
 
 Ovládanie simulácie je len pre admina. **V ostrom režime nastav `SIM_CONTROLS_ENABLED=false`**: všetky ovládacie endpointy vrátia 403 a admin UI ich skryje. Scenár „čo ak“ funguje ďalej.
 

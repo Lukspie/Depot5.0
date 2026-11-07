@@ -1148,7 +1148,8 @@ export class Engine {
 
   private courierVehicleEvent(plate: string, s: CourierSchedule, now: number): { data: VehicleEventData; pos: Position } {
     const st = courierStateAt(s, now);
-    const active = st.status !== null;
+    // a parked van (overnight, after the return) has no running round
+    const active = st.status !== null && st.status !== "parked";
     return {
       pos: st.pos,
       data: {

@@ -12,7 +12,7 @@
 
 ## Hlavný backend (app, Python FastAPI)
 
-Základná adresa: `http://localhost:8000`. 48 ciest.
+Základná adresa: `http://localhost:8000`. 55 ciest.
 
 | Skupina | Metóda | Cesta | Popis |
 | --- | --- | --- | --- |
@@ -57,6 +57,7 @@ Základná adresa: `http://localhost:8000`. 48 ciest.
 | internal | POST | `/internal/alerts` | Post Alert |
 | internal | POST | `/internal/days/{day}/reset` | Reset Day |
 | internal | POST | `/internal/events/couriers` | Courier Events |
+| internal | POST | `/internal/events/gate` | Simulované prejazdy brány od telematiky, rozhodnú ich pravidlá (ADR-061) |
 | internal | POST | `/internal/events/scans` | Scan Events |
 | internal | POST | `/internal/events/trips` | Trip Events |
 | loading | GET | `/api/loading/doors` | Doors |
@@ -86,7 +87,6 @@ Základná adresa: `http://localhost:8080`. 27 ciest. WebSocket: `ws://localhost
 | internal | GET | `/internal/vehicles/{plate}` | Aktuálna poloha vozidla (volá app) |
 | internal | POST | `/internal/broadcast` | Rozoslať udalosť klientom WebSocketu (volá app) |
 | internal | POST | `/internal/devices/{code}/maintenance` | Zariadenie označené na údržbu vo WMS (volá app) |
-| internal | POST | `/internal/events/gate` | Simulované prejazdy brány do app, rozhodnú ich pravidlá (ADR-061) |
 | internal | POST | `/internal/gate/passages` | Prejazd z reálnej kamery brány (CV v app, ADR-059) |
 | internal | POST | `/internal/plan/reload` | Plán sa zmenil (jazda na inú bránu): načítať ho znova (volá app) |
 | simulation | GET | `/routes` | Trasy kamiónov po reálnych cestách (pre mapu) |

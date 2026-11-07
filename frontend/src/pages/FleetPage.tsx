@@ -90,7 +90,7 @@ function VehiclePanel({ plate, position, onClose }: { plate: string; position: P
         <div className="space-y-5">
           {van && (
             <div className="space-y-3">
-              <Badge tone={vanState?.tone ?? "neutral"}>{vanState?.label ?? "Parkuje v depe"}</Badge>
+              <Badge tone={vanState?.tone ?? "neutral"}>{vanState?.label ?? "Zaparkovaná v depe"}</Badge>
               <KeyValue
                 rows={[
                   ["Rajón", position?.directionCode ?? "—"],
@@ -262,7 +262,7 @@ export function FleetPage() {
         if (v.trip) return <Badge tone={TRIP_STATUS[v.trip.status].tone}>{TRIP_STATUS[v.trip.status].label}</Badge>;
         const s = positions[v.plate]?.status;
         const vs = s ? VAN_STATUS[s] : undefined;
-        return vs ? <Badge tone={vs.tone}>{vs.label}</Badge> : <Badge>Parkuje</Badge>;
+        return vs ? <Badge tone={vs.tone}>{vs.label}</Badge> : <Badge>Zaparkovaná v depe</Badge>;
       },
     },
     {

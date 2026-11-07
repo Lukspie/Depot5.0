@@ -131,6 +131,10 @@ describe("engine: courier rounds", () => {
     await engine.init();
     expect(start).toBeLessThan(clock.now());
     await engine.step(clock.now());
+    // 06:20: parked at its own place in the yard, no running round (phase 7b)
+    const parked = engine.vehicleNow("KE-301KR");
+    expect(parked).toMatchObject({ status: "parked", moving: false, routeId: null, stopsTotal: 0 });
+    expect(engine.vehicleNow("KE-302KR")?.lon).not.toBe(parked?.lon);
     const until = zonedToUtc(NEXT, "14:00");
     for (let t = clock.now() + MINUTE; t <= until; t += MINUTE) {
       clock.set(t);

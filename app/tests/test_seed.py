@@ -84,6 +84,21 @@ def test_three_dispatchers_one_per_shift_also_added_to_an_old_seed(
     assert (
         client.patch(f"/api/admin/users/{third.id}", json={"shift": "evening"}).status_code == 422
     )
+    # only a dispatcher has a shift (the backend decides, not the dialog)
+    operator = db.execute(select(User).where(User.username == "operator")).scalar_one()
+    assert (
+        client.patch(f"/api/admin/users/{operator.id}", json={"shift": "night"}).status_code == 422
+    )
+    new = {
+        "username": "op2",
+        "full_name": "Op Two",
+        "role": "operator",
+        "password": "heslo-12345",
+        "shift": "night",
+    }
+    assert client.post("/api/admin/users", json=new).status_code == 422
+    moved = client.patch(f"/api/admin/users/{third.id}", json={"role": "operator"})
+    assert moved.status_code == 200 and moved.json()["shift"] is None
 
 
 def test_seed_reference_data_matches_domain(db: Session) -> None:

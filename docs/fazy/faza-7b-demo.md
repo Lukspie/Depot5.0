@@ -1,6 +1,6 @@
 # Fáza 7b – Demo: brána, kuriérska appka, dispečeri, ranná nakládka
 
-> Pre koho: tím a príprava na obhajobe. Posledné úpravy pred odovzdaním: čo vzniklo, kde to je v kóde, prečo je to tak a čo ostalo na neskôr. Rozhodnutia sú v ADR-061 (brána) a ADR-062 (kuriér).
+> Pre koho: tím a príprava na obhajobe. Posledné úpravy pred odovzdaním: čo vzniklo, kde to je v kóde, prečo je to tak a čo ostalo na neskôr. Rozhodnutia sú v ADR-061 (brána), ADR-062 (kuriér) a ADR-063 (ranná nakládka, dispečeri).
 
 ## Čo vzniklo
 

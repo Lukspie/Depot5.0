@@ -29,6 +29,8 @@ def list_users(_: Admin, db: DbSession) -> list[User]:
     responses={409: {"description": "Username already exists"}},
 )
 def create_user(body: UserCreate, _: Admin, db: DbSession) -> User:
+    if body.shift is not None and body.role != UserRole.DISPATCHER:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Only a dispatcher has a shift")
     exists = db.execute(select(User.id).where(User.username == body.username)).first()
     if exists:
         raise HTTPException(status.HTTP_409_CONFLICT, "Username already exists")
@@ -73,7 +75,13 @@ def update_user(user_id: int, body: UserUpdate, admin: Admin, db: DbSession) -> 
     if body.password is not None:
         user.password_hash = hash_password(body.password)
     if "shift" in body.model_fields_set:
+        if body.shift is not None and user.role != UserRole.DISPATCHER:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, "Only a dispatcher has a shift"
+            )
         user.shift = body.shift
+    if user.role != UserRole.DISPATCHER:
+        user.shift = None
 
     # deactivation, role or password change ends the user's other sessions
     if user.id != admin.id and (

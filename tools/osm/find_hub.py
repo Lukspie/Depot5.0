@@ -1,8 +1,11 @@
-"""Find the Bratislava hub of the carrier in the OSM extract (plan-doplnky 5c-4).
+"""Find a depot of the carrier in the OSM extract (plan-doplnky 5c-4, 7b point 5).
 
-Looks for buildings / landuse in Ivanka pri Dunaji and around whose name or operator mentions
-SPS or Slovak Parcel Service, and lists the largest warehouses there as candidates. Prints
-OSM id, centre, size (m) and orientation; nothing is changed. Run like build_osm_data.py:
+Looks for buildings / landuse in a bounding box (default Ivanka pri Dunaji) whose name or operator
+mentions SPS or Slovak Parcel Service, lists every building inside such a named area (point in
+polygon: the hall itself often has no name) and the largest buildings of the box as candidates.
+Prints OSM id, tags, centre, size (m) and orientation; nothing is changed. Run like
+build_osm_data.py, an optional second argument is the box "south,west,north,east", e.g. Žilina
+"49.16,18.62,49.28,18.86":
 
   docker run --rm -v "$PWD:/repo" -w /repo python:3.12-slim sh -c \\
     "apt-get update -qq && apt-get install -y -qq libexpat1 && pip install -q 'osmium>=4' && python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf"
@@ -16,7 +19,7 @@ from dataclasses import dataclass
 import osmium
 
 # Ivanka pri Dunaji with the D1 / R7 industrial zones around it
-BBOX = (48.14, 17.17, 48.23, 17.33)  # south, west, north, east
+BBOX = (48.14, 17.17, 48.23, 17.33)  # south, west, north, east (default)
 SPS = re.compile(r"\bSPS\b|slovak\s+parcel", re.IGNORECASE)
 
 
@@ -30,6 +33,7 @@ class Area:
     depth: float
     angle: float
     area: float
+    ring: list[tuple[float, float]]
 
 
 def footprint(points: list[tuple[float, float]]) -> tuple[float, float, float, float, float, float]:
@@ -72,8 +76,18 @@ class Finder(osmium.SimpleHandler):  # type: ignore[misc]
             if not (s <= lat <= n and wst <= lon <= e):
                 continue
             kind = "w" if a.from_way() else "r"
-            self.areas.append(Area(f"{kind}{a.orig_id()}", tags, lat, lon, w, d, ang, area))
+            self.areas.append(Area(f"{kind}{a.orig_id()}", tags, lat, lon, w, d, ang, area, pts))
             break
+
+
+def inside(p: tuple[float, float], ring: list[tuple[float, float]]) -> bool:
+    """Ray casting, lat/lon as plane coordinates (fine for a few hundred metres)."""
+    y, x = p
+    hit = False
+    for (y1, x1), (y2, x2) in zip(ring, ring[1:] + ring[:1]):
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+            hit = not hit
+    return hit
 
 
 def show(a: Area) -> str:
@@ -85,12 +99,21 @@ def show(a: Area) -> str:
 
 
 def main() -> None:
+    global BBOX
+    if len(sys.argv) > 2:
+        s, w, n, e = (float(v) for v in sys.argv[2].split(","))
+        BBOX = (s, w, n, e)
     f = Finder()
     f.apply_file(sys.argv[1], locations=True)
     sps = [a for a in f.areas if any(SPS.search(a.tags.get(k, "")) for k in ("name", "operator", "brand"))]
     print(f"== objects with SPS / Slovak Parcel Service in name/operator/brand: {len(sps)}")
     for a in sorted(sps, key=lambda a: -a.area):
         print(show(a))
+        if "building" not in a.tags:
+            within = [b for b in f.areas if "building" in b.tags and all(inside(p, a.ring) for p in b.ring)]
+            print(f"   buildings fully inside {a.osm_id}: {len(within)}")
+            for b in sorted(within, key=lambda b: -b.area):
+                print("   " + show(b))
     warehouses = [a for a in f.areas if a.tags.get("building") in ("warehouse", "industrial", "commercial", "yes")]
     print("== largest buildings in the area (candidates)")
     for a in sorted(warehouses, key=lambda a: -a.area)[:12]:

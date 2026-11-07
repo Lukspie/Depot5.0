@@ -269,7 +269,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Trasu vytvára app** (`services/couriers.py`) pri príprave prevádzkového dňa D (krok `couriers:D`). Patria do nej balíky rajónu z dňa D a jazdí sa **ráno D+1** (`courier_routes.date = D+1`), teda ešte v rámci prevádzkového dňa D (do 15:00). Pevné priradenie: `kurier0N` → rajón `KE-0N` → dodávka `KE-30NKR` → odstavná plocha `SB-0N`.
   - Poradie zastávok určuje **nearest neighbor od depa Budimír**. Plánované ETA v app je hrubý odhad (vzdušná čiara × 1,35 pri 28 km/h + 4 min na zastávku).
   - **Rajóny sú vyvážené podľa hustoty adries.** Pôvodné 45° výseky dávali jednému kuriérovi 40 a inému 123 zastávok. Hranice výsekov sú teraz kvantily azimutov košických adresných bodov, takže každý rajón má rovnaký počet adries. Platí pre balíky nových dní, už vygenerované dni sa nemenia.
-  - **Jazdu simuluje telematika** (`simulator/couriers.ts`, čistá funkcia ako scenár): nakládka od ~7:00 (sken každého balíka do dodávky), odchod ~7:30, jazda po **uliciach z offline grafu (A\*)**, na zastávke 2–6 min (priemer ~2,7 min), 90 % úspešných, návrat do depa. Seed je rovnaký ako pri kamiónoch, takže rovnaký seed = rovnaký deň kuriérov.
+  - **Jazdu simuluje telematika** (`simulator/couriers.ts`, čistá funkcia ako scenár): nakládka od ~7:00 (od Fázy 7b od 6:30, ADR-063) (sken každého balíka do dodávky), odchod ~7:30, jazda po **uliciach z offline grafu (A\*)**, na zastávke 2–6 min (priemer ~2,7 min), 90 % úspešných, návrat do depa. Seed je rovnaký ako pri kamiónoch, takže rovnaký seed = rovnaký deň kuriérov.
   - Udalosti `loaded`, `departed`, `delivered`, `failed`, `returned` a predikcie ETA idú do app cez `POST /internal/events/couriers`. Posielajú sa **aj pri skoku hodín**, lebo menia stav balíkov (na rozdiel od skenov, ADR-025). Chyba predikcie ETA sa zmenšuje, ako sa dodávka blíži.
   - Kuriér môže zastávku uzavrieť ručne na `/courier`. **Platí prvý výsledok**: neskoršia udalosť zo simulátora pre už uzavretú zastávku sa ignoruje.
   - Nezastihnutý balík ostáva `failed_delivery`. Opakované doručenie ďalší deň nie je v rozsahu prototypu.
@@ -668,3 +668,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Kuriér vidí, čo má robiť v každej fáze dňa (nakládka, trasa, okno zákazníka).
   - Trasy sú dlhšie v km. Je to cena za okná, nie chyba heuristiky. Zmerané a uvedené vyššie.
   - Mapa ukazuje orientačnú čiaru cez ďalšie zastávky, nie cestu po uliciach. Tú pozná len telematika a appka ju nevolá, aby na telefóne stačil prístup k app.
+
+## ADR-063 Ranná nakládka od 6:30, zaparkované dodávky, dispečeri po zmenách (Fáza 7b)
+Čiastočne nahrádza ADR-041 (nakládka od ~7:00).
+- **Kontext:** Zadanie 7b chce kuriérov nakladať od 6:30 pri odstavných plochách. Dodávky majú stáť v areáli depa v tieni aj na mape Flotily a potom vyraziť. Ďalej chce 3 dispečerov po zmenách s heslami z `.env`.
+- **Rozhodnutie:**
+  - **Nakládka** začína o 06:30 (+0–5 min podľa seedu), balíky sa skenujú rovnomerne 50 min, odchod ostáva ~07:30. Ťahy RNG sú rovnaké ako predtým, mení sa len čas. Skener v appke nakladá od 06:30 do odchodu (ADR-062). Situácia `couriers-morning` je o 06:55.
+  - **Miesto v areáli:** každá dodávka má `parkingSpot` v rade južne od bodu depa, ~9 m od seba podľa čísla rajónu. Nie je to zameraná geometria. Mapa a tieň potrebujú len to, aby dodávky nestáli v jednom bode. Kolo začína aj končí na tomto mieste.
+  - **Kontrakt kanála `vehicles`:** dodávka bez bežiaceho kola má `status: "parked"` (predtým `null`), polohu na svojom mieste a `routeId: null`. Frontend má štítok „Zaparkovaná v depe“, tieň ukazuje zaparkované aj nakladané dodávky za odstavnými plochami.
+  - **Dispečeri:** `dispecer` (ranná), `dispecer2` (poobedná), `dispecer3` (nočná). Spoločné heslo `SEED_DISPATCHER_PASSWORD` ako pri kuriéroch. Stĺpec `users.shift` (`morning` / `afternoon` / `night`) smie mať len dispečer, o tom rozhoduje backend (422, pri zmene roly sa zmaže). Krok seedu `users:v2` doplní účty do existujúcej DB a heslá existujúcich účtov nemení.
+- **Dôsledok:** Ranná scéna ukazuje celý tok: dodávky stoja v areáli, nakladajú sa, zákazníci dostávajú SMS, dodávky odchádzajú. Miesta v areáli sú schematické, presné státia patria k layoutom skladov (7b bod 5, po odovzdaní).

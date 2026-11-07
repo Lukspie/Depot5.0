@@ -206,7 +206,7 @@ def finish_stop(stop_id: int, body: StopResultIn, user: Courier, db: DbSession) 
     response_model_by_alias=True,
     responses={
         404: {"description": "Not a parcel of your route today"},
-        409: {"description": "Not loading time: before 07:00 or after the departure"},
+        409: {"description": "Not loading time: before 06:30 or after the departure"},
     },
 )
 def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
@@ -235,7 +235,7 @@ def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
     if stop.outcome is not None:
         action = "done"
     elif parcel.status not in IN_VAN:
-        # loading only at the staging bay: from 07:00 of the delivery day until the departure
+        # loading only at the staging bay: from 06:30 of the delivery day until the departure
         if route.departed_at is not None or now < datetime.combine(route.date, LOADING_START, TZ):
             raise HTTPException(status.HTTP_409_CONFLICT, "Not loading time for this route")
         load_parcel(

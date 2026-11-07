@@ -2,9 +2,10 @@
  * Courier rounds (Phase 4, ADR-041): the deterministic schedule of every courier van of a day.
  *
  * buildCourierSchedules() is a pure function of (courier plan, seed, road graph), like the trip
- * scenario: from ~07:00 the courier scans the parcels into the van, leaves Budimír ~07:30, drives
+ * scenario: from ~06:30 the courier scans the parcels into the van at its place in the yard
+ * (phase 7b, ADR-063), leaves Budimír ~07:30, drives
  * the stops in the app's order on the street graph (offline A*, ADR-038), stays 2–6 min at each
- * stop, ~90 % of deliveries succeed, then drives back to the depot.
+ * stop, ~90 % of deliveries succeed, then drives back to its place in the yard.
  */
 
 import { MINUTE, zonedToUtc } from "../clock/time.js";
@@ -114,7 +115,9 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
       const legStart: number[] = [];
       const legEnd: number[] = [];
       const visits: StopVisit[] = [];
-      let here = depot;
+      // the round starts and ends at the van's own place in the yard, not on the depot point
+      const parking = parkingSpot(depot, route);
+      let here = parking;
       let t = depart;
       for (const stop of route.stops) {
         const to: LatLon = [stop.lat, stop.lon];
@@ -143,12 +146,12 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
         });
         here = to;
       }
-      const back = leg(opts.router, here, depot, traffic);
+      const back = leg(opts.router, here, parking, traffic);
       legs.push(back.line);
       legStart.push(t);
       t = Math.round(t + back.minutes * MINUTE);
       legEnd.push(t);
-      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot, parking: parkingSpot(depot, route) };
+      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot, parking };
     });
 }
 

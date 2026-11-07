@@ -8,7 +8,7 @@ export interface MapVehicle {
   lat: number;
   lon: number;
   /** trip status (planned, en_route, at_door, loading, departed…), courier van status
-   * (loading, en_route, at_stop, returning) or null when parked */
+   * (parked, loading, en_route, at_stop, returning), null for a truck without a trip */
   status: string | null;
   delayMin: number | null;
   label?: string;
