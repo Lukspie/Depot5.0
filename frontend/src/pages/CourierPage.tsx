@@ -86,7 +86,19 @@ function NextStop({ stop, canAct }: { stop: CourierStop; canAct: boolean }) {
   );
 }
 
-function StopRow({ s }: { s: CourierStop }) {
+/**
+ * Open stops split at the last finished one: the next stop is the first open one after it; open
+ * stops before it were skipped (e.g. events lost while the simulator restarted) and must not be
+ * shown as "next" with an ETA from the past (phase 5b fix).
+ */
+function splitStops(stops: CourierStop[]): { upcoming: CourierStop[]; skipped: CourierStop[]; done: CourierStop[] } {
+  const done = stops.filter((s) => s.outcome !== null);
+  const lastDone = Math.max(0, ...done.map((s) => s.sequence));
+  const open = stops.filter((s) => s.outcome === null).sort((a, b) => a.sequence - b.sequence);
+  return { upcoming: open.filter((s) => s.sequence > lastDone), skipped: open.filter((s) => s.sequence < lastDone), done };
+}
+
+function StopRow({ s, skipped = false }: { s: CourierStop; skipped?: boolean }) {
   return (
     <li className="flex items-center gap-3 py-2.5">
       <span className="bg-neutral-100 text-ink flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold tabular-nums">
@@ -101,6 +113,10 @@ function StopRow({ s }: { s: CourierStop }) {
           <Badge size="sm" tone={s.outcome === "delivered" ? "ok" : "warn"}>
             {s.outcome === "delivered" ? `Doručené ${hhmm(s.deliveredAt)}` : "Nezastihnutý"}
           </Badge>
+        ) : skipped ? (
+          <Badge size="sm" tone="warn">
+            vynechaná
+          </Badge>
         ) : (
           <span className="text-sm tabular-nums">{hhmm(eta(s))}</span>
         )}
@@ -111,9 +127,8 @@ function StopRow({ s }: { s: CourierStop }) {
 
 function StopsList({ route, canAct }: { route: CourierRoute; canAct: boolean }) {
   const [showDone, setShowDone] = useState(false);
-  const open = route.stopList.filter((s) => s.outcome === null);
-  const done = route.stopList.filter((s) => s.outcome !== null);
-  const [next, ...rest] = open;
+  const { upcoming, skipped, done } = splitStops(route.stopList);
+  const [next, ...rest] = upcoming;
   return (
     <div className="space-y-4">
       {next ? (
@@ -122,8 +137,8 @@ function StopsList({ route, canAct }: { route: CourierRoute; canAct: boolean }) 
         <Card>
           <EmptyState
             icon={<CheckCircle2 size={20} />}
-            title="Všetky zastávky sú hotové"
-            description="Vráťte sa do depa Budimír."
+            title={skipped.length ? "Trasa je prejdená" : "Všetky zastávky sú hotové"}
+            description={skipped.length ? "Zostali vynechané zastávky (nižšie). Doručte ich alebo ich označte." : "Vráťte sa do depa Budimír."}
           />
         </Card>
       )}
@@ -132,6 +147,15 @@ function StopsList({ route, canAct }: { route: CourierRoute; canAct: boolean }) 
           <ul className="divide-line -my-2 divide-y">
             {rest.map((s) => (
               <StopRow key={s.id} s={s} />
+            ))}
+          </ul>
+        </Card>
+      )}
+      {skipped.length > 0 && (
+        <Card title={`Vynechané (${String(skipped.length)})`} subtitle="Zastávky pred poslednou hotovou, ktoré nemajú výsledok.">
+          <ul className="divide-line -my-2 divide-y">
+            {skipped.map((s) => (
+              <StopRow key={s.id} s={s} skipped />
             ))}
           </ul>
         </Card>
@@ -164,7 +188,11 @@ function StopsList({ route, canAct }: { route: CourierRoute; canAct: boolean }) 
 }
 
 function RouteMap({ route }: { route: CourierRoute }) {
-  const open = route.stopList.filter((s) => s.outcome === null);
+  // the next stop (brand colour) first, then the rest; skipped ones at the end
+  const open = useMemo(() => {
+    const { upcoming, skipped } = splitStops(route.stopList);
+    return [...upcoming, ...skipped];
+  }, [route.stopList]);
   const points: MapPoint[] = useMemo(() => {
     const list: MapPoint[] = open.map((s, i) => ({
       id: `s${String(s.id)}`,

@@ -902,6 +902,14 @@ export class Engine {
       if (state.gateIdx < 0) state.gateIdx = state.gate.length;
       state.courierIdx = state.courierEvents.findIndex((e) => e.at > now);
       if (state.courierIdx < 0) state.courierIdx = state.courierEvents.length;
+      // After a restart in the middle of the courier round the queued events were lost with the
+      // process: resend what already happened. The app applies them idempotently (a finished stop
+      // is not finished twice, departure/return only once); "loaded" is not resent, it would send
+      // the tracking SMS again (phase 5b /courier fix).
+      for (const ev of state.courierEvents.slice(0, state.courierIdx)) {
+        if (ev.kind === "loaded") continue;
+        this.courierQueue.push({ routeId: ev.routeId, kind: ev.kind, stopId: ev.stopId, at: iso(ev.at) });
+      }
       this.days.set(day, state);
       this.deps.log.info(
         {

@@ -147,4 +147,28 @@ describe("engine: courier rounds", () => {
     expect(van).toMatchObject({ kind: "van", directionCode: "KE-01" });
     expect(engine.vehicleNow("XX-000")).toBeNull();
   });
+
+  it("resends the finished stops after a restart in the middle of the round, not the loading", async () => {
+    // the process restarts at 12:00: events of the morning were in its memory queue only
+    const clock = new SimClock({ simTime: zonedToUtc(NEXT, "12:00"), speed: 60, paused: true }, () => 0);
+    const app = new FakeApp();
+    const engine = new Engine({
+      clock,
+      store: new MemoryStore(),
+      app,
+      hub: new Hub(),
+      routes: loadRoutes(),
+      log: silentLog,
+      realNow: () => 0,
+      config: { seed: 42, envSeed: 42, forceCascade: true, degradedDevice: null, degradationStartedAt: null, degradationHours: 6, externalDevices: [], degradedThreshold: 0.92 },
+    });
+    await engine.init();
+    await engine.step(clock.now());
+    await engine.flushTrips();
+    const kinds = app.courierEvents.map((e) => e.kind);
+    expect(kinds.filter((k) => k === "delivered" || k === "failed").length).toBeGreaterThan(10);
+    expect(kinds).toContain("departed");
+    expect(kinds).not.toContain("loaded"); // no second tracking SMS
+    expect(app.courierEvents.every((e) => Date.parse(e.at) <= clock.now())).toBe(true);
+  });
 });
