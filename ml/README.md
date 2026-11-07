@@ -163,8 +163,8 @@ python ml/download_gate_models.py     # yolox_tiny.onnx (19 MB), mobilenetv2-12.
 
   | Sada | Typ vozidla | ŠPZ |
   | --- | --- | --- |
-  | CC0 fotky (náves, Ford Transit), bez slovenskej ŠPZ | **2 / 2** | 2 / 2 (správne „nečitateľná“) |
-  | fotka dodávky kuriéra zo screenshotu tímu (nie je v repozitári) | 1 / 1 | – |
+  | CC0 fotky (náves, Ford Transit), bez slovenskej ŠPZ | **2 / 2** | 0 falošných čítaní (nemajú slovenskú ŠPZ, presnosť OCR to nemeria) |
+  | fotka dodávky kuriéra zo screenshotu tímu (overené ručne, nie je v repozitári, skript ju neopakuje) | 1 / 1 | – |
   | syntetické tabuľky: 12 ŠPZ × 4 podmienky (čistá, otočená o 4°, rozmazaná, malá so šumom) | – | **48 / 48**, istota OCR ≥ 0,99 |
 
   Čo to znamená a čo nie:
@@ -173,6 +173,7 @@ python ml/download_gate_models.py     # yolox_tiny.onnx (19 MB), mobilenetv2-12.
   - preto rozhodnutie nestojí len na modeli (ADR-061): identitu určí ŠPZ v databáze a pri nízkej istote (`GATE_MIN_VEHICLE_CONFIDENCE` 0,5, `GATE_MIN_PLATE_CONFIDENCE` 0,8) rozhodne ochranka.
 - **Obmedzenia:**
   - na reálnych fotkách z brány ani v tme a daždi to nie je overené (nemáme dáta),
+  - riziko istého, ale chybného čítania na *inú platnú* ŠPZ flotily (napr. KE-301KR ↔ KE-308KR): prah istoty pred ním nechráni, vozidlo by prešlo ako iné vozidlo flotily. Overené to nie je,
   - prah istoty OCR 0,8 je odhad. Na syntetických tabuľkách je istota vždy ≥ 0,99, takže ho treba nastaviť podľa reálnych záberov,
   - OCR modely sú všeobecné (latinka a čínština), nie špecializované na ŠPZ,
   - tabuľka musí mať aspoň ~60 px na výšku,

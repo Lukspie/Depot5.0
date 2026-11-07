@@ -904,6 +904,9 @@ export class Engine {
       if (state.scanIdx < 0) state.scanIdx = state.scans.length;
       state.gateIdx = state.gate.findIndex((g) => g.at > now);
       if (state.gateIdx < 0) state.gateIdx = state.gate.length;
+      // passages before a restart may not have reached the app (the queue is in memory): send them
+      // again, the app skips the ones it has (phase 7b review)
+      this.forwardGate(state.gate.slice(0, state.gateIdx));
       state.courierIdx = state.courierEvents.findIndex((e) => e.at > now);
       if (state.courierIdx < 0) state.courierIdx = state.courierEvents.length;
       // After a restart in the middle of the courier round the queued events were lost with the
@@ -1068,6 +1071,24 @@ export class Engine {
       const sent = new Set(chunk);
       this.scanQueue = this.scanQueue.filter((x) => !sent.has(x));
     }
+  }
+
+  /** Queue simulated passages for the decision rules in the app; the key makes a resend harmless. */
+  private forwardGate(rows: GateRow[]): void {
+    for (const g of rows) {
+      const at = iso(g.at);
+      this.gateQueue.push({
+        // an unread plate: the random confidence keeps two such passages in one ms apart
+        key: `${at}:${g.direction}:${g.plate ?? `${g.vehicleType}-${String(g.vehicleConfidence ?? 0)}`}`,
+        at,
+        direction: g.direction,
+        vehicleType: g.vehicleType,
+        vehicleConfidence: g.vehicleConfidence ?? null,
+        plate: g.plate,
+        plateConfidence: g.plateConfidence,
+      });
+    }
+    if (this.gateQueue.length > MAX_SCAN_QUEUE) this.gateQueue = this.gateQueue.slice(-MAX_SCAN_QUEUE);
   }
 
   private async flushGate(): Promise<void> {
@@ -1315,21 +1336,7 @@ export class Engine {
 
   private async emitGate(rows: GateRow[], forward = true): Promise<void> {
     if (rows.length === 0) return;
-    if (forward) {
-      for (const g of rows) {
-        const at = iso(g.at);
-        this.gateQueue.push({
-          key: `${at}:${g.direction}:${g.plate ?? g.vehicleType}`,
-          at,
-          direction: g.direction,
-          vehicleType: g.vehicleType,
-          vehicleConfidence: g.vehicleConfidence ?? null,
-          plate: g.plate,
-          plateConfidence: g.plateConfidence,
-        });
-      }
-      if (this.gateQueue.length > MAX_SCAN_QUEUE) this.gateQueue = this.gateQueue.slice(-MAX_SCAN_QUEUE);
-    }
+    if (forward) this.forwardGate(rows);
     for (const g of rows) {
       if (this.replayTarget !== null) break;
       this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), device: "GATE-CAM-01" });

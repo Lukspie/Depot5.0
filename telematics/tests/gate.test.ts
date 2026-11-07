@@ -83,4 +83,16 @@ describe("gate mix -> app decisions (ADR-061)", () => {
     const again = await runDay();
     expect(again.app.gate.slice(0, before)).toEqual(app.gate);
   });
+
+  it("after a restart sends the passages of the day again (the app skips duplicates by key)", async () => {
+    const now = START + 8 * 60 * MINUTE;
+    const clock = new SimClock({ simTime: now, speed: 60, paused: true }, () => 0);
+    const app = new FakeApp();
+    const engine = new Engine({ clock, store: new MemoryStore(), app, hub: new Hub(), routes: loadRoutes(), log: silentLog, realNow: () => 0, config: CONFIG });
+    await engine.init();
+    await engine.step(now);
+    await engine.flushTrips();
+    expect(app.gate.length).toBeGreaterThan(5);
+    expect(app.gate.every((g) => Date.parse(g.at) <= now)).toBe(true);
+  });
 });

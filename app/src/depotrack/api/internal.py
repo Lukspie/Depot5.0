@@ -253,9 +253,9 @@ def gate_events(body: GateEventsIn, db: DbSession, background: BackgroundTasks) 
         if stored is None:
             duplicates += 1
             continue
-        decisions[stored[0].decision] += 1
-        if stored[1] is not None:
-            alerts.append(stored[1])
+        decisions[stored.verdict.decision] += 1
+        if stored.alert is not None:
+            alerts.append(stored.alert)
     db.commit()
     _broadcast_alerts(background, alerts)
     return GateEventsOut(

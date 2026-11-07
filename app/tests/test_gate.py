@@ -114,23 +114,25 @@ def test_delivery_van_is_a_van_not_a_truck(
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
-def test_fleet_plate_passes_unknown_plate_waits_for_security(
+def test_a_plate_without_a_vehicle_waits_for_security(
     guard: TestClient, db: Session, passages: list[dict[str, Any]]
 ) -> None:
     fleet = db.execute(select(Vehicle).order_by(Vehicle.id)).scalars().first()
     assert fleet is not None
+    # a printed fleet plate in front of the camera: the plate is known, but no vehicle is seen
     known = detect(guard, plate_image(fleet.plate), "image/png", direction="out").json()
     assert known["plate"] == fleet.plate and known["expected"] is True
     assert known["fleetKind"] == str(fleet.kind) and passages[-1]["direction"] == "out"
-    assert known["decision"] == "auto_pass"
-    assert db.execute(select(Alert).where(Alert.kind == AlertKind.OTHER)).first() is None
+    assert (known["decision"], known["reason"]) == ("hold", "no_vehicle")
 
     stranger = detect(guard, plate_image("ZA-999XY"), "image/png").json()
     assert stranger["plate"] == "ZA-999XY" and stranger["expected"] is False
-    # no vehicle in the picture and an unknown plate: security decides
-    assert (stranger["decision"], stranger["reason"]) == ("hold", "unknown_plate")
-    alert = db.execute(select(Alert).where(Alert.ref_type == "gate")).scalar_one()
-    assert "ZA-999XY" in alert.message and alert.ref_id == str(stranger["eventId"])
+    assert (stranger["decision"], stranger["reason"]) == ("hold", "no_vehicle")
+    alert = db.execute(
+        select(Alert).where(Alert.ref_type == "gate", Alert.ref_id == str(stranger["eventId"]))
+    ).scalar_one()
+    assert "ZA-999XY" in alert.message
+    assert db.execute(select(Alert).where(Alert.kind == AlertKind.OTHER)).all()
     # record=false only reads, nothing goes to telematics
     before = len(passages)
     assert (
@@ -138,7 +140,7 @@ def test_fleet_plate_passes_unknown_plate_waits_for_security(
         is False
     )
     assert len(passages) == before
-    assert len(guard.get("/api/gate/queue").json()) == 1
+    assert len(guard.get("/api/gate/queue").json()) == 2
 
 
 @pytest.mark.usefixtures("seeded", "at_time")

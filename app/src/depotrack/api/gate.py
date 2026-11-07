@@ -2,16 +2,16 @@
 image -> vehicle type and plate (model), identity from the plate (fleet, allowed plates),
 decision by the rules, security decides the uncertain cases. Every decision is audited."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import Field
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from depotrack.core.clock import TZ
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.ml.gate import decode_image, gate_models, normalize_plate
 from depotrack.models import GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
@@ -156,21 +156,22 @@ def _process(
         plate_confidence=reading.plate_confidence,
     )
     at = telematics.sim_now()
-    verdict = rules.decide(db, seen, at)
+    event_id = None
+    recorded = False
+    if record and (seen.vehicle_type or reading.plate):
+        stored = rules.record(db, seen, at=at, source="camera")
+        assert stored is not None  # camera events have no idempotency key
+        verdict, event_id = stored.verdict, stored.event.id
+        db.commit()
+        _broadcast(background, stored.alert)
+    else:
+        verdict = rules.decide(db, seen, at)
     fleet = verdict.vehicle
     vehicle_type = seen.vehicle_type
     if fleet is not None and vehicle_type is None:
         vehicle_type = "truck" if fleet.kind == "truck" else "van"
     expected = fleet is not None or verdict.allowed is not None
-    event_id = None
-    recorded = False
-    if record and (vehicle_type or reading.plate):
-        stored = rules.record(db, seen, at=at, source="camera")
-        assert stored is not None  # camera events have no idempotency key
-        event, alert = stored
-        event_id = event.id
-        db.commit()
-        _broadcast(background, alert)
+    if event_id is not None:
         recorded = telematics.post_gate_passage(
             {
                 "direction": direction,
@@ -267,11 +268,16 @@ def _events_out(db: Session, events: list[GateEvent]) -> list[GateEventOut]:
 
 @router.get("/queue", response_model=list[GateEventOut], response_model_by_alias=True)
 def queue(_: Guard, db: DbSession) -> list[GateEventOut]:
-    """Open decisions for security, oldest first: held vehicles and lorries to verify."""
+    """Open decisions for security, oldest first: held vehicles and lorries to verify (not the
+    ones of a later day, after a jump back in the simulation)."""
     events = list(
         db.execute(
             select(GateEvent)
-            .where(GateEvent.resolution.is_(None), GateEvent.decision != rules.AUTO_PASS)
+            .where(
+                GateEvent.resolution.is_(None),
+                GateEvent.decision != rules.AUTO_PASS,
+                GateEvent.at <= telematics.sim_now(),
+            )
             .order_by(GateEvent.at, GateEvent.id)
             .limit(100)
         ).scalars()
@@ -284,11 +290,13 @@ def events(
     _: Guard, db: DbSession, limit: Annotated[int, Query(ge=1, le=200)] = 40
 ) -> list[GateEventOut]:
     """Passages of the current operating day with their decisions and audit, newest first."""
-    start = day_start(operating_day_of(telematics.sim_now()))
+    day = operating_day_of(telematics.sim_now())
     rows = list(
         db.execute(
             select(GateEvent)
-            .where(GateEvent.at >= start)
+            .where(
+                GateEvent.at >= day_start(day), GateEvent.at < day_start(day + timedelta(days=1))
+            )
             .order_by(GateEvent.at.desc(), GateEvent.id.desc())
             .limit(limit)
         ).scalars()
@@ -307,7 +315,8 @@ def decide_event(
     background: BackgroundTasks,
 ) -> GateEventOut:
     """Security decides: allow / deny a held vehicle (note required), verify a lorry."""
-    event = db.get(GateEvent, event_id)
+    # row lock: two guards deciding at once get one decision and one 409
+    event = db.get(GateEvent, event_id, with_for_update=True)
     if event is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "gate event not found")
     note = body.note.strip()
@@ -326,7 +335,13 @@ def decide_event(
 
 @router.get("/allowed-plates", response_model=list[AllowedPlateOut], response_model_by_alias=True)
 def allowed_plates(_: Guard, db: DbSession) -> list[AllowedPlateOut]:
-    rows = db.execute(select(GateAllowedPlate).order_by(GateAllowedPlate.plate)).scalars()
+    """Plates valid today (removed ones stay in the table for the audit of past passages)."""
+    today = telematics.sim_now().astimezone(TZ).date()
+    rows = db.execute(
+        select(GateAllowedPlate)
+        .where(or_(GateAllowedPlate.valid_until.is_(None), GateAllowedPlate.valid_until >= today))
+        .order_by(GateAllowedPlate.plate)
+    ).scalars()
     return [
         AllowedPlateOut(id=p.id, plate=p.plate, holder=p.holder, valid_until=p.valid_until)
         for p in rows
@@ -343,15 +358,18 @@ def add_allowed_plate(body: AllowedPlateIn, user: Guard, db: DbSession) -> Allow
     plate = normalize_plate(body.plate)
     if plate is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "not a Slovak plate")
-    row = GateAllowedPlate(
-        plate=plate, holder=body.holder.strip(), valid_until=body.valid_until, created_by=user.id
-    )
-    db.add(row)
-    try:
-        db.commit()
-    except IntegrityError as exc:
-        db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "plate already allowed") from exc
+    today = telematics.sim_now().astimezone(TZ).date()
+    row = db.execute(
+        select(GateAllowedPlate).where(GateAllowedPlate.plate == plate)
+    ).scalar_one_or_none()
+    if row is not None and (row.valid_until is None or row.valid_until >= today):
+        raise HTTPException(status.HTTP_409_CONFLICT, "plate already allowed")
+    if row is None:
+        row = GateAllowedPlate(plate=plate, holder="", created_by=user.id)
+        db.add(row)
+    # a removed plate comes back with the new holder and validity
+    row.holder, row.valid_until, row.created_by = body.holder.strip(), body.valid_until, user.id
+    db.commit()
     return AllowedPlateOut(
         id=row.id, plate=row.plate, holder=row.holder, valid_until=row.valid_until
     )
@@ -359,8 +377,9 @@ def add_allowed_plate(body: AllowedPlateIn, user: Guard, db: DbSession) -> Allow
 
 @router.delete("/allowed-plates/{plate_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_allowed_plate(plate_id: int, _: Guard, db: DbSession) -> None:
+    """Removal is logical (valid until yesterday): past passages keep the holder in their audit."""
     row = db.get(GateAllowedPlate, plate_id)
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "allowed plate not found")
-    db.delete(row)
+    row.valid_until = telematics.sim_now().astimezone(TZ).date() - timedelta(days=1)
     db.commit()

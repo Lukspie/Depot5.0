@@ -2,6 +2,7 @@
 vehicle type and the plate. Runs in the app image (the models are there):
 
     docker compose run --rm -v "$(pwd)/ml:/app/ml-src" app python /app/ml-src/eval_gate.py
+    (Git Bash na Windows: MSYS_NO_PATHCONV=1 a $(pwd -W))
 
 Pictures:
 - the CC0 photos from app/tests/data (a semi-trailer, a Ford Transit), type known, no Slovak plate,

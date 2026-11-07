@@ -4,6 +4,7 @@ from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -44,8 +45,8 @@ class Settings(BaseSettings):
     # trained models (ml/artifacts, copied into the image; ADR-057)
     ml_artifacts_dir: str = "/app/ml/artifacts"
     # gate (ADR-061): below these the rules never decide alone, security does
-    gate_min_vehicle_confidence: float = 0.5
-    gate_min_plate_confidence: float = 0.8
+    gate_min_vehicle_confidence: float = Field(default=0.5, ge=0, le=1)
+    gate_min_plate_confidence: float = Field(default=0.8, ge=0, le=1)
 
     # browser origins allowed to send state-changing requests (CSRF check, ADR-014)
     app_allowed_origins: str = "http://localhost:8000,http://localhost:5173"

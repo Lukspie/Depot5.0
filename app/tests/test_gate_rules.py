@@ -82,6 +82,15 @@ def guard(client: TestClient, make_user: MakeUser) -> TestClient:
             "unknown_plate",
         ),
         ({"vehicleType": "van", "plate": None}, "hold", "no_plate"),
+        # no vehicle in the picture counts as confidence 0, even for a fleet plate
+        ({"vehicleType": None, "plate": FLEET_VAN, "plateConfidence": 0.95}, "hold", "no_vehicle"),
+        # a passenger car on a fleet plate looks like a cloned plate
+        (
+            {"vehicleType": "car", "plate": FLEET_VAN, "plateConfidence": 0.95},
+            "hold",
+            "type_mismatch",
+        ),
+        ({"vehicleType": "van", "plate": FLEET_VAN}, "hold", "low_plate_confidence"),
         # low confidence: security decides even for a fleet plate
         (
             {"vehicleType": "van", "plate": FLEET_VAN, "plateConfidence": 0.6},
@@ -130,6 +139,17 @@ def test_resend_is_ignored_and_exit_after_allowed_entry_passes(
     assert out["decisions"] == {"auto_pass": 1}
     assert event(db, key="out1").reason == "exit_after_entry"
 
+    # a denied car that turns around at the gate is not "leaving after entry"
+    other = {"vehicleType": "car", "plate": "KS-455HK", "plateConfidence": 0.9}
+    send(client, passage("in2", local(16, 20), **other))
+    denied = event(db, key="in2")
+    guard.post(
+        f"/api/gate/events/{denied.id}/decision", json={"action": "deny", "note": "bez povolenia"}
+    )
+    assert send(client, passage("out2", local(16, 25), direction="out", **other))["decisions"] == {
+        "hold": 1
+    }
+
 
 @pytest.mark.usefixtures("seeded", "at_time")
 def test_security_decides_from_the_queue_with_audit(
@@ -175,7 +195,18 @@ def test_security_decides_from_the_queue_with_audit(
     make_user("disp", UserRole.DISPATCHER)
     login(client, "disp")
     assert client.get("/api/gate/queue").status_code == 403
+    assert client.get("/api/gate/events").status_code == 403
     assert decide(verify_id, action="verify").status_code == 403
+    assert client.get("/api/gate/allowed-plates").status_code == 403
+    assert (
+        client.post(
+            "/api/gate/allowed-plates", json={"plate": "BA-123CD", "holder": "x y"}
+        ).status_code
+        == 403
+    )
+    assert client.delete("/api/gate/allowed-plates/1").status_code == 403
+    # internal endpoint: service token only
+    assert client.post("/internal/events/gate", json={"passages": []}).status_code == 401
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
@@ -195,7 +226,16 @@ def test_allowed_plates_are_managed_by_security(client: TestClient, guard: TestC
     assert send(client, passage("a", local(16, 0), **plate))["decisions"] == {"auto_pass": 1}
     pid = res.json()["id"]
     assert guard.delete(f"/api/gate/allowed-plates/{pid}").status_code == 204
+    assert "BA-123CD" not in {p["plate"] for p in guard.get("/api/gate/allowed-plates").json()}
     assert send(client, passage("b", local(16, 30), **plate))["decisions"] == {"hold": 1}
+    # the earlier passage keeps its holder after the removal (logical delete)
+    first = guard.get("/api/gate/events").json()
+    assert [e["allowedHolder"] for e in first if e["plate"] == "BA-123CD"] == [None, "Kuriér DHL"]
+    # added again: allowed again
+    again = guard.post(
+        "/api/gate/allowed-plates", json={"plate": "BA-123CD", "holder": "Kuriér GLS"}
+    )
+    assert again.status_code == 201 and again.json()["id"] == pid
     expired = guard.post(
         "/api/gate/allowed-plates",
         json={
@@ -222,6 +262,18 @@ def test_day_reset_removes_passages_and_old_holds_expire(client: TestClient, db:
         a.action
         for a in db.execute(select(GateAudit).where(GateAudit.event_id == old.id)).scalars()
     ] == ["hold", "expired"]
+    db.add(
+        GateEvent(
+            at=local(17, 0), source="camera", direction="in", vehicle_type="car",
+            vehicle_confidence=0.9, decision="hold", reason="unknown_plate",
+        )
+    )  # fmt: skip
+    db.commit()
     res = client.post(f"/internal/days/{DAY.isoformat()}/reset", headers=TOKEN)
     assert res.status_code == 200 and res.json()["gateEvents"] == 1
-    assert db.execute(select(GateEvent.external_key)).scalars().all() == ["old"]
+    # the simulated passage of the day goes (the replay sends it again), the camera one stays
+    assert sorted(db.execute(select(GateEvent.source)).scalars().all()) == ["camera", "sim"]
+    assert (
+        db.execute(select(GateEvent.external_key).where(GateEvent.source == "sim")).scalar_one()
+        == "old"
+    )

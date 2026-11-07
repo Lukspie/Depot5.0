@@ -5,13 +5,14 @@ the fleet (`vehicles`) or the allowed external plates. Every decision goes to `g
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Literal
 
 from sqlalchemy import delete, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from depotrack.core.clock import TZ
 from depotrack.core.config import get_settings
 from depotrack.models import Alert, GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
 from depotrack.models.enums import AlertKind, AlertSeverity
@@ -31,6 +32,8 @@ SYSTEM_NOTE = {
     "exit_after_entry": "odchod vozidla, ktoré dnes vošlo s povolením",
     "truck_unknown_plate": "kamión s neznámou ŠPZ, prejazd povolený, overiť",
     "truck_no_plate": "kamión s neprečítanou ŠPZ, prejazd povolený, overiť",
+    "no_vehicle": "na zábere nie je vozidlo (napr. len tabuľka ŠPZ)",
+    "type_mismatch": "typ vozidla nesedí s vozidlom tejto ŠPZ",
     "low_vehicle_confidence": "nízka istota modelu typu vozidla",
     "low_plate_confidence": "nízka istota čítania ŠPZ",
     "unknown_plate": "ŠPZ nie je v databáze",
@@ -56,8 +59,9 @@ class Verdict:
 
 
 def decide(db: Session, r: Reading, at: datetime) -> Verdict:
-    """The rules, in this order: low confidence -> security; known plate -> pass; lorry ->
-    pass and verify; anything else unknown -> wait for security."""
+    """The rules, in this order: no vehicle in the picture or low confidence -> security;
+    known plate -> pass (unless the model sees a passenger car on a fleet plate); lorry -> pass
+    and verify; anything else unknown -> wait for security."""
     s = get_settings()
     vehicle = allowed = None
     if r.plate:
@@ -67,7 +71,7 @@ def decide(db: Session, r: Reading, at: datetime) -> Verdict:
                 GateAllowedPlate.plate == r.plate,
                 or_(
                     GateAllowedPlate.valid_until.is_(None),
-                    GateAllowedPlate.valid_until >= at.date(),
+                    GateAllowedPlate.valid_until >= at.astimezone(TZ).date(),
                 ),
             )
         ).scalar_one_or_none()
@@ -75,11 +79,17 @@ def decide(db: Session, r: Reading, at: datetime) -> Verdict:
     def verdict(decision: str, reason: str) -> Verdict:
         return Verdict(decision, reason, vehicle, allowed)
 
-    if r.vehicle_type is not None and (r.vehicle_confidence or 0.0) < s.gate_min_vehicle_confidence:
+    # no detection counts as confidence 0: a plate held up to the camera opens nothing
+    if r.vehicle_type is None:
+        return verdict(HOLD, "no_vehicle")
+    if (r.vehicle_confidence or 0.0) < s.gate_min_vehicle_confidence:
         return verdict(HOLD, "low_vehicle_confidence")
     if r.plate is not None and (r.plate_confidence or 0.0) < s.gate_min_plate_confidence:
         return verdict(HOLD, "low_plate_confidence")
     if vehicle is not None:
+        # the fleet has only lorries and vans: a passenger car with its plate looks like a clone
+        if r.vehicle_type == "car":
+            return verdict(HOLD, "type_mismatch")
         return verdict(AUTO_PASS, "fleet_vehicle")
     if allowed is not None:
         return verdict(AUTO_PASS, "allowed_plate")
@@ -109,9 +119,16 @@ def _entered_today(db: Session, plate: str, at: datetime) -> bool:
     )
 
 
+@dataclass(frozen=True)
+class Recorded:
+    event: GateEvent
+    verdict: Verdict
+    alert: AlertChange | None
+
+
 def record(
     db: Session, r: Reading, *, at: datetime, source: str, external_key: str | None = None
-) -> tuple[GateEvent, AlertChange | None] | None:
+) -> Recorded | None:
     """Decide and store one passage with its audit row; None if the key was already stored.
     A held vehicle also raises an alert for the dispatch (closed when security decides)."""
     v = decide(db, r, at)
@@ -152,7 +169,7 @@ def record(
             at=at,
         )
     db.flush()
-    return event, alert
+    return Recorded(event, v, alert)
 
 
 def describe(e: GateEvent) -> str:
@@ -182,7 +199,7 @@ def resolve(
     return resolve_alert(db, kind=AlertKind.OTHER, ref_type="gate", ref_id=str(event.id), at=at)
 
 
-def close_stale_events(db: Session, day: Any) -> int:
+def close_stale_events(db: Session, day: date) -> int:
     """Open events of days before the previous operating day are closed by the system
     (kept for the audit), like the alerts (phase 5d)."""
     cutoff = day_start(day - timedelta(days=1))
@@ -203,13 +220,18 @@ def close_stale_events(db: Session, day: Any) -> int:
         .values(resolution=EXPIRED, resolved_at=cutoff, note="uzavreté systémom na konci dňa")
     )
     db.add_all(
-        GateAudit(event_id=i, at=cutoff, actor_id=None, action=EXPIRED, reason="end of day")
+        GateAudit(event_id=i, at=cutoff, actor_id=None, action=EXPIRED, reason="end_of_day")
         for i in ids
     )
     return len(ids)
 
 
 def delete_day(db: Session, start: datetime, end: datetime) -> int:
-    """Reset of an operating day: its passages go (the replay sends the simulated ones again)."""
-    result = db.execute(delete(GateEvent).where(GateEvent.at >= start, GateEvent.at < end))
+    """Reset of an operating day: its simulated passages go (the replay sends them again).
+    Passages from the real camera stay with their audit."""
+    result = db.execute(
+        delete(GateEvent).where(
+            GateEvent.source == "sim", GateEvent.at >= start, GateEvent.at < end
+        )
+    )
     return int(getattr(result, "rowcount", 0) or 0)

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Check, ChevronDown, ScanLine, ShieldAlert, Trash2, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getJson, isApiError, sendJson } from "../api/client";
-import { Badge, Button, Card, EmptyState, type Tone } from "../components/ui";
+import { Badge, Button, Card, EmptyState, Spinner, type Tone } from "../components/ui";
 import { useChannel } from "../hooks/telematics";
 
 interface GateResult {
@@ -59,6 +59,9 @@ const REASON: Record<string, string> = {
   exit_after_entry: "odchod po povolenom vjazde",
   truck_unknown_plate: "kamión s neznámou ŠPZ",
   truck_no_plate: "kamión, ŠPZ neprečítaná",
+  no_vehicle: "na zábere nie je vozidlo",
+  type_mismatch: "typ nesedí s vozidlom tejto ŠPZ",
+  end_of_day: "koniec dňa",
   low_vehicle_confidence: "nízka istota typu vozidla",
   low_plate_confidence: "nízka istota čítania ŠPZ",
   unknown_plate: "ŠPZ nie je v databáze",
@@ -209,12 +212,18 @@ function AllowedPlates() {
     },
   });
   const remove = useMutation({ mutationFn: (id: number) => sendJson<null>("DELETE", `/api/gate/allowed-plates/${String(id)}`), onSuccess: refresh });
+  const removePlate = (p: AllowedPlate) => {
+    if (window.confirm(`Odobrať ${p.plate} (${p.holder}) zo zoznamu povolených?`)) remove.mutate(p.id);
+  };
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
     add.mutate();
   };
   return (
     <Card title="Povolené externé ŠPZ" subtitle="Prejdú bez zastavenia.">
+      {plates.isPending && <Spinner className="py-4" />}
+      {plates.isError && <p className="text-danger-600 text-sm">Zoznam sa nepodarilo načítať.</p>}
+      {remove.isError && <p className="text-danger-600 text-xs">ŠPZ sa nepodarilo odobrať.</p>}
       <ul className="divide-line divide-y text-sm">
         {(plates.data ?? []).map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 py-2">
@@ -225,7 +234,7 @@ function AllowedPlates() {
                 {p.validUntil && ` · do ${new Date(p.validUntil).toLocaleDateString("sk-SK")}`}
               </span>
             </span>
-            <Button size="sm" variant="ghost" aria-label={`Odobrať ${p.plate}`} icon={<Trash2 size={14} />} onClick={() => remove.mutate(p.id)} />
+            <Button size="sm" variant="ghost" aria-label={`Odobrať ${p.plate}`} icon={<Trash2 size={14} />} onClick={() => removePlate(p)} />
           </li>
         ))}
       </ul>
@@ -267,10 +276,21 @@ export function GatePage() {
     [preview],
   );
 
-  // a passage of the simulated camera reaches the app within ~1 s: refresh the lists
+  // a passage of the simulated camera reaches the app within ~1 s: refresh the lists once per burst
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   useChannel("devices", (ev) => {
-    if (ev.type === "gate_passage") setTimeout(refresh, 1500);
+    if (ev.type !== "gate_passage" || pending.current) return;
+    pending.current = setTimeout(() => {
+      pending.current = null;
+      refresh();
+    }, 1500);
   });
+  useEffect(
+    () => () => {
+      if (pending.current) clearTimeout(pending.current);
+    },
+    [],
+  );
 
   const r = run.data;
   const error = run.error
@@ -281,6 +301,11 @@ export function GatePage() {
         : "Obrázok sa nepodarilo vyhodnotiť."
     : null;
   const open = queue.data ?? [];
+  // the rules decide by the largest vehicle in the picture
+  const largest = r?.vehicles.reduce<GateResult["vehicles"][number] | null>(
+    (best, v) => (!best || (v.box[2] - v.box[0]) * (v.box[3] - v.box[1]) > (best.box[2] - best.box[0]) * (best.box[3] - best.box[1]) ? v : best),
+    null,
+  );
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_24rem]">
@@ -345,7 +370,7 @@ export function GatePage() {
               <dt className="text-ink-muted">Vozidlo</dt>
               <dd>
                 {r.vehicleType ? TYPE[r.vehicleType] ?? r.vehicleType : "nerozpoznané"}
-                {r.vehicles[0] && <span className="text-ink-muted"> · istota {pct(r.vehicles[0].confidence)}</span>}
+                {largest && <span className="text-ink-muted"> · istota {pct(largest.confidence)}</span>}
               </dd>
               <dt className="text-ink-muted">ŠPZ</dt>
               <dd className="flex flex-wrap items-center gap-2">
@@ -368,7 +393,11 @@ export function GatePage() {
         </Card>
 
         <Card title="Prejazdy dnes" subtitle="Klik ukáže audit: kto, kedy a prečo rozhodol.">
-          {(events.data ?? []).length === 0 ? (
+          {events.isPending ? (
+            <Spinner className="py-6" />
+          ) : events.isError ? (
+            <p className="text-danger-600 text-sm">Prejazdy sa nepodarilo načítať.</p>
+          ) : (events.data ?? []).length === 0 ? (
             <p className="text-ink-muted text-sm">Zatiaľ žiadny prejazd.</p>
           ) : (
             <ul className="divide-line divide-y">
@@ -389,7 +418,11 @@ export function GatePage() {
           }
           subtitle="Rozhodnite s dôvodom alebo potvrďte overenie."
         >
-          {open.length === 0 ? (
+          {queue.isPending ? (
+            <Spinner className="py-6" />
+          ) : queue.isError ? (
+            <p className="text-danger-600 text-sm">Front sa nepodarilo načítať. Vozidlá môžu čakať, skontrolujte bránu.</p>
+          ) : open.length === 0 ? (
             <EmptyState title="Nič nečaká" description="Všetky vozidlá pri bráne sú vybavené." />
           ) : (
             <ul className="divide-line divide-y">
