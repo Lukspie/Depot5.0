@@ -12,7 +12,12 @@ export interface User {
   role: Role;
   active: boolean;
   created_at: string;
+  /** dispatcher's work shift (phase 7b) */
+  shift?: Shift | null;
 }
+
+export type Shift = "morning" | "afternoon" | "night";
+export const SHIFT_LABEL: Record<Shift, string> = { morning: "ranná", afternoon: "poobedná", night: "nočná" };
 
 export const ME_KEY = ["auth", "me"] as const;
 

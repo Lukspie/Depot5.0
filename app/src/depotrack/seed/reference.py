@@ -251,11 +251,15 @@ class UserDef:
     username: str
     full_name: str
     role: UserRole
+    shift: str | None = None
 
 
 USERS = [
     UserDef("admin", "Martin Kováč", UserRole.ADMIN),
-    UserDef("dispecer", "Jana Horváthová", UserRole.DISPATCHER),
+    # three dispatchers, one per shift (phase 7b); the shared password SEED_DISPATCHER_PASSWORD
+    UserDef("dispecer", "Jana Horváthová", UserRole.DISPATCHER, "morning"),
+    UserDef("dispecer2", "Michal Fedor", UserRole.DISPATCHER, "afternoon"),
+    UserDef("dispecer3", "Zuzana Molnárová", UserRole.DISPATCHER, "night"),
     UserDef("operator", "Peter Varga", UserRole.OPERATOR),
     UserDef("ochranka", "Milan Tóth", UserRole.SECURITY),
 ] + [

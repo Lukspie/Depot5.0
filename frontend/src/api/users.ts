@@ -1,7 +1,7 @@
 /** Admin user management. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Role, User } from "./auth";
+import type { Role, Shift, User } from "./auth";
 import { getJson, sendJson } from "./client";
 
 const USERS_KEY = ["admin", "users"] as const;
@@ -11,6 +11,7 @@ export interface UserCreate {
   full_name: string;
   role: Role;
   password: string;
+  shift?: Shift | null;
 }
 
 export interface UserUpdate {
@@ -18,6 +19,7 @@ export interface UserUpdate {
   role?: Role;
   active?: boolean;
   password?: string;
+  shift?: Shift | null;
 }
 
 export function useUsers() {

@@ -1,7 +1,7 @@
 """Pydantic schemas for authentication and user management."""
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints
 
@@ -20,6 +20,7 @@ Username = Annotated[
 ]
 Password = Annotated[str, Field(min_length=8, max_length=128)]
 FullName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=120)]
+Shift = Literal["morning", "afternoon", "night"]
 
 
 class LoginIn(BaseModel):
@@ -36,6 +37,7 @@ class UserOut(BaseModel):
     role: UserRole
     active: bool
     created_at: datetime
+    shift: Shift | None = None
 
 
 class UserCreate(BaseModel):
@@ -43,6 +45,7 @@ class UserCreate(BaseModel):
     full_name: FullName
     role: UserRole
     password: Password
+    shift: Shift | None = None
 
 
 class UserUpdate(BaseModel):
@@ -50,3 +53,5 @@ class UserUpdate(BaseModel):
     role: UserRole | None = None
     active: bool | None = None
     password: Password | None = None
+    # sent as null: no shift
+    shift: Shift | None = None

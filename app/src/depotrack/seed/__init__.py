@@ -141,6 +141,28 @@ def seed_users(db: Session, settings: Settings) -> None:
                 role=u.role,
                 password_hash=hashes[u.role],
                 active=True,
+                shift=u.shift,
+            )
+        )
+
+
+def seed_users_v2(db: Session, settings: Settings) -> None:
+    """Users added after the first seed (the dispatchers of the other shifts) and the shift of
+    the existing ones. Existing accounts keep their password."""
+    existing = {u.username: u for u in db.execute(select(User)).scalars()}
+    for u in USERS:
+        if u.username in existing:
+            if existing[u.username].shift is None and u.shift is not None:
+                existing[u.username].shift = u.shift
+            continue
+        db.add(
+            User(
+                username=u.username,
+                full_name=u.full_name,
+                role=u.role,
+                password_hash=hash_password(_role_password(settings, u.role)),
+                active=True,
+                shift=u.shift,
             )
         )
 

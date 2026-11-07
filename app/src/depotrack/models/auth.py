@@ -19,6 +19,8 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(pg_enum(UserRole, "user_role"))
     active: Mapped[bool] = mapped_column(Boolean, server_default=true())
     created_at: Mapped[datetime] = utcnow_column()
+    # work shift of a dispatcher: morning | afternoon | night (phase 7b)
+    shift: Mapped[str | None] = mapped_column(String(10))
 
 
 class UserSession(Base):

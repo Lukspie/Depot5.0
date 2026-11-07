@@ -23,6 +23,7 @@ from depotrack.seed import (
     seed_parcels,
     seed_reference,
     seed_users,
+    seed_users_v2,
     seed_waves,
     step,
 )
@@ -58,6 +59,7 @@ def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
     day = day or settings.seed_date or datetime.now(TZ).date()
     step(db, "reference:v1", lambda: seed_reference(db))
     step(db, "users:v1", lambda: seed_users(db, settings))
+    step(db, "users:v2", lambda: seed_users_v2(db, settings))
     step(db, "geo:v1", lambda: seed_geo(db))
     step(db, "gate-plates:v1", lambda: seed_gate_plates(db))
     ensure_operating_day(db, settings, day)

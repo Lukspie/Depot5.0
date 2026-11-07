@@ -234,7 +234,7 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
    - typ doručenia: osobné odovzdanie (časové okno), do schránky, do výdajného boxu (seed ~60 / 25 / 15 %). Poradie rešpektuje okná osobných odovzdaní, boxy a schránky vypĺňajú medzery (heuristika lepšia ako nearest neighbor), ETA a „stihneš / nestihneš okno“, ADR,
    - oprava: pred nakládkou UI ukáže stav nakládky, nie neaktívne „Doručené“,
    - appka sa otvorí na telefóne v rovnakej Wi-Fi (`http://<IP PC>:8000/courier`): origin, cookies a CSRF pre LAN, postup v `docs/demo.md`.
-3. **Dispečeri:** 3 dispečerské účty v seede (mená, smena ranná / poobedná / nočná), viditeľné v admine, heslá z `.env`.
+3. **Dispečeri** *(hotové)*: 3 dispečerské účty v seede (mená, smena ranná / poobedná / nočná), viditeľné v admine, heslá z `.env`.
 4. **Ranná nakládka:** kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli depa v tieni aj na mape Flotily a potom vyrážajú. Kamióny ako doteraz.
 5. **Layouty skladov** (ak ostane čas): Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
 

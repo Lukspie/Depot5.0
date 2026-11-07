@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { Role, User } from "../../api/auth";
+import { SHIFT_LABEL, type Role, type Shift, type User } from "../../api/auth";
 import { isApiError } from "../../api/client";
 import { useCreateUser, useUpdateUser, type UserUpdate } from "../../api/users";
 import { ROLE_LABEL, ROLES } from "../../auth/roles";
@@ -35,6 +35,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [role, setRole] = useState<Role>(user?.role ?? "operator");
   const [active, setActive] = useState(user?.active ?? true);
+  const [shift, setShift] = useState<Shift | "">(user?.shift ?? "");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
     e.preventDefault();
     if (!canSubmit) return;
     if (user) {
-      const body: UserUpdate = { full_name: fullName.trim() };
+      const body: UserUpdate = { full_name: fullName.trim(), shift: role === "dispatcher" && shift ? shift : null };
       if (!isSelf) {
         body.role = role;
         body.active = active;
@@ -64,7 +65,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
       update.mutate({ id: user.id, ...body }, { onSuccess: onClose });
     } else {
       create.mutate(
-        { username: normalizedUsername, full_name: fullName.trim(), role, password },
+        { username: normalizedUsername, full_name: fullName.trim(), role, password, shift: role === "dispatcher" && shift ? shift : null },
         { onSuccess: onClose },
       );
     }
@@ -136,6 +137,22 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
               ))}
             </select>
           </div>
+
+          {role === "dispatcher" && (
+            <div>
+              <label htmlFor="u-shift" className="mb-1 block text-sm font-medium">
+                Zmena
+              </label>
+              <select id="u-shift" value={shift} onChange={(e) => setShift(e.target.value as Shift | "")} className={inputCls}>
+                <option value="">bez zmeny</option>
+                {(Object.keys(SHIFT_LABEL) as Shift[]).map((s) => (
+                  <option key={s} value={s}>
+                    {SHIFT_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {user && (
             <label className="flex items-center gap-2 text-sm">

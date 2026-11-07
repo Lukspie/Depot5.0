@@ -3,15 +3,17 @@
 from datetime import date
 
 from alembic import command
-from sqlalchemy import func, select
+from fastapi.testclient import TestClient
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from conftest import alembic_config
 from depotrack.core.config import get_settings
 from depotrack.core.db import get_engine
 from depotrack.core.security import verify_password
-from depotrack.models import Direction, Door, Parcel, ParcelEvent, User, Vehicle, Wave
+from depotrack.models import Direction, Door, Parcel, ParcelEvent, SeedMeta, User, Vehicle, Wave
 from depotrack.models.enums import DirectionType, DoorKind, UserRole
+from depotrack.seed import seed_users
 from depotrack.seed.generator import generate_parcels, kosice_rajon
 from depotrack.services.operating_day import run_seed
 
@@ -32,11 +34,56 @@ def test_seed_is_idempotent_and_complete(db: Session) -> None:
     assert counts[Direction] == 3 + 5 + 8
     assert counts[Door] == 8 + 8 + 1 + 6  # docks, staging bays, gate + Bratislava hub ramps
     assert counts[Vehicle] == 12 + 8
-    assert counts[User] == 4 + 8
+    assert counts[User] == 6 + 8  # admin, 3 dispatchers (one per shift), operator, security
     assert counts[Wave] == 2
     # 200 collected parcels + parcels brought by the 3 night trucks; one event each
     assert counts[Parcel] == counts[ParcelEvent]
     assert 200 + 3 * 110 <= counts[Parcel] <= 200 + 3 * 190
+
+
+def test_three_dispatchers_one_per_shift_also_added_to_an_old_seed(
+    db: Session, client: TestClient
+) -> None:
+    settings = get_settings().model_copy(update={"seed_parcels_per_day": 10})
+    # a database seeded before phase 7b: only the first dispatcher, without a shift
+    seed_users(db, settings)
+    for u in db.execute(
+        select(User).where(User.username.in_(["dispecer2", "dispecer3"]))
+    ).scalars():
+        db.delete(u)
+    db.execute(update(User).values(shift=None))
+    db.add(SeedMeta(key="users:v1"))
+    db.commit()
+    run_seed(db, settings, DAY)
+    rows = db.execute(
+        select(User.username, User.shift).where(User.role == UserRole.DISPATCHER)
+    ).all()
+    shifts = {name: shift for name, shift in rows}
+    assert shifts == {"dispecer": "morning", "dispecer2": "afternoon", "dispecer3": "night"}
+    # the password of the new accounts comes from .env (SEED_DISPATCHER_PASSWORD)
+    third = db.execute(select(User).where(User.username == "dispecer3")).scalar_one()
+    assert verify_password(third.password_hash, settings.seed_dispatcher_password or "")
+
+    # visible and editable in the admin
+    assert (
+        client.post(
+            "/api/auth/login", json={"username": "admin", "password": "admin-test-heslo"}
+        ).status_code
+        == 200
+    )
+    listed = {u["username"]: u["shift"] for u in client.get("/api/admin/users").json()}
+    assert listed["dispecer2"] == "afternoon" and listed["operator"] is None
+    res = client.patch(f"/api/admin/users/{third.id}", json={"shift": "morning"})
+    assert res.status_code == 200 and res.json()["shift"] == "morning"
+    assert (
+        client.patch(f"/api/admin/users/{third.id}", json={"full_name": "Zuzana M."}).json()[
+            "shift"
+        ]
+        == "morning"
+    )
+    assert (
+        client.patch(f"/api/admin/users/{third.id}", json={"shift": "evening"}).status_code == 422
+    )
 
 
 def test_seed_reference_data_matches_domain(db: Session) -> None:

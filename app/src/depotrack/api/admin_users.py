@@ -38,6 +38,7 @@ def create_user(body: UserCreate, _: Admin, db: DbSession) -> User:
         role=body.role,
         password_hash=hash_password(body.password),
         active=True,
+        shift=body.shift,
     )
     db.add(user)
     db.commit()
@@ -71,6 +72,8 @@ def update_user(user_id: int, body: UserUpdate, admin: Admin, db: DbSession) -> 
         user.active = body.active
     if body.password is not None:
         user.password_hash = hash_password(body.password)
+    if "shift" in body.model_fields_set:
+        user.shift = body.shift
 
     # deactivation, role or password change ends the user's other sessions
     if user.id != admin.id and (

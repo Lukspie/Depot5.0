@@ -92,7 +92,9 @@ Predvolené hodnoty v `.env.example` slúžia **len na vývoj a demo**.
 | Používateľ | Rola | Heslo (premenná v `.env`) | Predvolené v `.env.example` |
 | --- | --- | --- | --- |
 | `admin` | Administrátor | `SEED_ADMIN_PASSWORD` | `admin-demo-2026` |
-| `dispecer` | Dispečer | `SEED_DISPATCHER_PASSWORD` | `dispecer-demo-2026` |
+| `dispecer` | Dispečer, ranná zmena (Jana Horváthová) | `SEED_DISPATCHER_PASSWORD` | `dispecer-demo-2026` |
+| `dispecer2` | Dispečer, poobedná zmena (Michal Fedor) | `SEED_DISPATCHER_PASSWORD` | `dispecer-demo-2026` |
+| `dispecer3` | Dispečer, nočná zmena (Zuzana Molnárová) | `SEED_DISPATCHER_PASSWORD` | `dispecer-demo-2026` |
 | `operator` | Operátor nakládky | `SEED_OPERATOR_PASSWORD` | `operator-demo-2026` |
 | `ochranka` | Ochranka | `SEED_SECURITY_PASSWORD` | `ochranka-demo-2026` |
 | `kurier01` … `kurier08` | Kuriér | `SEED_COURIER_PASSWORD` | `kurier-demo-2026` |

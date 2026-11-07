@@ -1,6 +1,6 @@
 import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useMe, type User } from "../../api/auth";
+import { SHIFT_LABEL, useMe, type User } from "../../api/auth";
 import { useUsers } from "../../api/users";
 import { ROLE_LABEL, ROLE_TONE } from "../../auth/roles";
 import { Badge, Button, Card, DataTable, EmptyState, StatusDot, type Column } from "../ui";
@@ -53,7 +53,12 @@ export function UsersTab() {
       key: "role",
       header: "Rola",
       width: "11.5rem",
-      render: (u) => <Badge tone={ROLE_TONE[u.role]}>{ROLE_LABEL[u.role]}</Badge>,
+      render: (u) => (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <Badge tone={ROLE_TONE[u.role]}>{ROLE_LABEL[u.role]}</Badge>
+          {u.shift && <span className="text-ink-muted text-xs">{SHIFT_LABEL[u.shift]} zmena</span>}
+        </span>
+      ),
     },
     {
       key: "active",
