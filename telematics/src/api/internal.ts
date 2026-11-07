@@ -69,6 +69,33 @@ export const internalRoutes: FastifyPluginAsync<InternalRoutesDeps> = async (app
     async (req, reply) => (await engine.startMaintenance(req.params.code, req.body.minutes)) ?? reply.code(404).send({ error: "unknown device" }),
   );
 
+  app.post<{ Body: { direction: "in" | "out"; vehicleType: string; plate: string | null; plateConfidence: number | null; expected: boolean } }>(
+    "/internal/gate/passages",
+    {
+      preHandler: serviceTokenGuard(serviceToken),
+      schema: {
+        tags: ["internal"],
+        summary: "Prejazd z reálnej kamery brány (CV v app, ADR-059)",
+        body: {
+          type: "object",
+          required: ["direction", "vehicleType", "plate", "plateConfidence", "expected"],
+          additionalProperties: false,
+          properties: {
+            direction: { type: "string", enum: ["in", "out"] },
+            vehicleType: { type: "string", enum: ["car", "truck", "bus", "van"] },
+            plate: { type: ["string", "null"], maxLength: 16 },
+            plateConfidence: { type: ["number", "null"], minimum: 0, maximum: 1 },
+            expected: { type: "boolean" },
+          },
+        },
+      },
+    },
+    async (req) => {
+      const row = await engine.recordGatePassage(req.body);
+      return { ...row, at: new Date(row.at).toISOString() };
+    },
+  );
+
   app.get<{ Params: { plate: string } }>(
     "/internal/vehicles/:plate",
     {

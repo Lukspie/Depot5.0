@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.ml.delay import delay_model, model_card
+from depotrack.ml.gate import gate_models
 from depotrack.ml.scanner import scanner_model
 from depotrack.models import Trip, User
 from depotrack.models.enums import TripKind, UserRole
@@ -73,6 +74,12 @@ def ml_status(_: Staff) -> MlStatusOut:
                 title="Predikcia meškania kamiónov",
                 available=delay_model() is not None,
                 metrics=model_card("delay_model"),
+            ),
+            ModelStatus(
+                name="gate",
+                title="Brána: vozidlá (YOLOX) a ŠPZ (OCR)",
+                available=gate_models() is not None,
+                metrics=None,
             ),
             ModelStatus(
                 name="scanner",

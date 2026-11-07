@@ -26,6 +26,10 @@ dependencies = [
     "scikit-learn==1.9.1",
     "joblib>=1.4,<2",
     "numpy>=1.26,<3",
+    # gate CV (ADR-059): ONNX models without torch
+    "onnxruntime>=1.20,<2",
+    "rapidocr-onnxruntime>=1.4,<2",
+    "pillow>=10,<14",
 ]
 
 [project.optional-dependencies]
@@ -60,5 +64,5 @@ mypy_path = "src"
 
 [[tool.mypy.overrides]]
 # no type information shipped
-module = ["apscheduler.*", "sklearn.*", "joblib.*"]
+module = ["apscheduler.*", "sklearn.*", "joblib.*", "onnxruntime.*", "rapidocr_onnxruntime.*"]
 ignore_missing_imports = true

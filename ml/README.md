@@ -116,7 +116,45 @@ Vznikne `ml/artifacts/scanner_model.joblib` a `scanner_model.json`.
 
 ## 3. Brána: detekcia vozidiel a ŠPZ
 
-*(Pripravuje sa.)*
+**Príprava modelu** (jednorazovo, výsledok je v repozitári):
+
+```bash
+python ml/download_gate_models.py     # ml/artifacts/yolox_tiny.onnx (19 MB)
+```
+
+- **Úloha:** z jednej fotky z kamery brány zistiť typ vozidla (kamión, osobné auto, autobus) a slovenskú ŠPZ, zapísať prejazd a pri neznámej ŠPZ otvoriť alarm.
+- **Modely** (bez dotrénovania, bez torch v image, všetko na onnxruntime CPU):
+
+  | Časť | Model | Licencia |
+  | --- | --- | --- |
+  | detekcia vozidiel | **YOLOX-Tiny** (Megvii), ONNX export autorov, COCO (car, motorcycle, bus, truck), vstup 416 × 416 | Apache-2.0 |
+  | text ŠPZ | **RapidOCR** (`rapidocr-onnxruntime`): detekcia a rozpoznanie textu modelmi PaddleOCR v ONNX | Apache-2.0 |
+
+  Ultralytics YOLOv8 navrhovaný v PROMPT §8 je **AGPL-3.0**. Pri nasadení ako služba by sme museli zverejniť zdrojový kód celej aplikácie, preto sme zvolili YOLOX s Apache-2.0 (ADR-059).
+- **Postup** (`app/src/depotrack/ml/gate.py`):
+  1. YOLOX nájde vozidlá (skóre ≥ 0,35, NMS 0,45),
+  2. OCR číta text v najväčšom vozidle, alebo v celej fotke, ak vozidlo nenájde (detail tabuľky),
+  3. z textu sa vyberie slovenská ŠPZ `AA-123BB`. Typické zámeny OCR (O/0, I/1, B/8, S/5, Z/2) sa opravia podľa pozície, najviac 2, a v strede musia byť aspoň 2 skutočné číslice.
+- **API:**
+  - `POST /api/gate/detect?direction=in|out&record=true` (ochranka, admin), telo je obrázok JPEG, PNG alebo WebP do 8 MB,
+  - odpoveď: vozidlá s istotou a rámikom, typ, ŠPZ s istotou, prečítaný text a či ide o vozidlo flotily (tabuľka `vehicles`),
+  - s `record` ide prejazd do telematiky (`POST /internal/gate/passages`, dvor v digitálnom tieni) a neznáma ŠPZ otvorí alarm „Neznáma ŠPZ na bráne“.
+- **Obrazovka `/gate`** (ochranka): nahratie alebo odfotenie (na mobile priamo fotoaparát), rámik vozidla, výsledok a živé prejazdy z kamery.
+- **Video:** `ml/gate_video.py` na hostovi (`pip install -r ml/requirements-host.txt`) berie snímku každú sekundu videa alebo webkamery. Novú ŠPZ zapíše raz za minútu.
+
+  ```bash
+  DEPOT_PASSWORD=<heslo ochranky> python ml/gate_video.py video.mp4   # alebo --camera 0
+  ```
+- **Overenie:**
+  - CC0 fotka návesu (`app/tests/data/gate_truck_cc0.jpg`): kamión s istotou 0,86. Ruský nápis na kabíne nie je ŠPZ, výsledok je „nečitateľná“, čo je správne,
+  - syntetická tabuľka `KE-102LH`: prečítaná s istotou 0,96,
+  - celé demo video (kamión, ŠPZ flotily, neznáma ŠPZ): 3 prejazdy, 1 alarm,
+  - čas na CPU: 0,8–1,3 s na fotku.
+- **Obmedzenia:**
+  - na reálnych fotkách zo SPS ani na tme a v daždi to nie je overené (nemáme dáta),
+  - OCR modely sú všeobecné (latinka a čínština), nie špecializované na ŠPZ,
+  - tabuľka musí mať aspoň ~60 px na výšku,
+  - image app narástol na ~1,7 GB (OpenCV, onnxruntime).
 
 ## 4. IoT skener na nakládke
 

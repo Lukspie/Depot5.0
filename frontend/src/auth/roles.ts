@@ -41,7 +41,7 @@ export const NAV: NavItem[] = [
   { to: "/shadow", label: "Digitálny tieň", roles: ["dispatcher", "security"], ready: true },
   { to: "/fleet", label: "Flotila", roles: ["dispatcher"], ready: true },
   { to: "/loading", label: "Nakládka", roles: ["operator"], ready: true },
-  { to: "/gate", label: "Brána", roles: ["security"], ready: false },
+  { to: "/gate", label: "Brána", roles: ["security"], ready: true },
   { to: "/courier", label: "Moje zastávky", roles: ["courier", "dispatcher"], ready: true },
   { to: "/admin", label: "Administrácia", roles: [], ready: true },
   { to: "/system", label: "Stav systému", roles: ALL, ready: true },

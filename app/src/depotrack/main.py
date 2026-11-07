@@ -18,6 +18,7 @@ from depotrack.api import (
     dashboard,
     depots,
     fleet,
+    gate,
     internal,
     loading,
     ml,
@@ -73,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(track.router)
     app.include_router(notifications.router)
     app.include_router(ml.router)
+    app.include_router(gate.router)
     app.include_router(internal.router)
     # must be last: catch-all route for the single-page frontend
     mount_spa(app, settings.static_dir)

@@ -16,6 +16,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
 
+# OpenCV (pulled in by RapidOCR, gate OCR, ADR-059) needs these shared libraries
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0t64 \
+    && rm -rf /var/lib/apt/lists/*
+
 # install dependencies first (cached layer), using a stub package
 COPY app/pyproject.toml ./
 RUN mkdir -p src/depotrack && touch src/depotrack/__init__.py \

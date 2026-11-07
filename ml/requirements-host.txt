@@ -1,0 +1,4 @@
+# host scripts of phase 6 (gate_video.py, dock_scanner.py, labels.py); the models run in the app
+opencv-python>=4.8,<6
+numpy>=1.26
+pillow>=10

@@ -24,6 +24,7 @@ const FleetPage = lazy(() => import("./pages/FleetPage").then((m) => ({ default:
 const ShadowPage = lazy(() => import("./pages/ShadowPage").then((m) => ({ default: m.ShadowPage })));
 const TrackPage = lazy(() => import("./pages/TrackPage").then((m) => ({ default: m.TrackPage })));
 const CourierPage = lazy(() => import("./pages/CourierPage").then((m) => ({ default: m.CourierPage })));
+const GatePage = lazy(() => import("./pages/GatePage").then((m) => ({ default: m.GatePage })));
 
 // before the first render, so the page never flashes in the wrong colours
 applyTheme(loadTheme());
@@ -100,6 +101,16 @@ createRoot(root).render(
                 <RequireAuth roles={["dispatcher", "security"]}>
                   <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
                     <ShadowPage />
+                  </Suspense>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="gate"
+              element={
+                <RequireAuth roles={["security"]}>
+                  <Suspense fallback={<Spinner label="Načítavam…" className="py-20" />}>
+                    <GatePage />
                   </Suspense>
                 </RequireAuth>
               }

@@ -74,6 +74,21 @@ def device_metrics(code: str, hours: int = 2) -> list[dict[str, Any]] | None:
         return None
 
 
+def post_gate_passage(passage: dict[str, Any]) -> bool:
+    """A real gate camera passage to telematics (stored, broadcast; ADR-059); False on failure."""
+    try:
+        httpx.post(
+            f"{get_settings().telematics_internal_url}/internal/gate/passages",
+            json=passage,
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        ).raise_for_status()
+        return True
+    except httpx.HTTPError as exc:
+        log.warning("gate passage to telematics failed: %s", exc)
+        return False
+
+
 _devices_cache: tuple[float, list[dict[str, Any]]] | None = None
 
 

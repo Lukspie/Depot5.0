@@ -576,3 +576,23 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - V teste zachytí 10 z 10 epizód s 0,54 % falošných alarmov na zdravých bucket-och. Degradáciu zo seedu chytí v jej prvej večernej vlne okolo 20:45 (test).
   - Hodnotí len skenery brán, skener linky má iný objem a nie je v histórii.
   - Ak telematika nebeží, skóre sa neaktualizuje a alarm ostane v poslednom stave.
+
+## ADR-059 Brána: YOLOX + RapidOCR na onnxruntime, bez torch a bez AGPL
+- **Kontext:**
+  - PROMPT §8.1 navrhuje Ultralytics YOLO a EasyOCR s CPU PyTorchom.
+  - Tím chce bez torch v image app, ak sa dá.
+  - Ultralytics YOLO je AGPL-3.0, takže pri prevádzke ako sieťová služba by sme museli zverejniť zdrojový kód celej aplikácie.
+- **Rozhodnutie:**
+  - **Detekcia:** predtrénovaný **YOLOX-Tiny** (Apache-2.0) v ONNX od autorov, triedy COCO car, motorcycle, bus, truck.
+  - **ŠPZ:** **RapidOCR** (`rapidocr-onnxruntime`, modely PaddleOCR, Apache-2.0) a slovenský regex `AA-123BB` s opravou typických zámen podľa pozície (najviac 2, v strede aspoň 2 skutočné číslice).
+  - Oboje beží na onnxruntime (CPU) v app. Dotrénovanie sa nerobí, lebo nemáme vlastné fotky.
+  - **Image:** pribudli `onnxruntime`, `rapidocr-onnxruntime`, `pillow` a systémové `libgl1`, `libglib2.0-0t64` pre OpenCV. Image app narástol z ~0,85 GB na ~1,7 GB. Torch v ňom nie je.
+  - **API:**
+    - `POST /api/gate/detect` (ochranka, admin) berie surový obrázok v tele (do 8 MB), takže netreba `python-multipart`. Inferencia beží v threadpoole.
+    - Vozidlo flotily (tabuľka `vehicles`) je „očakávané“, neznáma ŠPZ otvorí alarm `other` (`ref_type=plate`).
+    - Prejazd ide do telematiky cez nový `POST /internal/gate/passages` (service token). Zapíše sa so simulovaným časom a pošle na kanál `devices` ako `gate_passage`, takže ho vidí dvor v tieni aj `/gate`.
+  - **Video na hostovi:** `ml/gate_video.py` posiela snímky na to isté API, modely ostávajú v app (ADR-013). Iba štandardná knižnica a OpenCV (`ml/requirements-host.txt`).
+  - **Licencie** sú v `ml/artifacts/LICENSES.md`. Testovacia fotka je CC0 (Wikimedia Commons).
+- **Dôsledok:**
+  - Žiadna AGPL ani torch závislosť, jedna fotka trvá na CPU ~1 s.
+  - Presnosť na reálnych fotkách brány nie je overená. Syntetická ŠPZ a CC0 fotka návesu prešli (ml/README.md).

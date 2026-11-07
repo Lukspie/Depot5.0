@@ -1284,6 +1284,14 @@ export class Engine {
     await this.safe("scans", () => this.sink.insertScans(rows));
   }
 
+  /** A real gate camera passage (app POST /api/gate/detect, ADR-059): stored and broadcast like a
+   * simulated one, at the simulated time. */
+  async recordGatePassage(p: Omit<GateRow, "at" | "snapshotPath">): Promise<GateRow> {
+    const row: GateRow = { ...p, at: this.deps.clock.now(), snapshotPath: null };
+    await this.emitGate([row]);
+    return row;
+  }
+
   private async emitGate(rows: GateRow[]): Promise<void> {
     if (rows.length === 0) return;
     for (const g of rows) {
