@@ -236,11 +236,15 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
    - appka sa otvorí na telefóne v rovnakej Wi-Fi (`http://<IP PC>:8000/courier`): origin, cookies a CSRF pre LAN, postup v `docs/demo.md`.
 3. **Dispečeri** *(hotové)*: 3 dispečerské účty v seede (mená, smena ranná / poobedná / nočná), viditeľné v admine, heslá z `.env`.
 4. **Ranná nakládka** *(hotové)*: kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli depa v tieni aj na mape Flotily a potom vyrážajú. Kamióny ako doteraz.
-5. **Layouty skladov** (ak ostane čas): Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
+5. **Layouty skladov** (ak ostane čas) *(presunuté do „Po odovzdaní“, nestihlo sa kvalitne)*: Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
 
 ## Po odovzdaní
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
+- 7b bod 5: layouty skladov Budimír, Ivanka pri Dunaji a Žilina (rampy, státia, parkovanie dodávok v tieni aj vo Flotile).
+  - Satelitné snímky tímu v `docs/design/` zatiaľ nie sú.
+  - Žilina v OSM (`find_hub.py` s oblasťou Žiliny, 7. 11. 2026): jediný objekt s „Slovak Parcel Service“ je **areál** way `810621382` (`landuse=industrial`, stred 49,18727 / 18,84900, 160 × 108 m, dlhá strana ~73°), nie budova. Budovu skladu v ňom OSM neoznačuje, preto ju nehádame.
+  - Ďalšie veľké objekty bez názvu: way `810621390` (`landuse=industrial`, 49,18586 / 18,85292, 142 × 133 m, ~0,3 km juhovýchodne od areálu SPS) a budovy `206741473`, `98316332`, `156170978` (3,6–9,4 ha, 3–4 km severozápadne). Ani jeden nie je označený ako SPS. Tím vyberie budovu v areáli `810621382` podľa satelitnej snímky.
 - 7b bod 2: kratšie trasy kuriérov pri oknách (okná ponúkať podľa plánovanej trasy, alebo 2-opt na pozadí). Dnes +82 % km a väčšina návratov po 15:00 (ADR-062).
 - Fáza 5b okrem `/courier`: UX review všetkých obrazoviek, `/shadow` podľa makety, `/board` pri 390 px, nové screenshoty Fázy 4.
 

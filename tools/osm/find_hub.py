@@ -5,7 +5,7 @@ SPS or Slovak Parcel Service, and lists the largest warehouses there as candidat
 OSM id, centre, size (m) and orientation; nothing is changed. Run like build_osm_data.py:
 
   docker run --rm -v "$PWD:/repo" -w /repo python:3.12-slim sh -c \\
-    "pip install -q 'osmium>=4' && python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf"
+    "apt-get update -qq && apt-get install -y -qq libexpat1 && pip install -q 'osmium>=4' && python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf"
 """
 
 import math
