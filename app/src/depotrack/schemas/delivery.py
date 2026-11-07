@@ -63,7 +63,7 @@ class CourierStopOut(CamelModel):
     delivered_at: datetime | None
     outcome: StopOutcome | None
     # ADR-062: handover (window, customer at home) | mailbox | locker
-    delivery_type: str
+    delivery_type: Literal["handover", "mailbox", "locker"]
     window_from: datetime | None
     window_to: datetime | None
 

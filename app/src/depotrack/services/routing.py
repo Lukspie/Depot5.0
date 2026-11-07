@@ -9,9 +9,9 @@ next stop minimises
 where a mailbox or locker counts as FLEX_URGENCY_MIN minutes left, so they fill the gaps between
 handovers instead of pushing them out of their windows. A handover already late goes first.
 
-On 16 real routes (80–100 stops) the plain nearest neighbour of phase 4 missed 69 % of the
-windows, this one 0 %, for ~80 % more kilometres (measured in ADR-062). O(n²) per route, so it
-runs in the seed step without delay.
+On all 648 routes in the database (80–100 stops) the phase 4 nearest neighbour misses 59 % of
+the windows, this one 0.2 %, for 82 % more kilometres and ~45 min longer routes
+(tools/measure_routes.py, ADR-062). O(n²) per route, so it runs in the seed step without delay.
 """
 
 import hashlib
@@ -19,8 +19,10 @@ import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
+from typing import Literal
 
 HANDOVER, MAILBOX, LOCKER = "handover", "mailbox", "locker"
+DeliveryType = Literal["handover", "mailbox", "locker"]
 # 3 h windows of personal handovers (morning, midday, afternoon)
 WINDOWS = [(time(8, 0), time(11, 0)), (time(10, 0), time(13, 0)), (time(12, 0), time(15, 0))]
 PLAN_SPEED_KMH = 28.0
@@ -79,6 +81,12 @@ class Visit:
     eta: datetime  # arrival after any wait for the window
     late_min: float  # after the end of the window (0 = in time)
 
+    @property
+    def missed(self) -> bool:
+        """A handover outside its window: too late, or too early (the customer is not home)."""
+        w = self.stop.window
+        return w is not None and not (w[0] <= self.eta <= w[1])
+
 
 def plan_tour(start: tuple[float, float], depart: datetime, stops: Sequence[Stop]) -> list[Visit]:
     left = sorted(stops, key=lambda s: s.key)
@@ -111,7 +119,8 @@ def plan_tour(start: tuple[float, float], depart: datetime, stops: Sequence[Stop
 def nearest_neighbour_tour(
     start: tuple[float, float], depart: datetime, stops: Sequence[Stop]
 ) -> list[Visit]:
-    """The phase 4 order (closest stop next, no waiting), for comparison in tests and the ADR."""
+    """The phase 4 order and timing (closest stop next, no waiting for windows, 4 min per stop),
+    for comparison in tests and tools/measure_routes.py."""
     left = sorted(stops, key=lambda s: s.key)
     here, t = start, depart
     out: list[Visit] = []
@@ -120,11 +129,10 @@ def nearest_neighbour_tour(
         eta = t + timedelta(minutes=drive_min(here, nxt.pos))
         late = 0.0
         if nxt.window is not None:
-            eta = max(eta, nxt.window[0])
             late = max(0.0, (eta - nxt.window[1]).total_seconds() / 60)
         out.append(Visit(nxt, eta, late))
         left.remove(nxt)
-        here, t = nxt.pos, eta + timedelta(minutes=SERVICE_MIN.get(nxt.kind, 4.0))
+        here, t = nxt.pos, eta + timedelta(minutes=4.0)
     return out
 
 

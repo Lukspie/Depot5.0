@@ -37,6 +37,7 @@
    - **Cookies a CSRF:** app pustí zmenovú požiadavku, keď `Origin` je zo zoznamu `APP_ALLOWED_ORIGINS`, alebo keď sa rovná adrese, z ktorej bola stránka načítaná (scheme + Host). IP telefónu ani PC preto netreba nikam písať. Cudzí web sa za túto adresu vydávať nevie (test `test_same_origin_from_the_lan_is_allowed`).
    - Session cookie je `SameSite=Strict`, bez `Secure` (HTTP v lokálnej sieti), takže funguje aj na IP adrese.
    - Mapa potrebuje internet (dlaždice OpenFreeMap).
+   - Po HTTP idú heslo aj cookie v sieti nešifrovane. Je to len na demo v dôveryhodnej sieti, ostrá prevádzka patrí za HTTPS (`SESSION_COOKIE_SECURE=true`).
 4. Kuriérska appka volá len app, nie telematiku. Ak chceš z telefónu aj obrazovky so živými dátami z telematiky (dispečing, tieň), v `.env` nastav `TELEMATICS_PUBLIC_URL=http://192.168.1.47:8080` a pridaj `http://192.168.1.47:8000` do `TELEMATICS_ALLOWED_ORIGINS`. Potom `docker compose up -d`.
 
 ## Keď niečo nevyjde

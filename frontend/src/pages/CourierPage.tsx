@@ -54,7 +54,6 @@ function windowState(s: CourierStop): { label: string; tone: Tone } | null {
   if (s.deliveryType !== "handover" || !s.windowFrom || !s.windowTo || !e || s.outcome) return null;
   const t = Date.parse(e);
   if (t > Date.parse(s.windowTo)) return { label: "nestihneš okno", tone: "danger" };
-  if (t < Date.parse(s.windowFrom)) return { label: "počkáš na okno", tone: "info" };
   if (Date.parse(s.windowTo) - t < 15 * 60_000) return { label: "tesne stihneš", tone: "warn" };
   return { label: "stihneš okno", tone: "ok" };
 }
@@ -166,8 +165,7 @@ function NextStop({ stop, canAct, picked, first }: { stop: CourierStop; canAct: 
             variant="secondary"
             className="text-danger-600 border-danger-600 py-4"
             icon={<XCircle size={22} />}
-            disabled={finish.isPending || stop.deliveryType !== "handover"}
-            title={stop.deliveryType !== "handover" ? "Schránka a box nepotrebujú zákazníka doma" : undefined}
+            disabled={finish.isPending}
             onClick={() => finish.mutate({ stopId: stop.id, outcome: "failed" })}
           >
             Nezastihnutý
@@ -226,6 +224,9 @@ function StopsTab({ route, canAct, selected, onScan }: { route: CourierRoute; ca
       {loading && <LoadingCard route={route} onScan={onScan} />}
       {current && (!loading || inVan) && (
         <NextStop stop={current} canAct={canAct && inVan && route.departedAt !== null} picked={current.id === selected} first={!route.departedAt} />
+      )}
+      {current && route.departedAt && !inVan && (
+        <p className="text-warn-600 px-1 text-sm">Balík tejto zastávky nie je v dodávke (nenaložený pri nakládke).</p>
       )}
       {!current && (
         <div className="bg-surface rounded-2xl p-4">
@@ -335,10 +336,26 @@ function MapTab({ route, selected }: { route: CourierRoute; selected: number | n
 
 // ------------------------------------------------------------------ scanner tab
 
-function ScanTab({ route, canAct, onPicked }: { route: CourierRoute; canAct: boolean; onPicked: (stopId: number) => void }) {
-  const [connected, setConnected] = useState(true);
+interface ScannerState {
+  connected: boolean;
+  setConnected: (v: boolean) => void;
+  log: { text: string; tone: Tone }[];
+  setLog: (f: (l: { text: string; tone: Tone }[]) => { text: string; tone: Tone }[]) => void;
+}
+
+function ScanTab({
+  route,
+  canAct,
+  onPicked,
+  scanner,
+}: {
+  route: CourierRoute;
+  canAct: boolean;
+  onPicked: (stopId: number) => void;
+  scanner: ScannerState;
+}) {
+  const { connected, setConnected, log, setLog } = scanner;
   const [code, setCode] = useState("");
-  const [log, setLog] = useState<{ text: string; tone: Tone }[]>([]);
   const scan = useCourierScan();
   const input = useRef<HTMLInputElement>(null);
   const loading = loadingPhase(route);
@@ -353,10 +370,15 @@ function ScanTab({ route, canAct, onPicked }: { route: CourierRoute; canAct: boo
               ? `${r.stop.barcode}: zastávka ${String(r.stop.sequence)} je už vybavená`
               : `${r.stop.barcode}: zastávka ${String(r.stop.sequence)} na mape`;
         setLog((l) => [{ text: msg, tone: (r.action === "done" ? "neutral" : "ok") as Tone }, ...l].slice(0, 6));
-        if (r.action === "selected") onPicked(r.stop.id);
+        // during loading a repeated scan only reports; after the departure it opens the map
+        if (r.action === "selected" && route.departedAt) onPicked(r.stop.id);
       },
       onError: (err) => {
-        const text = isApiError(err, 404) ? `${barcode}: nie je na vašej dnešnej trase` : `${barcode}: sken sa nepodarilo uložiť`;
+        const text = isApiError(err, 404)
+          ? `${barcode}: nie je na vašej dnešnej trase`
+          : isApiError(err, 409)
+            ? `${barcode}: teraz sa nenakladá (nakládka od 7:00 do odchodu)`
+            : `${barcode}: sken sa nepodarilo uložiť`;
         setLog((l) => [{ text, tone: "danger" as Tone }, ...l].slice(0, 6));
       },
     });
@@ -414,7 +436,7 @@ function ScanTab({ route, canAct, onPicked }: { route: CourierRoute; canAct: boo
             aria-label="Čiarový kód"
             autoComplete="off"
             disabled={!canAct || !connected}
-            className="border-line bg-surface focus:border-brand-500 focus:ring-brand-100 min-w-0 flex-1 rounded-xl border px-3 py-3 font-mono text-sm outline-none focus:ring-4"
+            className="border-line bg-surface focus:border-brand-500 focus:ring-brand-100 min-w-0 flex-1 rounded-xl border px-3 py-3 font-mono text-base outline-none focus:ring-4"
           />
           <Button type="submit" variant="secondary" disabled={!canAct || !connected || code.trim().length < 3}>
             OK
@@ -424,7 +446,7 @@ function ScanTab({ route, canAct, onPicked }: { route: CourierRoute; canAct: boo
       </section>
 
       {log.length > 0 && (
-        <ul className="bg-surface divide-line divide-y rounded-2xl px-4 py-1 text-sm">
+        <ul className="bg-surface divide-line divide-y rounded-2xl px-4 py-1 text-sm" aria-live="polite">
           {log.map((l, i) => (
             <li key={i} className={`py-2 ${l.tone === "danger" ? "text-danger-600" : l.tone === "ok" ? "text-ink" : "text-ink-muted"}`}>
               {l.text}
@@ -443,7 +465,7 @@ function CourierPicker({ value, onChange }: { value: string | null; onChange: (v
   return (
     <select className="border-line bg-surface rounded-xl border px-3 py-2 text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)} aria-label="Kuriér">
       <option value="" disabled>
-        Vyber kuriéra…
+        Vyberte kuriéra…
       </option>
       {routes.data?.map((r) => (
         <option key={r.id} value={r.courierUsername}>
@@ -503,14 +525,21 @@ export function CourierPage() {
   const route = useCourierRoute(chosen);
   const [tab, setTab] = useState<Tab>("stops");
   const [selected, setSelected] = useState<number | null>(null);
+  const [connected, setConnected] = useState(true);
+  const [log, setLog] = useState<{ text: string; tone: Tone }[]>([]);
   const canAct = isCourier || role === "admin";
+  const pickCourier = (c: string) => {
+    setSelected(null);
+    setLog(() => []);
+    setParams({ courier: c }, { replace: true });
+  };
 
   const above = !isCourier ? (
     <>
       <Link to="/" className="text-ink-muted flex items-center gap-1 text-sm">
         <ArrowLeft size={16} /> Späť
       </Link>
-      <CourierPicker value={chosen} onChange={(c) => setParams({ courier: c }, { replace: true })} />
+      <CourierPicker value={chosen} onChange={pickCourier} />
     </>
   ) : (
     <span className="text-ink-muted text-sm">Mobilná aplikácia kuriéra · na telefóne cez http://&lt;IP počítača&gt;:8000/courier</span>
@@ -527,8 +556,11 @@ export function CourierPage() {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {r && (
-            <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px]" title="Bluetooth skener spárovaný s vozidlom">
-              <Bluetooth size={12} /> {r.vehiclePlate}
+            <span
+              className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] ${connected ? "bg-white/10" : "bg-danger-600 text-white"}`}
+              title={connected ? "Bluetooth skener spárovaný s vozidlom" : "Skener odpojený"}
+            >
+              {connected ? <Bluetooth size={12} /> : <BluetoothOff size={12} />} {r.vehiclePlate}
             </span>
           )}
           {isCourier && (
@@ -556,7 +588,7 @@ export function CourierPage() {
 
   let body: ReactNode;
   if (route.isPending) body = <Spinner label="Načítavam trasu…" className="py-16" />;
-  else if (route.isError || !r)
+  else if (!r)
     body = (
       <div className="p-4">
         <EmptyState
@@ -566,13 +598,14 @@ export function CourierPage() {
         />
       </div>
     );
-  else if (tab === "stops") body = <StopsTab route={r} canAct={canAct} selected={selected} onScan={canAct ? () => setTab("scan") : undefined} />;
+  else if (tab === "stops") body = <StopsTab route={r} canAct={canAct} selected={selected} onScan={isCourier ? () => setTab("scan") : undefined} />;
   else if (tab === "map") body = <MapTab route={r} selected={selected} />;
   else
     body = (
       <ScanTab
         route={r}
-        canAct={canAct}
+        canAct={isCourier}
+        scanner={{ connected, setConnected, log, setLog }}
         onPicked={(id) => {
           setSelected(id);
           setTab("map");
@@ -588,7 +621,12 @@ export function CourierPage() {
           <Link to="/" className="text-ink-muted flex items-center gap-1 text-sm">
             <ArrowLeft size={16} /> Späť
           </Link>
-          <CourierPicker value={chosen} onChange={(c) => setParams({ courier: c }, { replace: true })} />
+          <CourierPicker value={chosen} onChange={pickCourier} />
+        </div>
+      )}
+      {r && route.isError && (
+        <div className="bg-warn-100 text-warn-600 shrink-0 px-3 py-1.5 text-xs" role="status">
+          Bez spojenia, zobrazené údaje z {new Date(route.dataUpdatedAt).toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" })}.
         </div>
       )}
       <main className={`min-h-0 flex-1 ${tab === "map" ? "overflow-hidden" : "overflow-y-auto"}`}>{body}</main>

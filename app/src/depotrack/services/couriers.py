@@ -1,7 +1,8 @@
 """Courier routes (Phase 4, ADR-041).
 
 Courier kurier0N drives district KE-0N with van KE-30NKR. The route of operating day D is driven
-on the morning of D+1 (still inside operating day D, which ends at 15:00): from 07:00 the courier
+on the morning of D+1 (inside operating day D, which ends at 15:00; with delivery windows many
+vans come back after 15:00, ADR-062): from 07:00 the courier
 scans the parcels into the van at staging bay SB-0N, leaves Budimír at ~07:30 and visits the
 stops in the order of services/routing.py (handover windows, mailboxes and lockers fill the gaps,
 ADR-062). Stops = the district's parcels of day D.
@@ -133,7 +134,7 @@ def _tour(depot: Depot, when: date, parcels: list[Parcel]) -> list[Visit]:
 
 def replan_routes(db: Session, day: date) -> int:
     """Routes built before ADR-062 (nearest neighbour) get the window-aware order, if nothing of
-    them happened yet (not departed, no stop finished). Seed step, idempotent per day."""
+    them happened yet (not departed, nothing loaded, no stop finished). Seed step and day reset."""
     depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
     changed = 0
     for route in routes_of_day(db, day):
@@ -146,7 +147,8 @@ def replan_routes(db: Session, day: date) -> int:
                 .where(RouteStop.route_id == route.id)
             ).tuples()
         )
-        if any(s.outcome is not None for s, _ in rows):
+        # finished stops or parcels already in the van: telematics drives the loaded plan
+        if any(s.outcome is not None or p.status not in LOADABLE for s, p in rows):
             continue
         by_barcode = {p.barcode: s for s, p in rows}
         # two passes: the (route, sequence) pairs are unique

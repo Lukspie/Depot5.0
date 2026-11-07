@@ -241,6 +241,7 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
 ## Po odovzdaní
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
+- 7b bod 2: kratšie trasy kuriérov pri oknách (okná ponúkať podľa plánovanej trasy, alebo 2-opt na pozadí). Dnes +82 % km a väčšina návratov po 15:00 (ADR-062).
 - Fáza 5b okrem `/courier`: UX review všetkých obrazoviek, `/shadow` podľa makety, `/board` pri 390 px, nové screenshoty Fázy 4.
 
 ## Fáza 5d – Simulácia a testovanie (pred Fázou 5b)

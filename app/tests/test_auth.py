@@ -107,7 +107,6 @@ def test_foreign_origin_is_blocked_for_state_changing_requests(
     assert ok.status_code == 200
 
 
-
 def test_same_origin_from_the_lan_is_allowed(client: TestClient, make_user: MakeUser) -> None:
     """A phone in the same Wi-Fi opens http://<IP of the PC>:8000: Origin equals the Host."""
     make_user("jana")

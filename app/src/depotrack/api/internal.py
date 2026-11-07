@@ -3,7 +3,7 @@ parcels: telematics reads the plan and manifests here and reports how the trips 
 
 from collections import Counter
 from datetime import date, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -56,6 +56,7 @@ from depotrack.services.loading import line_scan, loading_dock, process_scan, sc
 from depotrack.services.ml_eta import ML, TELEMATICS
 from depotrack.services.operating_day import ensure_operating_day, reset_operating_day
 from depotrack.services.parcels import LOADABLE, in_day
+from depotrack.services.routing import DeliveryType
 from depotrack.services.trip_plan import operating_day_of
 from depotrack.services.waves import close_evening_wave
 
@@ -298,7 +299,7 @@ def courier_plan(
                         barcode=p.barcode,
                         lat=p.lat,
                         lon=p.lon,
-                        delivery_type=p.delivery_type,
+                        delivery_type=cast(DeliveryType, p.delivery_type),
                         window_from=datetime.combine(route.date, p.window_from, TZ)
                         if p.window_from
                         else None,

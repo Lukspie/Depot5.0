@@ -6,7 +6,9 @@ and browsers always send Origin on cross-site POST/PUT/PATCH/DELETE.
 
 A same-origin request (Origin = the scheme and Host the page was loaded from) is allowed too, so
 the app works from a phone in the same Wi-Fi (http://<IP of the PC>:8000) without listing the IP.
-A cross-site attacker cannot make the browser send its own origin together with our Host.
+A cross-site attacker cannot make the browser send its own origin together with our Host. With
+DNS rebinding (attacker's name pointing at our IP) Origin and Host match, but the session cookie
+belongs to our host name and is not sent, so the request is anonymous.
 """
 
 from starlette.requests import Request

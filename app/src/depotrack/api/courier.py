@@ -5,7 +5,7 @@ A courier sees only their own route. Admin and dispatcher may look at any courie
 """
 
 from datetime import date, datetime, time
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -26,7 +26,14 @@ from depotrack.schemas.delivery import (
     VehiclePosition,
 )
 from depotrack.services import telematics
-from depotrack.services.couriers import DEPARTURE, complete_stop, load_parcel, staging_bay
+from depotrack.services.couriers import (
+    DEPARTURE,
+    LOADING_START,
+    complete_stop,
+    load_parcel,
+    staging_bay,
+)
+from depotrack.services.routing import DeliveryType
 
 router = APIRouter(prefix="/api/courier", tags=["courier"])
 
@@ -73,7 +80,7 @@ def _stop_out(s: RouteStop, p: Parcel, day: date) -> CourierStopOut:
         predicted_eta=s.predicted_eta,
         delivered_at=s.delivered_at,
         outcome=s.outcome,
-        delivery_type=p.delivery_type,
+        delivery_type=cast(DeliveryType, p.delivery_type),
         window_from=_window(day, p.window_from),
         window_to=_window(day, p.window_to),
     )
@@ -197,7 +204,10 @@ def finish_stop(stop_id: int, body: StopResultIn, user: Courier, db: DbSession) 
     "/scan",
     response_model=ScanOut,
     response_model_by_alias=True,
-    responses={404: {"description": "Not a parcel of your route today"}},
+    responses={
+        404: {"description": "Not a parcel of your route today"},
+        409: {"description": "Not loading time: before 07:00 or after the departure"},
+    },
 )
 def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
     """The Bluetooth scanner paired with the van (simulated on /courier): before the departure a
@@ -220,16 +230,20 @@ def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
     if route is None or row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Parcel is not on your route today")
     stop, parcel = row
+    now = telematics.sim_now()
     action: Literal["loaded", "selected", "done"] = "selected"
     if stop.outcome is not None:
         action = "done"
     elif parcel.status not in IN_VAN:
+        # loading only at the staging bay: from 07:00 of the delivery day until the departure
+        if route.departed_at is not None or now < datetime.combine(route.date, LOADING_START, TZ):
+            raise HTTPException(status.HTTP_409_CONFLICT, "Not loading time for this route")
         load_parcel(
             db,
             get_settings(),
             route=route,
             stop=stop,
-            at=telematics.sim_now(),
+            at=now,
             door=staging_bay(db, route.rajon_direction_id),
         )
         db.commit()
