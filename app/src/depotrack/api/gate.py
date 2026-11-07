@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.ml.gate import decode_image, gate_models
@@ -55,11 +56,23 @@ async def detect(
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "send the image as the request body"
         )
-    data = await request.body()
+    declared = request.headers.get("content-length")
+    if declared is not None and (not declared.isdigit() or int(declared) > MAX_BYTES):
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "image larger than 8 MB")
+    data = bytearray()
+    async for chunk in request.stream():  # stop reading as soon as the limit is passed
+        data += chunk
+        if len(data) > MAX_BYTES:
+            raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "image larger than 8 MB")
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "empty body")
-    if len(data) > MAX_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "image larger than 8 MB")
+    # decoding, the models, the database and the calls to telematics block: not on the event loop
+    return await run_in_threadpool(_process, bytes(data), direction, record, db, background)
+
+
+def _process(
+    data: bytes, direction: str, record: bool, db: Session, background: BackgroundTasks
+) -> GateDetectOut:
     models = gate_models()
     if models is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "gate models unavailable")
@@ -67,7 +80,7 @@ async def detect(
         bgr = decode_image(data)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "not an image") from exc
-    reading = await run_in_threadpool(models.read, bgr)
+    reading = models.read(bgr)
 
     largest = max(
         reading.vehicles,

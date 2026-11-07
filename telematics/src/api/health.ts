@@ -13,7 +13,6 @@ const healthSchema = {
     db: { type: "string", enum: ["ok", "unreachable"] },
     // where db-telemetry runs (ADR-056) and how long the ping took
     dbKind: { type: "string", enum: ["azure", "local", "external"] },
-    dbHost: { type: "string" },
     dbSsl: { type: "boolean" },
     dbLatencyMs: { type: "number" },
   },
@@ -41,7 +40,8 @@ export const healthRoutes: FastifyPluginAsync<{ db: Database }> = async (app, { 
       },
     },
     async (_req, reply) => {
-      const where = db.location ? { dbKind: db.location.kind, dbHost: db.location.host, dbSsl: db.location.ssl } : {};
+      // kind and TLS only: the public health check does not tell the server name
+      const where = db.location ? { dbKind: db.location.kind, dbSsl: db.location.ssl } : {};
       const started = performance.now();
       try {
         await db.ping();

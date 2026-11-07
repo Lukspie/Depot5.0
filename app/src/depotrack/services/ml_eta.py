@@ -52,11 +52,11 @@ def features(db: Session, trip: Trip, weather: str) -> DelayFeatures | None:
     return DelayFeatures(
         direction=direction.code,
         kind=str(trip.kind),
-        weekday=local.isoweekday(),
+        weekday=local.isoweekday() % 7,  # 0 = Sunday … 6 = Saturday, as in the history
         month=local.month,
         hour=local.hour,
         weather=weather,
-        prev_delay_min=max(prev, 0.0) if prev is not None else 0.0,
+        prev_delay_min=prev if prev is not None else 0.0,
     )
 
 
@@ -72,12 +72,15 @@ def refresh_ml_eta(
     yet; re-evaluates the cascade for night trucks whose prediction changed.
     Returns the number of changed trips and the alert changes (for the WebSocket)."""
     trips = db.execute(
-        select(Trip).where(
+        select(Trip)
+        .where(
             Trip.operating_day == day,
             Trip.kind == TripKind.INBOUND,
             Trip.status.in_(OPEN),
             Trip.planned_arrival.is_not(None),
         )
+        # rows locked by a concurrent trip event of telematics are skipped this round
+        .with_for_update(skip_locked=True)
     ).scalars()
     changed = 0
     alerts: list[AlertChange] = []

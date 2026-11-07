@@ -34,3 +34,19 @@ describe("db-telemetry connection", () => {
     expect(poolConfig(azure("?sslmode=disable")).ssl).toBe(false);
   });
 });
+
+describe("TELEMETRY_DATABASE_URL validation", () => {
+  it("rejects a malformed URL without leaking it (the password is in it)", async () => {
+    const { checkDbUrl } = await import("../src/config.js");
+    const bad = "postgres://telematics:s3cret#x@<server>.postgres.database.azure.com/db";
+    let message = "";
+    try {
+      checkDbUrl(bad);
+    } catch (err) {
+      message = String(err);
+    }
+    expect(message).toContain("TELEMETRY_DATABASE_URL is not a valid URL");
+    expect(message).not.toContain("s3cret");
+    expect(() => { checkDbUrl("postgres://u:p%40ss@h.postgres.database.azure.com:5432/db?sslmode=require"); }).not.toThrow();
+  });
+});

@@ -9,26 +9,26 @@
     "weather",
     "prev_delay_min"
   ],
-  "trainDays": 150,
+  "trainDays": 370,
   "testDays": 30,
-  "rowsTrain": 2400,
+  "rowsTrain": 5920,
   "rowsTest": 480,
-  "maeMin": 6.14,
-  "maeBaselineMin": 7.19,
-  "improvement": 0.147,
+  "maeMin": 7.19,
+  "maeBaselineMin": 15.29,
+  "improvement": 0.53,
   "perKind": {
     "inbound": {
-      "mae": 8.72,
-      "maeBaseline": 10.87
+      "mae": 11.21,
+      "maeBaseline": 25.3
     },
     "outbound": {
-      "mae": 3.55,
-      "maeBaseline": 3.51
+      "mae": 3.16,
+      "maeBaseline": 5.28
     }
   },
   "data": {
-    "from": "2026-05-11",
-    "to": "2026-11-06"
+    "from": "2025-11-27",
+    "to": "2026-12-31"
   },
   "sklearn": "1.9.1"
 }

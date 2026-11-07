@@ -33,7 +33,7 @@ CATEGORICAL = (True, True, False, False, False, True, False)
 class DelayFeatures:
     direction: str
     kind: str
-    weekday: int  # 1 = Monday … 7 = Sunday (local time)
+    weekday: int  # 0 = Sunday … 6 = Saturday (local time, as telematics localParts)
     month: int
     hour: int
     weather: str

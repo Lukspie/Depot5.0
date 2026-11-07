@@ -1,7 +1,7 @@
 /**
- * History generator for ML training (Phase 6):  npm run gen:history -- --days 180 --out ../ml/data
+ * History generator for ML training (Phase 6):  npm run gen:history -- --out ../ml/data
  *
- * Writes two CSV files with N days of simulated history ending yesterday:
+ * Writes two CSV files with N days (default 400) of simulated history ending at --end (default 2026-12-31):
  *   trips_history.csv           - truck trips with arrival/departure delays and their features
  *   device_metrics_history.csv  - per-minute scanner metrics incl. labelled degradation episodes
  * It uses the same delay and read-rate models as the live simulator.
@@ -52,10 +52,11 @@ function binomial(rng: ReturnType<typeof rngFor>, n: number, p: number): number 
   return k;
 }
 
-const days = Number(arg("days", "180"));
+// fixed defaults: the same history (and models) on every run; 400 days include a whole winter (snow)
+const days = Number(arg("days", "400"));
 const seed = Number(arg("seed", "42"));
 const outDir = resolve(arg("out", "../ml/data"));
-const end = arg("end", addDays(localDate(Date.now()), -1));
+const end = arg("end", "2026-12-31");
 const start = addDays(end, -(days - 1));
 mkdirSync(outDir, { recursive: true });
 // same real-road distances as the live simulator (Budimír depot, ADR-039)

@@ -2,6 +2,8 @@
 
 > Pre koho: kto píše kapitolu dokumentácie o ML, alebo model pretrénuje. Ku každému modelu: dáta, príznaky, metriky, obmedzenia. Rozhodnutia sú v ADR-057 a ďalších.
 
+**Všetko jedným príkazom** (z koreňa repozitára, beží stack): `sh ml/train_all.sh`. Pregeneruje históriu, natrénuje oba modely v image app a overí model brány. Potom `docker compose build app`.
+
 Artefakty sú v `ml/artifacts/` a app ich načíta pri štarte (sú skopírované do image). Ak artefakt chýba alebo bol uložený inou verziou scikit-learn, app naštartuje bez modelu a `/system` ukáže „model nedostupný“.
 
 ## Príprava dát
@@ -10,12 +12,12 @@ História sa generuje rovnakými modelmi meškania a čítanosti ako živý simu
 
 ```bash
 cd telematics
-npm run gen:history -- --days 180 --out ../ml/data
+npm run gen:history -- --out ../ml/data
 ```
 
-Výstup (v `.gitignore`, ~13 MB):
-- `ml/data/trips_history.csv`: 2 880 udalostí jázd (180 dní × 16),
-- `ml/data/device_metrics_history.csv`: 270 000 minútových metrík skenerov s označenými epizódami degradácie (objem ako v živom simulátore: ~1 položka/min na bránu).
+Predvolene je to 400 dní s pevným koncom 31. 12. 2026, takže každé spustenie dá rovnaké dáta a zima so snehom je v nich. Výstup (v `.gitignore`, ~30 MB):
+- `ml/data/trips_history.csv`: 6 400 udalostí jázd (400 dní × 16), počasie jasno 4 240, dážď 1 296, sneh 592, hmla 272,
+- `ml/data/device_metrics_history.csv`: 600 000 minútových metrík skenerov (91 epizód degradácie) s označenými epizódami degradácie (objem ako v živom simulátore: ~1 položka/min na bránu).
 
 ## 1. Predikcia meškania kamiónov
 
@@ -36,21 +38,25 @@ Vznikne `ml/artifacts/delay_model.joblib` a `delay_model.json` (metriky). Po pre
   | --- | --- |
   | `direction` | smer (BA, BB, ZA, MI, TV, HE, SL, SE) |
   | `kind` | príjazd / odjazd |
-  | `weekday`, `month`, `hour` | deň v týždni, mesiac (sezóna), hodina plánovanej udalosti, miestny čas |
+  | `weekday`, `month`, `hour` | deň v týždni (0 = nedeľa … 6 = sobota), mesiac (sezóna), hodina plánovanej udalosti, miestny čas |
   | `weather` | simulované počasie dňa (jasno, dážď, hmla, sneh) z telematiky |
   | `prev_delay_min` | meškanie tej istej jazdy predchádzajúci deň |
 
   Vzdialenosť trasy je pre smer konštantná, preto ju pokrýva smer.
-- **Rozdelenie:** podľa času, posledných 30 dní je test (480 udalostí), 150 dní tréning (2 400). Po vyhodnotení sa model pretrénuje na všetkých dňoch.
-- **Výsledok (dáta 11. 5. – 6. 11. 2026):**
+- **Rozdelenie:** podľa času, posledných 30 dní (december, aj sneh) je test (480 udalostí), 370 dní tréning (5 920). Po vyhodnotení sa model pretrénuje na všetkých dňoch.
+- **Výsledok (dáta 27. 11. 2025 – 31. 12. 2026):**
 
   | | MAE modelu | MAE baseline (priemer na smer a druh) |
   | --- | --- | --- |
-  | všetky udalosti | **6,14 min** | 7,19 min (−15 %) |
-  | príjazdy | **8,72 min** | 10,87 min (−20 %) |
-  | odjazdy | 3,55 min | 3,51 min |
+  | všetky udalosti | **7,19 min** | 15,29 min (−53 %) |
+  | príjazdy | **11,21 min** | 25,30 min (−56 %) |
+  | odjazdy | **3,16 min** | 5,28 min (−40 %) |
 
-  Pri odjazdoch model nepomôže: ich meškanie je hlavne náhodné prevádzkové meškanie bez väzby na príznaky. Prínos je pri príjazdoch, kde počasie a meškanie predchádzajúceho dňa vysvetľujú časť rozptylu.
+  Prínos je hlavne pri príjazdoch: v zime počasie (sneh) a meškanie predchádzajúceho dňa vysvetľujú veľkú časť rozptylu, čo priemer na smer nevie.
+- **Oprava po review:**
+  - prvá verzia sa učila len na máji až novembri, bez snehu, a sneh predpovedala ako jasno,
+  - tréning a inferencia mali deň v týždni posunutý (0–6 oproti 1–7),
+  - dnes test mení vždy len jeden príznak a kontraktný test overuje kódovanie dňa.
 - **Použitie v app** (`services/ml_eta.py`, úloha `ml_job` každých 5 simulovaných minút):
   - plánovaným príjazdom dňa doplní `predicted_arrival = plán + predikcia` a `predicted_by = "ml"`, potom prepočíta kaskádu,
   - keď telematika pošle vlastný odhad z polohy alebo poruchy (`predicted_by = "telematics"`), ten má prednosť a model jazdu už neprepisuje,
@@ -92,17 +98,17 @@ Vznikne `ml/artifacts/scanner_model.joblib` a `scanner_model.json`.
   - skener, ktorý číta lepšie ako bežne, je síce „nezvyčajný“, ale nie rizikový, preto má skóre najviac medián,
   - riziko v tieni = (skóre − medián) / (prah − medián), orezané na 0–100 %, pri 100 % sa otvorí alarm,
   - alarm sa zavrie pod 50 % (hysterézia, aby neblikal).
-- **Výsledok (posledných 45 dní):**
+- **Výsledok (posledných 45 dní histórie):**
 
   | Metrika | Hodnota |
   | --- | --- |
-  | zachytené epizódy degradácie | **10 z 10** |
-  | presnosť bucket-ov s alarmom (precision) | 0,88 |
-  | recall bucket-ov s viditeľným poklesom (≥ 4 body pod normálom) | 0,60 |
-  | falošné alarmy na zdravých bucket-och | 0,54 % |
+  | zachytené epizódy degradácie | **12 z 12** |
+  | presnosť bucket-ov s alarmom (precision) | 0,92 |
+  | recall bucket-ov s viditeľným poklesom (≥ 4 body pod normálom) | 0,70 |
+  | falošné alarmy na zdravých bucket-och | 0,49 % (pri 8 skeneroch zhruba 1 falošný alarm denne) |
   | medián oneskorenia od začiatku epizódy | 24 h (epizódy trvajú 6–48 h a prechádzajú viac vĺn) |
 
-- **Zaručená degradácia zo seedu** (`SIM_DEGRADED_DEVICE`, 0,97 → 0,85 za 6 h od 15:30, ADR-024): vo večernej vlne svojej brány (17:05–21:15) pri živom objeme spustí alarm okolo 20:45 pri čítanosti ~0,87. Zdravé skenery (0,93–0,97 so šumom) alarm nespustia. Overuje to `app/tests/test_ml.py`.
+- **Zaručená degradácia zo seedu** (`SIM_DEGRADED_DEVICE`, 0,97 → 0,85 za 6 h od 15:30, ADR-024): vo večernej vlne svojej brány (17:05–21:15) pri živom objeme spustí alarm pred koncom vlny pri čítanosti ~0,87 (naživo LD-02 o 21:10). Zdravé skenery (0,93–0,97 so šumom) alarm nespustia. Overuje to `app/tests/test_ml.py`.
 - **Použitie v app** (`services/ml_scanner.py`, úloha `ml_job` každých 5 simulovaných minút):
   - pre každý skener brány si vezme bucket-y za 2 h z telematiky (db-telemetry môže byť v Azure),
   - skóre uloží pre `GET /api/ml/scanners` (panel zariadenia v tieni: „Riziko poruchy (ML)“),

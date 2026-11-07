@@ -1,6 +1,6 @@
 """Data of an operating day and the whole seed (idempotent steps recorded in seed_meta)."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
@@ -91,11 +91,17 @@ def reset_operating_day(db: Session, day: date, *, clean: bool = False) -> dict[
         )
         .execution_options(synchronize_session=False)
     )
-    alerts = db.execute(delete(Alert).where(Alert.created_at >= start))
+    end = start + timedelta(days=1)
+    # only this day: alerts of later days (already simulated) stay for the audit
+    alerts = db.execute(delete(Alert).where(Alert.created_at >= start, Alert.created_at < end))
     maintenance = closed = 0
     if clean:
         maintenance = _rowcount(
-            db.execute(delete(MaintenanceOrder).where(MaintenanceOrder.created_at >= start))
+            db.execute(
+                delete(MaintenanceOrder).where(
+                    MaintenanceOrder.created_at >= start, MaintenanceOrder.created_at < end
+                )
+            )
         )
         closed = _rowcount(
             db.execute(

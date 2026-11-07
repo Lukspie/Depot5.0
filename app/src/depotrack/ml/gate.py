@@ -79,8 +79,12 @@ def normalize_plate(text: str) -> str | None:
     return None
 
 
+# a small file that decodes into a huge image (decompression bomb) is refused
+Image.MAX_IMAGE_PIXELS = 40_000_000
+
+
 def decode_image(data: bytes) -> np.ndarray[Any, np.dtype[np.uint8]]:
-    """JPEG/PNG bytes -> BGR array (what both models expect); ValueError on garbage."""
+    """JPEG/PNG bytes -> BGR array (what both models expect); ValueError on garbage or a bomb."""
     try:
         img = Image.open(BytesIO(data))
         img.load()

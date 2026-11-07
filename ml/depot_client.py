@@ -20,7 +20,7 @@ class DepotClient:
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
     def _call(self, method: str, path: str, body: bytes | None, content_type: str | None) -> Any:
-        headers = {"Origin": self.base}
+        headers: dict[str, str] = {}
         if content_type:
             headers["Content-Type"] = content_type
         req = urllib.request.Request(self.base + path, data=body, method=method, headers=headers)

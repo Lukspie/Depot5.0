@@ -530,13 +530,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Záloha:** kontajner `db-telemetry` ostáva v compose profile `local`.
     - `COMPOSE_PROFILES=local` a prázdne `TELEMETRY_DATABASE_URL` dajú 4 kontajnery ako doteraz (offline demo, test z čistého klonu),
     - závislosť telematiky na ňom je `required: false`.
-  - **`/health` telematiky** vracia `dbKind` (`azure` / `local` / `external`), `dbHost`, `dbSsl` a `dbLatencyMs`. Stránka `/system` ich zobrazí.
+  - **`/health` telematiky** vracia `dbKind` (`azure` / `local` / `external`), `dbSsl` a `dbLatencyMs`. Meno servera nevracia, lebo endpoint je verejný. Stránka `/system` ich zobrazí.
 - **Dôsledok:**
   - Predvolený režim má 3 kontajnery a 1 spravovanú databázu v Azure. Je to vedomá odchýlka od „4 kontajnerov“ podľa novej požiadavky učiteľa, počet databáz ostáva 2.
   - Bez Azure (alebo pri výpadku internetu) sa prepne jednou zmenou v `.env`.
-  - Nová Azure DB začína s prázdnym stavom simulátora, deň sa pripraví situáciou.
+  - Nová Azure DB začína s prázdnym stavom simulátora. Ak db-wms už má odsimulované neskoršie dni, treba pri prvom štarte nastaviť `SIM_START_DATE` na deň po poslednom: hodiny sa posunú vpred aj vtedy, keď už je stav uložený, ale je starší. Reset dňa maže alarmy a údržbu len v rozsahu daného dňa, neskoršie dni ostanú.
   - Azure účtuje server, kým beží, preto README ukazuje `az postgres flexible-server stop`.
-- **Overenie (7. 11. 2026, server `depotrack-tel-aispu`, B1ms, PG 16):**
+- **Overenie (7. 11. 2026, vlastný server tímu, B1ms, PG 16):**
   - všetkých 7 migrácií `001`–`007` prebehlo pri štarte na prázdnej Azure DB,
   - `/health` hlási `azure`, TLS, ping 19 ms,
   - živé hodiny držia nastavených 30×,
@@ -555,7 +555,8 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
     - Ak artefakt chýba alebo nesedí verzia scikit-learn, app naštartuje bez modelu, `GET /api/ml/status` vráti `available: false` a `/system` ukáže „model nedostupný“.
     - Načítavajú sa len vlastné artefakty z repozitára, nikdy súbory od používateľa (pickle je spustiteľný kód).
   - **Predikcia meškania:**
-    - `HistGradientBoostingRegressor` (`loss=absolute_error`), MAE 6,14 min oproti 7,19 min pri baseline,
+    - `HistGradientBoostingRegressor` (`loss=absolute_error`) na 400 dňoch histórie s pevným koncom (aj zima), MAE 7,19 min oproti 15,29 min pri baseline,
+    - deň v týždni je v tréningu aj inferencii 0 = nedeľa (`localParts`, `isoweekday() % 7`), kontraktný test,
     - úloha `ml_job` v APScheduleri beží každých 5 reálnych sekúnd a koná, keď prejde 5 simulovaných minút,
     - plánovaným príjazdom doplní `predicted_arrival` s `trips.predicted_by = "ml"` (Alembic `f2a6c8e4d1b7`) a prepočíta kaskádu,
     - telematika (`predicted_by = "telematics"`) má prednosť a jej prázdny odhad ML neprepíše, kým jazda nepríde,
@@ -579,7 +580,7 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Alarm:** `scanner_degradation` s `ref_type=device`. Otvára sa pri riziku 100 % a zatvára systémovo pod 50 % (hysterézia). Dnes ho nevytvára nič iné, takže nekoliduje s alarmami telematiky (`device_offline`).
   - **Riziko** sa drží v pamäti procesu app a `GET /api/ml/scanners` (dispečer, ochranka) ho dáva panelu zariadenia v tieni.
 - **Dôsledok:**
-  - V teste zachytí 10 z 10 epizód s 0,54 % falošných alarmov na zdravých bucket-och. Degradáciu zo seedu chytí v jej prvej večernej vlne okolo 20:45 (test).
+  - V teste zachytí 12 z 12 epizód s 0,49 % falošných alarmov na zdravých bucket-och (zhruba 1 denne na 8 skenerov). Degradáciu zo seedu chytí v jej prvej večernej vlne okolo 20:45 (test).
   - Hodnotí len skenery brán, skener linky má iný objem a nie je v histórii.
   - Ak telematika nebeží, skóre sa neaktualizuje a alarm ostane v poslednom stave.
 

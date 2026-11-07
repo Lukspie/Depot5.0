@@ -15,7 +15,6 @@ export interface Health {
   db: "ok" | "unreachable";
   /** telematics only: where db-telemetry runs (ADR-056) */
   dbKind?: "azure" | "local" | "external";
-  dbHost?: string;
   dbSsl?: boolean;
   dbLatencyMs?: number;
 }

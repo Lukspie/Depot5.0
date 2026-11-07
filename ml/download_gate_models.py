@@ -14,18 +14,22 @@ from pathlib import Path
 
 URL = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx"
 OUT = Path(__file__).resolve().parent / "artifacts" / "yolox_tiny.onnx"
+SHA256 = "427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7"  # LICENSES.md
 
 
 def main() -> None:
     if OUT.exists():
-        print(f"{OUT.name} already there ({OUT.stat().st_size // 1024} kB)")
+        ok = hashlib.sha256(OUT.read_bytes()).hexdigest() == SHA256
+        print(f"{OUT.name} already there ({OUT.stat().st_size // 1024} kB, sha256 {'ok' if ok else 'MISMATCH'})")
+        if not ok:
+            sys.exit(1)
         return
     OUT.parent.mkdir(exist_ok=True)
     print(f"downloading {URL}")
     with urllib.request.urlopen(URL, timeout=120) as resp:  # noqa: S310 (fixed https URL)
         data = resp.read()
-    if len(data) < 1_000_000:
-        sys.exit("download too small, check the URL")
+    if hashlib.sha256(data).hexdigest() != SHA256:
+        sys.exit("sha256 of the download does not match LICENSES.md, not saved")
     OUT.write_bytes(data)
     print(f"{OUT} {len(data) // 1024} kB sha256 {hashlib.sha256(data).hexdigest()}")
 

@@ -65,6 +65,15 @@ function bool(name: string, fallback: boolean): boolean {
   return raw === "true";
 }
 
+/** A malformed URL stops the start without printing it: it contains the database password. */
+export function checkDbUrl(url: string): void {
+  try {
+    new URL(url);
+  } catch {
+    throw new Error("TELEMETRY_DATABASE_URL is not a valid URL (encode special characters of the password, e.g. @ as %40)");
+  }
+}
+
 function list(value: string): string[] {
   return value
     .split(",")
@@ -77,7 +86,7 @@ export function loadConfig(): Config {
   if (secret.length < 32) throw new Error("WS_TICKET_SECRET must have at least 32 characters");
   const startDate = optional("SIM_START_DATE", "");
   const dbUrl = optional("TELEMETRY_DATABASE_URL", "").trim() || null;
-  if (dbUrl) new URL(dbUrl); // fail at start on a malformed URL
+  if (dbUrl) checkDbUrl(dbUrl);
   const degraded = optional("SIM_DEGRADED_DEVICE", "DOCK-SCN-02");
   return {
     port: Number(optional("PORT", "8080")),

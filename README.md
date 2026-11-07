@@ -26,9 +26,8 @@ Potrebuješ Docker Desktop (alebo Docker Engine s Compose v2).
 
 ```bash
 cp .env.example .env          # pri prvom spustení; hodnoty change-me zmeň
-# Azure: doplň TELEMETRY_DATABASE_URL (časť Azure nižšie)
-# offline bez Azure: v .env nastav COMPOSE_PROFILES=local a TELEMETRY_DATABASE_URL= (prázdne)
-docker compose up --build
+docker compose up --build     # .env.example štartuje offline (lokálna db-telemetry, profil local)
+# Azure: v .env nastav TELEMETRY_DATABASE_URL a COMPOSE_PROFILES= (prázdne), časť Azure nižšie
 ```
 
 | Adresa | Čo |
@@ -79,7 +78,7 @@ COMPOSE_PROFILES=
 
 Potom `docker compose up -d --build telematics app`. Na **http://localhost:8000/system** má telematika pri databáze *Azure Database for PostgreSQL · TLS · N ms* a stav *OK*.
 
-- Nová databáza znamená nový stav simulátora: simulácia začne od `SIM_START_TIME`. Známy stav dňa pripravíš situáciou (napr. `?situation=evening-peak`).
+- Nová databáza znamená nový stav simulátora, simulácia začne dnes o `SIM_START_TIME`. Ak už lokálne prebehli neskoršie simulované dni, nastav pri prvom štarte `SIM_START_DATE` na deň po poslednom (napr. `SIM_START_DATE=2027-03-13 docker compose up -d telematics`). Hodiny sa posunú vpred a WMS nedostane už odohraný deň. Známy stav dňa potom pripravíš situáciou (napr. `?situation=evening-peak`).
 - Prepnutie späť na offline: `COMPOSE_PROFILES=local`, `TELEMETRY_DATABASE_URL=` (prázdne), `docker compose up -d`.
 - Testy (vitest, pytest) Azure nepotrebujú, bežia proti pamäťovému úložisku a lokálnej db-wms.
 
@@ -110,6 +109,7 @@ Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, 
 | http://localhost:8000/fleet | dispečer, admin | Flotila na mape |
 | http://localhost:8000/shadow?depot=BUD | dispečer, ochranka, admin | Digitálny tieň: 3D hala naživo s plávajúcimi panelmi, brány so senzormi, panely zariadení a kamiónov, hľadanie balíka, scenár „čo ak“ a akcie (dispečer) |
 | http://localhost:8000/board?key=tabula-demo-2026 | verejné (kľúč `BOARD_KEY`) | Tabuľa príchodov a odchodov |
+| http://localhost:8000/gate | ochranka, admin | Brána: fotka vozidla → typ (YOLOX) a ŠPZ (OCR), prejazd, alarm neznámej ŠPZ |
 | http://localhost:8000/courier | kuriér (dispečer len náhľad), admin | Moje zastávky, „Doručené“ / „Nezastihnutý“ (mobil) |
 | http://localhost:8000/track/&lt;token&gt; | verejné (odkaz zo SMS) | Sledovanie zásielky pre zákazníka (mobil) |
 | http://localhost:8000/admin | admin | Používatelia, smery, zariadenia, simulácia, simulované SMS |

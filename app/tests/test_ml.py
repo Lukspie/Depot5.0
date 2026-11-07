@@ -19,7 +19,7 @@ from test_wms import TOKEN, at_time, local, seeded, trip
 __all__ = ["at_time", "seeded"]  # fixtures shared with test_wms
 
 SAMPLE = DelayFeatures(
-    direction="BA", kind="inbound", weekday=3, month=11, hour=1, weather="snow", prev_delay_min=20
+    direction="BA", kind="inbound", weekday=3, month=1, hour=1, weather="snow", prev_delay_min=20
 )
 
 
@@ -33,11 +33,24 @@ def test_the_trained_model_loads_and_predicts() -> None:
     assert model is not None, "ml/artifacts/delay_model.joblib missing: run ml/train_delay.py"
     assert "BA" in model.directions
     assert model.metrics["maeMin"] < model.metrics["maeBaselineMin"]
+    # one feature at a time: snow alone makes the night truck later than a clear night
     [snowy] = model.predict([SAMPLE])
-    [clear] = model.predict(
-        [DelayFeatures(**{**SAMPLE.__dict__, "weather": "clear", "prev_delay_min": 0})]
-    )
-    assert -30 < clear < snowy < 240  # snow and a late yesterday make it later
+    [clear] = model.predict([DelayFeatures(**{**SAMPLE.__dict__, "weather": "clear"})])
+    assert -30 < clear < snowy < 240, (clear, snowy)
+    [late_yesterday] = model.predict([DelayFeatures(**{**SAMPLE.__dict__, "prev_delay_min": 90})])
+    assert late_yesterday > snowy
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_inference_encodes_the_weekday_like_the_history(db: Session) -> None:
+    """History (telematics localParts): 0 = Sunday … 6 = Saturday; the app must not use 1-7."""
+    from depotrack.services.ml_eta import features
+
+    night = trip(
+        db, "BA", "inbound"
+    )  # DAY 2026-10-23 is a Friday, the night truck arrives Saturday
+    f = features(db, night, "clear")
+    assert f is not None and f.weekday == 6 and f.hour == 1 and f.month == 10
 
 
 def test_weather_comes_from_the_telematics_scenario(monkeypatch: pytest.MonkeyPatch) -> None:

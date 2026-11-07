@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 
 import logging
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -32,10 +33,13 @@ from depotrack.core.csrf import OriginCheckMiddleware
 from depotrack.core.ratelimit import limiter
 from depotrack.core.spa import mount_spa
 from depotrack.jobs.scheduler import create_scheduler
+from depotrack.ml.gate import gate_models
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # the gate models take seconds to load: in the background at start, not in the first request
+    threading.Thread(target=gate_models, name="gate-models", daemon=True).start()
     scheduler = create_scheduler() if get_settings().run_jobs else None
     if scheduler:
         scheduler.start()

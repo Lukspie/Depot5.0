@@ -32,22 +32,37 @@ _last_ml_run: datetime | None = None
 
 def ml_job() -> None:
     """Every 5 simulated minutes: scanner risk scores (ADR-058) and the ML arrival prediction
-    of the planned trips (ADR-057)."""
+    of the planned trips (ADR-057). Each part on its own: one failing does not stop the other."""
     global _last_ml_run
-    now = telematics.sim_now()
+    now = telematics.sim_now_or_none()
+    if now is None:  # never compute with the wall clock
+        return
     if _last_ml_run is not None and timedelta(0) <= now - _last_ml_run < ML_EVERY:
         return
     _last_ml_run = now
+    try:
+        _scanner_part(now)
+    except Exception:
+        log.exception("ML scanner scoring failed")
+    try:
+        _eta_part(now)
+    except Exception:
+        log.exception("ML arrival prediction failed")
+
+
+def _scanner_part(now: datetime) -> None:
     scanners = scanner_model()
-    if scanners is not None:
-        with get_session_factory()() as db:
-            alerts = score_scanners(
-                db, scanners, telematics.devices(), telematics.device_metrics, now
-            )
-            db.commit()
-            scanner_events = [alert_event(c.alert) for c in alerts if c.created]
-        if scanner_events:
-            telematics.broadcast_many("alerts", "alert", scanner_events)
+    if scanners is None:
+        return
+    with get_session_factory()() as db:
+        alerts = score_scanners(db, scanners, telematics.devices(), telematics.device_metrics, now)
+        db.commit()
+        events = [alert_event(c.alert) for c in alerts if c.created]
+    if events:
+        telematics.broadcast_many("alerts", "alert", events)
+
+
+def _eta_part(now: datetime) -> None:
     model = delay_model()
     if model is None:
         return

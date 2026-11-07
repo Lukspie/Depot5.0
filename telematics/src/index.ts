@@ -42,7 +42,14 @@ if (saved) {
     // SIM_RANDOM_SEED in .env changed since the last start: apply it
     seed = sim.seed;
     restartForNewEnvSeed = true;
-  } else if (saved.situation) {
+  }
+  // SIM_START_DATE later than the saved clock moves it forward (a new telemetry database, e.g.
+  // Azure, starts "today" while db-wms already has later days simulated; ADR-056)
+  if (sim.startDate && saved.simTime < initialSimTime(sim.startDate, sim.startTime, Date.now())) {
+    clockState = { ...clockState, simTime: initialSimTime(sim.startDate, sim.startTime, Date.now()) };
+    restartForNewEnvSeed = true;
+  }
+  if (saved.envSeed === sim.seed && saved.situation) {
     situation = { id: saved.situation, forceCascade: saved.forceCascade ?? sim.forceCascade, degradedDevice: saved.degradedDevice };
   }
 } else {
@@ -100,7 +107,22 @@ await registerSimulation(app, {
 await app.listen({ host: "0.0.0.0", port: config.port });
 const wss = attachWebSocket(app.server, { hub, verifier, allowedOrigins: config.allowedOrigins, log: app.log });
 hub.start();
-if (restartForNewEnvSeed) await engine.restartDay();
+if (restartForNewEnvSeed) {
+  // the app starts after telematics is healthy (compose depends_on), so the day restart (which
+  // resets the day in the app too) waits for it in the background instead of failing the start
+  void (async () => {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await engine.restartDay();
+        app.log.info({ attempt }, "operating day restarted for the new seed / start date");
+        return;
+      } catch (err) {
+        if (attempt === 1 || attempt % 10 === 0) app.log.warn({ err: String(err), attempt }, "day restart waits for the app");
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+  })();
+}
 await engine.persist();
 engine.start();
 app.log.info(engine.clockInfo(), "simulation running");

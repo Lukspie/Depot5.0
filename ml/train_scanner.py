@@ -88,7 +88,7 @@ def main() -> None:
     if not DATA.exists():
         sys.exit(
             f"missing {DATA}: in telematics run "
-            "`npm run gen:history -- --days 180 --out ../ml/data`"
+            "`npm run gen:history -- --out ../ml/data`"
         )
     series = load()
     all_rows = {d: rows(s) for d, s in series.items()}

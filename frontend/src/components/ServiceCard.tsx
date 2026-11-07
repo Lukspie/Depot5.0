@@ -60,14 +60,7 @@ export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Prop
             </span>
           )}
         </dd>
-        {health.data?.dbHost && (
-          <>
-            <dt className="text-ink-muted">Server DB</dt>
-            <dd className="min-w-0 truncate font-mono text-xs" title={health.data.dbHost}>
-              {health.data.dbHost}
-            </dd>
-          </>
-        )}
+
       </dl>
 
       {hello.isError && (

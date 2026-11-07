@@ -37,14 +37,24 @@ export class BufferedSink implements TelemetrySink {
     this.gate = [];
     this.sensors = [];
     this.metrics = new Map();
-    await Promise.all([
-      this.inner.insertScans(scans),
-      this.inner.insertGps(gps),
-      this.inner.insertHeartbeats(heartbeats),
-      this.inner.insertGatePassages(gate),
-      this.inner.insertSensorReadings(sensors),
-      this.inner.upsertMetrics(metrics),
-    ]);
+    // one table after another: a failure keeps its rows and the not yet written ones for the
+    // next flush (the written tables are not repeated, the metric upsert is additive)
+    const steps: [() => Promise<void>, () => void][] = [
+      [() => this.inner.insertScans(scans), () => this.scans.unshift(...scans)],
+      [() => this.inner.insertGps(gps), () => this.gps.unshift(...gps)],
+      [() => this.inner.insertHeartbeats(heartbeats), () => this.heartbeats.unshift(...heartbeats)],
+      [() => this.inner.insertGatePassages(gate), () => this.gate.unshift(...gate)],
+      [() => this.inner.insertSensorReadings(sensors), () => this.sensors.unshift(...sensors)],
+      [() => this.inner.upsertMetrics(metrics), () => void this.upsertMetrics(metrics)],
+    ];
+    for (let i = 0; i < steps.length; i++) {
+      try {
+        await (steps[i] as [() => Promise<void>, () => void])[0]();
+      } catch (err) {
+        for (const [, restore] of steps.slice(i)) restore();
+        throw err;
+      }
+    }
   }
 
   insertScans(rows: ScanRow[]): Promise<void> {

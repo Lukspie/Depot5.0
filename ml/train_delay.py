@@ -1,7 +1,7 @@
 """Train the truck delay model (phase 6, PROMPT §8.3, ADR-057).
 
 Data:   ml/data/trips_history.csv
-        (cd telematics && npm run gen:history -- --days 180 --out ../ml/data)
+        (cd telematics && npm run gen:history -- --out ../ml/data)
 Output: ml/artifacts/delay_model.joblib + delay_model.json (metrics)
 
 Runs inside the app image, so training and inference use the same scikit-learn and the same
@@ -70,7 +70,7 @@ def main() -> None:
     if not DATA.exists():
         sys.exit(
             f"missing {DATA}: in telematics run "
-            "`npm run gen:history -- --days 180 --out ../ml/data`"
+            "`npm run gen:history -- --out ../ml/data`"
         )
     days, rows, y_all = load()
     directions = tuple(sorted({r.direction for r in rows}))

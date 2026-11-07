@@ -11,9 +11,11 @@ import { Sparkline } from "./Sparkline";
 const EMPTY: LiveScan[] = [];
 
 /** IsolationForest risk of a dock scanner: 0 % = like a healthy one, 100 % = alert (ADR-058). */
-function RiskValue({ code, kind }: { code: string; kind: string | undefined }) {
+function RiskValue({ code, kind, live }: { code: string; kind: string | undefined; live: boolean }) {
   const q = useScannerRisks();
   if (kind !== "dock_scanner") return <span className="text-ink-muted">len skenery brán</span>;
+  // offline, maintenance or switched off: the last score is not valid any more (lessons learned)
+  if (!live) return <span className="text-ink-muted">bez údajov</span>;
   if (q.data && !q.data.available) return <span className="text-ink-muted">model nedostupný</span>;
   const r = q.data?.scanners.find((s) => s.device === code);
   if (!r) return <span className="text-ink-muted">—</span>;
@@ -69,7 +71,7 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
           ["Čítanosť za smenu (8 h)", counted > 0 ? `${((read / counted) * 100).toFixed(1)} %` : "—"],
           ["Spočítané / prečítané", `${counted.toLocaleString("sk-SK")} / ${read.toLocaleString("sk-SK")}`],
           ["Neidentifikované", (counted - read).toLocaleString("sk-SK")],
-          ["Riziko poruchy (ML)", <RiskValue key="r" code={code} kind={d?.kind} />],
+          ["Riziko poruchy (ML)", <RiskValue key="r" code={code} kind={d?.kind} live={d?.status === "online" || d?.status === "degraded"} />],
         ]}
       />
       <AlertList alerts={alerts.filter((a) => a.refType === "device" && a.refId === code)} canAct={canAct} />

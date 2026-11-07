@@ -5,14 +5,14 @@
     "z_2h"
   ],
   "testDays": 45,
-  "trainBuckets": 17497,
-  "threshold": 0.6697,
-  "healthyRate": 0.9574,
-  "bucketRecall": 0.603,
-  "bucketPrecision": 0.88,
-  "falseAlarmRate": 0.0054,
-  "episodes": 10,
-  "episodesDetected": 10,
-  "medianDetectionDelayH": 24.4,
+  "trainBuckets": 45890,
+  "threshold": 0.6675,
+  "healthyRate": 0.9565,
+  "bucketRecall": 0.702,
+  "bucketPrecision": 0.924,
+  "falseAlarmRate": 0.0049,
+  "episodes": 12,
+  "episodesDetected": 12,
+  "medianDetectionDelayH": 24.6,
   "sklearn": "1.9.1"
 }

@@ -174,6 +174,17 @@ def vehicle_position(plate: str) -> dict[str, Any] | None:
     return data
 
 
+def sim_now_or_none() -> datetime | None:
+    """Simulated time, or None when telematics is unreachable (jobs then skip, ADR-057)."""
+    try:
+        resp = httpx.get(f"{get_settings().telematics_internal_url}/sim/clock", timeout=_TIMEOUT)
+        resp.raise_for_status()
+        return datetime.fromisoformat(resp.json()["simTime"])
+    except (httpx.HTTPError, KeyError, ValueError) as exc:
+        log.warning("simulated clock unavailable, ML job skipped: %s", exc)
+        return None
+
+
 def sim_now() -> datetime:
     """Simulated time owned by telematics; falls back to wall-clock time if unreachable."""
     global _clock_cache
