@@ -238,6 +238,68 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
 4. **Ranná nakládka** *(hotové)*: kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli depa v tieni aj na mape Flotily a potom vyrážajú. Kamióny ako doteraz.
 5. **Layouty skladov** (ak ostane čas) *(presunuté do „Po odovzdaní“, nestihlo sa kvalitne)*: Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
 
+## Fáza 7c – sklady (návrh, čaká na potvrdenie)
+Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 4 skladov: **Budimír (BUD)**, **Ivanka pri Dunaji (BAH, hub BA)**, **Žilina (ZIL)**, **Dunajská Streda (DS)**. Pred začatím je git tag `pre-depots`. Po každom kroku commit, reviewer po krokoch 2, 3 a na konci. Nepushovať bez potvrdenia.
+
+**Východiská (stav k tagu `pre-depots`):**
+- Layout skladu už je dáta v DB (`depots.layout`, `doors`) a `/api/layout?depot=…` z neho kreslí tieň aj 3D halu na mape (ADR-039, 040). BUD a BAH existujú, ZIL a DS nie.
+- Simulátor je jednoskladový: plán jázd, balíky, kuriéri, brána a mix prejazdov sú len pre BUD. BAH je cieľ diaľkových kamiónov BA (stav „hub“ z jázd). Diaľkový smer ZA dnes končí v bode Žilina, nie v sklade.
+- Offline cestná sieť má ulice len pri Košiciach, inde diaľnice a cesty I. a II. triedy (ADR-038).
+- Satelitné snímky v `docs/design/` zatiaľ nie sú (`satelit-zilina.png`, `satelit-dunajska-streda.png`). Bez nich sú strany rámp, vjazd a parkoviská predpoklad a tak budú aj označené.
+
+**Krok 1 – geometria a dáta layoutu (app, tools/osm)**
+- `tools/osm/build_depot_layouts.py`: z OSM extraktu vytiahne footprint haly a polygón areálu (way id v súbore anotácií), prevedie ich do lokálnych metrov skladu (x na východ, y na juh, ako dnes) a zlúči s ručnými anotáciami `tools/osm/depots.json` (strana a počet rámp, typ brán podľa ADR-050, kuriérske brány, odstavné plochy, vjazd, státia kamiónov, parkovisko dodávok, jazdné pruhy). Výsledok `app/src/depotrack/seed/data/depots.json` je v gite, za behu sa nič nesťahuje.
+- Layout JSON rozšírim o areál: `site` (polygón), `gate` (vjazd so závorou a kamerou, smer), `truckStands`, `vanParking`, `lanes`. Staré polia (`hall`, `belt`, `yardGate`) ostanú kompatibilné.
+- ZIL: areál way `810621382`, hala way `321455829` (127 × 33 m), rampy na západnej dlhej strane (k ulici SNP), administratíva na južnom konci, návesy parkujú na východnej strane.
+- DS: podľa výberu z kandidátov (nižšie).
+- BUD a BAH: spresnenie z OSM (footprint, areál). Strany a počty rámp, vjazd a státia podľa satelitu, keď ho dodáš. Dovtedy ostane súčasný predpoklad a ADR to povie.
+- Migrácia (upsert skladov, brán a layoutu) a seed z toho istého `depots.json`, test, že čistá DB aj existujúca DB skončia rovnako (ako `test_depots.py`). ADR-064.
+
+**Krok 2 – UI (mapa a tieň), bez novej prevádzky**
+- Flotila: piny a 3D haly všetkých skladov, tlačidlá skladov nad mapou, pri priblížení areál (vjazd, státia, parkovisko, pruhy) z layoutu.
+- Tieň: prepínač skladov ako rozbaľovací zoznam (4 sklady sa do pilulky pri 390 px nezmestia bez zalamovania), scéna kreslí areál z layoutu, KPI a taby sa vzťahujú na zvolený sklad. Vzhľad podľa `docs/design/maketa-tien/`.
+- Komponenty nemajú nič natvrdo: všetko z `/api/layout`.
+- Screenshoty 1280/1440/390. **Reviewer.**
+
+**Krok 3 – prevádzka v každom sklade (app + telematika)**
+- 3a **cestná sieť:** `build_osm_data.py` dostane ďalšie výrezy s ulicami okolo Žiliny, Dunajskej Stredy a Ivanky (rovnaký postup ako Košice). `roads.json.gz` narastie odhadom o 0,5–1 MB. Overím, že trasy kamiónov BUD sa nezmenili (determinizmus). Ak by výrez nešiel, dodávky pôjdu po hlavných cestách a zapíšem to ako obmedzenie.
+- 3b **vlastní kuriéri skladov:** rajóny okolo mesta (ZIL napr. 4, DS 3, BAH 4), dodávky a kuriéri v seede, balíky pre tieto rajóny (vlastný prúd generátora, BUD sa nezmení), trasy s oknami z ADR-062. Telematika: plán kuriérov pre všetky sklady (každá trasa má svoj sklad), parkovanie podľa `vanParking` z layoutu, nakládka od 6:30, odchod, večerný návrat.
+- 3c **kamióny:** diaľkový ZA končí a začína v ZIL (státie na rampe, odchod), BA v BAH ako dnes. DS: **návrh** napájacia jazda BAH ↔ DS (DS nemá vlastný smer z Budimíra). Animácia príjazdu cez bránu skladu, státie na rampe, odchod.
+- 3d **brána každého skladu:** mix prejazdov a pravidlá z Fázy 7b pre každý sklad (`gate_events.depot`, `gate_passages.depot` v novej migrácii db-telemetry `008`), vlastný prúd `rngFor(seed, deň, "gate-mix", sklad)`. Prúd BUD ostane s pôvodným kľúčom, takže jeho čísla sa nezmenia.
+- Determinizmus: každý sklad má vlastné prúdy RNG. Testy: rovnaký seed dá rovnaké dni, situácie z 5d fungujú (reset dňa pre všetky sklady), BUD dáva rovnaké skeny ako pred 7c.
+- **Reviewer.**
+
+**Krok 4 – kontroly a dokumentácia**
+- testy: seed a layout každého skladu, API, simulácia nového skladu (dodávky naložia a vyrazia, kamióny prídu a odídu), determinizmus,
+- všetky kontroly zelené, test z čistého klonu,
+- screenshoty: mapa so všetkými skladmi, tieň každého skladu v situácii `evening-peak` a ráno 6:45,
+- ADR-064 (layouty), ADR-065 (prevádzka viacerých skladov), README (zoznam skladov, obmedzenia), `docs/fazy/faza-7c-sklady.md`, zmienka v `docs/AI-pouzitie.md`. **Záverečný reviewer.**
+
+**Riziká a otvorené otázky (navrhnutý default):**
+- **Rozsah:** krok 3 je najväčší a mení jadro simulátora (doteraz jeden sklad). Odhad: kroky 1–2 rádovo hodiny, krok 3 viac ako všetko ostatné. Default: poradie 3b (kuriéri) → 3d (brána) → 3c (kamióny) → 3a (ulice). Ak by niečo nešlo kvalitne, zastavím sa a navrhnem orezanie, nie polovičatý stav.
+- **DS kamióny:** default napájacia jazda BAH ↔ DS ráno a večer (nový smer s domovským skladom BAH). Alternatíva: DS len s kuriérmi a prejazdmi bránou, bez kamiónov.
+- **BAH kuriéri:** zadanie hovorí o vlastných kuriéroch „pre každý sklad“. Default áno, rajóny Bratislava-východ a Senec.
+- **Satelitné snímky** pre BUD, BAH, ZIL, DS: bez nich sú rampy, vjazd a státia predpoklad (okrem toho, čo si napísal pre ZIL).
+- **DS:** výber budovy z kandidátov nižšie.
+
+**Dunajská Streda – kandidáti z OSM** (`python tools/osm/find_hub.py tools/osm/cache/slovakia-latest.osm.pbf 47.94,17.54,48.04,17.72`, 7. 11. 2026). **Objekt s „SPS“ alebo „Slovak Parcel Service“ v názve, prevádzkovateľovi či značke v oblasti nie je.** Najväčšie budovy (OSM id, stred, rozmery, tagy):
+
+| OSM | stred | rozmery | plocha | tagy |
+| --- | --- | --- | --- | --- |
+| way `1152416066` | 47,99252 / 17,57477 | 384 × 154 m | 55 458 m² | building=yes |
+| way `666588016` | 47,98868 / 17,57022 | 312 × 190 m | 47 659 m² | warehouse, „RLS Logisticke Centrum“ |
+| way `1152416073` | 47,98637 / 17,56803 | 245 × 151 m | 32 371 m² | building=yes, „Mondelez SR Production“ |
+| way `1152416075` | 47,99137 / 17,57236 | 408 × 85 m | 30 437 m² | building=yes |
+| way `1152416065` | 47,98722 / 17,57916 | 216 × 161 m | 28 407 m² | building=yes |
+| way `839149661` | 47,98513 / 17,61955 | 155 × 120 m | 17 831 m² | industrial |
+| way `839149660` | 47,98565 / 17,62092 | 274 × 64 m | 17 604 m² | industrial |
+| way `61639879` | 47,98320 / 17,62323 | 194 × 90 m | 17 426 m² | warehouse |
+| way `785924304` | 48,00576 / 17,63492 | 169 × 101 m | 13 716 m² | building=yes |
+| way `71668849` | 47,96176 / 17,60741 | 158 × 82 m | 11 345 m² | building=yes |
+
+Prekládkové depo kuriérov je pravdepodobne menšie ako tieto haly (Žilina má 127 × 33 m), takže tu nemusí byť vôbec. **Nevyberám, čakám na tvoj výber:** OSM id budovy, alebo súradnice a satelitná snímka `docs/design/satelit-dunajska-streda.png`. Potom skript vypíše budovy v okolí bodu a vyberieme presne.
+
+
 ## Po odovzdaní
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
