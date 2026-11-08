@@ -15,7 +15,17 @@ from sqlalchemy import func, select
 
 from depotrack.api.depots import depot_state
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import Alert, Depot, Door, LoadingScan, Parcel, ParcelEvent, Trip, User
+from depotrack.models import (
+    Alert,
+    Depot,
+    Door,
+    GateEvent,
+    LoadingScan,
+    Parcel,
+    ParcelEvent,
+    Trip,
+    User,
+)
 from depotrack.models.enums import (
     AlertKind,
     DepotKind,
@@ -123,10 +133,32 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
         docks=docks,
         staged=state.staged,
         trucks=state.trucks,
-        alerts=[AlertOut.model_validate(a) for a in open_alerts(db, 30, clk.operating_day)]
-        if operated
-        else [],
+        alerts=[AlertOut.model_validate(a) for a in _alerts_of(db, d, operated)],
     )
+
+
+def _alerts_of(db: DbSession, d: Depot, operated: bool) -> list[Alert]:
+    """Open alerts for the shadow of a depot: a gate alarm only at its own gate (phase 7c), the
+    others where the depot runs trips (or is the hub)."""
+    alerts = open_alerts(db, 30, clock().operating_day)
+    gate = [a.ref_id or "" for a in alerts if a.ref_type == "gate"]
+    ids = {int(ref) for ref in gate if ref.isdigit()}
+    gate_depot = (
+        dict(
+            db.execute(
+                select(GateEvent.id, GateEvent.depot_id).where(GateEvent.id.in_(ids))
+            )
+            .tuples()
+            .all()
+        )
+        if ids
+        else {}
+    )
+    return [
+        a
+        for a in alerts
+        if (gate_depot.get(int(a.ref_id or 0)) == d.id if a.ref_type == "gate" else operated)
+    ]
 
 
 @router.get("/doors/{code}", response_model=ShadowDockDetail, response_model_by_alias=True)

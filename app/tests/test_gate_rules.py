@@ -293,3 +293,21 @@ def test_every_depot_has_its_own_gate(client: TestClient, guard: TestClient, db:
     assert [e["depot"] for e in guard.get("/api/gate/queue?depot=BUD").json()] == ["BUD"]
     assert guard.get("/api/gate/queue?depot=ZIL").json() == []
     assert guard.get("/api/gate/events?depot=XX").status_code == 404
+    # an unknown car at the Žilina gate: the alarm names the gate and shows in Žilina's shadow only
+    car = passage(
+        "zilcar", local(16, 10), vehicleType="car", plate="TT-123AB", plateConfidence=0.9
+    )
+    assert send(client, car | {"depot": "ZIL"})["decisions"] == {"hold": 1}
+    alert = db.execute(select(Alert).where(Alert.message.contains("TT-123AB"))).scalar_one()
+    assert alert.message.startswith("Brána Žilina:")
+    in_shadow = {
+        d: [a["message"] for a in guard.get(f"/api/shadow/{d}").json()["alerts"]]
+        for d in ("ZIL", "BUD")
+    }
+    assert any("TT-123AB" in m for m in in_shadow["ZIL"])
+    assert not any("TT-123AB" in m for m in in_shadow["BUD"])
+    assert any("ZA-999XY" in m for m in in_shadow["BUD"])  # Budimír's own gate alarm, old text
+    # a passage of a depot that does not exist: 422 for the batch, not a 500 resent forever
+    bad = {"passages": [car | {"key": "x", "depot": "XX"}]}
+    res = client.post("/internal/events/gate", json=bad, headers=TOKEN)
+    assert res.status_code == 422

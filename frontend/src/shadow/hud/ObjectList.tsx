@@ -44,7 +44,8 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
   const doorReadings = useShadowStore((s) => s.doors);
   const docks = live?.docks ?? [];
   const busy = docks.filter((d) => d.trip && (d.trip.status === "at_door" || d.trip.status === "loading"));
-  // the hub has no tracked doors (docks = []): its trucks come from live.trucks
+  // the hub has no tracked doors (docks = []): its trucks come from live.trucks; a depot gets
+  // there the linehaul trucks that end at it (Žilina)
   const hub = live?.depot.kind === "hub";
   const hubTrucks = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
   const deviceList = Object.values(devices).sort((a, b) => a.code.localeCompare(b.code));
@@ -55,8 +56,8 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
         onChange={setTab}
         className="mb-2"
         items={[
-          { id: "doors", label: "Brány", count: `${String(busy.length)}/${String(docks.length)}` },
-          { id: "trucks", label: "Kamióny", count: String(hub ? hubTrucks.length : busy.length) },
+          { id: "doors", label: "Brány", count: `${String(Math.min(busy.length + (hub ? 0 : hubTrucks.length), docks.length))}/${String(docks.length)}` },
+          { id: "trucks", label: "Kamióny", count: String(hub ? hubTrucks.length : busy.length + hubTrucks.length) },
           { id: "devices", label: "Zariadenia", count: String(deviceList.length) },
         ]}
       />
@@ -87,7 +88,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
           ))}
         {tab === "trucks" &&
           !hub &&
-          (busy.length === 0 ? (
+          (busy.length + hubTrucks.length === 0 ? (
             <li className="text-ink-muted px-2 py-3 text-sm">Pri bránach nestojí žiadny kamión.</li>
           ) : (
             busy.map((d) => (
@@ -97,6 +98,17 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
                 <Progress className="min-w-0 flex-1" value={Math.round(d.trip?.load?.loadedKg ?? 0)} max={d.trip?.capacityKg ?? 0} tone="brand" />
               </Row>
             ))
+          ))}
+        {tab === "trucks" &&
+          !hub &&
+          // linehaul trucks of other depots' directions that end here (Žilina, ADR-065)
+          hubTrucks.map((t) => (
+            <li key={t.plate} className="flex items-center gap-3 px-2 py-2 text-sm">
+              <span className="w-20 shrink-0 font-mono text-xs font-semibold">{t.plate}</span>
+              <Badge tone={t.state === "loading_at_hub" ? "ok" : "neutral"} size="sm">
+                {t.state === "loading_at_hub" ? "nakladá sa" : "na mieste"}
+              </Badge>
+            </li>
           ))}
         {tab === "devices" &&
           deviceList.map((dev) => (

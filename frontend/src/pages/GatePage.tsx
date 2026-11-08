@@ -93,8 +93,9 @@ function state(e: Pick<GateEvent, "decision" | "resolution">): { label: string; 
   return { label: "prejazd", tone: "ok" };
 }
 
-function detect(file: File, direction: "in" | "out"): Promise<GateResult> {
-  return getJson<GateResult>(`/api/gate/detect?direction=${direction}`, {
+function detect(file: File, direction: "in" | "out", depot: string): Promise<GateResult> {
+  // the gate of the depot chosen above (phase 7c); Budimír when "all depots" is selected
+  return getJson<GateResult>(`/api/gate/detect?direction=${direction}&depot=${depot || "BUD"}`, {
     method: "POST",
     headers: { "Content-Type": file.type || "application/octet-stream" },
     body: file,
@@ -268,7 +269,7 @@ export function GatePage() {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [direction, setDirection] = useState<"in" | "out">("in");
   const refresh = () => void qc.invalidateQueries({ queryKey: ["gate"] });
-  const run = useMutation({ mutationFn: (f: File) => detect(f, direction), onSuccess: refresh });
+  const run = useMutation({ mutationFn: (f: File) => detect(f, direction, depot), onSuccess: refresh });
   // which depot's gate: all by default (phase 7c, every depot has its own gate)
   const [depot, setDepot] = useState("");
   const depots = useDepots();

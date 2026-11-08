@@ -233,7 +233,7 @@ function StopsTab({ route, canAct, selected, onScan }: { route: CourierRoute; ca
           <EmptyState
             icon={<CheckCircle2 size={20} />}
             title={skipped.length ? "Trasa je prejdená" : "Všetky zastávky sú hotové"}
-            description={skipped.length ? "Zostali vynechané zastávky (nižšie)." : "Vráťte sa do depa Budimír."}
+            description={skipped.length ? "Zostali vynechané zastávky (nižšie)." : `Vráťte sa do skladu ${route.depot.name}.`}
           />
         </div>
       )}
@@ -300,7 +300,7 @@ function MapTab({ route, selected }: { route: CourierRoute; selected: number | n
       color: i === 0 ? "var(--color-brand-500)" : "var(--color-neutral-600)",
       title: `${String(s.sequence)}. ${s.address}`,
     }));
-    list.push({ id: "depot", ...route.depot, icon: HOME_ICON, color: "var(--color-chrome)", title: "Depo Budimír" });
+    list.push({ id: "depot", ...route.depot, icon: HOME_ICON, color: "var(--color-chrome)", title: `Sklad ${route.depot.name}` });
     if (route.vehicle)
       list.push({ id: "van", lat: route.vehicle.lat, lon: route.vehicle.lon, icon: VAN_ICON, color: "var(--color-info-600)", title: route.vehiclePlate });
     return list;

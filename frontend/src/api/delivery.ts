@@ -92,7 +92,7 @@ export interface CourierRoute extends CourierRouteBrief {
     heading: number;
     moving: boolean;
   } | null;
-  depot: { lat: number; lon: number };
+  depot: { code: string; name: string; lat: number; lon: number };
   stopList: CourierStop[];
 }
 

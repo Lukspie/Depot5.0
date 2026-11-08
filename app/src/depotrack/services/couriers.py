@@ -29,14 +29,24 @@ from depotrack.models import (
     Depot,
     Direction,
     Door,
+    LoadingScan,
     Parcel,
     ParcelEvent,
     RouteStop,
     TrackingToken,
+    Trip,
     User,
     Vehicle,
 )
-from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, StopOutcome, UserRole
+from depotrack.models.enums import (
+    DoorKind,
+    EventSource,
+    ParcelStatus,
+    ScanResult,
+    StopOutcome,
+    TripStatus,
+    UserRole,
+)
 from depotrack.seed.operations import BAH_OPS, ZIL_OPS, DepotOps, district_of
 from depotrack.services import tracking
 from depotrack.services.parcels import LOADABLE, in_day
@@ -181,6 +191,18 @@ def _depot_routes(
     return routes
 
 
+def _truck_arrived(db: Session, parcel: Parcel) -> bool:
+    """The linehaul truck the parcel was loaded onto has arrived at its destination."""
+    status = db.execute(
+        select(Trip.status)
+        .join(LoadingScan, LoadingScan.trip_id == Trip.id)
+        .where(LoadingScan.parcel_id == parcel.id, LoadingScan.result == ScanResult.OK)
+        .order_by(LoadingScan.at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    return bool(status == TripStatus.COMPLETED)
+
+
 def depot_of_route(db: Session, route: CourierRoute) -> Depot:
     """The depot the route starts from: the home depot of its district."""
     district = db.get(Direction, route.rajon_direction_id)
@@ -270,6 +292,8 @@ def load_parcel(
     loadable = LOADABLE if depot_of_route(db, route).code == "BUD" else (ParcelStatus.LOADED,)
     if parcel is None or parcel.status not in loadable:
         return None
+    if parcel.status == ParcelStatus.LOADED and not _truck_arrived(db, parcel):
+        return None  # still on the motorway (a late linehaul truck)
     parcel.status = ParcelStatus.OUT_FOR_DELIVERY
     db.add(
         ParcelEvent(

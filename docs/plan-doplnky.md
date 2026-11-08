@@ -308,6 +308,12 @@ Prekládkové depo kuriérov je pravdepodobne menšie ako tieto haly (Žilina m�
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).
 - 7c (ADR-066): prevádzka **Dunajskej Stredy** (vlastní kuriéri, napájacia jazda Ivanka ↔ DS ráno a večer, brána) a **Trenčína** (kuriéri, napájacia jazda z Ivanky po D1, brána so 7b). Rozmery haly DS z merania tímu a popis Budimíra dodá tím, potom spresniť layout a ADR-064.
+- 7c (záverečný reviewer, odporúčané):
+  - test aktualizácie z DB pred Fázou 7c s už naplánovaným dňom (kroky `depot-ops:*`, `couriers-depots:*`),
+  - stĺpec sklad pri prejazdoch v db-telemetry (migrácia `008`),
+  - počet pripravených balíkov pri kuriérskych bránach Žiliny a Ivanky (dnes 0, balíky majú smer ZA / BA),
+  - cieľ smeru ZA pri zmene stredu haly Žiliny (krok `depot-ops` ho nastaví len raz),
+  - limit áut na dvore v tieni pre každý sklad zvlášť.
 - 7c krok 3a: ulice okolo Žiliny, Ivanky, Dunajskej Stredy a Trenčína v offline cestnej sieti (`build_osm_data.py`, rovnaký postup ako Košice), overiť, že trasy Budimíra sa nezmenili. Dovtedy dodávky mimo Košíc jazdia po hlavných cestách.
 - *(hotové vo Fáze 7c)* 7b bod 5: layouty skladov Budimír, Ivanka pri Dunaji a Žilina (rampy, státia, parkovanie dodávok v tieni aj vo Flotile).
   - Satelitné snímky tímu v `docs/design/` zatiaľ nie sú.

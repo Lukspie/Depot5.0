@@ -255,6 +255,11 @@ def gate_events(body: GateEventsIn, db: DbSession, background: BackgroundTasks) 
     decisions: Counter[str] = Counter()
     duplicates = 0
     alerts: list[AlertChange] = []
+    known = set(db.execute(select(Depot.code)).scalars())
+    unknown = sorted({p.depot for p in body.passages} - known)
+    if unknown:
+        # a whole batch would fail on one bad code; telematics must not resend it forever
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown depot: {unknown[0]}")
     for p in body.passages:
         stored = gate_rules.record(
             db,

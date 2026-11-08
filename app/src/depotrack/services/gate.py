@@ -126,6 +126,10 @@ class Recorded:
     alert: AlertChange | None
 
 
+class UnknownDepotError(ValueError):
+    """A gate passage for a depot code that does not exist."""
+
+
 def record(
     db: Session,
     r: Reading,
@@ -138,10 +142,13 @@ def record(
     """Decide and store one passage with its audit row; None if the key was already stored.
     A held vehicle also raises an alert for the dispatch (closed when security decides)."""
     v = decide(db, r, at)
+    home = db.execute(select(Depot).where(Depot.code == depot)).scalar_one_or_none()
+    if home is None:
+        raise UnknownDepotError(depot)
     values: dict[str, Any] = {
         "at": at,
         "source": source,
-        "depot_id": db.execute(select(Depot.id).where(Depot.code == depot)).scalar_one(),
+        "depot_id": home.id,
         "external_key": external_key,
         "direction": r.direction,
         "vehicle_type": r.vehicle_type,
@@ -169,7 +176,9 @@ def record(
             db,
             kind=AlertKind.OTHER,
             severity=AlertSeverity.WARNING,
-            message=f"Brána: {describe(event)} čaká na rozhodnutie ochranky "
+            # which gate (phase 7c); Budimír keeps the text it had
+            message=f"Brána{'' if home.code == 'BUD' else ' ' + home.name}: {describe(event)} "
+            "čaká na rozhodnutie ochranky "
             f"({SYSTEM_NOTE[v.reason]})",
             ref_type="gate",
             ref_id=str(event.id),

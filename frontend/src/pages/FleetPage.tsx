@@ -213,20 +213,22 @@ export function FleetPage() {
       list.push({ plate: v.plate, kind: v.kind, lat: v.parkedAt[0], lon: v.parkedAt[1], status: null, delayMin: null, label: `${v.plate} · zaparkovaná` });
     }
     missing.forEach((v, i) => {
-      if (!home) return;
+      // at the vehicle's own depot (Žilina vans in Žilina), Budimír when unknown
+      const depot = depots.data?.find((d) => d.code === v.depot) ?? home;
+      if (!depot) return;
       const angle = (2 * Math.PI * i) / Math.max(missing.length, 1);
       list.push({
         plate: v.plate,
         kind: v.kind,
-        lat: home.lat + 0.0035 * Math.sin(angle),
-        lon: home.lon + 0.0052 * Math.cos(angle),
+        lat: depot.lat + 0.0035 * Math.sin(angle),
+        lon: depot.lon + 0.0052 * Math.cos(angle),
         status: null,
         delayMin: null,
         label: `${v.plate} · v depe`,
       });
     });
     return list;
-  }, [positions, vehicles.data, home]);
+  }, [positions, vehicles.data, home, depots.data]);
 
   const selectedVehicle = vehicles.data?.find((v) => v.plate === selected);
   // courier vans: the rest of the round on the streets; trucks: the route of their direction

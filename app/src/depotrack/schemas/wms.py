@@ -180,6 +180,7 @@ class VehicleOut(CamelModel):
     trip: TripBrief | None
     # [lat, lon] of the parking spot of a van in a depot without simulated operations (ADR-066)
     parked_at: tuple[float, float] | None = None
+    depot: str | None = None  # home depot code
 
 
 class VehicleDetail(VehicleOut):

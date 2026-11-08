@@ -190,6 +190,15 @@ Posledné úpravy pred odovzdaním. Tím zadal 5 bodov v poradí priority, po ka
 
 Vzniklo ADR-061 až 063, body 1–4 sú hotové. Bod 5 tím presunul po odovzdanie. Agent v OSM našiel kandidáta na sklad Žilina, ale budovu nehádal. Reviewer zachytil napríklad to, že vytlačená ŠPZ bez vozidla otvorila bránu, a meranie trás len na 16 trasách namiesto všetkých 648. Obe chyby sú opravené (ADR-061, ADR-062).
 
+### Fáza 7c – sklady (8. 11.)
+Tím zadal skutočné layouty a prevádzku skladov Budimír, Ivanka pri Dunaji, Žilina, Dunajská Streda a Trenčín. Pravidlá:
+- geometria len z OSM, satelitné snímky tímu len na kontrolu,
+- budovu nehádať, pri nejasnosti vypísať kandidátov,
+- Budimír sa nesmie zmeniť,
+- prevádzku pridávať po skladoch a po každom commit.
+
+Agent pred zmenami zachytil „golden“ výstup Budimíra zo stavu pred fázou (tag `pre-depots`), ktorý test porovnáva po každom kroku. V Dunajskej Strede agent v OSM sklad nenašiel a vypísal kandidátov. Adresu, strany rámp a vjazd dodal tím zo satelitu a z reálu, v Žiline tím potvrdil areál a halu. Kvôli termínu tím zmenil poradie: Žilina a Ivanka majú plnú prevádzku (kuriéri, brána), Dunajská Streda a Trenčín len layout so zaparkovanými dodávkami. Ich prevádzka a ulice ďalších miest sú v „Po odovzdaní“. Kontrola naživo našla chybu: kuriér Žiliny mohol naložiť balík, ktorý kamión nezobral. Chyba je opravená a pokrytá testom. Vzniklo ADR-064 až 066.
+
 ## 6. Čo rozhodol a opravil tím (príklady)
 
 | Situácia | Čo urobil tím |
@@ -201,12 +210,13 @@ Vzniklo ADR-061 až 063, body 1–4 sú hotové. Bod 5 tím presunul po odovzdan
 | Scenár „čo ak“ | tím si vyžiadal diagnózu pred opravami. Odhalila chybu validácie API a nevhodné KPI |
 | Prah meškania | tím určil, že oneskorený prechod je až nad 15 min |
 | Hub Bratislava | pravidlo „nehádať budovu“: použila sa len budova jednoznačne označená v OSM |
+| Sklady (7c) | tím určil budovy (Žilina, Dunajská Streda, Trenčín), strany rámp a vjazdy podľa satelitu a z reálu. Pre termín zúžil prevádzku na Žilinu a Ivanku |
 | Termín | tím zúžil rozsah a určil poradie: ML pred dizajnom |
 | Azure | voľba databázy (telemetria), vytvorenie servera, kontrola nákladov (bezplatná ponuka) |
 
 ## 7. Kontrola kvality
 
-- **Automatické testy:** 171 testov hlavného backendu (pytest) a 123 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript). Stav k 7. 11. 2026 po Fáze 7b.
+- **Automatické testy:** 184 testov hlavného backendu (pytest) a 125 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript). Stav k 8. 11. 2026 po Fáze 7c, vrátane golden testov Budimíra zo stavu pred fázou.
 - **Hooks:** lint po každej úprave, typecheck a testy pred koncom každej odpovede agenta.
 - **Reviewer:** po každej fáze. Našiel napríklad rozsah dôveryhodných proxy, ktorý by umožnil obísť limit prihlásení, skeny prichádzajúce do WMS až po odchode kamióna, model meškania bez zimných dát alebo chybný štart simulácie na novej Azure DB. Všetky blokujúce nálezy sú opravené.
 - **Test z čistého klonu** pred odovzdaním a ručné overenie hlavných scenárov v aplikácii.

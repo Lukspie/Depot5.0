@@ -97,7 +97,9 @@ Predvolené hodnoty v `.env.example` slúžia **len na vývoj a demo**.
 | `dispecer3` | Dispečer, nočná zmena (Zuzana Molnárová) | `SEED_DISPATCHER_PASSWORD` | `dispecer-demo-2026` |
 | `operator` | Operátor nakládky | `SEED_OPERATOR_PASSWORD` | `operator-demo-2026` |
 | `ochranka` | Ochranka | `SEED_SECURITY_PASSWORD` | `ochranka-demo-2026` |
-| `kurier01` … `kurier08` | Kuriér | `SEED_COURIER_PASSWORD` | `kurier-demo-2026` |
+| `kurier01` … `kurier08` | Kuriér, Budimír (Košice) | `SEED_COURIER_PASSWORD` | `kurier-demo-2026` |
+| `kurierza01` … `kurierza04` | Kuriér, Žilina | `SEED_COURIER_PASSWORD` | `kurier-demo-2026` |
+| `kurierba01` … `kurierba03` | Kuriér, Ivanka pri Dunaji (Bratislava-východ, Senec) | `SEED_COURIER_PASSWORD` | `kurier-demo-2026` |
 
 Heslá sa nastavujú len pri prvom seede. Neskôr ich mení admin v aplikácii, alebo treba spustiť
 `docker compose down -v`, ktoré zmaže všetky dáta.
@@ -124,7 +126,7 @@ Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, 
 Sledovanie zásielky: kuriéri nakladajú ráno od 6:30 (v admine situácia *Kuriéri ráno*, 06:55). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
 
-Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji.
+Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji, `ZIL` Žilina, `DS` Dunajská Streda, `TN` Trenčín (sklady v [docs/fazy/faza-7c-sklady.md](docs/fazy/faza-7c-sklady.md)).
 
 **Digitálny tieň, nie dvojča:** 3D pohľad automaticky zrkadlí realitu (skeny, vozidlá, zariadenia), ale do fyzického sveta zasahuje len cez rozhodnutia človeka v bežných obrazovkách WMS. Rozdiel model / tieň / dvojča vysvetľuje ADR-045.
 
@@ -133,7 +135,17 @@ Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&devic
 - Mapový podklad: [OpenFreeMap](https://openfreemap.org) (štýl Positron, © OpenMapTiles), dáta **© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)**. Podklad potrebuje v prehliadači internet.
 - Cestná sieť a adresy pre simuláciu sú odvodené z OpenStreetMap (ODbL 1.0) a sú uložené v repozitári. Postup výroby je v [tools/osm/README.md](tools/osm/README.md). Za behu systém nič zo siete nesťahuje.
 - 3D modely v digitálnom tieni (dodávka, autá, krabice): [Kenney](https://kenney.nl) Car Kit 3.1 a Factory Kit 3.0, licencia CC0 ([frontend/public/models/LICENSE.txt](frontend/public/models/LICENSE.txt)).
-- Depo: **Budimír** (BUD), hub: **Ivanka pri Dunaji** (BAH, „hub Bratislava“, poloha z OSM, ADR-051).
+- Sklady (layout haly a areálu z OSM, ADR-064):
+
+  | Kód | Sklad | Prevádzka v simulácii |
+  | --- | --- | --- |
+  | BUD | Budimír (prekládkové depo pri Košiciach) | plná: večerná a nočná vlna, 8 kuriérov |
+  | BAH | Ivanka pri Dunaji („hub Bratislava“) | kamióny BA, brána, 3 kuriéri Bratislava-východ a Senec (ADR-066) |
+  | ZIL | Žilina | kamióny ZA, brána, 4 kuriéri (ADR-065) |
+  | DS | Dunajská Streda | len layout a zaparkované dodávky (ADR-066) |
+  | TN | Trenčín | len layout a zaparkované dodávky (ADR-066) |
+
+  Obmedzenia: offline cestná sieť má ulice len okolo Košíc, dodávky Žiliny a Ivanky jazdia po hlavných cestách. Strany a počty rámp sú z poznámok tímu podľa satelitu, predpoklady sú v layoute (`source.assumed`). Hala v Dunajskej Strede je v OSM len čiastočne.
 
 ## Simulácia
 
@@ -201,3 +213,5 @@ cd frontend && npm ci && npm run dev
 - [ ] Fáza 5b: UX review (všetky obrazovky, 3 šírky)
 - [x] Fáza 6: ML (predikcia meškania, prediktívna údržba skenerov, brána YOLOX + OCR, IoT skener; ml/README.md)
 - [ ] Fáza 7: dokončenie
+- [x] Fáza 7b: demo (brána s pravidlami a ochrankou, mobilná appka kuriéra, 3 dispečeri, ranná nakládka)
+- [x] Fáza 7c: sklady (layouty 5 skladov z OSM, prevádzka Žiliny a Ivanky, brána každého skladu)

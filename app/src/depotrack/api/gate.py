@@ -105,6 +105,7 @@ async def detect(
     background: BackgroundTasks,
     direction: Annotated[Literal["in", "out"], Query()] = "in",
     record: Annotated[bool, Query()] = True,
+    depot: Annotated[str, Query(max_length=8)] = "BUD",
 ) -> GateDetectOut:
     """Body: the image (image/jpeg, image/png, image/webp). With `record` the passage is stored
     with its decision and goes to telematics (yard in the digital shadow)."""
@@ -125,7 +126,11 @@ async def detect(
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "empty body")
     # decoding, the models, the database and the calls to telematics block: not on the event loop
-    return await run_in_threadpool(_process, bytes(data), direction, record, db, background)
+    if db.execute(select(Depot.id).where(Depot.code == depot)).first() is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Unknown depot")
+    return await run_in_threadpool(
+        _process, bytes(data), direction, record, db, background, depot
+    )
 
 
 def _process(
@@ -134,6 +139,7 @@ def _process(
     record: bool,
     db: Session,
     background: BackgroundTasks,
+    depot: str = "BUD",
 ) -> GateDetectOut:
     models = gate_models()
     if models is None:
@@ -160,7 +166,7 @@ def _process(
     event_id = None
     recorded = False
     if record and (seen.vehicle_type or reading.plate):
-        stored = rules.record(db, seen, at=at, source="camera")
+        stored = rules.record(db, seen, at=at, source="camera", depot=depot)
         assert stored is not None  # camera events have no idempotency key
         verdict, event_id = stored.verdict, stored.event.id
         db.commit()

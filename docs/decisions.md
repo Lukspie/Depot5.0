@@ -708,7 +708,11 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Kamióny ZA** končia a začínajú v sklade Žilina (`destination_depot_id`), nie v bode mesta. Stav Žiliny ukazuje večerný kamión na ceste a pri rampe a nočný kamión, ktorý tam nakladá (rovnaká logika ako hub).
   - **Plán kuriérov** nesie pri každej trase jej sklad, parkovacie miesto dodávky a miesto nakládky pred odstavnou plochou (z layoutu, ADR-064). Dodávky Budimíra tým tiež parkujú na parkovisku z layoutu, nie v hale (známe obmedzenie z ADR-064 je vyriešené).
   - **Brána:** prejazd má sklad (`gate_events.depot_id`, migrácia). Žilina má vlastný mix na vlastnom prúde `rngFor(seed, deň, "gate-mix", "ZIL")`: kamióny ZA (príchod a odchod), dodávky kuriérov a občas neznáme auto. Rozhodujú tie isté pravidlá zo 7b. `/gate` filtruje podľa skladu.
-  - **Budimír sa nemení:** dashboard aj plán berú len smery Budimíra, trasy Budimíra sa tvoria prvé (rovnaké id), prúd RNG brány Budimíra je ten istý. Golden test app vynecháva len zámernú zmenu (cieľ ZA a nový kľúč `destinationDepots`), golden simulátora (evening-peak) je bez výnimky.
+  - **Budimír sa nemení:** dashboard aj plán berú len smery Budimíra a trasy Budimíra sa tvoria prvé (rovnaké id).
+    - Golden test app vynecháva len zámerné zmeny: cieľ ZA, nový kľúč `destinationDepots` a nové polia trás (`depot`, `parking`, `loading`), porovnáva trasy Budimíra.
+    - Golden simulátora porovnáva večernú špičku (skeny, jazdy, prejazdy, alarmy) bez výnimky. Ráno Budimíra golden nepokrýva a zámerne sa zmenilo: dodávky stoja a nakladajú na miestach z layoutu (ADR-064). Prúd RNG prejazdov dodávok je podľa rajónu, nie podľa id trasy, takže trasy ďalších skladov ho neposunú (test v `telematics/tests/depots.test.ts`).
+    - V dashboarde Budimíra sa balíky ZA a BA, ktoré už rozváža Žilina alebo Ivanka, počítajú ako naložené.
+  - **Odchýlka od plánu:** db-telemetry nemá stĺpec skladu pri prejazdoch (plánovaná migrácia `008` nevznikla). Sklad prejazdu nesie app (`gate_events.depot_id`), telemetria ukladá prejazdy všetkých skladov spolu. Je to v „Po odovzdaní“.
   - Sklad pridaný neskôr dostane trasy aj pre deň, ktorý už bol naplánovaný (krok seedu `couriers-depots:<deň>`).
 - **Overenie naživo (8. 11. 2026, situácia „Kuriéri ráno“):** 4 trasy Žiliny, 148 zastávok. Od 6:30 sa nakladá, dodávky stoja pri kuriérskych bránach a v tieni sú pri rampách oba kamióny ZA. Dodávky vyrazili 7:32–7:34 bránou Žiliny (automaticky, vozidlá vozového parku).
 - **Dôsledok:** Ďalšie sklady (Ivanka, Dunajská Streda, Trenčín) pôjdu rovnakým spôsobom: schéma kuriérov, `DepotOps` a mix brány. Cestná sieť má ulice len pri Košiciach, dodávky Žiliny jazdia po hlavných cestách a priamych spojniciach (rozšírenie siete je v pláne, krok 3a).
@@ -726,4 +730,11 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Brána Ivanky** BA-GATE: kamióny BA (príchod v noci, odchod večerného spoja), dodávky a občas neznáme auto. Vlastný prúd `rngFor(seed, deň, "gate-mix", "BAH")`, pravidlá zo 7b. ŠPZ neznámych áut podľa okolia skladu.
   - **Dunajská Streda a Trenčín:** dodávky DS-301KR až DS-306KR a TN-301KR až TN-304KR (toľko, koľko má layout parkovacích miest) bez kuriérov a trás. Server ich pošle s layoutom (`/api/layout` → `parked`) a vo Flotile (`parkedAt`). Tieň aj mapa ich kreslia na parkovisku. Miesto dostanú **len** sklady, ktorých dodávky simulátor nevedie. Pri prevádzkovaných skladoch polohu vždy hlási telematika, nič sa nepredpokladá.
 - **Overenie naživo (situácia „Kuriéri ráno“):** BA kamión KE-102LH prišiel bránou Ivanky o 02:31. Pri nakládke o 6:55 stoja v tieni pri rampách 2 kamióny a dodávky pri kuriérskych bránach. Dodávky vyrazili 7:31 až 7:34 (automaticky), všetky 3 trasy odišli. 101 zo 115 balíkov je na rozvoze, zvyšok kamión nezobral a ostal v Budimíri (pravidlo z ADR-065).
+- **Doplnky po záverečnom review:**
+  - kuriér Žiliny a Ivanky naloží balík až po príchode jeho kamióna (jazda `completed`); meškajúci kamión → 409,
+  - alarm brány nesie názov skladu („Brána Žilina: …“, text Budimíra ostal) a tieň ukazuje alarm brány len v jej sklade,
+  - fotka z kamery na `/gate` sa zapíše k skladu zvolenému ochrankou (`/api/gate/detect?depot=`),
+  - neznámy kód skladu v dávke prejazdov vráti 422, nie 500,
+  - neznáme auto pri bráne Žiliny a Ivanky aj odíde a jeho ťahy sú prvé v prúde, takže nezávisia od jázd,
+  - appka kuriéra ukazuje sklad trasy („Vráťte sa do skladu Žilina.“).
 - **Dôsledok:** Budimír sa nemení (golden test prechádza). Prevádzka DS a TN (kuriéri, napájacie jazdy Ivanka ↔ DS ráno a večer, Ivanka → TN po D1) a ulice ďalších miest sú v „Po odovzdaní“. Dovtedy dodávky Žiliny a Ivanky jazdia po hlavných cestách a priamych spojniciach.

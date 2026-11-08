@@ -141,6 +141,11 @@ def test_a_plate_without_a_vehicle_waits_for_security(
     )
     assert len(passages) == before
     assert len(guard.get("/api/gate/queue").json()) == 2
+    # the guard has chosen the Žilina gate: the photo is a passage there (phase 7c)
+    there = detect(guard, plate_image("ZA-998XY"), "image/png", depot="ZIL").json()
+    assert [e["depot"] for e in guard.get("/api/gate/queue?depot=ZIL").json()] == ["ZIL"]
+    assert there["eventId"] in [e["id"] for e in guard.get("/api/gate/queue?depot=ZIL").json()]
+    assert detect(guard, plate_image("ZA-998XY"), "image/png", depot="XX").status_code == 422
 
 
 @pytest.mark.usefixtures("seeded", "at_time")

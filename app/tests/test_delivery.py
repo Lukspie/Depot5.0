@@ -292,8 +292,28 @@ def test_zilina_couriers_deliver_the_parcels_of_the_za_truck(
     courier_login(client, "kurierza01")
     first = za_parcels[routes[0]["stops"][0]["barcode"]]
     assert client.post("/api/courier/scan", json={"barcode": first.barcode}).status_code == 409
-    # the courier of Žilina loads a parcel that came on the linehaul truck (status loaded)
+    # the app shows the round's own depot, not Budimír
+    route = client.get("/api/courier/route").json()
+    assert (route["depot"]["code"], route["depot"]["name"]) == ("ZIL", "Žilina")
+    # loaded onto the ZA truck in Budimír, but the truck has not arrived yet (late): still 409
+    from depotrack.models import Door, LoadingScan, Trip
+    from depotrack.models.enums import ScanResult, TripKind, TripStatus
+
+    truck = db.execute(
+        select(Trip).where(Trip.direction_id == za.id, Trip.kind == TripKind.OUTBOUND)
+    ).scalars().first()
+    assert truck is not None
+    door = db.execute(select(Door).where(Door.code == "LD-03")).scalar_one()
     first.status = ParcelStatus.LOADED
+    db.add(LoadingScan(parcel_id=first.id, trip_id=truck.id, door_id=door.id,
+                       at=truck.planned_departure, result=ScanResult.OK))  # fmt: skip
+    truck.status = TripStatus.EN_ROUTE
+    db.commit()
+    at("06:40")
+    courier_login(client, "kurierza01")
+    assert client.post("/api/courier/scan", json={"barcode": first.barcode}).status_code == 409
+    # the truck arrived in Žilina: the courier loads the parcel
+    truck.status = TripStatus.COMPLETED
     db.commit()
     at("06:40")
     courier_login(client, "kurierza01")

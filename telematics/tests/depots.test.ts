@@ -87,7 +87,16 @@ describe("phase 7c: a second depot with its own couriers and gate", () => {
     await runMorning2(alone);
     const strip = (g: (typeof app.gate)[number]) => ({ ...g });
     expect(alone.gate.filter((g) => g.depot === undefined).map(strip)).toEqual(bud.map(strip));
-  }, 60_000);
+
+    // routes of other depots take ids, so Budimír's routes get others on the next days: its van
+    // passages are keyed by the district and do not change
+    const shifted = new TwoDepotApp();
+    shifted.withZilina = false;
+    const plan = shifted.getCourierRoutes.bind(shifted);
+    shifted.getCourierRoutes = (day: string) => plan(day).then((p) => ({ ...p, routes: p.routes.map((r) => ({ ...r, routeId: r.routeId + 1000 })) }));
+    await runMorning2(shifted);
+    expect(shifted.gate.filter((g) => g.depot === undefined).map(strip)).toEqual(bud.map(strip));
+  }, 90_000);
 });
 
 /** The same morning without asserting Žilina's van (it does not exist there). */

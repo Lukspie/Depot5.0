@@ -16,6 +16,13 @@ class TrackPoint(CamelModel):
     lon: float
 
 
+class RouteDepot(TrackPoint):
+    """The depot the courier's round starts from (phase 7c: Budimír, Žilina, Ivanka)."""
+
+    code: str
+    name: str
+
+
 class TrackCourier(CamelModel):
     """Exact position (customer ≤ 3rd in line) or an approximate circle (ADR-042)."""
 
@@ -96,7 +103,7 @@ class CourierRouteBrief(CamelModel):
 
 class CourierRouteOut(CourierRouteBrief):
     vehicle: VehiclePosition | None
-    depot: TrackPoint
+    depot: RouteDepot
     stop_list: list[CourierStopOut]
 
 

@@ -74,7 +74,8 @@ export function gateMix(base: GateRow[], couriers: CourierSchedule[], day: strin
     out.push({ ...g, vehicleConfidence, plateConfidence: lowPlate && g.plate !== null ? low : g.plateConfidence });
   }
   for (const c of [...couriers].sort((a, b) => a.route.routeId - b.route.routeId)) {
-    const r = rngFor(seed, day, "gate-mix", "van", c.route.routeId);
+    // keyed by the district, not the route id: routes of other depots (phase 7c) shift the ids
+    const r = rngFor(seed, day, "gate-mix", "van", c.route.districtCode);
     for (const [at, direction] of [
       [c.depart, "out"],
       [c.returnAt, "in"],
@@ -111,6 +112,11 @@ const REGION_PLATES: Record<string, string[]> = {
 export function depotGateMix(depot: string, trucks: TripSchedule[], couriers: CourierSchedule[], day: string, seed: number): GateRow[] {
   const rng = rngFor(seed, day, "gate-mix", depot);
   const out: GateRow[] = [];
+  // an unknown car on two days of three, drawn first so it does not depend on the trips
+  const car = rng.chance(0.66);
+  const carAt = Math.round(rng.float(zonedToUtc(addDays(day, 1), "09:00"), zonedToUtc(addDays(day, 1), "14:00")));
+  const carStay = rng.int(20, 90) * 60_000;
+  const carPlate = `${rng.pick(REGION_PLATES[depot] ?? ["ZA", "MT", "PB", "CA"])}-${String(rng.int(100, 999))}${rng.pick(["AB", "EF", "KL", "XY"])}`;
   const row = (at: number, direction: "in" | "out", vehicleType: string, plate: string | null, expected: boolean): GateRow => ({
     at,
     direction,
@@ -130,10 +136,6 @@ export function depotGateMix(depot: string, trucks: TripSchedule[], couriers: Co
   for (const c of [...couriers].sort((a, b) => a.route.routeId - b.route.routeId)) {
     out.push(row(c.depart, "out", "van", c.route.vehiclePlate, true), row(c.returnAt, "in", "van", c.route.vehiclePlate, true));
   }
-  // an unknown car in the afternoon on two days of three
-  const car = rng.chance(0.66);
-  const carAt = Math.round(rng.float(zonedToUtc(addDays(day, 1), "09:00"), zonedToUtc(addDays(day, 1), "14:00")));
-  const carPlate = `${rng.pick(REGION_PLATES[depot] ?? ["ZA", "MT", "PB", "CA"])}-${String(rng.int(100, 999))}${rng.pick(["AB", "EF", "KL", "XY"])}`;
-  if (car) out.push(row(carAt, "in", "car", carPlate, false));
+  if (car) out.push(row(carAt, "in", "car", carPlate, false), row(carAt + carStay, "out", "car", carPlate, false));
   return out;
 }

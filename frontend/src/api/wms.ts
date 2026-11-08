@@ -146,6 +146,8 @@ export interface Vehicle {
   trip: TripBrief | null;
   /** [lat, lon] of the parking spot of a van in a depot without simulated operations (ADR-066) */
   parkedAt?: [number, number] | null;
+  /** home depot code */
+  depot?: string | null;
 }
 
 export interface VehicleDetail extends Vehicle {

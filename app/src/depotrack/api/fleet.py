@@ -72,7 +72,9 @@ def vehicles(_: Dispatcher, db: DbSession) -> list[VehicleOut]:
     clk = clock()
     look = Lookup(db)
     parked: dict[str, tuple[float, float]] = {}
+    codes: dict[int, str] = {}
     for depot in db.execute(select(Depot)).scalars():
+        codes[depot.id] = depot.code
         for plate, s in parked_spots(db, depot).items():
             parked[plate] = to_latlon(depot.layout, float(s["x"]), float(s["y"]))
     out = []
@@ -86,6 +88,7 @@ def vehicles(_: Dispatcher, db: DbSession) -> list[VehicleOut]:
                 capacity_parcels=v.capacity_parcels,
                 trip=trip_brief(db, trip, look, clk.sim_time) if trip else None,
                 parked_at=parked.get(v.plate),
+                depot=codes.get(v.depot_id) if v.depot_id else None,
             )
         )
     return out

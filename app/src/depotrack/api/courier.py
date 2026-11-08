@@ -19,10 +19,10 @@ from depotrack.schemas.delivery import (
     CourierRouteBrief,
     CourierRouteOut,
     CourierStopOut,
+    RouteDepot,
     ScanIn,
     ScanOut,
     StopResultIn,
-    TrackPoint,
     VehiclePosition,
 )
 from depotrack.services import telematics
@@ -165,7 +165,7 @@ def my_route(
             if pos
             else None
         ),
-        depot=TrackPoint(lat=depot.lat, lon=depot.lon),
+        depot=RouteDepot(code=depot.code, name=depot.name, lat=depot.lat, lon=depot.lon),
         stop_list=[_stop_out(s, p, route.date) for s, p in stops],
     )
 
@@ -207,7 +207,10 @@ def finish_stop(stop_id: int, body: StopResultIn, user: Courier, db: DbSession) 
     response_model_by_alias=True,
     responses={
         404: {"description": "Not a parcel of your route today"},
-        409: {"description": "Not loading time: before 06:30 or after the departure"},
+        409: {
+            "description": "Not loading time (before 06:30 or after the departure), or the "
+            "parcel is not in this depot (it did not come on the linehaul truck, ADR-065)"
+        },
     },
 )
 def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:

@@ -22,7 +22,9 @@ function occupancy(live: Shadow | undefined): string | null {
     return `${String(here)} ${word} na mieste`;
   }
   const busy = live.docks.filter((d) => d.trip && (d.trip.status === "at_door" || d.trip.status === "loading")).length;
-  return `${String(busy)}/${String(live.docks.length)} brán obsadených`;
+  // linehaul trucks that end in this depot (Žilina, ADR-065) stand on free ramps
+  const arrived = live.trucks.filter((t) => t.state === "at_hub" || t.state === "loading_at_hub").length;
+  return `${String(Math.min(busy + arrived, live.docks.length))}/${String(live.docks.length)} brán obsadených`;
 }
 
 /**

@@ -59,6 +59,15 @@ def wave_parcels(db: Session, day: date, kind: str) -> int:
     ).scalar_one()
 
 
+# statuses after the courier scan
+DELIVERY = (
+    ParcelStatus.OUT_FOR_DELIVERY,
+    ParcelStatus.DELIVERED,
+    ParcelStatus.FAILED_DELIVERY,
+    ParcelStatus.RETURNED,
+)
+
+
 def day_overview(
     db: Session, day: date, trips: list[Trip], look: Lookup, now: datetime
 ) -> tuple[DashboardKpis, list[DirectionRow]]:
@@ -80,8 +89,12 @@ def day_overview(
     # the directions of Budimír (the courier districts of other depots are theirs, phase 7c)
     home = db.execute(select(Depot.id).where(Depot.code == "BUD")).scalar_one()
     own = (d for d in look.directions.values() if d.depot_id == home)
+    onward = 0
     for d in sorted(own, key=lambda d: (d.type.value, d.code)):
         c = per_dir.get(d.id, Counter())
+        # ZA / BA parcels already in the vans of Žilina / Ivanka left Budimír loaded (ADR-065)
+        later = sum(c[s] for s in DELIVERY) if d.destination_depot_id is not None else 0
+        onward += later
         loadable = sum(c[s] for s in LOADABLE)
         missing = loadable if d.id in departed_dirs else 0
         rows.append(
@@ -90,7 +103,7 @@ def day_overview(
                 name=d.name,
                 type=d.type,
                 total=sum(c.values()),
-                loaded=c[ParcelStatus.LOADED],
+                loaded=c[ParcelStatus.LOADED] + later,
                 staged=c[ParcelStatus.STAGED] + c[ParcelStatus.SORTED],
                 waiting=sum(c[s] for s in WAITING),
                 missing=missing,
@@ -109,7 +122,7 @@ def day_overview(
     on_site = {t.vehicle_id for t in trips if t.status in (TripStatus.AT_DOOR, TripStatus.LOADING)}
     kpis = DashboardKpis(
         parcels_total=sum(totals.values()),
-        parcels_loaded=totals[ParcelStatus.LOADED],
+        parcels_loaded=totals[ParcelStatus.LOADED] + onward,
         parcels_staged=totals[ParcelStatus.STAGED],
         parcels_sorted=totals[ParcelStatus.SORTED],
         parcels_waiting=sum(totals[s] for s in WAITING),
