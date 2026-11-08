@@ -11,6 +11,7 @@ import { VehicleMarkers, type MapVehicle } from "../components/map/VehicleMarker
 import { Badge, Card, DataTable, EmptyState, KeyValue, PageHeader, Progress, SidePanel, Spinner, Tabs, type Column } from "../components/ui";
 import { DIRECTION_TYPE, PARCEL_STATUS, TRIP_STATUS, VAN_STATUS, delayLabel, delayTone, hhmm } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
+import { kg } from "../lib/format";
 
 interface Position {
   plate: string;
@@ -160,7 +161,7 @@ function VehiclePanel({ plate, position, onClose }: { plate: string; position: P
                       {p.barcode}
                     </Link>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className="text-ink-muted text-xs tabular-nums">{p.weightKg.toFixed(1)} kg</span>
+                      <span className="text-ink-muted text-xs tabular-nums">{kg(p.weightKg)}</span>
                       <Badge size="sm" tone={PARCEL_STATUS[p.status].tone}>
                         {PARCEL_STATUS[p.status].label}
                       </Badge>

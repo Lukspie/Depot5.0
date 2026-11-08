@@ -35,6 +35,7 @@ import { FitBounds, HOME_ICON, PointMarkers, VAN_ICON, type MapPoint } from "../
 import { RouteLine } from "../components/map/RouteLine";
 import { Badge, Button, EmptyState, Progress, Spinner, type Tone } from "../components/ui";
 import { hhmm } from "../domain/labels";
+import { kg } from "../lib/format";
 
 type Tab = "stops" | "map" | "scan";
 
@@ -142,7 +143,7 @@ function NextStop({ stop, canAct, picked, first }: { stop: CourierStop; canAct: 
           </div>
           <div className="text-ink-muted mt-1 flex flex-wrap gap-x-3 text-xs">
             <span className="font-mono">{stop.barcode}</span>
-            <span>{stop.weightKg.toFixed(1)} kg</span>
+            <span>{kg(stop.weightKg)}</span>
             <span className="flex items-center gap-1">
               <Clock size={12} /> ETA {hhmm(eta(stop))}
             </span>
@@ -163,7 +164,7 @@ function NextStop({ stop, canAct, picked, first }: { stop: CourierStop; canAct: 
           <Button
             size="lg"
             variant="secondary"
-            className="text-danger-600 border-danger-600 py-4"
+            className="text-danger-700 border-danger-600 py-4"
             icon={<XCircle size={22} />}
             disabled={finish.isPending}
             onClick={() => finish.mutate({ stopId: stop.id, outcome: "failed" })}
@@ -173,7 +174,7 @@ function NextStop({ stop, canAct, picked, first }: { stop: CourierStop; canAct: 
         </div>
       )}
       {finish.error && (
-        <p className="text-danger-600 mt-3 text-sm">
+        <p className="text-danger-700 mt-3 text-sm">
           {isApiError(finish.error, 409) ? "Zastávka je už uzavretá alebo balík nie je v dodávke." : "Nepodarilo sa uložiť, skúste znova."}
         </p>
       )}
@@ -204,7 +205,7 @@ function StopRow({ s, skipped = false }: { s: CourierStop; skipped?: boolean }) 
         ) : (
           <>
             <div className="text-sm tabular-nums">{hhmm(eta(s))}</div>
-            {w && w.tone !== "ok" && <div className={`text-[11px] ${w.tone === "danger" ? "text-danger-600" : "text-ink-muted"}`}>{w.label}</div>}
+            {w && w.tone !== "ok" && <div className={`text-[11px] ${w.tone === "danger" ? "text-danger-700" : "text-ink-muted"}`}>{w.label}</div>}
           </>
         )}
       </div>
@@ -226,7 +227,7 @@ function StopsTab({ route, canAct, selected, onScan }: { route: CourierRoute; ca
         <NextStop stop={current} canAct={canAct && inVan && route.departedAt !== null} picked={current.id === selected} first={!route.departedAt} />
       )}
       {current && route.departedAt && !inVan && (
-        <p className="text-warn-600 px-1 text-sm">Balík tejto zastávky nie je v dodávke (nenaložený pri nakládke).</p>
+        <p className="text-warn-700 px-1 text-sm">Balík tejto zastávky nie je v dodávke (nenaložený pri nakládke).</p>
       )}
       {!current && (
         <div className="bg-surface rounded-2xl p-4">
@@ -398,7 +399,7 @@ function ScanTab({
     <div className="space-y-3 p-3">
       <section className="bg-surface rounded-2xl p-4">
         <div className="flex items-center gap-3">
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${connected ? "bg-info-100 text-info-600" : "bg-neutral-100 text-neutral-600"}`}>
+          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${connected ? "bg-info-100 text-info-700" : "bg-neutral-100 text-neutral-700"}`}>
             {connected ? <Bluetooth size={22} /> : <BluetoothOff size={22} />}
           </div>
           <div className="min-w-0 flex-1">
@@ -448,7 +449,7 @@ function ScanTab({
       {log.length > 0 && (
         <ul className="bg-surface divide-line divide-y rounded-2xl px-4 py-1 text-sm" aria-live="polite">
           {log.map((l, i) => (
-            <li key={i} className={`py-2 ${l.tone === "danger" ? "text-danger-600" : l.tone === "ok" ? "text-ink" : "text-ink-muted"}`}>
+            <li key={i} className={`py-2 ${l.tone === "danger" ? "text-danger-700" : l.tone === "ok" ? "text-ink" : "text-ink-muted"}`}>
               {l.text}
             </li>
           ))}
@@ -625,7 +626,7 @@ export function CourierPage() {
         </div>
       )}
       {r && route.isError && (
-        <div className="bg-warn-100 text-warn-600 shrink-0 px-3 py-1.5 text-xs" role="status">
+        <div className="bg-warn-100 text-warn-700 shrink-0 px-3 py-1.5 text-xs" role="status">
           Bez spojenia, zobrazené údaje z {new Date(route.dataUpdatedAt).toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" })}.
         </div>
       )}

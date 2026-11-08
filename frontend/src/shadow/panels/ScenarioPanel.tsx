@@ -52,7 +52,7 @@ function Delta({ plan, scenario }: { plan: number; scenario: number }) {
   const d = scenario - plan;
   if (d === 0) return <span className="text-ink-muted">0</span>;
   // every KPI here is "lower is better"
-  return <span className={`font-semibold ${d > 0 ? "text-danger-600" : "text-ok-600"}`}>{d > 0 ? `+${String(d)}` : String(d)}</span>;
+  return <span className={`font-semibold ${d > 0 ? "text-danger-700" : "text-ok-700"}`}>{d > 0 ? `+${String(d)}` : String(d)}</span>;
 }
 
 function Results({ r }: { r: WhatIfResult }) {
@@ -100,7 +100,7 @@ function Results({ r }: { r: WhatIfResult }) {
                 </span>
                 <span className="shrink-0 text-xs tabular-nums">
                   {hhmm(t.base)} → <b>{hhmm(t.scenario)}</b>{" "}
-                  <span className={t.deltaMin > 0 ? "text-danger-600" : t.deltaMin < 0 ? "text-ok-600" : "text-ink-muted"}>
+                  <span className={t.deltaMin > 0 ? "text-danger-700" : t.deltaMin < 0 ? "text-ok-700" : "text-ink-muted"}>
                     ({t.deltaMin > 0 ? "+" : ""}
                     {t.deltaMin} min)
                   </span>
@@ -110,7 +110,7 @@ function Results({ r }: { r: WhatIfResult }) {
           </ul>
         )}
         {r.notes.length > 0 && (
-          <p className="text-warn-600 mt-2 text-xs">
+          <p className="text-warn-700 mt-2 text-xs">
             {r.notes.length === 1 ? "Jedna zo zmenených jázd" : "Niektoré zo zmenených jázd"} už prebehli, zásah sa na nich neprejaví.
           </p>
         )}
@@ -280,7 +280,7 @@ export function ScenarioPanel({ layout, onAffected }: { layout: DepotLayout; onA
           </Button>
         </div>
       )}
-      {run.isError && <p className="text-danger-600 mt-3 text-sm">{actionError(run.error)}</p>}
+      {run.isError && <p className="text-danger-700 mt-3 text-sm">{actionError(run.error)}</p>}
       {result && <Results r={result} />}
     </Card>
   );

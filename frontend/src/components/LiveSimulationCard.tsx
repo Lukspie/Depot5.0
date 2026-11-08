@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useChannel, useSimClock, useSocketStatus } from "../hooks/telematics";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  open: { label: "Pripojené", cls: "bg-ok-100 text-ok-600" },
-  connecting: { label: "Pripájam…", cls: "bg-info-100 text-info-600" },
-  closed: { label: "Odpojené – skúšam znova", cls: "bg-danger-100 text-danger-600" },
+  open: { label: "Pripojené", cls: "bg-ok-100 text-ok-700" },
+  connecting: { label: "Pripájam…", cls: "bg-info-100 text-info-700" },
+  closed: { label: "Odpojené – skúšam znova", cls: "bg-danger-100 text-danger-700" },
 };
 
 interface AlertData {
@@ -66,7 +66,7 @@ export function LiveSimulationCard() {
             {info ? (
               <>
                 deň {info.operatingDay} · ×{info.speed} · seed {info.seed}
-                {info.paused && <span className="bg-warn-100 text-warn-600 ml-2 rounded-full px-2 py-0.5">pauza</span>}
+                {info.paused && <span className="bg-warn-100 text-warn-700 ml-2 rounded-full px-2 py-0.5">pauza</span>}
               </>
             ) : (
               "čakám na hodiny…"
@@ -89,7 +89,7 @@ export function LiveSimulationCard() {
       </div>
 
       {lastAlert && (
-        <p className="bg-warn-100 text-warn-600 mt-4 rounded-xl px-3 py-2 text-sm">
+        <p className="bg-warn-100 text-warn-700 mt-4 rounded-xl px-3 py-2 text-sm">
           <span className="font-medium">Posledný alarm:</span> {lastAlert.message}
         </p>
       )}

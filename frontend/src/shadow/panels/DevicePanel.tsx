@@ -7,6 +7,7 @@ import { useShadowStore, type LiveScan } from "../store";
 import { useCanAct } from "../permissions";
 import { AlertList, Maintenance } from "./Actions";
 import { Sparkline } from "./Sparkline";
+import { pct } from "../../lib/format";
 
 const EMPTY: LiveScan[] = [];
 
@@ -24,7 +25,7 @@ function RiskValue({ code, kind, live }: { code: string; kind: string | undefine
   return (
     <span className="flex min-w-32 items-center gap-2">
       <Progress className="w-20" value={pct} max={100} tone={r.alarm ? "danger" : pct >= 50 ? "warn" : "ok"} />
-      <span className={`tabular-nums ${r.alarm ? "text-danger-600 font-semibold" : ""}`}>{pct} %</span>
+      <span className={`tabular-nums ${r.alarm ? "text-danger-700 font-semibold" : ""}`}>{pct} %</span>
     </span>
   );
 }
@@ -67,8 +68,8 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
       <KeyValue
         rows={[
           ["Stav", <StatusDot key="s" tone={status.tone}>{status.label}</StatusDot>],
-          ["Čítanosť (30 min)", d?.readRate === null || d?.readRate === undefined ? "—" : `${(d.readRate * 100).toFixed(1)} %`],
-          ["Čítanosť za smenu (8 h)", counted > 0 ? `${((read / counted) * 100).toFixed(1)} %` : "—"],
+          ["Čítanosť (30 min)", pct(d?.readRate)],
+          ["Čítanosť za smenu (8 h)", counted > 0 ? pct(read / counted) : "—"],
           ["Spočítané / prečítané", `${counted.toLocaleString("sk-SK")} / ${read.toLocaleString("sk-SK")}`],
           ["Neidentifikované", (counted - read).toLocaleString("sk-SK")],
           ["Riziko poruchy (ML)", <RiskValue key="r" code={code} kind={d?.kind} live={d?.status === "online" || d?.status === "degraded"} />],

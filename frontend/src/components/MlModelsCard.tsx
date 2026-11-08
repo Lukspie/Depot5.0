@@ -24,7 +24,7 @@ export function MlModelsCard() {
     <section className="bg-surface shadow-card rounded-card p-5">
       <h2 className="mb-1 font-semibold">ML modely</h2>
       <p className="text-ink-muted mb-4 text-sm">Načítané v hlavnom backende z ml/artifacts.</p>
-      {q.isError && <p className="text-danger-600 text-sm">Stav modelov sa nepodarilo načítať.</p>}
+      {q.isError && <p className="text-danger-700 text-sm">Stav modelov sa nepodarilo načítať.</p>}
       <ul className="divide-line divide-y text-sm">
         {q.data?.models.map((m) => {
           const mae = num(m.metrics?.maeMin);

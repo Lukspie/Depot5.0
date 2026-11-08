@@ -7,6 +7,7 @@ import { useDirectionsAdmin, useUpdateDirection, type DirectionAdmin } from "../
 import { DIRECTION_TYPE, dayLabel } from "../../domain/labels";
 import { useSimClock } from "../../hooks/telematics";
 import { Badge, Button, Card, DataTable, KeyValue, StatusDot, type Column, type Tone } from "../ui";
+import { num, pct } from "../../lib/format";
 
 // ------------------------------------------------------------------ directions
 
@@ -107,7 +108,7 @@ export function DevicesTab() {
       width: "8.5rem",
       align: "right",
       hideBelow: "sm",
-      render: (d) => <span className="tabular-nums">{d.readRate === null ? "—" : `${(d.readRate * 100).toFixed(1)} %`}</span>,
+      render: (d) => <span className="tabular-nums">{pct(d.readRate)}</span>,
     },
     {
       key: "actions",
@@ -145,7 +146,7 @@ export function DevicesTab() {
         columns={columns}
         rows={devices.data?.devices}
         loading={devices.isPending}
-        error={devices.isError && <p className="text-danger-600 text-sm">Telematika je nedostupná.</p>}
+        error={devices.isError && <p className="text-danger-700 text-sm">Telematika je nedostupná.</p>}
         rowKey={(d) => d.code}
       />
     </Card>
@@ -207,7 +208,7 @@ export function SimulationTab() {
   const jump = (to: string) => {
     // the next HH:MM can be almost a day ahead (e.g. the same time again): ask before a long replay
     const hours = now ? hoursUntil(now, to, info?.timeZone ?? "Europe/Bratislava") : 0;
-    if (mode === "replay" && hours > 6 && !window.confirm(`Pretočiť s dátami ${hours.toFixed(1)} h simulácie? Môže to trvať desiatky sekúnd.`)) return;
+    if (mode === "replay" && hours > 6 && !window.confirm(`Pretočiť s dátami ${num(hours, 1)} h simulácie? Môže to trvať desiatky sekúnd.`)) return;
     act.mutate({ method: "POST", path: "/sim/clock/jump", body: { to, mode } });
   };
   const situations = useQuery({
@@ -279,7 +280,7 @@ export function SimulationTab() {
           Situácia je čistý reset s daným seedom a prepínačmi a pretočenie dňa s dátami do jej času. Rovnaká situácia dá vždy rovnaké čísla. Dá sa
           otvoriť aj odkazom, napr. <code>/shadow?depot=BUD&amp;situation=evening-peak</code>.
         </p>
-        {situations.isError && <p className="text-danger-600 text-sm">Telematika je nedostupná.</p>}
+        {situations.isError && <p className="text-danger-700 text-sm">Telematika je nedostupná.</p>}
         <ul className="divide-line divide-y">
           {situations.data?.map((s) => (
             <li key={s.id} className="flex flex-wrap items-center gap-3 py-2">

@@ -57,7 +57,26 @@ def _out(d: Depot) -> DepotOut:
 
 @router.get("/depots", response_model=list[DepotOut], response_model_by_alias=True)
 def depots(_: CurrentUser, db: DbSession) -> list[DepotOut]:
-    return [_out(d) for d in db.execute(select(Depot).order_by(Depot.id)).scalars()]
+    return [
+        _out(d).model_copy(update={"label": label})
+        for d, label in depot_labels(db)
+    ]
+
+
+def depot_labels(db: DbSession) -> list[tuple[Depot, str]]:
+    """What each depot is, from the data: a depot with its own linehaul directions transships,
+    a hub is named after the directions that end there, the others deliver."""
+    directions = list(db.execute(select(Direction)).scalars())
+    out = []
+    for d in db.execute(select(Depot).order_by(Depot.id)).scalars():
+        if d.kind == DepotKind.HUB:
+            towns = sorted({x.name for x in directions if x.destination_depot_id == d.id})
+            out.append((d, " ".join(["hub", *towns])))
+        elif any(x.depot_id == d.id and x.type == DirectionType.LINEHAUL for x in directions):
+            out.append((d, "prekládkové depo"))
+        else:
+            out.append((d, "depo"))
+    return out
 
 
 @router.get("/layout", response_model=LayoutOut, response_model_by_alias=True)

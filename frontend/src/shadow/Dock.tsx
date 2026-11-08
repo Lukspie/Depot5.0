@@ -64,7 +64,7 @@ export function Dock({
       {equipment && <primitive object={equipment} />}
       {(fault || state === "unknown") && (
         <Html position={[0, OPENING_H / 2, -0.6]} center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-          <div className="bg-warn-100 text-warn-600 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shadow">{fault ? "senzor – porucha" : "senzor – bez údajov"}</div>
+          <div className="bg-warn-100 text-warn-700 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shadow">{fault ? "senzor – porucha" : "senzor – bez údajov"}</div>
         </Html>
       )}
       <primitive object={plate} position={[0, OPENING_H + 1.4, -0.3]} />

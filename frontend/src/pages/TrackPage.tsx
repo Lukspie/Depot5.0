@@ -162,7 +162,7 @@ function Delivered({ t }: { t: TrackInfo }) {
   return (
     <Card>
       <div className="flex flex-col items-center py-8 text-center">
-        <CheckCircle2 size={56} className="text-ok-600 mb-3" />
+        <CheckCircle2 size={56} className="text-ok-700 mb-3" />
         <h1 className="text-2xl font-semibold">Doručené o {hhmm(t.deliveredAt)}</h1>
         <p className="text-ink-muted mt-1 text-sm">Ďakujeme za trpezlivosť.</p>
       </div>
@@ -174,7 +174,7 @@ function Failed({ t }: { t: TrackInfo }) {
   return (
     <Card>
       <div className="flex flex-col items-center py-8 text-center">
-        <PackageX size={56} className="text-warn-600 mb-3" />
+        <PackageX size={56} className="text-warn-700 mb-3" />
         <h1 className="text-xl font-semibold">Nezastihli sme vás</h1>
         <p className="text-ink-muted mt-1 max-w-xs text-sm">
           Kuriér {t.courierName ?? ""} sa pokúsil balík doručiť o {hhmm(t.failedAt)}. Balík sa vráti do depa a doručíme ho v ďalší
@@ -226,7 +226,7 @@ export function TrackPage() {
         Zásielka <span className="font-mono">{t.barcode}</span>
         {t.updatedAt && t.status !== "delivered" && <> · aktualizované {hhmmss(t.updatedAt)}</>}
       </p>
-      {throttled && <p className="text-warn-600 text-center text-xs">Príliš veľa požiadaviek, údaje sa obnovia o chvíľu.</p>}
+      {throttled && <p className="text-warn-700 text-center text-xs">Príliš veľa požiadaviek, údaje sa obnovia o chvíľu.</p>}
     </Shell>
   );
 }

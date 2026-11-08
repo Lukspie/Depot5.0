@@ -4,6 +4,7 @@ import { useParcel, type ParcelStatus } from "../api/wms";
 import { Badge, Card, DataTable, EmptyState, KeyValue, PageHeader, Spinner, type Column } from "../components/ui";
 import { DIRECTION_TYPE, PARCEL_STATUS, SCAN_RESULT, SOURCE, hhmm, hhmmss } from "../domain/labels";
 import type { ParcelEvent, ScanRow } from "../api/wms";
+import { num } from "../lib/format";
 
 /** Main path of a parcel through the depot (the horizontal timeline). */
 const STEPS: { status: ParcelStatus; label: string }[] = [
@@ -106,7 +107,7 @@ export function ParcelPage() {
             rows={[
               ["Smer", `${p.directionName} (${p.directionCode})`],
               ["Typ smeru", DIRECTION_TYPE[p.directionType]],
-              ["Hmotnosť", `${p.weightKg.toFixed(2)} kg`],
+              ["Hmotnosť", `${num(p.weightKg, 2)} kg`],
               ["Rozmery", `${String(p.lengthCm)} × ${String(p.widthCm)} × ${String(p.heightCm)} cm`],
               ["Odosielateľ", p.sender],
               ["Prijatý do systému", hhmm(p.createdAt)],

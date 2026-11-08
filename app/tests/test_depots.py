@@ -37,6 +37,15 @@ def test_depots_budimir_and_bratislava_hub(user: TestClient) -> None:
     assert depots["BUD"]["kind"] == "depot" and depots["BUD"]["name"] == "Budimír"
     assert depots["BAH"]["kind"] == "hub"
     assert 48.7 < depots["BUD"]["lat"] < 48.9 and 21.2 < depots["BUD"]["lon"] < 21.4
+    # what each depot is, from the data (phase 7d): navigation, login network
+    labels = {code: d["label"] for code, d in depots.items()}
+    assert labels == {
+        "BUD": "prekládkové depo",
+        "BAH": "hub Bratislava",
+        "ZIL": "depo",
+        "DS": "depo",
+        "TN": "depo",
+    }
 
 
 @pytest.mark.usefixtures("seeded")

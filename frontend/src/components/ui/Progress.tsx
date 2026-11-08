@@ -16,12 +16,12 @@ export function Progress({ value, max, tone = "ok", label = false, className = "
   return (
     <div className={`flex min-w-0 items-center gap-2 ${className}`}>
       <div
-        className="bg-neutral-100 h-1.5 min-w-10 flex-1 overflow-hidden rounded-full"
+        className="bg-line-soft h-1.5 min-w-10 flex-1 overflow-hidden rounded-[3px]"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemax={max}
       >
-        <div className={`h-full rounded-full ${TONE_DOT[tone]}`} style={{ width: `${String(pct)}%` }} />
+        <div className={`h-full rounded-[3px] ${TONE_DOT[tone]}`} style={{ width: `${String(pct)}%` }} />
       </div>
       {text && <span className="text-ink-muted shrink-0 text-xs whitespace-nowrap tabular-nums">{text}</span>}
     </div>

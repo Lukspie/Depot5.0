@@ -57,9 +57,16 @@ def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
 
 @router.get("/alerts", response_model=AlertListOut, response_model_by_alias=True)
 def list_alerts(
-    _: Staff, db: DbSession, include_closed: Annotated[bool, Query(alias="all")] = False
+    _: Staff,
+    db: DbSession,
+    include_closed: Annotated[bool, Query(alias="all")] = False,
+    current: Annotated[bool, Query()] = False,
 ) -> AlertListOut:
-    if include_closed:
+    """Open alerts; `current` keeps those of the current operating day, as counted in the KPI
+    and the top bar (phase 7d); `all` adds the closed ones."""
+    if current:
+        rows = open_alerts(db, 100, clock().operating_day)
+    elif include_closed:
         rows = list(
             db.execute(select(Alert).order_by(Alert.created_at.desc()).limit(100)).scalars()
         )

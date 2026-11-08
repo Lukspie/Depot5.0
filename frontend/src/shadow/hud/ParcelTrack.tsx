@@ -56,7 +56,7 @@ export function ParcelTrack({ barcode, result, error, canOpen, onClose }: Props)
           <X size={15} />
         </Button>
       </div>
-      {isApiError(error, 404) && <p className="text-danger-600 mt-2 text-sm">Balík s týmto kódom neexistuje.</p>}
+      {isApiError(error, 404) && <p className="text-danger-700 mt-2 text-sm">Balík s týmto kódom neexistuje.</p>}
       {result && (
         <ol className="mt-3 flex overflow-x-auto pb-1">
           {result.events.map((e, i) => (

@@ -253,6 +253,8 @@ class DepotOut(CamelModel):
     lon: float
     # centre of the hall (layout.origin, ADR-064): where the map flies to
     center: tuple[float, float] | None = None
+    # what the depot is, from the data (phase 7d): "prekládkové depo", "hub Bratislava", "depo"
+    label: str | None = None
 
 
 class LayoutDoor(CamelModel):

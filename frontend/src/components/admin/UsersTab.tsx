@@ -130,7 +130,7 @@ export function UsersTab() {
         loading={users.isPending}
         error={
           users.isError && (
-            <p className="bg-danger-100 text-danger-600 rounded-xl px-3 py-2 text-sm">
+            <p className="bg-danger-100 text-danger-700 rounded-xl px-3 py-2 text-sm">
               Zoznam používateľov sa nepodarilo načítať.{" "}
               <button type="button" className="underline" onClick={() => void users.refetch()}>
                 Skúsiť znova

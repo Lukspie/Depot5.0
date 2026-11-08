@@ -100,7 +100,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
                 className={inputCls}
                 aria-invalid={usernameInvalid}
               />
-              <p className={`mt-1 text-xs ${usernameInvalid ? "text-danger-600" : "text-ink-muted"}`}>
+              <p className={`mt-1 text-xs ${usernameInvalid ? "text-danger-700" : "text-ink-muted"}`}>
                 3–32 znakov: malé písmená bez diakritiky, číslice, bodka, podčiarkovník, pomlčka.
               </p>
             </div>
@@ -185,13 +185,13 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
               className={inputCls}
               aria-invalid={passwordInvalid}
             />
-            <p className={`mt-1 text-xs ${passwordInvalid ? "text-danger-600" : "text-ink-muted"}`}>
+            <p className={`mt-1 text-xs ${passwordInvalid ? "text-danger-700" : "text-ink-muted"}`}>
               Aspoň 8 znakov.{user ? " Zmena hesla odhlási používateľa zo všetkých zariadení." : ""}
             </p>
           </div>
 
           {mutation.isError && (
-            <p role="alert" className="rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-600">
+            <p role="alert" className="rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-700">
               {saveErrorMessage(mutation.error)}
             </p>
           )}

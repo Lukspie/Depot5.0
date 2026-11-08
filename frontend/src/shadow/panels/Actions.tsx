@@ -24,7 +24,7 @@ export function AlertList({ alerts, canAct }: { alerts: Alert[]; canAct: boolean
   return (
     <ul className="mt-3 space-y-2">
       {alerts.map((a) => (
-        <li key={a.id} className={`flex items-start gap-2 rounded-xl p-3 text-sm ${a.severity === "critical" ? "bg-danger-100 text-danger-600" : "bg-warn-100 text-warn-600"}`}>
+        <li key={a.id} className={`flex items-start gap-2 rounded-xl p-3 text-sm ${a.severity === "critical" ? "bg-danger-100 text-danger-700" : "bg-warn-100 text-warn-700"}`}>
           <span className="min-w-0 flex-1">{a.message}</span>
           {canAct && <AckButton alert={a} />}
         </li>
@@ -58,7 +58,7 @@ export function MoveTrip({ dock, layout, onMoved }: { dock: ShadowDock; layout: 
           Presunúť
         </Button>
       </div>
-      {move.isError && <p className="text-danger-600 mt-2 text-xs">{actionError(move.error)}</p>}
+      {move.isError && <p className="text-danger-700 mt-2 text-xs">{actionError(move.error)}</p>}
     </div>
   );
 }
@@ -87,7 +87,7 @@ export function Maintenance({ code }: { code: string }) {
         </Button>
       </div>
       <p className="text-ink-muted mt-2 text-xs">Počas údržby skener neposiela skeny (nakládka sa sníma ručne), potom je vyčistený.</p>
-      {start.isError && <p className="text-danger-600 mt-2 text-xs">{actionError(start.error)}</p>}
+      {start.isError && <p className="text-danger-700 mt-2 text-xs">{actionError(start.error)}</p>}
       {last && (
         <p className="mt-2 text-xs">
           <Badge tone="info" size="sm">

@@ -738,3 +738,14 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - neznáme auto pri bráne Žiliny a Ivanky aj odíde a jeho ťahy sú prvé v prúde, takže nezávisia od jázd,
   - appka kuriéra ukazuje sklad trasy („Vráťte sa do skladu Žilina.“).
 - **Dôsledok:** Budimír sa nemení (golden test prechádza). Prevádzka DS a TN (kuriéri, napájacie jazdy Ivanka ↔ DS ráno a večer, Ivanka → TN po D1) a ulice ďalších miest sú v „Po odovzdaní“. Dovtedy dodávky Žiliny a Ivanky jazdia po hlavných cestách a priamych spojniciach.
+
+## ADR-067 Design systém v2: tokeny, komponenty na Radix, vlastné grafy (Fáza 7d, krok 1)
+- **Kontext:** Tím schválil maketu dispečingu ako design systém v2 pre celú aplikáciu (`docs/design/maketa-dispecing/README.md`): karty s tenkým okrajom, husté tabuľky, čierne primárne tlačidlo, oranžová len na zvýraznenie, horná lišta, slovenský formát čísel. README odporúča komponenty v štýle shadcn/ui (Radix + Tailwind 4) a grafy cez Recharts alebo SVG.
+- **Rozhodnutie:**
+  - Tokeny v `index.css` podľa README makety (pozadie `#f4f4f2`, okraj `#e7e6e2`, radius 12, stavy s tromi odtieňmi: `-100` pozadie, `-600` bodka, `-700` text s kontrastom ≥ 4,5 : 1). Téma Modrá ostáva s rovnakými tokenmi.
+  - Komponenty v štýle shadcn/ui priamo v `frontend/src/components/ui`, bez generátora a bez CLI shadcn. **Jediná nová závislosť je `radix-ui`** (oficiálny balík všetkých Radix primitív) pre menu, popover, tooltip, dialóg a select, ktoré musia byť ovládateľné klávesnicou, s focusom a ARIA. Tieto veci by sme inak písali a testovali sami.
+  - **Bez Recharts** (≈ 100 kB gzip): sparklines, skladané pruhy a časová os sú pár desiatok riadkov SVG. Bez `class-variance-authority` a `tailwind-merge`: varianty sú malé mapy tried a stačí funkcia `cn`.
+  - Formát čísel a časov len cez `lib/format.ts` (sk-SK, simulovaný čas Europe/Bratislava).
+  - Shell: bočná lišta so sekciami a hornou lištou `AppHeader` (sklad, drobčeky, hľadanie Ctrl K, vlna, čas, alarmy). Dáta pre ňu dáva nový `GET /api/shell` pre každú prihlásenú rolu (vlna, počet alarmov dňa, front brány, odkaz na tabuľu), časti, ktoré rola nevidí, sú `null`. Zoznam alarmov v hornej lište je `GET /api/alerts?current=true`, teda tie isté alarmy, aké ráta KPI. Typ skladu (`prekládkové depo`, `hub Bratislava`, `depo`) sa počíta z dát v `/api/depots`.
+  - V digitálnom tieni je bočná lišta zbalená na 72 px a horná lišta aplikácie sa nezobrazuje: tieň má vlastnú lištu podľa svojej makety.
+- **Dôsledok:** Všetky obrazovky dostali nový vzhľad cez tokeny naraz, ich layout sa mení v ďalších krokoch. Bundle narástol len o použité Radix primitíva. Položky navigácie sa riadia rolou (ADR-017), dispečer preto nevidí Nakládku, Bránu ani Administráciu, hoci ich maketa (dizajn pre administrátora) ukazuje.

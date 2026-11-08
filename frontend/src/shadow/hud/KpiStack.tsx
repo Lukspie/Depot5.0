@@ -3,8 +3,8 @@ import type { Shadow } from "../../api/shadow";
 import { KpiCard } from "../../components/ui";
 import { hhmm } from "../../domain/labels";
 import { useShadowStore } from "../store";
+import { pct } from "../../lib/format";
 
-const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)} %`);
 
 /** The hub has no KPI block, only the alert list the API caps at 30 (api/shadow.py). */
 const ALERT_CAP = 30;

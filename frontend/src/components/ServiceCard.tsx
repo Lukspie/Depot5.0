@@ -64,7 +64,7 @@ export function ServiceCard({ title, subtitle, hello, health, waitingFor }: Prop
       </dl>
 
       {hello.isError && (
-        <p className="mt-4 rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-600">
+        <p className="mt-4 rounded-xl bg-danger-100 px-3 py-2 text-sm text-danger-700">
           {hello.error.message}. Skúšam znova každých 10 s.
         </p>
       )}

@@ -62,7 +62,7 @@ export function SituationLoader() {
   }, [state]);
 
   if (!state) return null;
-  const tone = state.kind === "error" ? "bg-danger-100 text-danger-600" : state.kind === "loaded" ? "bg-ok-100 text-ok-600" : "bg-brand-100 text-brand-700";
+  const tone = state.kind === "error" ? "bg-danger-100 text-danger-700" : state.kind === "loaded" ? "bg-ok-100 text-ok-700" : "bg-brand-100 text-brand-700";
   return (
     <div
       role="status"

@@ -304,6 +304,64 @@ Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 5 skladov:
 Prekládkové depo kuriérov je pravdepodobne menšie ako tieto haly (Žilina má 127 × 33 m), takže tu nemusí byť vôbec. **Nevyberám, čakám na tvoj výber:** OSM id budovy, alebo súradnice a satelitná snímka `docs/design/satelit-dunajska-streda.png`. Potom skript vypíše budovy v okolí bodu a vyberieme presne.
 
 
+## Fáza 7d – UI/UX v2 (schválené 8. 11. 2026 s defaultmi)
+Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README = design systém v2), `docs/design/maketa-login/`, `docs/design/maketa-tien/`. Tieň v 5b/5c nebol postavený podľa makety, teraz je to povinné.
+
+**Pravidlo pre každú obrazovku s maketou:**
+- pred kódovaním screenshot súčasného stavu pri 1440 px a tabuľka v `docs/fazy/faza-7d-ui.md`: položka | maketa | teraz | čo zmením,
+- po implementácii tá istá tabuľka so stavom ✓/✗ a screenshoty vedľa makety (1440, 1280, 390),
+- commit, až keď sú všetky položky ✓. Odchýlku napíšem s dôvodom a čakám na súhlas,
+- reviewer kontroluje tabuľku proti screenshotom a maketám, nielen kód.
+
+**Krok 1 – design systém v2** (frontend, ADR-067) *(hotové: tokeny, komponenty, shell, `/api/shell`, tabuľka v `docs/fazy/faza-7d-ui.md`)*
+- Tokeny v `index.css` podľa README makety: pozadie `#f4f4f2`, karta s okrajom 1 px `#e7e6e2` a radius 12, stavy ok/info/warn/danger/neutral, Inter s tabulárnymi číslami, riadok tabuľky 52 px, hlavička 34 px. Primárne tlačidlo čierne, oranžová len na zvýraznenie. Téma Modrá ostane (tie isté tokeny, iná primárna).
+- Komponenty v štýle shadcn/ui v `components/ui`, napojené na tokeny: `AppHeader`, `KpiCard` so sparkline, `DataTable` so skupinami a akciami, `StatusBadge`, `DeltaBadge`, `RiskChip`, `AlertItem`, `SegmentedTabs`, `FilterChips`, `StackedBar`, `DayTimeline`, plus `Select`, `DropdownMenu`, `Popover`, `Tooltip`, `Dialog`.
+- **Nové závislosti:** len Radix primitíva (balík `radix-ui`, dostupnosť: klávesnica, focus, ARIA). Sparklines a pruhy vlastné SVG, bez Recharts (menší bundle, stačí nám to). Bez `class-variance-authority` a `tailwind-merge`, ostane vlastný malý `cn`.
+- `lib/format.ts`: slovenský formát čísel a percent (`88,9 %`, `1 989`), čas `06:06`, relatívny čas (`o 3 h 20 min`, `pred 5 min`) zo simulovaného času. Použije sa všade.
+- Shell: bočná lišta podľa makety (sekcie Prevádzka / Systém, odznak pri Bráne, zbalenie na pruh 72 px), horná lišta `AppHeader` (sklad, drobčeky, hľadanie Ctrl K, vlna, živý čas a rýchlosť, alarmy).
+- `docs/design/komponenty.md` prepísaný na v2.
+
+**Krok 2 – Depot 5.0 ako produkt pre sieť skladov** (app + frontend, ADR-068)
+- Migrácia `users.home_depot_id` (FK na depots, nullable pre admina), seed: kuriéri podľa skladu (`kurier0N` BUD, `kurierza0N` ZIL, `kurierba0N` BAH), operátor, ochranka a dispečeri BUD. Krok seedu doplní aj existujúcu DB.
+- Prepínanie: admin a dispečer smú všetky sklady, operátor, ochranka a kuriér len domovský. Backend stráži sklad pri nakládke, bráne (front, prejazdy, fotka), kuriérovi, tieni a alarmoch (cudzí sklad → 403). HTTP test pre každú rolu.
+- `/api/auth/me` vráti domovský sklad a zoznam povolených skladov. Admin nastaví domovský sklad v správe používateľov.
+- UI: bez natvrdo písaného „Budimír“. Bočná lišta ukazuje zvolený sklad, prepínač skladu v hornej lište len pre roly, ktoré smú prepínať. Zvolený sklad je v URL (`?depot=`) a pamätá sa. Tabuľa na fasáde tieňa „Depot 5.0 · <SKLAD>“.
+
+**Krok 3 – Login podľa makety** (app + frontend)
+- Verejný endpoint `GET /api/public/login-info` (bez prihlásenia, s rate limitom): sklady (názov, typ, poloha z DB), spojenia siete z dát (smery s cieľovým skladom, pre sklady bez prevádzky prerušovane), stav služieb a príznak demo režimu. App dostane `SIM_CONTROLS_ENABLED` z compose.
+- Tmavý panel so schémou siete (SVG z polôh skladov), formulár so zobrazením hesla, chybové stavy: zlé údaje (401), zablokovaný účet (403), veľa pokusov (429 s časom), nedostupný server. Info o 8 h smene.
+- Pri demo režime rozbaľovací blok „Demo účty“ pod formulárom, v ostrom režime skrytý.
+
+**Krok 4 – Dispečing podľa makety** (app + frontend)
+- `GET /api/dashboard/history?depot=`: KPI dňa v 30-min bodoch od 15:00 (balíky, naložené, kamióny pri bránach, čítanosť, alarmy) pre sparklines a zmenu.
+- Jazdy: taby Odchody / Príchody, filtre Všetky / Diaľkové / Prechody / S rizikom, skupiny „Večerné diaľkové odchody“ a „Ranné prechody“, relatívny čas, nenaložené balíky, „nakládka od“, ML odhad s odchýlkou, riziko (kaskáda, skener), menu akcií na riadku.
+- Štruktúrované alarmy (typ, čas, nadpis, čipy faktov, akcie Otvoriť scenár / Detail balíka / Poslať na údržbu / Potvrdiť), balíky podľa smerov (skladané pruhy), časová os dňa 15:00 → 15:00. Doplním, čo API ešte nevracia (fakty alarmu, nakládka od).
+- Export dňa: CSV jázd dňa.
+
+**Krok 5 – Digitálny tieň podľa makety** (frontend), kontrolný zoznam z README makety, všetko ✓:
+- 5a layout: zbalená navigácia 72 px, scéna cez celú plochu bez scrollu pri 1280/1440, horná lišta v jednom riadku, 4 nízke KPI v riadku (pod 1380 px dva), detail 360 px + stĺpec kamery, taby s legendou vpravo dole, sledovanie balíka vľavo dole,
+- 5b scéna: kamera izometria zo strany dvora, fasáda diagonálne stredom, strecha zatvorená; farby podľa tabuľky, tri odtiene na objekt, `ContactShadows`; fasáda (rebrovaný plech, oranžová atika, rámy brán, tmavé tabuľky čísel brán, tabuľa „Depot 5.0 · <SKLAD>“, otvorené brány s krabicami); dvor (žlté státia, prerušovaný pruh, závora, vrátnica); kamióny (biele návesy, ťahače tmavé a oranžové), dodávky biele s oranžovým pruhom,
+- 5c piny v tvare kvapky, popisky pri hoveri, plávajúce štítky len pre vybraný, degradovaný, prichádzajúci a čakajúci kamión.
+
+**Krok 6 – ostatné obrazovky** (Flotila, Nakládka, Brána, Kuriéri, Admin, Tabuľa, Stav systému): nové komponenty, horná lišta a tokeny, layout bez zmeny.
+
+**Krok 7 – kontroly a dokumentácia:** lint, typecheck, testy, tabuľky v `faza-7d-ui.md`, reviewer, `docs/AI-pouzitie.md` (Fáza 7d), README. Commit po krokoch, nepushovať bez potvrdenia.
+
+**Doplnenia tímu pri schválení:**
+- Demo účty: len mená a roly, klik vyplní meno, heslá cez API nikdy.
+- Dispečing Žiliny a Ivanky: rovnaký layout, obsah podľa skladu. Časová os dňa depa (príchod kamióna, nakládka kuriérov 6:30, odchod kuriérov, večerný odchod), KPI pre depo bez triedenia (balíky z kamióna, na doručenie, doručené). Žiadne prázdne vlny ani nulové karty, ktoré tam nepatria.
+- Zabudnuté heslo: len vysvetlenie (reset robí administrátor).
+- Ctrl K rešpektuje sklad a rolu ako ostatné API (test).
+- Ak chýba čas, vynechať krok 6, nie tieň.
+- Poistky: po kroku 2 golden test Budimíra a demo scenáre z `docs/demo.md` ako admin aj dispečer, na konci fázy test z čistého klonu. Screenshoty pre tabuľky v rovnakom stave ako maketa (dispečing `night-cascade` okolo 02:25, tieň `evening-peak` okolo 18:40).
+
+**Otvorené otázky (navrhnutý default, schválené):**
+1. *Demo účty na logine:* default zoznam mien a rolí, klik vyplní meno, heslo nie (API heslá neposiela, sú v `.env` a README). Alternatíva: v demo režime aj heslá (pohodlnejšie na obhajobe, ale heslá idú cez verejné API).
+2. *Dispečing pre Žilinu a Ivanku* (nemajú vlastné vlny ani odchody): default ten istý layout s ich dátami: prichádzajúce a odchádzajúce diaľkové kamióny, kuriéri (trasy, zastávky), brána, alarmy. Vlny a balíky podľa smerov len tam, kde existujú.
+3. *„Zabudnuté heslo?“* z makety: obnova hesla neexistuje, default odkaz otvorí vysvetlenie „heslo obnoví administrátor“, nie falošný formulár.
+4. *Hľadanie Ctrl K:* default balík (čiarový kód), ŠPZ, jazda a brána, výsledok otvorí detail balíka, vozidlo vo Flotile alebo tieň.
+5. *Poradie:* 1 → 2 → 3 → 4 → 5 → 6. Tieň (krok 5) je najväčší. Ak by nestačil čas, navrhnem orezanie kroku 6, nie tieňa.
+
 ## Po odovzdaní
 - 5d krok 3 (incidenty v živej simulácii), krok 4 okrem prahu 15 min (výber zo zoznamov s predikciou, rezerva do závislých odchodov, nové KPI, horizont ďalšieho dňa, golden testy), krok 6 (e2e Playwright).
 - 5d krok 5 okrem uzavretia starých alarmov (deduplikácia, automatické uzatváranie vyriešených).

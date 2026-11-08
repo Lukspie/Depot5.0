@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TONE_BADGE, TONE_DOT, type Tone } from "./tone";
+import { cn, TONE_BADGE, TONE_DOT, type Tone } from "./tone";
 
 interface Props {
   tone?: Tone;
@@ -11,19 +11,16 @@ interface Props {
 }
 
 const SIZE = {
-  sm: "px-2 py-0.5 text-[11px]",
-  md: "px-2.5 py-1 text-xs",
-  lg: "px-3 py-1.5 text-sm",
+  sm: "rounded-[5px] px-1.5 py-px text-[11px]",
+  md: "rounded-md px-2 py-0.5 text-xs",
+  lg: "rounded-md px-2.5 py-1 text-[13px]",
 };
 
-/** Pill-shaped status label. Never wraps (rule from docs/design/komponenty.md). */
+/** Tinted label (type of an alert, a count, a state). Never wraps (docs/design/komponenty.md). */
 export function Badge({ tone = "neutral", children, dot = false, size = "md", title }: Props) {
   return (
-    <span
-      title={title}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full font-medium whitespace-nowrap ${SIZE[size]} ${TONE_BADGE[tone]}`}
-    >
-      {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[tone]}`} />}
+    <span title={title} className={cn("inline-flex shrink-0 items-center gap-1.5 font-bold whitespace-nowrap", SIZE[size], TONE_BADGE[tone])}>
+      {dot && <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", TONE_DOT[tone])} />}
       {children}
     </span>
   );

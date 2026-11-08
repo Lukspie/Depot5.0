@@ -7,6 +7,7 @@ import { useDoors, useDoorView, useManualScan, type ManualScanResult, type ScanR
 import { Badge, Button, Card, EmptyState, PageHeader, Progress, Spinner, StatusDot } from "../components/ui";
 import { SCAN_RESULT, TRIP_STATUS, delayLabel, delayTone, hhmm, hhmmss } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
+import { kg } from "../lib/format";
 
 interface LiveScan {
   door: string;
@@ -39,7 +40,7 @@ function saveDoor(code: string): void {
 }
 
 function Counter({ label, value, tone }: { label: string; value: number; tone?: "danger" | "warn" | "ok" }) {
-  const color = tone === "danger" ? "text-danger-600" : tone === "warn" ? "text-warn-600" : tone === "ok" ? "text-ok-600" : "";
+  const color = tone === "danger" ? "text-danger-700" : tone === "warn" ? "text-warn-700" : tone === "ok" ? "text-ok-700" : "";
   return (
     <div className="bg-canvas rounded-2xl px-4 py-3">
       <div className={`text-3xl font-bold tabular-nums md:text-4xl ${color}`}>{value}</div>
@@ -96,17 +97,17 @@ function ManualScan({ door }: { door: string }) {
           role="status"
           className={`mt-3 rounded-xl px-4 py-3 text-base font-medium ${
             last.result === "ok"
-              ? "bg-ok-100 text-ok-600"
+              ? "bg-ok-100 text-ok-700"
               : last.result === "wrong_direction"
-                ? "bg-danger-100 text-danger-600"
-                : "bg-warn-100 text-warn-600"
+                ? "bg-danger-100 text-danger-700"
+                : "bg-warn-100 text-warn-700"
           }`}
         >
           {last.parcel?.barcode ?? ""} – {last.message}
           {last.result === "wrong_direction" && last.parcel && ` (patrí do ${last.parcel.directionCode})`}
         </p>
       )}
-      {error && <p className="bg-danger-100 text-danger-600 mt-3 rounded-xl px-4 py-3 text-sm">{error}</p>}
+      {error && <p className="bg-danger-100 text-danger-700 mt-3 rounded-xl px-4 py-3 text-sm">{error}</p>}
     </Card>
   );
 }
@@ -206,7 +207,7 @@ export function LoadingPage() {
       {alarm && (
         <div
           role="alert"
-          className="border-danger-600 bg-danger-100 text-danger-600 mb-5 flex flex-col gap-3 rounded-2xl border-4 p-5 sm:flex-row sm:items-center"
+          className="border-danger-600 bg-danger-100 text-danger-700 mb-5 flex flex-col gap-3 rounded-2xl border-4 p-5 sm:flex-row sm:items-center"
         >
           <AlertOctagon size={44} className="shrink-0 animate-pulse" />
           <div className="min-w-0 flex-1">
@@ -285,7 +286,7 @@ export function LoadingPage() {
                     <li key={`${String(Date.parse(s.at))}|${s.barcode ?? ""}|${s.result}`} className="flex items-center gap-3 px-5 py-2.5 text-sm">
                       <span className="text-ink-muted w-16 shrink-0 tabular-nums">{hhmmss(s.at)}</span>
                       <span className="min-w-0 flex-1 truncate font-mono">{s.barcode ?? "— štítok neprečítaný —"}</span>
-                      {s.result === "wrong_direction" && <span className="text-danger-600 shrink-0 text-xs">→ {s.parcelDirection}</span>}
+                      {s.result === "wrong_direction" && <span className="text-danger-700 shrink-0 text-xs">→ {s.parcelDirection}</span>}
                       <Badge size="sm" tone={SCAN_RESULT[s.result].tone}>
                         {SCAN_RESULT[s.result].label}
                       </Badge>
@@ -315,7 +316,7 @@ export function LoadingPage() {
                       <span className="block truncate font-mono text-xs">{p.barcode}</span>
                       <span className="text-ink-muted block truncate text-xs">{p.recipientName}</span>
                     </span>
-                    <span className="text-ink-muted shrink-0 text-xs tabular-nums">{p.weightKg.toFixed(1)} kg</span>
+                    <span className="text-ink-muted shrink-0 text-xs tabular-nums">{kg(p.weightKg)}</span>
                   </li>
                 ))}
               </ul>

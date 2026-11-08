@@ -14,6 +14,8 @@ export interface Depot {
   lon: number;
   /** centre of the hall (ADR-064), where the map flies to */
   center?: [number, number] | null;
+  /** what the depot is, from the data: "prekládkové depo", "hub Bratislava", "depo" */
+  label?: string | null;
 }
 
 export interface DepotState {

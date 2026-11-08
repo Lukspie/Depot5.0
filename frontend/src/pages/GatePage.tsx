@@ -160,7 +160,7 @@ function QueueItem({ e, onDone }: { e: GateEvent; onDone: () => void }) {
           </Button>
         )}
       </div>
-      {decide.isError && <p className="text-danger-600 mt-1 text-xs">{isApiError(decide.error, 409) ? "O vozidle už rozhodol niekto iný." : "Rozhodnutie sa nepodarilo uložiť."}</p>}
+      {decide.isError && <p className="text-danger-700 mt-1 text-xs">{isApiError(decide.error, 409) ? "O vozidle už rozhodol niekto iný." : "Rozhodnutie sa nepodarilo uložiť."}</p>}
     </li>
   );
 }
@@ -227,8 +227,8 @@ function AllowedPlates() {
   return (
     <Card title="Povolené externé ŠPZ" subtitle="Prejdú bez zastavenia.">
       {plates.isPending && <Spinner className="py-4" />}
-      {plates.isError && <p className="text-danger-600 text-sm">Zoznam sa nepodarilo načítať.</p>}
-      {remove.isError && <p className="text-danger-600 text-xs">ŠPZ sa nepodarilo odobrať.</p>}
+      {plates.isError && <p className="text-danger-700 text-sm">Zoznam sa nepodarilo načítať.</p>}
+      {remove.isError && <p className="text-danger-700 text-xs">ŠPZ sa nepodarilo odobrať.</p>}
       <ul className="divide-line divide-y text-sm">
         {(plates.data ?? []).map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 py-2">
@@ -250,7 +250,7 @@ function AllowedPlates() {
           Pridať
         </Button>
         {add.isError && (
-          <p className="text-danger-600 text-xs">{isApiError(add.error, 409) ? "ŠPZ už je v zozname." : isApiError(add.error, 422) ? "Toto nie je slovenská ŠPZ." : "Nepodarilo sa uložiť."}</p>
+          <p className="text-danger-700 text-xs">{isApiError(add.error, 409) ? "ŠPZ už je v zozname." : isApiError(add.error, 422) ? "Toto nie je slovenská ŠPZ." : "Nepodarilo sa uložiť."}</p>
         )}
       </form>
     </Card>
@@ -367,7 +367,7 @@ export function GatePage() {
             </div>
           )}
 
-          {error && <p className="text-danger-600 mt-3 text-sm">{error}</p>}
+          {error && <p className="text-danger-700 mt-3 text-sm">{error}</p>}
           {r && (
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
               <dt className="text-ink-muted">Rozhodnutie</dt>
@@ -406,7 +406,7 @@ export function GatePage() {
           {events.isPending ? (
             <Spinner className="py-6" />
           ) : events.isError ? (
-            <p className="text-danger-600 text-sm">Prejazdy sa nepodarilo načítať.</p>
+            <p className="text-danger-700 text-sm">Prejazdy sa nepodarilo načítať.</p>
           ) : (events.data ?? []).length === 0 ? (
             <p className="text-ink-muted text-sm">Zatiaľ žiadny prejazd.</p>
           ) : (
@@ -446,7 +446,7 @@ export function GatePage() {
           {queue.isPending ? (
             <Spinner className="py-6" />
           ) : queue.isError ? (
-            <p className="text-danger-600 text-sm">Front sa nepodarilo načítať. Vozidlá môžu čakať, skontrolujte bránu.</p>
+            <p className="text-danger-700 text-sm">Front sa nepodarilo načítať. Vozidlá môžu čakať, skontrolujte bránu.</p>
           ) : open.length === 0 ? (
             <EmptyState title="Nič nečaká" description="Všetky vozidlá pri bráne sú vybavené." />
           ) : (

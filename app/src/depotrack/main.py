@@ -25,6 +25,7 @@ from depotrack.api import (
     ml,
     notifications,
     shadow,
+    shell,
     system,
     track,
 )
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.add_middleware(OriginCheckMiddleware, allowed_origins=settings.allowed_origins)
 
     app.include_router(system.router)
+    app.include_router(shell.router)
     app.include_router(auth.router)
     app.include_router(admin_users.router)
     app.include_router(admin_directions.router)

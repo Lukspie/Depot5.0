@@ -1,39 +1,65 @@
 import type { ReactNode } from "react";
-import { TONE_TEXT, type Tone } from "./tone";
+import { DeltaBadge } from "./DeltaBadge";
+import { Sparkline } from "./Sparkline";
+import { cn, TONE_BADGE, TONE_DOT, type Tone } from "./tone";
 
 interface Props {
-  icon: ReactNode;
   label: string;
   value: ReactNode;
-  /** small change next to the value, e.g. "+15" */
-  delta?: { value: string; tone: Tone };
-  /** grey context line under the value, e.g. "palety · WH-01" */
-  context?: ReactNode;
+  /** grey unit after the number, e.g. "/ 1 989", "%" */
+  unit?: ReactNode;
+  /** colour of the small square before the label and of the sparkline */
   tone?: Tone;
+  /** history for the sparkline (oldest first) */
+  spark?: number[];
+  /** small tinted change, e.g. "+186", "↓ 1,6", "LD-02" */
+  delta?: { value: string; tone: Tone };
+  /** grey context after the change, e.g. "495 čaká na triedenie" */
+  context?: ReactNode;
+  /** icon square instead of the marker (compact cards floating over the 3D scene) */
+  icon?: ReactNode;
 }
 
-const ICON_BG: Record<Tone, string> = {
-  ok: "bg-ok-100 text-ok-600",
-  info: "bg-info-100 text-info-600",
-  warn: "bg-warn-100 text-warn-600",
-  danger: "bg-danger-100 text-danger-600",
-  neutral: "bg-neutral-100 text-neutral-600",
-  brand: "bg-brand-100 text-brand-700",
-};
-
-/** KPI tile as in the reference: icon square, label, big number, delta, context. */
-export function KpiCard({ icon, label, value, delta, context, tone = "brand" }: Props) {
-  return (
-    <div className="bg-surface shadow-card rounded-card flex min-w-0 items-center gap-4 p-4">
-      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${ICON_BG[tone]}`}>{icon}</div>
-      <div className="min-w-0">
-        <div className="text-ink-muted truncate text-sm">{label}</div>
-        <div className="flex items-baseline gap-2 whitespace-nowrap">
-          <span className="text-2xl leading-tight font-bold tabular-nums">{value}</span>
-          {delta && <span className={`text-sm font-medium ${TONE_TEXT[delta.tone]}`}>{delta.value}</span>}
+/**
+ * KPI card of design system v2: marker + label, big number with a unit, sparkline, change and
+ * context. With `icon` the compact variant used over the digital shadow.
+ */
+export function KpiCard({ label, value, unit, tone = "brand", spark, delta, context, icon }: Props) {
+  if (icon !== undefined) {
+    return (
+      <div className="bg-surface border-line shadow-card rounded-card flex min-w-0 items-center gap-3 border px-3.5 py-3">
+        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]", TONE_BADGE[tone])}>{icon}</div>
+        <div className="min-w-0">
+          <div className="text-ink-muted truncate text-xs font-medium">{label}</div>
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[22px] leading-tight font-extrabold tracking-tight tabular-nums">{value}</span>
+            {unit !== undefined && <span className="text-ink-muted text-xs font-semibold">{unit}</span>}
+            {delta && <DeltaBadge tone={delta.tone}>{delta.value}</DeltaBadge>}
+          </div>
+          {context !== undefined && <div className="text-ink-muted truncate text-xs">{context}</div>}
         </div>
-        {context !== undefined && <div className="text-ink-muted truncate text-xs">{context}</div>}
       </div>
+    );
+  }
+  return (
+    <div className="bg-surface border-line shadow-card rounded-card flex min-w-0 flex-col gap-2 border px-4 py-3.5">
+      <div className="flex items-center gap-2 text-[12.5px] font-semibold text-neutral-700">
+        <span className={cn("h-2 w-2 shrink-0 rounded-[2px]", TONE_DOT[tone])} />
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+          <span className="text-[26px] leading-none font-extrabold tracking-tight tabular-nums">{value}</span>
+          {unit !== undefined && <span className="text-ink-muted truncate text-[13px] font-semibold">{unit}</span>}
+        </div>
+        {spark && <Sparkline values={spark} tone={tone} label={`${label}: vývoj dňa`} />}
+      </div>
+      {(delta || context !== undefined) && (
+        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap">
+          {delta && <DeltaBadge tone={delta.tone}>{delta.value}</DeltaBadge>}
+          {context !== undefined && <span className="text-ink-muted truncate">{context}</span>}
+        </div>
+      )}
     </div>
   );
 }

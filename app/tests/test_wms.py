@@ -494,3 +494,7 @@ def test_old_alerts_are_closed_and_the_kpi_counts_only_the_current_day(
     body = dispatcher.get("/api/dashboard").json()
     assert body["kpis"]["openAlerts"] == 2  # today + the device, not yesterday's
     assert {a["message"] for a in body["alerts"]} == {"today", "device"}
+    # the top bar counts and lists the same (phase 7d)
+    current = dispatcher.get("/api/alerts?current=true").json()["alerts"]
+    assert {a["message"] for a in current} == {"today", "device"}
+    assert dispatcher.get("/api/shell").json()["openAlerts"] == 2

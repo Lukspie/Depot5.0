@@ -1,77 +1,111 @@
 @import "tailwindcss";
 
 /*
- * Depot 5.0 themes (docs/design/komponenty.md, ADR-032).
- * Layout and component style follow docs/design/reference.png: floating white cards, soft
- * shadows, pastel status tones. Colours come from tokens, switched by <html data-theme="…">:
- *   oranzova (default) – orange primary, black navigation, warm grey canvas
- *   modra              – blue, as in the reference screenshots
- * Status tones (*-100 background, *-600 text/dot) are shared by both themes.
+ * Depot 5.0 design system v2 (docs/design/maketa-dispecing/README.md, docs/design/komponenty.md,
+ * ADR-067). SaaS dashboard style (shadcn/ui, Linear): cards with a 1 px border and a hairline
+ * shadow, dense tables, black primary buttons, orange only as an accent. Colours come from
+ * tokens, switched by <html data-theme="…">:
+ *   oranzova (default) – orange accent, black navigation, warm grey canvas
+ *   modra              – blue accent, white navigation
+ * Status tones: *-100 background, *-600 dot / bar, *-700 text (contrast ≥ 4.5 : 1).
  */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   /* page */
-  --color-canvas: #f1f1ef;
+  --color-canvas: #f4f4f2;
   --color-surface: #ffffff;
+  /* table header, inputs, group rows */
+  --color-subtle: #fafaf8;
   --color-ink: #1d1d1b;
+  --color-ink-soft: #3d3c39;
   --color-ink-muted: #6b6b68;
-  --color-line: #e6e5e1;
+  --color-ink-faint: #8a8984;
+  --color-line: #e7e6e2;
+  /* dividers inside a card */
+  --color-line-soft: #efeee9;
+  --color-track: #f1f1ee;
 
-  /* primary (orange) */
+  /* accent (orange) */
   --color-brand-50: #fff6eb;
   --color-brand-100: #ffe8c7;
+  --color-brand-200: #f3d9a8;
   --color-brand-500: #f39200;
   --color-brand-600: #dc8400;
   --color-brand-700: #a85f00;
+  --color-brand-800: #8a4e00;
   /* text on a brand-coloured surface */
   --color-on-brand: #1d1d1b;
+  /* primary button */
+  --color-primary: #1d1d1b;
+  --color-primary-hover: #3a3936;
+  --color-on-primary: #ffffff;
 
   /* navigation chrome (sidebar) */
   --color-chrome: #1d1d1b;
-  --color-chrome-ink: #f1f1ef;
-  --color-chrome-muted: #9c9c97;
-  --color-chrome-hover: #2c2c29;
-  --color-chrome-active: #3a3127;
+  --color-chrome-ink: #ffffff;
+  --color-chrome-item: #c9c8c3;
+  --color-chrome-muted: #a3a29d;
+  --color-chrome-label: #8a8984;
+  --color-chrome-hover: #2a2926;
+  --color-chrome-active: #2c2a26;
+  --color-chrome-active-ink: #ffb54d;
+  --color-chrome-line: #34322e;
 
   /* status tones */
-  --color-ok-100: #e2f5e9;
+  --color-ok-100: #e8f6ee;
   --color-ok-600: #23874f;
-  --color-info-100: #e4ecff;
+  --color-ok-700: #17603a;
+  --color-info-100: #eaf0ff;
   --color-info-600: #2f5be9;
-  --color-warn-100: #fdf1cf;
-  --color-warn-600: #a66a00;
-  --color-danger-100: #fde3e3;
+  --color-info-700: #2347c2;
+  --color-warn-100: #fdf3d8;
+  --color-warn-600: #c97f00;
+  --color-warn-700: #8a5800;
+  --color-danger-100: #fdecec;
   --color-danger-600: #c93434;
-  --color-neutral-100: #efefec;
-  --color-neutral-600: #5c5c58;
+  --color-danger-700: #a32727;
+  --color-neutral-100: #f1f1ee;
+  --color-neutral-600: #8a8984;
+  --color-neutral-700: #5c5c58;
 
-  --shadow-card: 0 1px 2px rgb(29 29 27 / 0.05), 0 8px 24px rgb(29 29 27 / 0.07);
+  --shadow-card: 0 1px 2px rgb(29 29 27 / 0.04);
   --shadow-float: 0 12px 40px rgb(29 29 27 / 0.18);
-  --radius-card: 1rem;
+  --shadow-pop: 0 8px 24px rgb(29 29 27 / 0.12), 0 1px 2px rgb(29 29 27 / 0.06);
+  --radius-card: 12px;
 }
 
-/* blue theme from the reference screenshots */
+/* blue theme */
 :root[data-theme="modra"] {
-  --color-canvas: #eef2f8;
+  --color-canvas: #f2f4f8;
+  --color-subtle: #f8f9fb;
   --color-ink: #1b2333;
+  --color-ink-soft: #364057;
   --color-ink-muted: #687186;
-  --color-line: #e5e9f2;
+  --color-ink-faint: #8a92a5;
+  --color-line: #e3e7ef;
+  --color-line-soft: #edf0f5;
+  --color-track: #eef1f6;
   --color-brand-50: #f0f4ff;
   --color-brand-100: #e2eaff;
+  --color-brand-200: #c9d6fb;
   --color-brand-500: #2f5be9;
   --color-brand-600: #284fd2;
   --color-brand-700: #2143b3;
+  --color-brand-800: #1b3792;
   --color-on-brand: #ffffff;
+  --color-primary: #1b2333;
+  --color-primary-hover: #364057;
   --color-chrome: #ffffff;
   --color-chrome-ink: #1b2333;
+  --color-chrome-item: #4b5468;
   --color-chrome-muted: #687186;
+  --color-chrome-label: #8a92a5;
   --color-chrome-hover: #f0f4ff;
   --color-chrome-active: #e2eaff;
-  --color-warn-100: #fff0dc;
-  --color-warn-600: #c46a0f;
-  --color-neutral-100: #eff1f5;
-  --color-neutral-600: #5b6376;
+  --color-chrome-active-ink: #2143b3;
+  --color-chrome-line: #e3e7ef;
 }
 
 html,

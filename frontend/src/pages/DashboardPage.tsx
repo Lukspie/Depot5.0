@@ -18,6 +18,7 @@ import {
   plannedTime,
 } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
+import { pct } from "../lib/format";
 
 const fmt = new Intl.NumberFormat("sk-SK");
 
@@ -160,7 +161,7 @@ function AlertList({ alerts }: { alerts: Alert[] }) {
         <li key={a.id} className="flex items-start gap-3 py-3">
           <AlertTriangle
             size={18}
-            className={`mt-0.5 shrink-0 ${a.severity === "critical" ? "text-danger-600" : "text-warn-600"}`}
+            className={`mt-0.5 shrink-0 ${a.severity === "critical" ? "text-danger-700" : "text-warn-700"}`}
           />
           <div className="min-w-0 flex-1">
             <div className="mb-0.5 flex flex-wrap items-center gap-2">
@@ -230,7 +231,7 @@ export function DashboardPage() {
           icon={<Gauge size={22} />}
           tone={k.readRate !== null && k.readRate < 0.92 ? "warn" : "ok"}
           label="Čítanosť"
-          value={k.readRate === null ? "—" : `${(k.readRate * 100).toFixed(1)} %`}
+          value={pct(k.readRate)}
           context={`${fmt.format(k.unidentified)} neidentif.`}
         />
         <KpiCard

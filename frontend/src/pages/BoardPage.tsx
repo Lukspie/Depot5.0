@@ -6,6 +6,7 @@ import { getJson, isApiError } from "../api/client";
 import type { Board, TripBrief } from "../api/wms";
 import { Logo } from "../components/ui";
 import { TRIP_STATUS, WAVE_LABEL, delayLabel, expectedTime, hhmm, plannedTime } from "../domain/labels";
+import { pct } from "../lib/format";
 
 /**
  * Public ETA board for screens in the depot: no login, read-only, key in the URL
@@ -107,7 +108,7 @@ export function BoardPage() {
           <div className="text-6xl font-bold tabular-nums">{b ? hhmm(b.clock.simTime) : "--:--"}</div>
           <div className="text-lg text-white/60">
             {board.isError ? "spojenie sa obnovuje…" : `linka: ${b?.devices.lineStatus === "online" ? "v prevádzke" : (b?.devices.lineStatus ?? "—")}`}
-            {b?.devices.readRate != null && ` · čítanosť ${(b.devices.readRate * 100).toFixed(1)} %`}
+            {b?.devices.readRate != null && ` · čítanosť ${pct(b.devices.readRate)}`}
           </div>
         </div>
       </header>

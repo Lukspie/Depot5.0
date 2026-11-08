@@ -11,7 +11,7 @@ export function CenteredMessage({
     <div className="flex min-h-full items-center justify-center p-6">
       <p
         className={`rounded-xl px-4 py-3 text-sm ${
-          tone === "error" ? "bg-danger-100 text-danger-600" : "text-ink-muted"
+          tone === "error" ? "bg-danger-100 text-danger-700" : "text-ink-muted"
         }`}
       >
         {children}
