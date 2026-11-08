@@ -31,6 +31,8 @@ export interface YardSlot {
 /** The depot's yard from OSM and the team's notes (phase 7c, ADR-064). */
 export interface Yard {
   gate: [number, number];
+  /** direction vehicles drive in through the gate (towards the hall) */
+  gateHeading?: number;
   truckStands: YardSlot[];
   vanParking: YardSlot[];
   vanLoading: YardSlot[];

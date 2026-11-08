@@ -9,8 +9,11 @@ export interface Depot {
   code: string;
   name: string;
   kind: "depot" | "hub";
+  /** routing point of the simulator */
   lat: number;
   lon: number;
+  /** centre of the hall (ADR-064), where the map flies to */
+  center?: [number, number] | null;
 }
 
 export interface DepotState {

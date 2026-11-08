@@ -25,10 +25,12 @@ interface Orbit {
 }
 
 /** Hands the camera controls to the page (focus, home, zoom, rotate). */
-function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void; homeBox?: THREE.Box3 }) {
+function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: CameraApi) => void; homeBox?: THREE.Box3; homeTurn?: number }) {
   const bounds = useBounds();
   const get = useThree((s) => s.get);
   const homed = useRef(false);
+  // azimuth of the default camera (it looks at doors on the north wall); turned by homeTurn
+  const baseAzimuth = useRef<number | null>(null);
   useEffect(() => {
     /** look at the box: orbit target to its centre, zoom so that it fills the view (no animation) */
     const view = (box?: THREE.Box3) => {
@@ -53,6 +55,14 @@ function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void;
       orbit?.update();
       invalidate();
     };
+    /** turn the camera to the wall with the ramps (phase 7c: they are not always on the north) */
+    const turnHome = () => {
+      const orbit = get().controls as unknown as Orbit | null;
+      if (!orbit) return;
+      baseAzimuth.current ??= orbit.getAzimuthalAngle();
+      orbit.setAzimuthalAngle(baseAzimuth.current + homeTurn);
+      orbit.update();
+    };
     onReady({
       zoom(factor) {
         const { camera, invalidate } = get();
@@ -69,6 +79,7 @@ function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void;
         invalidate();
       },
       home() {
+        turnHome();
         view(homeBox);
       },
       focus(x, z) {
@@ -85,12 +96,14 @@ function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void;
       // after the initial fit of <Bounds>; cancelled when the scene goes away (or re-planned)
       const t = window.setTimeout(() => {
         homed.current = true;
+        turnHome();
         view(homeBox);
-      }, 300);
+        // after the fit animation of <Bounds> (maxDuration 0.6 s), which would turn the camera back
+      }, 800);
       return () => window.clearTimeout(t);
     }
     return undefined;
-  }, [bounds, get, onReady, homeBox]);
+  }, [bounds, get, onReady, homeBox, homeTurn]);
   return null;
 }
 
@@ -99,14 +112,24 @@ function CameraBridge({ onReady, homeBox }: { onReady: (api: CameraApi) => void;
  * limits, no panning or flipping. drei <Bounds> fits the whole depot into the view on load and
  * on resize.
  */
-export function CameraRig({ children, onReady, homeBox }: { children: ReactNode; onReady?: (api: CameraApi) => void; homeBox?: THREE.Box3 }) {
+export function CameraRig({
+  children,
+  onReady,
+  homeBox,
+  homeTurn,
+}: {
+  children: ReactNode;
+  onReady?: (api: CameraApi) => void;
+  homeBox?: THREE.Box3;
+  homeTurn?: number;
+}) {
   return (
     <>
       <OrthographicCamera makeDefault position={POSITION} zoom={5} near={-500} far={2000} />
       <OrbitControls makeDefault enablePan={false} enableDamping={false} minPolarAngle={POLAR} maxPolarAngle={POLAR} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} />
       <Bounds fit observe margin={1.1} maxDuration={0.6}>
         {children}
-        {onReady && <CameraBridge onReady={onReady} homeBox={homeBox} />}
+        {onReady && <CameraBridge onReady={onReady} homeBox={homeBox} homeTurn={homeTurn} />}
       </Bounds>
     </>
   );

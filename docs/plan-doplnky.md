@@ -238,8 +238,8 @@ Poradie je priorita. Po každom bode commit, reviewer po bodoch 1 a 2 a na konci
 4. **Ranná nakládka** *(hotové)*: kuriéri od 6:30 nakladajú dodávky pri odstavných plochách, dodávky stoja v areáli depa v tieni aj na mape Flotily a potom vyrážajú. Kamióny ako doteraz.
 5. **Layouty skladov** (ak ostane čas) *(presunuté do „Po odovzdaní“, nestihlo sa kvalitne)*: Budimír, Ivanka pri Dunaji a nový sklad Žilina (len layout a vozidlá). Geometria z OSM (`tools/osm`, ADR-051), satelitné snímky tímu len na kontrolu počtu a strany rámp. Rampy, státia a parkovanie dodávok v tieni aj vo Flotile. Keď budova v OSM nie je jednoznačná, nehádať a vypísať kandidátov.
 
-## Fáza 7c – sklady (návrh, čaká na potvrdenie)
-Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 4 skladov: **Budimír (BUD)**, **Ivanka pri Dunaji (BAH, hub BA)**, **Žilina (ZIL)**, **Dunajská Streda (DS)**. Pred začatím je git tag `pre-depots`. Po každom kroku commit, reviewer po krokoch 2, 3 a na konci. Nepushovať bez potvrdenia.
+## Fáza 7c – sklady (schválené 8. 11. 2026)
+Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 5 skladov: **Budimír (BUD)**, **Ivanka pri Dunaji (BAH, hub BA)**, **Žilina (ZIL)**, **Dunajská Streda (DS)**, **Trenčín (TN)**. Pred začatím je git tag `pre-depots`. Po každom kroku commit, reviewer po krokoch 2, 3 a na konci. Nepushovať bez potvrdenia.
 
 **Východiská (stav k tagu `pre-depots`):**
 - Layout skladu už je dáta v DB (`depots.layout`, `doors`) a `/api/layout?depot=…` z neho kreslí tieň aj 3D halu na mape (ADR-039, 040). BUD a BAH existujú, ZIL a DS nie.
@@ -248,7 +248,7 @@ Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 4 skladov:
 - Satelitné snímky v `docs/design/` zatiaľ nie sú (`satelit-zilina.png`, `satelit-dunajska-streda.png`). Bez nich sú strany rámp, vjazd a parkoviská predpoklad a tak budú aj označené.
 
 **Krok 1 – geometria a dáta layoutu (app, tools/osm)** *(hotové pre BUD, BAH, ZIL, DS, TN, ADR-064; ZIL a TN podľa snímok; DS čaká na rozmery haly z merania tímu; BUD a BAH na snímky a popis)*
-- `tools/osm/build_depot_layouts.py`: z OSM extraktu vytiahne footprint haly a polygón areálu (way id v súbore anotácií), prevedie ich do lokálnych metrov skladu (x na východ, y na juh, ako dnes) a zlúči s ručnými anotáciami `tools/osm/depots.json` (strana a počet rámp, typ brán podľa ADR-050, kuriérske brány, odstavné plochy, vjazd, státia kamiónov, parkovisko dodávok, jazdné pruhy). Výsledok `app/src/depotrack/seed/data/depots.json` je v gite, za behu sa nič nesťahuje.
+- *(skutočnosť: `tools/osm/extract_depots.py` → `seed/data/depots_osm.json`, layout počíta `seed/depots.py`, zápis krokom seedu namiesto Alembic migrácie, ADR-064)* `tools/osm/build_depot_layouts.py`: z OSM extraktu vytiahne footprint haly a polygón areálu (way id v súbore anotácií), prevedie ich do lokálnych metrov skladu (x na východ, y na juh, ako dnes) a zlúči s ručnými anotáciami `tools/osm/depots.json` (strana a počet rámp, typ brán podľa ADR-050, kuriérske brány, odstavné plochy, vjazd, státia kamiónov, parkovisko dodávok, jazdné pruhy). Výsledok `app/src/depotrack/seed/data/depots.json` je v gite, za behu sa nič nesťahuje.
 - Layout JSON rozšírim o areál: `site` (polygón), `gate` (vjazd so závorou a kamerou, smer), `truckStands`, `vanParking`, `lanes`. Staré polia (`hall`, `belt`, `yardGate`) ostanú kompatibilné.
 - ZIL: areál way `810621382`, hala way `321455829` (127 × 33 m), rampy na západnej dlhej strane (k ulici SNP), administratíva na južnom konci, návesy parkujú na východnej strane.
 - DS: podľa výberu z kandidátov (nižšie).

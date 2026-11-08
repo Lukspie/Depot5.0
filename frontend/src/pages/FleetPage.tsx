@@ -54,7 +54,7 @@ function Camera({ target, view }: { target: [number, number] | null; view: strin
           key={d.code}
           type="button"
           className={btn}
-          onClick={() => map.flyTo({ center: [d.lon, d.lat], zoom: 17.2, pitch: 60, bearing: -25, duration: 2000 })}
+          onClick={() => map.flyTo({ center: [d.center?.[1] ?? d.lon, d.center?.[0] ?? d.lat], zoom: 17.2, pitch: 60, bearing: -25, duration: 2000 })}
         >
           {d.kind === "hub" ? <Building2 size={14} /> : <Warehouse size={14} />} {d.name}
         </button>

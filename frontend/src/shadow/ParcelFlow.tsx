@@ -2,7 +2,7 @@ import { Instance, Instances } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { beltZ, type DepotLayout } from "./layout";
+import { beltZ, inFront, type DepotLayout } from "./layout";
 import { WithModel } from "./gltf";
 import { useModelMesh, type ModelMesh } from "./useModelMesh";
 import { MODELS } from "./models";
@@ -94,8 +94,10 @@ function Flow({ layout, mesh }: { layout: DepotLayout; mesh: ModelMesh | null })
         if (door) {
           s.xs[1] = door.x;
           s.zs[1] = geo.z;
-          s.xs[2] = door.x;
-          s.zs[2] = door.y + 1.5;
+          // just inside the door, whichever wall it is on
+          const [ix, iz] = inFront(layout, door, -1.5);
+          s.xs[2] = ix;
+          s.zs[2] = iz;
           s.n = 3;
         } else {
           s.xs[1] = geo.endX;

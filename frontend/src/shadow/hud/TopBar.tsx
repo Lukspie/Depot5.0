@@ -39,9 +39,8 @@ export function TopBar({ depot, live, onSearch, onScenario }: Props) {
   return (
     <div className="bg-surface shadow-card flex flex-wrap items-center gap-2 rounded-2xl p-2">
       {/* depot switch: a drop-down, the list of depots does not fit as pills (phase 7c) */}
-      <label className="bg-brand-100 text-brand-700 relative flex items-center gap-1.5 rounded-xl py-2 pr-8 pl-3 text-sm font-semibold whitespace-nowrap">
+      <label className="bg-brand-100 text-brand-700 focus-within:ring-brand-500 relative flex items-center gap-1.5 rounded-xl py-2 pr-8 pl-3 text-sm font-semibold whitespace-nowrap focus-within:ring-2">
         {current?.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}
-        <span className="sr-only">Sklad</span>
         <select
           value={depot}
           onChange={(e) => void navigate(`/shadow?depot=${e.target.value}`)}

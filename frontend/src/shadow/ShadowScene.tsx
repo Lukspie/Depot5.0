@@ -205,10 +205,27 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
  * (frameloop="demand"); live updates, moving parcels and arriving trucks request frames themselves.
  */
 export function ShadowScene({ onFps, onCamera, ...props }: Props) {
-  // home view: the facade with the doors and the trucks in front of it
+  // home view: the hall with the doors and the trucks in front of them, whichever wall they are on
   const homeBox = useMemo(() => {
     const { width: w, depth: d, height: h } = hallOf(props.layout);
-    return new THREE.Box3(new THREE.Vector3(-w / 2 - 2, 0, -d / 2 - 20), new THREE.Vector3(w / 2 + 2, h, d / 2));
+    const box = new THREE.Box3(new THREE.Vector3(-w / 2 - 2, 0, -d / 2), new THREE.Vector3(w / 2 + 2, h, d / 2));
+    for (const door of props.layout.doors) {
+      if (door.kind !== "loading_dock") continue;
+      const [x, z] = inFront(props.layout, door, 20);
+      box.expandByPoint(new THREE.Vector3(x, 0, z));
+    }
+    return box;
+  }, [props.layout]);
+  // the camera looks at the wall with most ramps (the default view is for ramps on the north)
+  const homeTurn = useMemo(() => {
+    const count = new Map<number, number>();
+    for (const door of props.layout.doors) {
+      if (door.kind !== "loading_dock") continue;
+      const h = facingOf(props.layout, door);
+      count.set(h, (count.get(h) ?? 0) + 1);
+    }
+    const best = [...count.entries()].sort((a, b) => b[1] - a[1])[0];
+    return best ? facingRotation(best[0]) : 0;
   }, [props.layout]);
   return (
     <Canvas
@@ -235,7 +252,7 @@ export function ShadowScene({ onFps, onCamera, ...props }: Props) {
         shadow-camera-bottom={-110}
       />
       <YardGround layout={props.layout} />
-      <CameraRig onReady={onCamera} homeBox={homeBox}>
+      <CameraRig onReady={onCamera} homeBox={homeBox} homeTurn={homeTurn}>
         <Depot {...props} />
       </CameraRig>
       <ContactShadows position={[0, 0.12, -10]} scale={240} blur={2.4} opacity={0.3} far={18} resolution={1024} />

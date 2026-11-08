@@ -35,3 +35,6 @@ tools/osm/cache/
 
 # Kenney asset kits (downloaded manually, selected models go to frontend/public/models)
 tools/kenney/
+
+# satellite screenshots (Google imagery) - local visual reference only, do not commit
+docs/design/satelit/

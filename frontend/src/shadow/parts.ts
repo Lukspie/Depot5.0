@@ -142,7 +142,8 @@ export function yardPlaces(l: DepotLayout): THREE.Group {
   const paint = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const lane = new THREE.MeshBasicMaterial({ color: 0xb9bdc4 });
   for (const s of yard.truckStands) g.add(slotOutline(s, 17, 4, paint));
-  for (const s of [...yard.vanParking, ...yard.carParking]) g.add(slotOutline(s, s.code?.includes("-C") ? 5 : 6, s.code?.includes("-C") ? 2.5 : 2.8, paint));
+  for (const s of yard.vanParking) g.add(slotOutline(s, 6, 2.8, paint));
+  for (const s of yard.carParking) g.add(slotOutline(s, 5, 2.5, paint));
   for (const path of yard.lanes) {
     for (let i = 0; i + 1 < path.length; i++) {
       const a = path[i];
@@ -150,13 +151,14 @@ export function yardPlaces(l: DepotLayout): THREE.Group {
       if (a && b) g.add(segment(a, b, 0.25, 0.02, lane, 0.1));
     }
   }
-  if (yard.gatehouse) {
+  const house = yard.gatehouse;
+  if (house) {
     const island = flatPolygon(
-      [-4, 4, 4, -4].map((dx, i) => [yard.gatehouse![0] + dx, yard.gatehouse![1] + (i < 2 ? -3 : 3)] as [number, number]),
+      [-4, 4, 4, -4].map((dx, i): [number, number] => [house[0] + dx, house[1] + (i < 2 ? -3 : 3)]),
       mat(0x9fc59a),
       0.12,
     );
-    g.add(island, box(3, 3, 3, mat(0xffffff), yard.gatehouse[0], 1.6, yard.gatehouse[1]));
+    g.add(island, box(3, 3, 3, mat(0xffffff), house[0], 1.6, house[1]));
   }
   return g;
 }
@@ -368,12 +370,26 @@ export function stagingBay(brand: THREE.Color): THREE.Mesh {
 }
 
 /** Yard entrance: gatehouse and barrier. */
-export function yardGate(brand: THREE.Color): THREE.Group {
+export function yardGate(brand: THREE.Color, house = true): THREE.Group {
   const g = new THREE.Group();
-  g.add(box(3, 3, 3, mat(0xffffff), 0, 1.5, 0));
-  g.add(box(3.2, 0.3, 3.2, mat(brand), 0, 3.1, 0));
+  if (house) {
+    g.add(box(3, 3, 3, mat(0xffffff), 0, 1.5, 0));
+    g.add(box(3.2, 0.3, 3.2, mat(brand), 0, 3.1, 0));
+  }
   g.add(box(8, 0.25, 0.25, mat(0xc93434), -5.5, 1.1, 0)); // barrier
   return g;
+}
+
+/** The yard gate placed and turned across the way in (ADR-064); the barrier spans the lane. */
+export function placedYardGate(l: DepotLayout, brand: THREE.Color): THREE.Group | null {
+  const gate = l.layout.yardGate;
+  if (!gate) return null;
+  const y = yardGate(brand, !l.layout.yard?.gatehouse);
+  y.position.set(gate[0], 0, gate[1]);
+  // modelled with the barrier along x (traffic along z): turn so that traffic follows the heading
+  const heading = l.layout.yard?.gateHeading;
+  if (heading !== undefined) y.rotation.y = facingRotation(heading);
+  return y;
 }
 
 /** Everything static of a hall in one group (the map layer draws it like this). */
@@ -381,12 +397,8 @@ export function hallStatic(l: DepotLayout, brand: THREE.Color): THREE.Group {
   const g = new THREE.Group();
   g.add(yardGround(l), hallShell(l, brand), conveyor(l));
   for (const door of l.doors) g.add(placeDoor(l, door, brand));
-  const gate = l.layout.yardGate;
-  if (gate) {
-    const y = yardGate(brand);
-    y.position.set(gate[0], 0, gate[1]);
-    g.add(y);
-  }
+  const gate = placedYardGate(l, brand);
+  if (gate) g.add(gate);
   return g;
 }
 

@@ -1,7 +1,7 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import { WithModel } from "./gltf";
-import type { DepotLayout } from "./layout";
+import { headingVec, type DepotLayout } from "./layout";
 import { MODELS } from "./models";
 import { carModel, disposeTree } from "./parts";
 import { useShadowStore } from "./store";
@@ -26,10 +26,13 @@ export function YardCars({ layout }: { layout: DepotLayout }) {
   const yard = useShadowStore((s) => s.yard);
   const gate = layout.layout.yardGate;
   if (!gate) return null;
+  // inside the gate: 10 m in along the way in, then a row beside the lane
+  const [fx, fz] = headingVec(layout.layout.yard?.gateHeading ?? 90);
+  const [sx, sz] = [-fz, fx];
   return (
     <>
       {yard.map((c, i) => (
-        <group key={c.plate} position={[gate[0] - 8 - i * 3.4, 0, gate[1] + 6]}>
+        <group key={c.plate} position={[gate[0] + fx * 10 + sx * (8 + i * 3.4), 0, gate[1] + fz * 10 + sz * (8 + i * 3.4)]}>
           <WithModel fallback={<PrimitiveCar color={COLORS[i % COLORS.length] ?? 0x6b7f99} />}>
             <KitCar index={i} />
           </WithModel>

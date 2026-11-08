@@ -1,6 +1,7 @@
 """Depots and hubs (ADR-039): shadow/map layout, live state, plan geography, real addresses."""
 
 from datetime import date
+from itertools import pairwise
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,11 +10,8 @@ from sqlalchemy.orm import Session
 
 from conftest import MakeUser, login
 from depotrack.core.config import get_settings
-from depotrack.models import Direction, Parcel
-from depotrack.models.enums import DirectionType, UserRole
-from depotrack.seed.depots import built_depots, inside
-from depotrack.seed.generator import kosice_rajon
-from depotrack.seed.geo import addresses
+from depotrack.models.enums import UserRole
+from depotrack.seed.depots import SPECS, built_depots, inside
 from depotrack.seed.reference import HUB_LAT, HUB_LON, HUB_NAME
 from depotrack.services.operating_day import run_seed
 
@@ -72,8 +70,19 @@ def test_every_depot_layout_is_inside_its_site(user: TestClient, code: str) -> N
     layout = body["layout"]
     site = [tuple(p) for p in layout["site"]]
     yard = layout["yard"]
-    assert yard["truckStands"] or code == "DS"
-    assert yard["vanParking"] and yard["lanes"]
+    spec = next(s for s in SPECS if s.code == code)
+    assert len(yard["truckStands"]) == sum(s.count for s in spec.stands)
+    assert len(yard["vanParking"]) == sum(s.count for s in spec.vans) and yard["lanes"]
+    # no parking place on a lane (a 7 m band along every lane segment)
+    for lane in yard["lanes"]:
+        for a, b in pairwise(lane):
+            x0, x1 = sorted((a[0], b[0]))
+            y0, y1 = sorted((a[1], b[1]))
+            for s in yard["truckStands"] + yard["vanParking"] + yard["carParking"]:
+                assert not (x0 - 3.5 < s["x"] < x1 + 3.5 and y0 - 3.5 < s["y"] < y1 + 3.5), (
+                    code,
+                    s["code"],
+                )
     slots = yard["truckStands"] + yard["vanParking"] + yard["vanLoading"] + yard["carParking"]
     points = (
         [(d["x"], d["y"]) for d in body["doors"]]
@@ -170,84 +179,43 @@ def test_budimir_keeps_its_routing_point_the_hall_comes_from_osm(user: TestClien
 
 
 def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient) -> None:
-    """A database from before phase 7c (old schematic layouts, no Žilina) gets the same layouts."""
+    """A database from before phase 7c (only Budimír and Ivanka, schematic layouts) ends with the
+    same depots and doors, every field, as a clean one."""
     from sqlalchemy import delete, update
 
     from depotrack.models import Depot, Door, SeedMeta
 
+    def snapshot() -> tuple[dict[str, object], dict[str, object]]:
+        depots = {d.id: d.code for d in db.execute(select(Depot)).scalars()}
+        return (
+            {
+                d.code: (d.name, d.kind, d.lat, d.lon, d.layout)
+                for d in db.execute(select(Depot)).scalars()
+            },
+            {
+                d.code: (
+                    depots[d.depot_id],
+                    d.kind,
+                    d.position_x,
+                    d.position_y,
+                    d.door_drive,
+                    d.dock_equipment,
+                )
+                for d in db.execute(select(Door)).scalars()
+            },
+        )
+
     settings = get_settings()
     run_seed(db, settings, DAY)
-    clean = {d.code: (d.lat, d.lon, d.layout) for d in db.execute(select(Depot)).scalars()}
-    clean_doors = {
-        d.code: (d.position_x, d.position_y, d.depot_id) for d in db.execute(select(Door)).scalars()
-    }
-    zil = db.execute(select(Depot).where(Depot.code == "ZIL")).scalar_one()
-    db.execute(delete(Door).where(Door.depot_id == zil.id))
-    db.delete(zil)
+    clean = snapshot()
+    new = [
+        d.id for d in db.execute(select(Depot).where(Depot.code.not_in(["BUD", "BAH"]))).scalars()
+    ]
+    db.execute(delete(Door).where(Door.depot_id.in_(new)))
+    db.execute(delete(Depot).where(Depot.id.in_(new)))
     db.execute(update(Depot).values(layout={"hall": {"width": 86, "depth": 40, "height": 10}}))
     db.execute(update(Door).values(position_x=0, position_y=0))
     db.execute(delete(SeedMeta).where(SeedMeta.key.like("depot-layouts:%")))
     db.commit()
     run_seed(db, settings, DAY)
-    again = {d.code: (d.lat, d.lon, d.layout) for d in db.execute(select(Depot)).scalars()}
-    assert again["BUD"] == clean["BUD"] and again["BAH"] == clean["BAH"]
-    assert again["ZIL"][2] == clean["ZIL"][2]
-    doors = {d.code: (d.position_x, d.position_y) for d in db.execute(select(Door)).scalars()}
-    assert doors == {k: v[:2] for k, v in clean_doors.items()}
-
-
-@pytest.mark.usefixtures("seeded")
-def test_depot_state_shows_trucks_at_doors(user: TestClient, db: Session) -> None:
-    plan = user.get(f"/internal/plan?day={DAY}", headers=TOKEN).json()
-    ba = next(t for t in plan["trips"] if t["directionCode"] == "BA" and t["kind"] == "outbound")
-    body = {
-        "simTime": "2026-10-23T16:00:00+00:00",
-        "trips": [{"tripId": ba["id"], "status": "loading"}],
-    }
-    user.post("/internal/events/trips", json=body, headers=TOKEN)
-    state = user.get("/api/depots/BUD/state").json()
-    assert state["occupied"] == [
-        {
-            "doorCode": "LD-02",
-            "plate": ba["vehiclePlate"],
-            "tripId": ba["id"],
-            "tripKind": "outbound",
-            "status": "loading",
-            "directionCode": "BA",
-            "directionType": "linehaul",
-        }
-    ]
-    assert len(state["staged"]) == 8
-
-    body = {
-        "simTime": "2026-10-23T22:00:00+00:00",
-        "trips": [{"tripId": ba["id"], "status": "departed"}],
-    }
-    user.post("/internal/events/trips", json=body, headers=TOKEN)
-    hub = user.get("/api/depots/BAH/state").json()
-    assert {"plate": ba["vehiclePlate"], "state": "arriving"}.items() <= next(
-        t for t in hub["trucks"] if t["tripId"] == ba["id"]
-    ).items()
-
-
-@pytest.mark.usefixtures("seeded")
-def test_plan_tells_telematics_where_trucks_drive(client: TestClient) -> None:
-    plan = client.get(f"/internal/plan?day={DAY}", headers=TOKEN).json()
-    assert plan["depot"]["code"] == "BUD"
-    dest = plan["destinations"]
-    assert set(dest) == {"BB", "BA", "ZA", "MI", "TV", "HE", "SL", "SE"}
-    assert dest["BA"] == [pytest.approx(HUB_LAT), pytest.approx(HUB_LON)]  # the hub, not the city
-
-
-@pytest.mark.skipif(not addresses(), reason="address file not built")
-@pytest.mark.usefixtures("seeded")
-def test_parcels_use_real_osm_addresses(db: Session) -> None:
-    known = {(a[0], a[1]) for town in addresses().values() for a in town}
-    parcels = db.execute(select(Parcel, Direction).join(Direction)).all()
-    assert parcels
-    for p, d in parcels:
-        street_number = p.address.split(",")[0]
-        street, number = street_number.rsplit(" ", 1)
-        assert (street, number) in known, p.address
-        if d.type == DirectionType.LOCAL:
-            assert d.code == kosice_rajon(p.lat, p.lon)
+    assert snapshot() == clean

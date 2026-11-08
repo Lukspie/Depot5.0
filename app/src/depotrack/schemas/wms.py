@@ -245,8 +245,11 @@ class DepotOut(CamelModel):
     code: str
     name: str
     kind: DepotKind
+    # routing point of the simulator
     lat: float
     lon: float
+    # centre of the hall (layout.origin, ADR-064): where the map flies to
+    center: tuple[float, float] | None = None
 
 
 class LayoutDoor(CamelModel):

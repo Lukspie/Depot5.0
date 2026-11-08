@@ -44,7 +44,13 @@ def _depot(db: DbSession, code: str) -> Depot:
 
 
 def _out(d: Depot) -> DepotOut:
-    return DepotOut(code=d.code, name=d.name, kind=d.kind, lat=d.lat, lon=d.lon)
+    origin = d.layout.get("origin") if isinstance(d.layout, dict) else None
+    center = (
+        (float(origin[0]), float(origin[1]))
+        if isinstance(origin, list) and len(origin) == 2
+        else None
+    )
+    return DepotOut(code=d.code, name=d.name, kind=d.kind, lat=d.lat, lon=d.lon, center=center)
 
 
 @router.get("/depots", response_model=list[DepotOut], response_model_by_alias=True)

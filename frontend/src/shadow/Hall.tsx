@@ -1,19 +1,15 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { DepotLayout } from "./layout";
-import { disposeTree, hallRoof, hallShell, yardGate, yardGround } from "./parts";
+import { disposeTree, hallRoof, hallShell, placedYardGate, yardGround } from "./parts";
 
 /** Floor, walls with the door openings, the roof (unless revealed) and the yard entrance. */
 export function Hall({ layout, brand, roofOpen }: { layout: DepotLayout; brand: THREE.Color; roofOpen: boolean }) {
   const object = useMemo(() => {
     const g = new THREE.Group();
     g.add(hallShell(layout, brand));
-    const gate = layout.layout.yardGate;
-    if (gate) {
-      const y = yardGate(brand);
-      y.position.set(gate[0], 0, gate[1]);
-      g.add(y);
-    }
+    const gate = placedYardGate(layout, brand);
+    if (gate) g.add(gate);
     return g;
   }, [layout, brand]);
   const roof = useMemo(() => hallRoof(layout, brand), [layout, brand]);

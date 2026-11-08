@@ -9,7 +9,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from depotrack.models import Depot, Direction, Door, Vehicle
+from depotrack.models import Depot, Direction, Door, Trip, Vehicle
 from depotrack.models.enums import DepotKind, DockEquipment, DoorDrive, DoorKind
 from depotrack.seed.depots import built_depots
 from depotrack.seed.reference import HUB_RAMPS, LINEHAUL, TRANSIT
@@ -89,6 +89,16 @@ def seed_depot_layouts(db: Session) -> None:
             db.flush()
         depot.name = b.name
         depot.layout = b.layout
+        if code not in ("BUD", "BAH"):
+            # new depots route from the centre of their hall; Budimír and Ivanka keep their point
+            depot.lat, depot.lon = b.origin
+            depot.kind = DepotKind(b.kind)
+        wanted = {p.code for p in b.doors}
+        for old in [x for x in doors.values() if x.depot_id == depot.id and x.code not in wanted]:
+            # a door the notes no longer have (fewer ramps): removed unless a trip uses it
+            used = db.execute(select(Trip.id).where(Trip.door_id == old.id).limit(1)).first()
+            if used is None:
+                db.delete(old)
         for p in b.doors:
             door = doors.get(p.code)
             if door is None:

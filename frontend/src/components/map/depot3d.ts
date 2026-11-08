@@ -83,7 +83,11 @@ export function createDepotLayer(id: string, layout: DepotLayout): DepotLayerHan
     } else {
       // hub: trucks fill the ramps from the left
       const ramps = layout.doors.filter((d) => d.kind === "loading_dock");
-      ramps.slice(0, state.trucksAtHub).forEach((r) => live.add(at(truckModel(TRUCK_COLOR.linehaul ?? 0), r.x, r.y)));
+      ramps.slice(0, state.trucksAtHub).forEach((r) => {
+        const truck = at(truckModel(TRUCK_COLOR.linehaul ?? 0), r.x, r.y);
+        truck.rotation.y = facingRotation(facingOf(layout, r));
+        live.add(truck);
+      });
     }
     map?.triggerRepaint();
   }
