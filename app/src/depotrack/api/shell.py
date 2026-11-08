@@ -6,18 +6,19 @@ from datetime import datetime
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 
 from depotrack.core.clock import TZ
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import Alert, GateEvent, User
+from depotrack.models import GateEvent, User
 from depotrack.models.enums import UserRole
 from depotrack.schemas.internal import CamelModel
 from depotrack.services import gate as gate_rules
 from depotrack.services import telematics
-from depotrack.services.alerts import current_alerts
+from depotrack.services.depot_scope import alerts_of_depot, can_switch, resolve_depot
+from depotrack.services.kpis import open_alerts
 from depotrack.services.views import clock
 from depotrack.services.waves import EVENING, NIGHT, current_wave
 
@@ -51,8 +52,13 @@ class ShellOut(CamelModel):
 
 @router.get("/shell", response_model=ShellOut, response_model_by_alias=True)
 def shell(
-    user: AnyUser, db: DbSession, settings: Annotated[Settings, Depends(get_settings)]
+    user: AnyUser,
+    db: DbSession,
+    settings: Annotated[Settings, Depends(get_settings)],
+    depot: Annotated[str | None, Query(max_length=8)] = None,
 ) -> ShellOut:
+    """The shell for the depot shown (the user's own when absent, ADR-068)."""
+    d = resolve_depot(db, user, depot)
     clk = clock()
     code = current_wave(clk.sim_time.astimezone(TZ))
     wave = None
@@ -61,11 +67,8 @@ def shell(
         wave = WaveOut(code=code, name=name, start=f"{start:%H:%M}", end=f"{end:%H:%M}")
     alerts = None
     if user.role in ALERT_ROLES:
-        alerts = db.execute(
-            select(func.count())
-            .select_from(Alert)
-            .where(Alert.acknowledged_at.is_(None), current_alerts(clk.operating_day))
-        ).scalar_one()
+        today = open_alerts(db, 500, clk.operating_day)
+        alerts = len(alerts_of_depot(db, today, d, unplaced=can_switch(user)))
     queue = None
     if user.role in GATE_ROLES:
         queue = db.execute(
@@ -75,6 +78,7 @@ def shell(
                 GateEvent.resolution.is_(None),
                 GateEvent.decision != gate_rules.AUTO_PASS,
                 GateEvent.at <= telematics.sim_now(),
+                GateEvent.depot_id == d.id,
             )
         ).scalar_one()
     board = None

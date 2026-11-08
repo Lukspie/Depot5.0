@@ -1,6 +1,7 @@
 import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SHIFT_LABEL, useMe, type User } from "../../api/auth";
+import { useDepots } from "../../api/depots";
 import { useUsers } from "../../api/users";
 import { ROLE_LABEL, ROLE_TONE } from "../../auth/roles";
 import { Badge, Button, Card, DataTable, EmptyState, StatusDot, type Column } from "../ui";
@@ -13,6 +14,8 @@ export function UsersTab() {
   const me = useMe();
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const depots = useDepots();
+  const depotName = (code: string) => depots.data?.find((d) => d.code === code)?.name;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -59,6 +62,13 @@ export function UsersTab() {
           {u.shift && <span className="text-ink-muted text-xs">{SHIFT_LABEL[u.shift]} zmena</span>}
         </span>
       ),
+    },
+    {
+      key: "depot",
+      header: "Sklad",
+      width: "9rem",
+      hideBelow: "md",
+      render: (u) => <span className="text-ink-soft text-[13px]">{(u.home_depot && depotName?.(u.home_depot)) ?? u.home_depot ?? "—"}</span>,
     },
     {
       key: "active",

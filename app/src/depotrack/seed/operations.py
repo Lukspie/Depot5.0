@@ -206,3 +206,14 @@ def parked_spots(db: Session, depot: Depot) -> dict[str, dict[str, float]]:
         .order_by(Vehicle.plate)
     ).scalars()
     return {plate: spot for plate, spot in zip(vans, spots, strict=False)}
+
+
+def seed_home_depots(db: Session) -> None:
+    """Home depot of every user without one (ADR-068): the couriers of Žilina and Ivanka by their
+    username (kurierza01 …, kurierba01 …), everybody else the main depot (Budimír)."""
+    depots = {d.code: d for d in db.execute(select(Depot)).scalars()}
+    main = db.execute(select(Depot).order_by(Depot.id).limit(1)).scalar_one()
+    for user in db.execute(select(User).where(User.home_depot_id.is_(None))).scalars():
+        ops = next((o for o in OPS if user.username.startswith(o.courier_prefix)), None)
+        depot = depots.get(ops.depot) if ops else None
+        user.home_depot_id = (depot or main).id

@@ -8,7 +8,7 @@ GET /api/depots/{code}/state       live state: occupied doors and staged parcels
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Query
 from sqlalchemy import func, select
 
 from depotrack.core.rbac import CurrentUser, DbSession
@@ -32,17 +32,11 @@ from depotrack.schemas.wms import (
     StagedBay,
 )
 from depotrack.seed.operations import parked_spots
+from depotrack.services.depot_scope import resolve_depot
 from depotrack.services.parcels import in_day
 from depotrack.services.views import Lookup, clock
 
 router = APIRouter(prefix="/api", tags=["depots"])
-
-
-def _depot(db: DbSession, code: str) -> Depot:
-    depot = db.execute(select(Depot).where(Depot.code == code)).scalar_one_or_none()
-    if depot is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown depot")
-    return depot
 
 
 def _out(d: Depot) -> DepotOut:
@@ -57,37 +51,35 @@ def _out(d: Depot) -> DepotOut:
 
 @router.get("/depots", response_model=list[DepotOut], response_model_by_alias=True)
 def depots(_: CurrentUser, db: DbSession) -> list[DepotOut]:
+    directions = list(db.execute(select(Direction)).scalars())
     return [
-        _out(d).model_copy(update={"label": label})
-        for d, label in depot_labels(db)
+        _out(d).model_copy(update={"label": depot_label(d, directions)})
+        for d in db.execute(select(Depot).order_by(Depot.id)).scalars()
     ]
 
 
-def depot_labels(db: DbSession) -> list[tuple[Depot, str]]:
-    """What each depot is, from the data: a depot with its own linehaul directions transships,
-    a hub is named after the directions that end there, the others deliver."""
-    directions = list(db.execute(select(Direction)).scalars())
-    out = []
-    for d in db.execute(select(Depot).order_by(Depot.id)).scalars():
-        if d.kind == DepotKind.HUB:
-            towns = sorted({x.name for x in directions if x.destination_depot_id == d.id})
-            out.append((d, " ".join(["hub", *towns])))
-        elif any(x.depot_id == d.id and x.type == DirectionType.LINEHAUL for x in directions):
-            out.append((d, "prekládkové depo"))
-        else:
-            out.append((d, "depo"))
-    return out
+def depot_label(d: Depot, directions: list[Direction]) -> str:
+    """What a depot is, from the data: a depot with its own linehaul directions transships, a
+    hub is named after the directions that end there, the others deliver."""
+    if d.kind == DepotKind.HUB:
+        towns = sorted({x.name for x in directions if x.destination_depot_id == d.id})
+        return " ".join(["hub", *towns])
+    if any(x.depot_id == d.id and x.type == DirectionType.LINEHAUL for x in directions):
+        return "prekládkové depo"
+    return "depo"
 
 
 @router.get("/layout", response_model=LayoutOut, response_model_by_alias=True)
 def layout(
-    _: CurrentUser, db: DbSession, depot: Annotated[str, Query(max_length=8)] = "BUD"
+    user: CurrentUser, db: DbSession, depot: Annotated[str | None, Query(max_length=8)] = None
 ) -> LayoutOut:
-    d = _depot(db, depot)
+    """Layout of a depot: the user's own when absent; another depot only for who may switch."""
+    d = resolve_depot(db, user, depot)
     look = Lookup(db)
     doors = db.execute(select(Door).where(Door.depot_id == d.id).order_by(Door.code)).scalars()
+    directions = list(db.execute(select(Direction)).scalars())
     return LayoutOut(
-        depot=_out(d),
+        depot=_out(d).model_copy(update={"label": depot_label(d, directions)}),
         layout=dict(d.layout),
         doors=[
             LayoutDoor(
@@ -116,8 +108,8 @@ def layout(
 
 
 @router.get("/depots/{code}/state", response_model=DepotState, response_model_by_alias=True)
-def depot_state(code: str, _: CurrentUser, db: DbSession) -> DepotState:
-    d = _depot(db, code)
+def depot_state(code: str, user: CurrentUser, db: DbSession) -> DepotState:
+    d = resolve_depot(db, user, code)
     look = Lookup(db)
     clk = clock()
     day = clk.operating_day

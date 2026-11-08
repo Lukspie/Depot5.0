@@ -33,6 +33,7 @@ from depotrack.seed.operations import (
     BAH_OPS,
     ZIL_OPS,
     seed_depot_operations,
+    seed_home_depots,
     seed_parked_vans,
 )
 from depotrack.services.alerts import close_stale_alerts
@@ -79,6 +80,7 @@ def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
     step(db, "depot-ops:ZIL:v1", lambda: seed_depot_operations(db, settings, ZIL_OPS))
     step(db, "depot-ops:BAH:v1", lambda: seed_depot_operations(db, settings, BAH_OPS))
     step(db, "depot-fleet:DS-TN:v1", lambda: seed_parked_vans(db))
+    step(db, "users-home-depot:v1", lambda: seed_home_depots(db))
     ensure_operating_day(db, settings, day)
 
 

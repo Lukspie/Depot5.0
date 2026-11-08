@@ -1,12 +1,16 @@
 """Users and server-side sessions."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, true
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from depotrack.models.base import Base, pg_enum, utcnow_column
 from depotrack.models.enums import UserRole
+
+if TYPE_CHECKING:
+    from depotrack.models.network import Depot
 
 
 class User(Base):
@@ -21,6 +25,13 @@ class User(Base):
     created_at: Mapped[datetime] = utcnow_column()
     # work shift of a dispatcher: morning | afternoon | night (phase 7b)
     shift: Mapped[str | None] = mapped_column(String(10))
+    # the depot the user works in (phase 7d, ADR-068); admins and dispatchers may switch
+    home_depot_id: Mapped[int | None] = mapped_column(ForeignKey("depots.id"))
+    home_depot: Mapped["Depot | None"] = relationship(lazy="joined")
+
+    @property
+    def home_depot_code(self) -> str | None:
+        return self.home_depot.code if self.home_depot else None
 
 
 class UserSession(Base):

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { SHIFT_LABEL, type Role, type Shift, type User } from "../../api/auth";
+import { useDepots } from "../../api/depots";
 import { isApiError } from "../../api/client";
 import { useCreateUser, useUpdateUser, type UserUpdate } from "../../api/users";
 import { ROLE_LABEL, ROLES } from "../../auth/roles";
@@ -36,6 +37,8 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
   const [role, setRole] = useState<Role>(user?.role ?? "operator");
   const [active, setActive] = useState(user?.active ?? true);
   const [shift, setShift] = useState<Shift | "">(user?.shift ?? "");
+  const depots = useDepots();
+  const [homeDepot, setHomeDepot] = useState(user?.home_depot ?? "");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
@@ -57,6 +60,7 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
     if (!canSubmit) return;
     if (user) {
       const body: UserUpdate = { full_name: fullName.trim(), shift: role === "dispatcher" && shift ? shift : null };
+      if (homeDepot) body.home_depot = homeDepot;
       if (!isSelf) {
         body.role = role;
         body.active = active;
@@ -65,7 +69,14 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
       update.mutate({ id: user.id, ...body }, { onSuccess: onClose });
     } else {
       create.mutate(
-        { username: normalizedUsername, full_name: fullName.trim(), role, password, shift: role === "dispatcher" && shift ? shift : null },
+        {
+          username: normalizedUsername,
+          full_name: fullName.trim(),
+          role,
+          password,
+          shift: role === "dispatcher" && shift ? shift : null,
+          ...(homeDepot ? { home_depot: homeDepot } : {}),
+        },
         { onSuccess: onClose },
       );
     }
@@ -153,6 +164,21 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
               </select>
             </div>
           )}
+
+          <div>
+            <label htmlFor="u-depot" className="mb-1 block text-sm font-medium">
+              Domovský sklad
+            </label>
+            <select id="u-depot" value={homeDepot} onChange={(e) => setHomeDepot(e.target.value)} className={inputCls}>
+              <option value="">hlavný sklad</option>
+              {depots.data?.map((d) => (
+                <option key={d.code} value={d.code}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-ink-muted mt-1 text-xs">Dispečer a administrátor môžu prepínať všetky sklady, ostatní vidia len svoj.</p>
+          </div>
 
           {user && (
             <label className="flex items-center gap-2 text-sm">

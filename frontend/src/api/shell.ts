@@ -14,16 +14,40 @@ export interface Shell {
   boardUrl: string | null;
 }
 
-export function useShell(enabled = true) {
-  return useQuery({ queryKey: ["shell"], queryFn: () => getJson<Shell>("/api/shell"), refetchInterval: 15_000, enabled });
+const q = (depot: string | null) => (depot ? `depot=${encodeURIComponent(depot)}` : "");
+
+export function useShell(depot: string | null) {
+  return useQuery({
+    queryKey: ["shell", depot],
+    queryFn: () => getJson<Shell>(`/api/shell?${q(depot)}`),
+    refetchInterval: 15_000,
+    enabled: depot !== null,
+  });
 }
 
-/** Open alerts of the current operating day (the list behind the bell). */
-export function useCurrentAlerts(enabled: boolean) {
+/** Open alerts of the current operating day in the depot (the list behind the bell). */
+export function useCurrentAlerts(depot: string | null, enabled: boolean) {
   return useQuery({
-    queryKey: ["alerts", "current"],
-    queryFn: () => getJson<{ alerts: Alert[] }>("/api/alerts?current=true"),
+    queryKey: ["alerts", "current", depot],
+    queryFn: () => getJson<{ alerts: Alert[] }>(`/api/alerts?current=true&${q(depot)}`),
     refetchInterval: 15_000,
-    enabled,
+    enabled: enabled && depot !== null,
+  });
+}
+
+export interface SearchHit {
+  kind: "parcel" | "vehicle" | "trip" | "door";
+  key: string;
+  title: string;
+  subtitle: string;
+  href: string;
+}
+
+/** Search of the top bar within the depot (GET /api/search, scoped by role and depot). */
+export function useSearch(term: string, depot: string | null) {
+  return useQuery({
+    queryKey: ["search", depot, term],
+    queryFn: () => getJson<{ depot: string; hits: SearchHit[] }>(`/api/search?q=${encodeURIComponent(term)}&${q(depot)}`),
+    enabled: term.trim().length >= 2 && depot !== null,
   });
 }

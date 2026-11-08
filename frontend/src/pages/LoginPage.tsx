@@ -42,7 +42,7 @@ export function LoginPage() {
           <Logo size={40} />
           <div>
             <h1 className="text-xl font-semibold">Depot 5.0</h1>
-            <p className="text-ink-muted text-sm">Prekládkové depo Budimír</p>
+            <p className="text-ink-muted text-sm">Prekládková sieť</p>
           </div>
         </div>
 

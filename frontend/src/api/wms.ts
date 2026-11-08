@@ -182,6 +182,8 @@ export interface ParcelDetail extends ParcelBrief {
 }
 
 export interface Board {
+  /** "Budimír · prekládkové depo" (phase 7d) */
+  depot: string;
   clock: Clock;
   arrivals: TripBrief[];
   departures: TripBrief[];
@@ -202,10 +204,11 @@ export interface DirectionAdmin {
 
 // ------------------------------------------------------------------ hooks
 
-export function useDashboard() {
+export function useDashboard(depot: string | null) {
   return useQuery({
-    queryKey: ["dashboard"],
-    queryFn: () => getJson<Dashboard>("/api/dashboard"),
+    queryKey: ["dashboard", depot],
+    queryFn: () => getJson<Dashboard>(`/api/dashboard?depot=${encodeURIComponent(depot ?? "")}`),
+    enabled: depot !== null,
     refetchInterval: 5000,
     placeholderData: keepPreviousData,
   });
@@ -222,10 +225,11 @@ export function useAckAlert() {
   });
 }
 
-export function useDoors() {
+export function useDoors(depot: string | null) {
   return useQuery({
-    queryKey: ["loading", "doors"],
-    queryFn: () => getJson<DoorSummary[]>("/api/loading/doors"),
+    queryKey: ["loading", "doors", depot],
+    queryFn: () => getJson<DoorSummary[]>(`/api/loading/doors?depot=${encodeURIComponent(depot ?? "")}`),
+    enabled: depot !== null,
     refetchInterval: 10_000,
   });
 }

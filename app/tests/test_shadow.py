@@ -23,7 +23,7 @@ def viewer(client: TestClient, make_user: MakeUser) -> TestClient:
 
 
 @pytest.mark.usefixtures("seeded", "at_time")
-def test_shadow_scene_for_security(viewer: TestClient, db: Session) -> None:
+def test_shadow_scene_for_security(viewer: TestClient, db: Session, make_user: MakeUser) -> None:
     ba_trip = trip(db, "BA", "outbound")
     send_trip(viewer, ba_trip.id, "loading", local(17, 10))
     ba, mi = parcels_of(db, "BA")[0], parcels_of(db, "MI")[0]
@@ -47,6 +47,11 @@ def test_shadow_scene_for_security(viewer: TestClient, db: Session) -> None:
     assert detail["wrongDirection"][0]["parcelDirection"] == "MI"
     assert viewer.get("/api/shadow/doors/SB-01").status_code == 404
 
+    # the guard of Budimír sees only Budimír (ADR-068); the other depots through a dispatcher
+    assert viewer.get("/api/shadow/BAH").status_code == 403
+    assert viewer.get("/api/shadow/ZIL").status_code == 403
+    make_user("disp-net", UserRole.DISPATCHER)
+    login(viewer, "disp-net")
     hub = viewer.get("/api/shadow/BAH").json()
     assert hub["kpis"] is None and hub["docks"] == []
     # a depot without its own trips yet (phase 7c): its doors, but no KPIs or alarms of Budimír

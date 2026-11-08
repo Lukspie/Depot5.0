@@ -1,7 +1,8 @@
-import { Outlet, useLocation, useSearchParams } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { useMe } from "../api/auth";
 import { useDepots } from "../api/depots";
 import { pageTitle } from "../auth/roles";
+import { useDepot } from "../hooks/useDepot";
 import { AppHeader } from "./AppHeader";
 import { MobileNav, Sidebar } from "./Sidebar";
 import { SituationLoader } from "./SituationLoader";
@@ -14,12 +15,11 @@ import { SituationLoader } from "./SituationLoader";
 export function Layout() {
   const me = useMe();
   const { pathname } = useLocation();
-  const [params] = useSearchParams();
   const depots = useDepots();
   const shadow = pathname.startsWith("/shadow");
   const user = me.data;
-  // the depot shown in the shell: the one in the address (shadow, fleet), else the main depot
-  const code = params.get("depot") ?? "BUD";
+  // the depot shown: address, last choice or the user's home depot (ADR-068)
+  const { code } = useDepot();
   const depot = depots.data?.find((d) => d.code === code);
 
   return (

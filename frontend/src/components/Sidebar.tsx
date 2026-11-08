@@ -166,7 +166,7 @@ function SectionLabel({ children, collapsed, first }: { children: string; collap
  * bottom. On the digital shadow it collapses to a 72 px strip of icons (maketa-tien).
  */
 export function Sidebar({ user, depot, collapsed }: { user: User; depot: Depot | undefined; collapsed: boolean }) {
-  const shell = useShell();
+  const shell = useShell(depot?.code ?? null);
   const socket = useSocketStatus();
   const items = NAV.filter((n) => n.ready && canAccess(user.role, n.roles));
   const ops = items.filter((n) => n.section === "ops");

@@ -96,10 +96,10 @@ export interface CourierRoute extends CourierRouteBrief {
   stopList: CourierStop[];
 }
 
-export function useCourierRoutes(enabled: boolean) {
+export function useCourierRoutes(enabled: boolean, depot: string | null = null) {
   return useQuery({
-    queryKey: ["courier", "routes"],
-    queryFn: () => getJson<CourierRouteBrief[]>("/api/courier/routes"),
+    queryKey: ["courier", "routes", depot],
+    queryFn: () => getJson<CourierRouteBrief[]>(`/api/courier/routes${depot ? `?depot=${encodeURIComponent(depot)}` : ""}`),
     enabled,
     refetchInterval: 30_000,
   });

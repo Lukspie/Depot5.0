@@ -6,7 +6,7 @@ from datetime import date, datetime
 from sqlalchemy import ColumnElement, exists, func, select
 from sqlalchemy.orm import Session
 
-from depotrack.models import Alert, Depot, LoadingScan, Parcel, ParcelEvent, Trip
+from depotrack.models import Alert, LoadingScan, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import ParcelStatus, ScanResult, TripKind, TripStatus
 from depotrack.schemas.wms import DashboardKpis, DirectionRow
 from depotrack.services.alerts import current_alerts
@@ -69,9 +69,9 @@ DELIVERY = (
 
 
 def day_overview(
-    db: Session, day: date, trips: list[Trip], look: Lookup, now: datetime
+    db: Session, day: date, trips: list[Trip], look: Lookup, now: datetime, depot_id: int
 ) -> tuple[DashboardKpis, list[DirectionRow]]:
-    """Parcel counts per direction and the KPI row of the operating day."""
+    """Parcel counts per direction of a depot and the KPI row of the operating day."""
     wave = current_wave(now)
     departed_dirs = {
         t.direction_id for t in trips if t.kind == TripKind.OUTBOUND and t.status in DONE
@@ -86,9 +86,8 @@ def day_overview(
         per_dir.setdefault(direction_id, Counter())[st] += n
 
     rows: list[DirectionRow] = []
-    # the directions of Budimír (the courier districts of other depots are theirs, phase 7c)
-    home = db.execute(select(Depot.id).where(Depot.code == "BUD")).scalar_one()
-    own = (d for d in look.directions.values() if d.depot_id == home)
+    # the directions of the depot (the courier districts of other depots are theirs, phase 7c)
+    own = (d for d in look.directions.values() if d.depot_id == depot_id)
     onward = 0
     for d in sorted(own, key=lambda d: (d.type.value, d.code)):
         c = per_dir.get(d.id, Counter())
@@ -110,9 +109,12 @@ def day_overview(
             )
         )
 
+    # parcels of the depot's own directions (Budimír: all of them; the districts of Žilina and
+    # Ivanka have no parcels of their own, those come on the ZA / BA trucks)
     totals: Counter[ParcelStatus] = Counter()
-    for c in per_dir.values():
-        totals.update(c)
+    for direction_id, c in per_dir.items():
+        if look.directions[direction_id].depot_id == depot_id:
+            totals.update(c)
     unidentified = db.execute(
         select(func.count())
         .select_from(LoadingScan)

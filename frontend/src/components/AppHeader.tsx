@@ -1,14 +1,25 @@
-import { Bell, ChevronRight, Search } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, DoorOpen, Package, Route as RouteIcon, Search, Truck, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Link, useNavigate } from "react-router";
 import type { User } from "../api/auth";
-import type { Depot } from "../api/depots";
-import { useCurrentAlerts, useShell } from "../api/shell";
-import { useParcelSearch } from "../api/wms";
+import { useDepots, type Depot } from "../api/depots";
+import { useCurrentAlerts, useSearch, useShell, type SearchHit } from "../api/shell";
 import { ALERT_KIND } from "../domain/labels";
 import { useSimClock, useSocketStatus } from "../hooks/telematics";
+import { useDepot } from "../hooks/useDepot";
 import { hhmm } from "../lib/format";
-import { Badge, cn, Popover, Spinner } from "./ui";
+import { Badge, cn, Menu, MenuItem, MenuLabel, Popover, Spinner } from "./ui";
+
+const HIT_ICON: Record<SearchHit["kind"], LucideIcon> = { parcel: Package, vehicle: Truck, trip: RouteIcon, door: DoorOpen };
+
+/** What the search finds for a role (none for couriers). */
+const SEARCH_PLACEHOLDER: Record<User["role"], string | null> = {
+  admin: "Hľadať balík, ŠPZ, jazdu…",
+  dispatcher: "Hľadať balík, ŠPZ, jazdu…",
+  operator: "Hľadať bránu…",
+  security: "Hľadať ŠPZ…",
+  courier: null,
+};
 
 /** Ctrl K / ⌘K focuses the search field. */
 function useSearchShortcut(ref: RefObject<HTMLInputElement | null>) {
@@ -24,17 +35,19 @@ function useSearchShortcut(ref: RefObject<HTMLInputElement | null>) {
   }, [ref]);
 }
 
-function SearchBox() {
+/** Search within the depot shown; the backend returns what the role may open (ADR-068). */
+function SearchBox({ depot, placeholder }: { depot: string | null; placeholder: string }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   useSearchShortcut(input);
-  const results = useParcelSearch(q);
+  const results = useSearch(q, depot);
+  const hits = results.data?.hits;
   const navigate = useNavigate();
-  const go = (id: number) => {
+  const go = (hit: SearchHit) => {
     setQ("");
     setOpen(false);
-    navigate(`/parcels/${String(id)}`);
+    navigate(hit.href);
   };
   return (
     <div className="relative ml-1 hidden max-w-[420px] min-w-0 flex-[1_1_280px] lg:block">
@@ -53,37 +66,78 @@ function SearchBox() {
           onBlur={() => window.setTimeout(() => setOpen(false), 150)}
           onKeyDown={(e) => {
             if (e.key === "Escape") input.current?.blur();
-            if (e.key === "Enter" && results.data?.[0]) go(results.data[0].id);
+            if (e.key === "Enter" && hits?.[0]) go(hits[0]);
           }}
-          placeholder="Hľadať balík, ŠPZ, jazdu…"
+          placeholder={placeholder}
           className="text-ink placeholder:text-ink-muted min-w-0 flex-1 bg-transparent text-[13px] outline-none"
         />
         <kbd className="border-line bg-surface text-ink-muted rounded-[5px] border px-[5px] font-sans text-[11px] font-semibold">Ctrl K</kbd>
       </label>
-      {open && q.trim().length >= 3 && (
+      {open && q.trim().length >= 2 && (
         <div className="bg-surface border-line shadow-pop absolute inset-x-0 top-full z-30 mt-1.5 max-h-80 overflow-y-auto rounded-[10px] border p-1">
           {results.isPending && <Spinner className="py-4" />}
-          {results.data?.length === 0 && <p className="text-ink-muted p-3 text-sm">Nič sa nenašlo.</p>}
-          {results.data?.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => go(p.id)}
-              className="hover:bg-track flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left"
-            >
-              <span className="min-w-0">
-                <span className="block truncate font-mono text-xs font-semibold">{p.barcode}</span>
-                <span className="text-ink-muted block truncate text-xs">
-                  {p.recipientName} · {p.address}
+          {hits?.length === 0 && <p className="text-ink-muted p-3 text-sm">V tomto sklade sa nič nenašlo.</p>}
+          {hits?.map((h) => {
+            const Icon = HIT_ICON[h.kind];
+            return (
+              <button
+                key={`${h.kind}-${h.key}`}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => go(h)}
+                className="hover:bg-track flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left"
+              >
+                <Icon size={15} className="text-ink-muted shrink-0" aria-hidden="true" />
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold">{h.title}</span>
+                  <span className="text-ink-muted block truncate text-xs">{h.subtitle}</span>
                 </span>
-              </span>
-              <Badge size="sm">{p.directionCode}</Badge>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The depot shown: a menu of the depots for administrators and dispatchers, a plain label for
+ * the roles bound to their own depot (ADR-068).
+ */
+function DepotSwitch({ depot }: { depot: Depot | undefined }) {
+  const { canSwitch, setDepot } = useDepot();
+  const depots = useDepots();
+  const label = (
+    <>
+      <span className="bg-brand-500 h-2 w-2 rounded-[2px]" aria-hidden="true" />
+      {depot?.name ?? "—"}
+    </>
+  );
+  const cls = "border-line flex h-[34px] shrink-0 items-center gap-2 rounded-lg border px-2.5 text-[13px] font-semibold whitespace-nowrap";
+  if (!canSwitch) return <span className={cls}>{label}</span>;
+  return (
+    <Menu
+      align="start"
+      trigger={
+        <button
+          type="button"
+          aria-label={`Sklad ${depot?.name ?? ""}, zmeniť sklad`}
+          className={cn(cls, "bg-surface hover:bg-subtle focus-visible:ring-brand-200 outline-none focus-visible:ring-4")}
+        >
+          {label}
+          <ChevronDown size={14} className="text-ink-muted" aria-hidden="true" />
+        </button>
+      }
+    >
+      <MenuLabel>Sklady siete</MenuLabel>
+      {depots.data?.map((d) => (
+        <MenuItem key={d.code} active={d.code === depot?.code} onSelect={() => setDepot(d.code)}>
+          {d.name}
+          <span className="text-ink-muted ml-1.5 text-xs">{d.label}</span>
+        </MenuItem>
+      ))}
+    </Menu>
   );
 }
 
@@ -105,12 +159,12 @@ function ClockPill() {
   );
 }
 
-function AlertsBell({ user }: { user: User }) {
-  const shell = useShell();
+function AlertsBell({ user, depot }: { user: User; depot: string | null }) {
+  const shell = useShell(depot);
   const count = shell.data?.openAlerts;
   const canList = user.role === "admin" || user.role === "dispatcher" || user.role === "security";
   const [open, setOpen] = useState(false);
-  const alerts = useCurrentAlerts(open && canList);
+  const alerts = useCurrentAlerts(depot, open && canList);
   if (count === null || count === undefined) return null;
   const where = user.role === "security" ? "/shadow" : "/";
   return (
@@ -162,20 +216,18 @@ function AlertsBell({ user }: { user: User }) {
 }
 
 /**
- * Top bar of design system v2 (docs/design/maketa-dispecing): depot, breadcrumb, search
- * (Ctrl K), current wave, simulated time with speed and the alerts. Pages put their own title
- * and actions under it (PageHeader).
+ * Top bar of design system v2 (docs/design/maketa-dispecing): depot (switch for who may),
+ * breadcrumb, search (Ctrl K) within the depot, current wave, simulated time with speed and the
+ * alerts of the depot. Pages put their own title and actions under it (PageHeader).
  */
 export function AppHeader({ user, depot, title }: { user: User; depot: Depot | undefined; title: string }) {
-  const shell = useShell();
+  const code = depot?.code ?? null;
+  const shell = useShell(code);
   const wave = shell.data?.wave;
-  const canSearch = user.role === "admin" || user.role === "dispatcher";
+  const placeholder = SEARCH_PLACEHOLDER[user.role];
   return (
     <header className="bg-surface border-line flex h-[60px] shrink-0 items-center gap-3 border-b px-4 md:px-6">
-      <span className="border-line flex h-[34px] shrink-0 items-center gap-2 rounded-lg border px-2.5 text-[13px] font-semibold whitespace-nowrap">
-        <span className="bg-brand-500 h-2 w-2 rounded-[2px]" aria-hidden="true" />
-        {depot?.name ?? "—"}
-      </span>
+      <DepotSwitch depot={depot} />
       {title && (
         <>
           <span className="text-chrome-item hidden sm:inline" aria-hidden="true">
@@ -184,7 +236,7 @@ export function AppHeader({ user, depot, title }: { user: User; depot: Depot | u
           <span className="hidden truncate text-[13px] font-semibold sm:inline">{title}</span>
         </>
       )}
-      {canSearch && <SearchBox />}
+      {placeholder && <SearchBox depot={code} placeholder={placeholder} />}
       <span className="flex-1" />
       {wave && (
         <span className="bg-brand-50 text-brand-800 hidden h-[30px] items-center rounded-full px-2.5 text-xs font-bold whitespace-nowrap xl:flex">
@@ -192,7 +244,7 @@ export function AppHeader({ user, depot, title }: { user: User; depot: Depot | u
         </span>
       )}
       <ClockPill />
-      <AlertsBell user={user} />
+      <AlertsBell user={user} depot={code} />
     </header>
   );
 }

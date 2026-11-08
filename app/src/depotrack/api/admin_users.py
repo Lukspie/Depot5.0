@@ -8,11 +8,20 @@ from sqlalchemy import select
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.core.security import hash_password
 from depotrack.core.sessions import delete_user_sessions
-from depotrack.models import User
+from depotrack.models import Depot, User
 from depotrack.models.enums import UserRole
 from depotrack.schemas.users import UserCreate, UserOut, UserUpdate
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin"])
+
+
+def _depot(db: DbSession, code: str | None) -> Depot | None:
+    if code is None:
+        return None
+    depot = db.execute(select(Depot).where(Depot.code == code)).scalar_one_or_none()
+    if depot is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown depot")
+    return depot
 
 Admin = Annotated[User, Depends(require_role(UserRole.ADMIN))]
 
@@ -41,6 +50,7 @@ def create_user(body: UserCreate, _: Admin, db: DbSession) -> User:
         password_hash=hash_password(body.password),
         active=True,
         shift=body.shift,
+        home_depot=_depot(db, body.home_depot),
     )
     db.add(user)
     db.commit()
@@ -82,6 +92,9 @@ def update_user(user_id: int, body: UserUpdate, admin: Admin, db: DbSession) -> 
         user.shift = body.shift
     if user.role != UserRole.DISPATCHER:
         user.shift = None
+    if body.home_depot is not None:
+        # the relationship, not the id: the loaded depot would stay stale in the response
+        user.home_depot = _depot(db, body.home_depot)
 
     # deactivation, role or password change ends the user's other sessions
     if user.id != admin.id and (

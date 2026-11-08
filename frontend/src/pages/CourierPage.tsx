@@ -36,6 +36,7 @@ import { RouteLine } from "../components/map/RouteLine";
 import { Badge, Button, EmptyState, Progress, Spinner, type Tone } from "../components/ui";
 import { hhmm } from "../domain/labels";
 import { kg } from "../lib/format";
+import { useDepot } from "../hooks/useDepot";
 
 type Tab = "stops" | "map" | "scan";
 
@@ -462,7 +463,8 @@ function ScanTab({
 // ------------------------------------------------------------------ shell
 
 function CourierPicker({ value, onChange }: { value: string | null; onChange: (v: string) => void }) {
-  const routes = useCourierRoutes(true);
+  // the rounds of the depot shown in the top bar (ADR-068)
+  const routes = useCourierRoutes(true, useDepot().code);
   return (
     <select className="border-line bg-surface rounded-xl border px-3 py-2 text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)} aria-label="Kuriér">
       <option value="" disabled>

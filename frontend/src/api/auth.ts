@@ -14,6 +14,11 @@ export interface User {
   created_at: string;
   /** dispatcher's work shift (phase 7b) */
   shift?: Shift | null;
+  /** code of the home depot (phase 7d, ADR-068) */
+  home_depot?: string | null;
+  /** depots the user may open (only in /api/auth/me) */
+  depots?: string[];
+  can_switch_depot?: boolean;
 }
 
 export type Shift = "morning" | "afternoon" | "night";

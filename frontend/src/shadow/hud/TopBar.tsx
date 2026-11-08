@@ -1,10 +1,11 @@
 import { Building2, ChevronDown, FlaskConical, Search, Warehouse } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useMe } from "../../api/auth";
 import { useDepots } from "../../api/depots";
 import type { Shadow } from "../../api/shadow";
 import { Button } from "../../components/ui";
 import { useSimClock } from "../../hooks/telematics";
+import { useDepot } from "../../hooks/useDepot";
 
 interface Props {
   depot: string;
@@ -33,7 +34,10 @@ function occupancy(live: Shadow | undefined): string | null {
  */
 export function TopBar({ depot, live, onSearch, onScenario }: Props) {
   const depots = useDepots();
-  const navigate = useNavigate();
+  const me = useMe();
+  const { canSwitch, setDepot } = useDepot();
+  // only the depots the user may open (ADR-068); the backend checks again
+  const allowed = (depots.data ?? []).filter((d) => me.data?.depots?.includes(d.code));
   const current = depots.data?.find((d) => d.code === depot);
   const { now } = useSimClock();
   const [text, setText] = useState("");
@@ -43,22 +47,19 @@ export function TopBar({ depot, live, onSearch, onScenario }: Props) {
       {/* depot switch: a drop-down, the list of depots does not fit as pills (phase 7c) */}
       <label className="bg-brand-100 text-brand-700 focus-within:ring-brand-500 relative flex items-center gap-1.5 rounded-xl py-2 pr-8 pl-3 text-sm font-semibold whitespace-nowrap focus-within:ring-2">
         {current?.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}
-        <select
-          value={depot}
-          onChange={(e) => void navigate(`/shadow?depot=${e.target.value}`)}
-          className="absolute inset-0 cursor-pointer opacity-0"
-          aria-label="Sklad"
-        >
-          {depots.data?.map((d) => (
-            <option key={d.code} value={d.code}>
-              {d.name}
-              {d.kind === "hub" ? " · hub Bratislava" : ""}
-            </option>
-          ))}
-        </select>
-        <span aria-hidden>{current?.name ?? depot}</span>
-        {current?.kind === "hub" && <span className="hidden text-[11px] font-normal xl:inline">hub Bratislava</span>}
-        <ChevronDown size={14} className="pointer-events-none absolute right-2.5" aria-hidden />
+        {canSwitch && (
+          <select value={depot} onChange={(e) => setDepot(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" aria-label="Sklad">
+            {allowed.map((d) => (
+              <option key={d.code} value={d.code}>
+                {d.name}
+                {d.label ? ` · ${d.label}` : ""}
+              </option>
+            ))}
+          </select>
+        )}
+        <span aria-hidden={canSwitch}>{current?.name ?? depot}</span>
+        {current?.kind === "hub" && current.label && <span className="hidden text-[11px] font-normal xl:inline">{current.label}</span>}
+        {canSwitch && <ChevronDown size={14} className="pointer-events-none absolute right-2.5" aria-hidden />}
       </label>
       <span className="text-ink-muted hidden px-1 text-xs whitespace-nowrap lg:inline">{occupancy(live)}</span>
       <form

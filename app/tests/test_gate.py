@@ -12,12 +12,12 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw, ImageFont
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from conftest import MakeUser, login
 from depotrack.ml.gate import normalize_plate
-from depotrack.models import Alert, Vehicle
+from depotrack.models import Alert, Depot, User, Vehicle
 from depotrack.models.enums import AlertKind, UserRole
 from depotrack.services import telematics
 from test_wms import at_time, seeded
@@ -141,11 +141,16 @@ def test_a_plate_without_a_vehicle_waits_for_security(
     )
     assert len(passages) == before
     assert len(guard.get("/api/gate/queue").json()) == 2
-    # the guard has chosen the Žilina gate: the photo is a passage there (phase 7c)
-    there = detect(guard, plate_image("ZA-998XY"), "image/png", depot="ZIL").json()
-    assert [e["depot"] for e in guard.get("/api/gate/queue?depot=ZIL").json()] == ["ZIL"]
-    assert there["eventId"] in [e["id"] for e in guard.get("/api/gate/queue?depot=ZIL").json()]
-    assert detect(guard, plate_image("ZA-998XY"), "image/png", depot="XX").status_code == 422
+    # a guard of Budimír cannot record at the Žilina gate (ADR-068), an unknown depot is 404
+    assert detect(guard, plate_image("ZA-998XY"), "image/png", depot="ZIL").status_code == 403
+    assert detect(guard, plate_image("ZA-998XY"), "image/png", depot="XX").status_code == 404
+    # the guard of Žilina: the photo is a passage at their gate without choosing it (phase 7c)
+    zil = db.execute(select(Depot.id).where(Depot.code == "ZIL")).scalar_one()
+    db.execute(update(User).where(User.username == "gate").values(home_depot_id=zil))
+    db.commit()
+    there = detect(guard, plate_image("ZA-998XY"), "image/png").json()
+    assert [e["depot"] for e in guard.get("/api/gate/queue").json()] == ["ZIL"]
+    assert there["eventId"] in [e["id"] for e in guard.get("/api/gate/queue").json()]
 
 
 @pytest.mark.usefixtures("seeded", "at_time")

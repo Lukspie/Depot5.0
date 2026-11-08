@@ -12,6 +12,8 @@ export interface UserCreate {
   role: Role;
   password: string;
   shift?: Shift | null;
+  /** home depot code (ADR-068) */
+  home_depot?: string;
 }
 
 export interface UserUpdate {
@@ -20,6 +22,8 @@ export interface UserUpdate {
   active?: boolean;
   password?: string;
   shift?: Shift | null;
+  /** home depot code (ADR-068) */
+  home_depot?: string;
 }
 
 export function useUsers() {

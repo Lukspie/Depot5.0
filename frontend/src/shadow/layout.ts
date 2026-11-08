@@ -42,7 +42,7 @@ export interface Yard {
 }
 
 export interface DepotLayout {
-  depot: { code: string; name: string; kind: "depot" | "hub"; lat: number; lon: number };
+  depot: { code: string; name: string; kind: "depot" | "hub"; lat: number; lon: number; label?: string | null };
   layout: {
     /** centre of the hall (map anchor); the depot's lat/lon is its routing point */
     origin?: [number, number];

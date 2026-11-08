@@ -313,7 +313,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - commit, až keď sú všetky položky ✓. Odchýlku napíšem s dôvodom a čakám na súhlas,
 - reviewer kontroluje tabuľku proti screenshotom a maketám, nielen kód.
 
-**Krok 1 – design systém v2** (frontend, ADR-067) *(hotové: tokeny, komponenty, shell, `/api/shell`, tabuľka v `docs/fazy/faza-7d-ui.md`)*
+**Krok 1 – design systém v2** (frontend, ADR-067) *(hotové, menu podľa roly bez sivých položiek schválené: tokeny, komponenty, shell, `/api/shell`, tabuľka v `docs/fazy/faza-7d-ui.md`)*
 - Tokeny v `index.css` podľa README makety: pozadie `#f4f4f2`, karta s okrajom 1 px `#e7e6e2` a radius 12, stavy ok/info/warn/danger/neutral, Inter s tabulárnymi číslami, riadok tabuľky 52 px, hlavička 34 px. Primárne tlačidlo čierne, oranžová len na zvýraznenie. Téma Modrá ostane (tie isté tokeny, iná primárna).
 - Komponenty v štýle shadcn/ui v `components/ui`, napojené na tokeny: `AppHeader`, `KpiCard` so sparkline, `DataTable` so skupinami a akciami, `StatusBadge`, `DeltaBadge`, `RiskChip`, `AlertItem`, `SegmentedTabs`, `FilterChips`, `StackedBar`, `DayTimeline`, plus `Select`, `DropdownMenu`, `Popover`, `Tooltip`, `Dialog`.
 - **Nové závislosti:** len Radix primitíva (balík `radix-ui`, dostupnosť: klávesnica, focus, ARIA). Sparklines a pruhy vlastné SVG, bez Recharts (menší bundle, stačí nám to). Bez `class-variance-authority` a `tailwind-merge`, ostane vlastný malý `cn`.
@@ -321,7 +321,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - Shell: bočná lišta podľa makety (sekcie Prevádzka / Systém, odznak pri Bráne, zbalenie na pruh 72 px), horná lišta `AppHeader` (sklad, drobčeky, hľadanie Ctrl K, vlna, živý čas a rýchlosť, alarmy).
 - `docs/design/komponenty.md` prepísaný na v2.
 
-**Krok 2 – Depot 5.0 ako produkt pre sieť skladov** (app + frontend, ADR-068)
+**Krok 2 – Depot 5.0 ako produkt pre sieť skladov** (app + frontend, ADR-068) *(hotové)*
 - Migrácia `users.home_depot_id` (FK na depots, nullable pre admina), seed: kuriéri podľa skladu (`kurier0N` BUD, `kurierza0N` ZIL, `kurierba0N` BAH), operátor, ochranka a dispečeri BUD. Krok seedu doplní aj existujúcu DB.
 - Prepínanie: admin a dispečer smú všetky sklady, operátor, ochranka a kuriér len domovský. Backend stráži sklad pri nakládke, bráne (front, prejazdy, fotka), kuriérovi, tieni a alarmoch (cudzí sklad → 403). HTTP test pre každú rolu.
 - `/api/auth/me` vráti domovský sklad a zoznam povolených skladov. Admin nastaví domovský sklad v správe používateľov.
@@ -342,6 +342,13 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - 5a layout: zbalená navigácia 72 px, scéna cez celú plochu bez scrollu pri 1280/1440, horná lišta v jednom riadku, 4 nízke KPI v riadku (pod 1380 px dva), detail 360 px + stĺpec kamery, taby s legendou vpravo dole, sledovanie balíka vľavo dole,
 - 5b scéna: kamera izometria zo strany dvora, fasáda diagonálne stredom, strecha zatvorená; farby podľa tabuľky, tri odtiene na objekt, `ContactShadows`; fasáda (rebrovaný plech, oranžová atika, rámy brán, tmavé tabuľky čísel brán, tabuľa „Depot 5.0 · <SKLAD>“, otvorené brány s krabicami); dvor (žlté státia, prerušovaný pruh, závora, vrátnica); kamióny (biele návesy, ťahače tmavé a oranžové), dodávky biele s oranžovým pruhom,
 - 5c piny v tvare kvapky, popisky pri hoveri, plávajúce štítky len pre vybraný, degradovaný, prichádzajúci a čakajúci kamión.
+
+**Krok 5d – vnútro skladu** (app + telematika + frontend, ADR, doplnené tímom 8. 11. 2026)
+- Linka ako dáta v layoute (graf: uzly a pásy), nie natvrdo v komponentoch: vykládka a teleskopické pásy na plošine pri bránach → vstup na hlavný pás → **CP1** senzor vstupu (počíta aj neprečítané) → **CP2** skenovací tunel (viacstranové čítanie štítku) → **CP3** váha a rozmery (DWS) → triedič s odbočkami k bránam a odstavným plochám → **CP4** IoT skener na konci vetvy (existujúci). Neprečítané balíky idú na stanicu ručného dokódovania a späť na pás. Budimír podľa popisu tímu (pošle), ostatné sklady zjednodušená verzia z rovnakých dielov.
+- Kontrolné body ako zariadenia v db-telemetry (migrácia). Simulátor generuje prechody balíkov cez kontrolné body s časmi podľa dĺžky a rýchlosti pásu, deterministicky (vlastný prúd RNG). Golden test Budimíra pre doterajšie skeny pri bránach sa nesmie zmeniť.
+- `parcel_events` dostanú kontrolný bod, časová os balíka ich ukáže.
+- Tieň pri odkrytej streche: pásy, triedič, plošina, piny kontrolných bodov, balíky sa pohybujú po trase podľa udalostí (max. 300 inštancií, 60 fps). Klik na kontrolný bod: priepustnosť za hodinu, čítanosť, neprečítané, front pri dokódovaní. Vyhľadaný balík zvýrazní svoju trasu a aktuálny kontrolný bod.
+- Testy (generovanie prechodov, determinizmus, API kontrolných bodov), ADR, screenshot vnútra vedľa makety tieňa (odkrytá strecha).
 
 **Krok 6 – ostatné obrazovky** (Flotila, Nakládka, Brána, Kuriéri, Admin, Tabuľa, Stav systému): nové komponenty, horná lišta a tokeny, layout bez zmeny.
 

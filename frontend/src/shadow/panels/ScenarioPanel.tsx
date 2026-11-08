@@ -7,6 +7,7 @@ import { hhmm } from "../../domain/labels";
 import type { DepotLayout } from "../layout";
 import { useShadowStore } from "../store";
 import { actionError } from "../permissions";
+import { useDepot } from "../../hooks/useDepot";
 
 type Kind = Intervention["kind"];
 
@@ -125,7 +126,7 @@ function Results({ r }: { r: WhatIfResult }) {
  * scenario; affected doors and devices are ringed in the scene.
  */
 export function ScenarioPanel({ layout, onAffected }: { layout: DepotLayout; onAffected: (codes: string[] | null) => void }) {
-  const dashboard = useDashboard();
+  const dashboard = useDashboard(useDepot().code);
   const devices = useShadowStore((s) => s.devices);
   const run = useWhatIf();
   const tripList = useMemo(() => dashboard.data?.trips ?? [], [dashboard.data]);

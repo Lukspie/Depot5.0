@@ -17,9 +17,7 @@ from depotrack.api.depots import depot_state
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.models import (
     Alert,
-    Depot,
     Door,
-    GateEvent,
     LoadingScan,
     Parcel,
     ParcelEvent,
@@ -48,6 +46,13 @@ from depotrack.schemas.shadow import (
     WrongScan,
 )
 from depotrack.schemas.wms import DepotOut
+from depotrack.services.depot_scope import (
+    alerts_of_depot,
+    can_switch,
+    check_depot,
+    check_parcel,
+    resolve_depot,
+)
 from depotrack.services.kpis import day_overview, open_alerts
 from depotrack.services.loading import active_trip_at, missing_parcels
 from depotrack.services.parcels import LOADABLE, in_day
@@ -61,13 +66,6 @@ DoorCode = Annotated[str, Path(max_length=16)]
 Barcode = Annotated[str, Path(min_length=3, max_length=64)]
 
 MISSING_SHOWN = 30
-
-
-def _depot(db: DbSession, code: str) -> Depot:
-    d = db.execute(select(Depot).where(Depot.code == code)).scalar_one_or_none()
-    if d is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown depot")
-    return d
 
 
 def _cascade(db: DbSession, trip: Trip) -> AlertOut | None:
@@ -104,19 +102,18 @@ def _dock(db: DbSession, door: Door, look: Lookup) -> ShadowDock:
 
 @router.get("/{depot}", response_model=ShadowOut, response_model_by_alias=True)
 def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
-    d = _depot(db, depot)
+    d = resolve_depot(db, user, depot)  # security sees only its own depot (ADR-068)
     look = Lookup(db)
     clk = clock()
     state = depot_state(d.code, user, db)  # the same live state as the 3D map
     docks: list[ShadowDock] = []
     kpis = None
-    # KPIs and alerts of the chosen depot only (phase 7c): a depot without its own trips yet has
-    # none, instead of showing Budimír's numbers
+    # KPIs of the chosen depot only (phase 7c): a depot without its own trips yet has none,
+    # instead of showing Budimír's numbers
     trips = sorted((t for t in trips_of(db, clk.operating_day) if t.depot_id == d.id), key=sort_key)
-    operated = bool(trips) or d.kind == DepotKind.HUB
     if d.kind == DepotKind.DEPOT:
         if trips:
-            kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time)
+            kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time, d.id)
         doors = sorted(
             (
                 x
@@ -133,41 +130,24 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
         docks=docks,
         staged=state.staged,
         trucks=state.trucks,
-        alerts=[AlertOut.model_validate(a) for a in _alerts_of(db, d, operated)],
-    )
-
-
-def _alerts_of(db: DbSession, d: Depot, operated: bool) -> list[Alert]:
-    """Open alerts for the shadow of a depot: a gate alarm only at its own gate (phase 7c), the
-    others where the depot runs trips (or is the hub)."""
-    alerts = open_alerts(db, 30, clock().operating_day)
-    gate = [a.ref_id or "" for a in alerts if a.ref_type == "gate"]
-    ids = {int(ref) for ref in gate if ref.isdigit()}
-    gate_depot = (
-        dict(
-            db.execute(
-                select(GateEvent.id, GateEvent.depot_id).where(GateEvent.id.in_(ids))
+        # alerts of this depot; those of no depot only for who sees the whole network
+        alerts=[
+            AlertOut.model_validate(a)
+            for a in alerts_of_depot(
+                db, open_alerts(db, 30, clk.operating_day), d, unplaced=can_switch(user)
             )
-            .tuples()
-            .all()
-        )
-        if ids
-        else {}
+        ],
     )
-    return [
-        a
-        for a in alerts
-        if (gate_depot.get(int(a.ref_id or 0)) == d.id if a.ref_type == "gate" else operated)
-    ]
 
 
 @router.get("/doors/{code}", response_model=ShadowDockDetail, response_model_by_alias=True)
-def dock_detail(code: DoorCode, _: Viewer, db: DbSession) -> ShadowDockDetail:
+def dock_detail(code: DoorCode, user: Viewer, db: DbSession) -> ShadowDockDetail:
     door = db.execute(
         select(Door).where(Door.code == code, Door.kind == DoorKind.LOADING_DOCK)
     ).scalar_one_or_none()
     if door is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown loading door")
+    check_depot(db, user, door.depot_id)
     look = Lookup(db)
     dock = _dock(db, door, look)
     trip = active_trip_at(db, door, clock().sim_time)
@@ -253,12 +233,13 @@ def _place(db: DbSession, parcel: Parcel, look: Lookup, last_trip_id: int | None
 
 
 @router.get("/parcels/{barcode}", response_model=ParcelLocate, response_model_by_alias=True)
-def locate_parcel(barcode: Barcode, _: Viewer, db: DbSession) -> ParcelLocate:
+def locate_parcel(barcode: Barcode, user: Viewer, db: DbSession) -> ParcelLocate:
     parcel = db.execute(
         select(Parcel).where(Parcel.barcode == barcode.strip().upper())
     ).scalar_one_or_none()
     if parcel is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown parcel")
+    check_parcel(db, user, parcel)
     look = Lookup(db)
     events = list(
         db.execute(

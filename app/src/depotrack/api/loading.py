@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
 from depotrack.core.rbac import DbSession, require_role
@@ -11,6 +11,7 @@ from depotrack.models.enums import EventSource, ScanResult, UserRole
 from depotrack.schemas.wms import DoorSummary, LoadingView, ManualScanIn, ManualScanOut, ScanOut
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
+from depotrack.services.depot_scope import check_depot, resolve_depot
 from depotrack.services.loading import (
     active_trip_at,
     depot_docks,
@@ -52,14 +53,19 @@ def _door_or_404(db: DbSession, code: str) -> Door:
 
 
 @router.get("/doors", response_model=list[DoorSummary], response_model_by_alias=True)
-def doors(_: Operator, db: DbSession) -> list[DoorSummary]:
+def doors(
+    user: Operator, db: DbSession, depot: Annotated[str | None, Query(max_length=8)] = None
+) -> list[DoorSummary]:
+    """Loading doors of a depot: the operator's own depot, an admin may choose (ADR-068)."""
     look = Lookup(db)
-    return [_door_summary(db, d, look) for d in depot_docks(db)]
+    code = resolve_depot(db, user, depot).code
+    return [_door_summary(db, d, look) for d in depot_docks(db, code)]
 
 
 @router.get("/doors/{code}", response_model=LoadingView, response_model_by_alias=True)
-def door_view(code: str, _: Operator, db: DbSession) -> LoadingView:
+def door_view(code: str, user: Operator, db: DbSession) -> LoadingView:
     door = _door_or_404(db, code)
+    check_depot(db, user, door.depot_id)
     look = Lookup(db)
     summary = _door_summary(db, door, look)
     trip = active_trip_at(db, door, clock().sim_time)
@@ -87,6 +93,7 @@ def manual_scan(
 ) -> ManualScanOut:
     """Hand-scanner simulation: the operator types or scans a barcode at the door."""
     door = _door_or_404(db, code)
+    check_depot(db, user, door.depot_id)
     outcome = process_scan(
         db,
         door=door,

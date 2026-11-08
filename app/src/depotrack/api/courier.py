@@ -34,6 +34,7 @@ from depotrack.services.couriers import (
     load_parcel,
     staging_bay,
 )
+from depotrack.services.depot_scope import resolve_depot
 from depotrack.services.routing import DeliveryType
 
 router = APIRouter(prefix="/api/courier", tags=["courier"])
@@ -114,12 +115,21 @@ def _brief(
 
 @router.get("/routes", response_model=list[CourierRouteBrief], response_model_by_alias=True)
 def routes(
-    user: Viewer, db: DbSession, day: Annotated[date | None, Query()] = None
+    user: Viewer,
+    db: DbSession,
+    day: Annotated[date | None, Query()] = None,
+    depot: Annotated[str | None, Query(max_length=8)] = None,
 ) -> list[CourierRouteBrief]:
-    """Routes of a delivery day (default today). A courier gets only their own."""
+    """Routes of a delivery day (default today). A courier gets only their own; `depot` keeps
+    the rounds of one depot (ADR-068)."""
     stmt = select(CourierRoute).where(CourierRoute.date == (day or today()))
     if user.role == UserRole.COURIER:
         stmt = stmt.where(CourierRoute.courier_user_id == user.id)
+    elif depot is not None:
+        districts = select(Direction.id).where(
+            Direction.depot_id == resolve_depot(db, user, depot).id
+        )
+        stmt = stmt.where(CourierRoute.rajon_direction_id.in_(districts))
     return [
         _brief(db, r, _stops(db, r)) for r in db.execute(stmt.order_by(CourierRoute.id)).scalars()
     ]

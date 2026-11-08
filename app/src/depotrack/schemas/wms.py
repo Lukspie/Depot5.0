@@ -162,6 +162,8 @@ class DeviceSummary(CamelModel):
 
 
 class BoardOut(CamelModel):
+    # "Budimír · prekládkové depo": the depot whose trips the board shows (phase 7d)
+    depot: str
     clock: ClockOut
     arrivals: list[TripBrief]
     departures: list[TripBrief]

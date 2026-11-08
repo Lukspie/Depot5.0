@@ -8,6 +8,7 @@ import { Badge, Button, Card, EmptyState, PageHeader, Progress, Spinner, StatusD
 import { SCAN_RESULT, TRIP_STATUS, delayLabel, delayTone, hhmm, hhmmss } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
 import { kg } from "../lib/format";
+import { useDepot } from "../hooks/useDepot";
 
 interface LiveScan {
   door: string;
@@ -113,7 +114,7 @@ function ManualScan({ door }: { door: string }) {
 }
 
 export function LoadingPage() {
-  const doors = useDoors();
+  const doors = useDoors(useDepot().code);
   // /loading?door=LD-02 (link from the digital shadow) wins over the remembered door
   const [params] = useSearchParams();
   const [chosen, setChosen] = useState<string | null>(() => params.get("door") ?? loadDoor());

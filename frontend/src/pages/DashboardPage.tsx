@@ -19,6 +19,7 @@ import {
 } from "../domain/labels";
 import { useChannel } from "../hooks/telematics";
 import { pct } from "../lib/format";
+import { useDepot } from "../hooks/useDepot";
 
 const fmt = new Intl.NumberFormat("sk-SK");
 
@@ -182,7 +183,7 @@ function AlertList({ alerts }: { alerts: Alert[] }) {
 }
 
 export function DashboardPage() {
-  const dash = useDashboard();
+  const dash = useDashboard(useDepot().code);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [tripTab, setTripTab] = useState<"outbound" | "inbound">("outbound");

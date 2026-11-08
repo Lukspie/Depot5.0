@@ -38,6 +38,17 @@ class UserOut(BaseModel):
     active: bool
     created_at: datetime
     shift: Shift | None = None
+    # code of the home depot (phase 7d, ADR-068)
+    home_depot: str | None = Field(default=None, validation_alias="home_depot_code")
+
+
+class MeOut(UserOut):
+    # depots the user may open: all for admins and dispatchers, else the home depot
+    depots: list[str] = []
+    can_switch_depot: bool = False
+
+
+DepotCode = Annotated[str, StringConstraints(max_length=8)]
 
 
 class UserCreate(BaseModel):
@@ -46,6 +57,7 @@ class UserCreate(BaseModel):
     role: UserRole
     password: Password
     shift: Shift | None = None
+    home_depot: DepotCode | None = None
 
 
 class UserUpdate(BaseModel):
@@ -55,3 +67,4 @@ class UserUpdate(BaseModel):
     password: Password | None = None
     # sent as null: no shift
     shift: Shift | None = None
+    home_depot: DepotCode | None = None

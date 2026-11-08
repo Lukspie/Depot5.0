@@ -14,7 +14,8 @@ from depotrack.core.sessions import create_session, delete_session
 from depotrack.core.tickets import issue_ws_ticket
 from depotrack.models import User
 from depotrack.schemas.internal import WsTicketOut
-from depotrack.schemas.users import LoginIn, UserOut
+from depotrack.schemas.users import LoginIn, MeOut, UserOut
+from depotrack.services.depot_scope import allowed_depots, can_switch, home_depot
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -71,9 +72,13 @@ def logout(request: Request, response: Response, db: DbSession, settings: Settin
     )
 
 
-@router.get("/me", response_model=UserOut)
-def me(user: CurrentUser) -> User:
-    return user
+@router.get("/me", response_model=MeOut)
+def me(user: CurrentUser, db: DbSession) -> MeOut:
+    out = MeOut.model_validate(user)
+    out.home_depot = home_depot(db, user).code
+    out.depots = [d.code for d in allowed_depots(db, user)]
+    out.can_switch_depot = can_switch(user)
+    return out
 
 
 @router.post("/ws-ticket", response_model=WsTicketOut, response_model_by_alias=True)

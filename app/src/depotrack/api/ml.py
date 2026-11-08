@@ -13,6 +13,7 @@ from depotrack.models import Trip, User
 from depotrack.models.enums import TripKind, UserRole
 from depotrack.schemas.internal import CamelModel
 from depotrack.services import telematics
+from depotrack.services.depot_scope import can_switch, door_depot, home_depot
 from depotrack.services.ml_eta import features, predict_delay
 from depotrack.services.ml_scanner import LATEST
 
@@ -123,9 +124,14 @@ def predict_trip_delay(
 
 
 @router.get("/scanners", response_model=ScannerRisksOut, response_model_by_alias=True)
-def scanner_risks(_: Viewer) -> ScannerRisksOut:
-    """Latest risk score of every dock scanner (digital shadow device panel, ADR-058)."""
+def scanner_risks(user: Viewer, db: DbSession) -> ScannerRisksOut:
+    """Latest risk score of every dock scanner (digital shadow device panel, ADR-058); security
+    gets those of its own depot (ADR-068)."""
     model = scanner_model()
+    risks = sorted(LATEST.values(), key=lambda x: x.device)
+    if not can_switch(user):
+        home = home_depot(db, user).id
+        risks = [r for r in risks if r.door_code and door_depot(db, r.door_code) == home]
     return ScannerRisksOut(
         available=model is not None,
         threshold=model.threshold if model else None,
@@ -139,6 +145,6 @@ def scanner_risks(_: Viewer) -> ScannerRisksOut:
                 rate_long=r.rate_2h,
                 at=r.at,
             )
-            for r in sorted(LATEST.values(), key=lambda x: x.device)
+            for r in risks
         ],
     )

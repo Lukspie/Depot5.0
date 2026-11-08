@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useLayout } from "../api/depots";
+import { useDepot } from "../hooks/useDepot";
 import { useParcelLocate, useShadow, type ParcelLocate } from "../api/shadow";
 import { Button, Card, EmptyState, Spinner } from "../components/ui";
 import type { CameraApi } from "../shadow/CameraRig";
@@ -52,14 +53,15 @@ function Legend() {
  * model automatically; model -> reality only through human decisions in the WMS.
  */
 export function ShadowPage() {
-  const [params] = useSearchParams();
   // a new depot = a fresh page: the devices channel is subscribed again and sends its snapshot
-  return <ShadowView key={params.get("depot") ?? "BUD"} />;
+  const { code } = useDepot();
+  if (!code) return null;
+  return <ShadowView key={code} code={code} />;
 }
 
-function ShadowView() {
+function ShadowView({ code }: { code: string }) {
   const [params] = useSearchParams();
-  const code = params.get("depot") ?? "BUD";
+  // the depot comes from the shell (useDepot): address, last choice or home depot (ADR-068)
   // fps measurement (docs/fazy/faza-5): ?fps=1 live data, ?fps=stress also a full belt (~300 parcels)
   const stress = params.get("fps") === "stress";
   const measuring = params.get("fps") === "1" || stress;

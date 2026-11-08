@@ -8,6 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 
+from depotrack.api.depots import depot_label
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.ratelimit import limiter
 from depotrack.core.rbac import DbSession, require_role
@@ -27,6 +28,7 @@ from depotrack.schemas.wms import (
 )
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
+from depotrack.services.depot_scope import alerts_of_depot, can_switch, main_depot, resolve_depot
 from depotrack.services.kpis import day_overview, day_read_rate, open_alerts
 from depotrack.services.views import DONE, Lookup, clock, sort_key, trip_brief, trips_of
 
@@ -39,13 +41,19 @@ Staff = Annotated[
 
 
 @router.get("/dashboard", response_model=DashboardOut, response_model_by_alias=True)
-def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
+def dashboard(
+    user: Dispatcher, db: DbSession, depot: Annotated[str | None, Query(max_length=8)] = None
+) -> DashboardOut:
+    """The day of one depot (the dispatcher's home depot when absent, ADR-068)."""
+    d = resolve_depot(db, user, depot)
     clk = clock()
     day = clk.operating_day
     look = Lookup(db)
-    trips = sorted(trips_of(db, day), key=sort_key)
-    kpis, rows = day_overview(db, day, trips, look, clk.sim_time)
-    alerts = open_alerts(db, day=day)
+    trips = sorted((t for t in trips_of(db, day) if t.depot_id == d.id), key=sort_key)
+    kpis, rows = day_overview(db, day, trips, look, clk.sim_time, d.id)
+    alerts = alerts_of_depot(db, open_alerts(db, 200, day), d, unplaced=True)
+    # the KPI counts the same alerts as the list (of this depot)
+    kpis.open_alerts = len(alerts)
     return DashboardOut(
         clock=clk,
         kpis=kpis,
@@ -57,13 +65,15 @@ def dashboard(_: Dispatcher, db: DbSession) -> DashboardOut:
 
 @router.get("/alerts", response_model=AlertListOut, response_model_by_alias=True)
 def list_alerts(
-    _: Staff,
+    user: Staff,
     db: DbSession,
     include_closed: Annotated[bool, Query(alias="all")] = False,
     current: Annotated[bool, Query()] = False,
+    depot: Annotated[str | None, Query(max_length=8)] = None,
 ) -> AlertListOut:
     """Open alerts; `current` keeps those of the current operating day, as counted in the KPI
-    and the top bar (phase 7d); `all` adds the closed ones."""
+    and the top bar (phase 7d); `all` adds the closed ones. `depot` keeps one depot's alerts;
+    an operator or a guard always gets only those of their own depot (ADR-068)."""
     if current:
         rows = open_alerts(db, 100, clock().operating_day)
     elif include_closed:
@@ -72,6 +82,8 @@ def list_alerts(
         )
     else:
         rows = open_alerts(db, 100)
+    if depot is not None or not can_switch(user):
+        rows = alerts_of_depot(db, rows, resolve_depot(db, user, depot), unplaced=can_switch(user))
     return AlertListOut(alerts=[AlertOut.model_validate(a) for a in rows])
 
 
@@ -125,7 +137,10 @@ def board(
     devices = telematics.devices()
     states = Counter(str(d.get("status")) for d in devices)
     line = next((d for d in devices if d.get("kind") == "line_scanner"), None)
+    home = main_depot(db)
+    label = depot_label(home, list(look.directions.values()))
     return BoardOut(
+        depot=f"{home.name} · {label}",
         clock=clk,
         arrivals=[brief(t) for t in arrivals],
         departures=[brief(t) for t in departures],

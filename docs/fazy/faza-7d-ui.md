@@ -34,3 +34,17 @@ Porovnáva sa rám aplikácie z makety dispečingu (obsah dispečingu je krok 4)
 ![Po: maketa vľavo, implementácia vpravo (1440 px)](../screenshots/faza-7d/1-shell-po-1440.png)
 
 Kontrola ďalších šírok: 1280 px a 390 px bez vodorovného posúvania (skript screenshotov meria `scrollWidth`).
+
+## Krok 2 – sieť skladov (prepínač skladu, ADR-068)
+
+Maketa ukazuje v hornej lište sklad so šípkou (prepínač). Prihlásený dispečer, 1440 px.
+
+| Položka | Maketa | Pred | Čo sa zmenilo | Stav |
+| --- | --- | --- | --- | --- |
+| Prepínač skladu | „Budimír ▾“ v hornej lište | sklad bez prepínania (krok 1), v tieni vlastný zoznam všetkých skladov | menu „Sklady siete“ s typom skladu z dát. Len pre dispečera a administrátora, ochranka, operátor a kuriér vidia svoj sklad bez menu. Výber je v adrese a pamätá sa | ✓ |
+| Sklad v bočnej lište | „Budimír · prekládkové depo“ | podľa adresy, inak Budimír natvrdo | zvolený sklad a jeho typ (`Žilina · depo`, `Ivanka pri Dunaji · hub Bratislava`) | ✓ |
+| Hľadanie | v rámci skladu | balíky celej siete | `/api/search` v zvolenom sklade podľa roly | ✓ |
+
+![Prepínač skladu dispečera](../screenshots/faza-7d/2-prepinac-skladu.png)
+
+Poistky po kroku 2: golden test Budimíra prechádza, demo scenáre z `docs/demo.md` prejdené v prehliadači ako administrátor, dispečer, operátor, ochranka a kuriéri Budimíra a Žiliny (večerná špička aj ranní kuriéri): všetky obrazovky bez chýb v konzole, bez chybových odpovedí API a bez vodorovného posúvania.

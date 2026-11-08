@@ -20,6 +20,7 @@ from depotrack.schemas.internal import CamelModel
 from depotrack.services import gate as rules
 from depotrack.services import telematics
 from depotrack.services.alerts import AlertChange, alert_event, day_start
+from depotrack.services.depot_scope import can_switch, check_depot, resolve_depot
 from depotrack.services.trip_plan import operating_day_of
 
 router = APIRouter(prefix="/api/gate", tags=["gate"])
@@ -100,12 +101,13 @@ class AllowedPlateOut(CamelModel):
 @router.post("/detect", response_model=GateDetectOut, response_model_by_alias=True)
 async def detect(
     request: Request,
-    _: Guard,
+    user: Guard,
     db: DbSession,
     background: BackgroundTasks,
     direction: Annotated[Literal["in", "out"], Query()] = "in",
     record: Annotated[bool, Query()] = True,
-    depot: Annotated[str, Query(max_length=8)] = "BUD",
+    # the gate of this depot; the guard's own depot when absent (ADR-068)
+    depot: Annotated[str | None, Query(max_length=8)] = None,
 ) -> GateDetectOut:
     """Body: the image (image/jpeg, image/png, image/webp). With `record` the passage is stored
     with its decision and goes to telematics (yard in the digital shadow)."""
@@ -126,11 +128,8 @@ async def detect(
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "empty body")
     # decoding, the models, the database and the calls to telematics block: not on the event loop
-    if db.execute(select(Depot.id).where(Depot.code == depot)).first() is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Unknown depot")
-    return await run_in_threadpool(
-        _process, bytes(data), direction, record, db, background, depot
-    )
+    code = resolve_depot(db, user, depot).code
+    return await run_in_threadpool(_process, bytes(data), direction, record, db, background, code)
 
 
 def _process(
@@ -278,17 +277,16 @@ def _events_out(db: Session, events: list[GateEvent]) -> list[GateEventOut]:
 DepotFilter = Annotated[str | None, Query(max_length=8)]
 
 
-def _of_depot(db: Session, depot: str | None) -> list[ColumnElement[bool]]:
-    if depot is None:
+def _of_depot(db: Session, user: User, depot: str | None) -> list[ColumnElement[bool]]:
+    """The gate(s) a request is about: all for an admin without a filter, else one depot. A guard
+    sees only the gate of their own depot (ADR-068)."""
+    if depot is None and can_switch(user):
         return []
-    depot_id = db.execute(select(Depot.id).where(Depot.code == depot)).scalar_one_or_none()
-    if depot_id is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown depot")
-    return [GateEvent.depot_id == depot_id]
+    return [GateEvent.depot_id == resolve_depot(db, user, depot).id]
 
 
 @router.get("/queue", response_model=list[GateEventOut], response_model_by_alias=True)
-def queue(_: Guard, db: DbSession, depot: DepotFilter = None) -> list[GateEventOut]:
+def queue(user: Guard, db: DbSession, depot: DepotFilter = None) -> list[GateEventOut]:
     """Open decisions for security, oldest first: held vehicles and lorries to verify (not the
     ones of a later day, after a jump back in the simulation); `depot` keeps one depot's gate."""
     events = list(
@@ -298,7 +296,7 @@ def queue(_: Guard, db: DbSession, depot: DepotFilter = None) -> list[GateEventO
                 GateEvent.resolution.is_(None),
                 GateEvent.decision != rules.AUTO_PASS,
                 GateEvent.at <= telematics.sim_now(),
-                *_of_depot(db, depot),
+                *_of_depot(db, user, depot),
             )
             .order_by(GateEvent.at, GateEvent.id)
             .limit(100)
@@ -309,7 +307,7 @@ def queue(_: Guard, db: DbSession, depot: DepotFilter = None) -> list[GateEventO
 
 @router.get("/events", response_model=list[GateEventOut], response_model_by_alias=True)
 def events(
-    _: Guard,
+    user: Guard,
     db: DbSession,
     limit: Annotated[int, Query(ge=1, le=200)] = 40,
     depot: DepotFilter = None,
@@ -322,7 +320,7 @@ def events(
             .where(
                 GateEvent.at >= day_start(day),
                 GateEvent.at < day_start(day + timedelta(days=1)),
-                *_of_depot(db, depot),
+                *_of_depot(db, user, depot),
             )
             .order_by(GateEvent.at.desc(), GateEvent.id.desc())
             .limit(limit)
@@ -346,6 +344,7 @@ def decide_event(
     event = db.get(GateEvent, event_id, with_for_update=True)
     if event is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "gate event not found")
+    check_depot(db, user, event.depot_id)
     note = body.note.strip()
     if body.action in ("allow", "deny") and len(note) < 3:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "a note is required")
