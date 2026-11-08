@@ -22,6 +22,7 @@ export function DepotLayer({ layout, live }: Props) {
   useEffect(() => {
     if (!map) return;
     const h = createDepotLayer(`dt-depot-${code}`, layout);
+    const centre = layout.layout.origin ?? [layout.depot.lat, layout.depot.lon];
     handle.current = h;
     map.addLayer(h.layer);
 
@@ -30,12 +31,12 @@ export function DepotLayer({ layout, live }: Props) {
     label.textContent = `${layout.depot.name}${layout.depot.kind === "hub" ? " · hub Bratislava" : " · depo"}`;
     label.addEventListener("click", () => navigate(`/shadow?depot=${code}`));
     const marker = new maplibregl.Marker({ element: label, anchor: "top", offset: [0, 18] })
-      .setLngLat([layout.depot.lon, layout.depot.lat])
+      .setLngLat([centre[1], centre[0]])
       .addTo(map);
 
     // click on the 3D marker / hall
     const onClick = (e: maplibregl.MapMouseEvent) => {
-      const p = map.project([layout.depot.lon, layout.depot.lat]);
+      const p = map.project([centre[1], centre[0]]);
       const zoom = map.getZoom();
       const radius = zoom >= 15 ? 120 : 34;
       if (Math.hypot(e.point.x - p.x, e.point.y - p.y) < radius) navigate(`/shadow?depot=${code}`);

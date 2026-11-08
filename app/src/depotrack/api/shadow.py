@@ -100,12 +100,13 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
     state = depot_state(d.code, user, db)  # the same live state as the 3D map
     docks: list[ShadowDock] = []
     kpis = None
+    # KPIs and alerts of the chosen depot only (phase 7c): a depot without its own trips yet has
+    # none, instead of showing Budimír's numbers
+    trips = sorted((t for t in trips_of(db, clk.operating_day) if t.depot_id == d.id), key=sort_key)
+    operated = bool(trips) or d.kind == DepotKind.HUB
     if d.kind == DepotKind.DEPOT:
-        # KPIs of the chosen depot only (phase 7c: more depots than Budimír)
-        trips = sorted(
-            (t for t in trips_of(db, clk.operating_day) if t.depot_id == d.id), key=sort_key
-        )
-        kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time)
+        if trips:
+            kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time)
         doors = sorted(
             (
                 x
@@ -122,7 +123,9 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
         docks=docks,
         staged=state.staged,
         trucks=state.trucks,
-        alerts=[AlertOut.model_validate(a) for a in open_alerts(db, 30, clk.operating_day)],
+        alerts=[AlertOut.model_validate(a) for a in open_alerts(db, 30, clk.operating_day)]
+        if operated
+        else [],
     )
 
 

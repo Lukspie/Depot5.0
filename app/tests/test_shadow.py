@@ -49,6 +49,10 @@ def test_shadow_scene_for_security(viewer: TestClient, db: Session) -> None:
 
     hub = viewer.get("/api/shadow/BAH").json()
     assert hub["kpis"] is None and hub["docks"] == []
+    # a depot without its own trips yet (phase 7c): its doors, but no KPIs or alarms of Budimír
+    zil = viewer.get("/api/shadow/ZIL").json()
+    assert zil["kpis"] is None and zil["alerts"] == []
+    assert len(zil["docks"]) == 12 and all(d["trip"] is None for d in zil["docks"])
     assert viewer.get("/api/shadow/XXX").status_code == 404
 
 

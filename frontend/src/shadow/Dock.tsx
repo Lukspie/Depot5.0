@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import type * as THREE from "three";
-import { hallOf, type DepotLayout, type LayoutDoor } from "./layout";
+import { facingOf, facingRotation, type DepotLayout, type LayoutDoor } from "./layout";
 import type { DoorState } from "./layout";
 import { BoxPile } from "./BoxPile";
 import { disposeTree, dockFrame, dockLeveler, doorLeaf, doorUnknown, numberPlate, OPENING_H, stagingBay, telescopicConveyor } from "./parts";
@@ -46,14 +46,13 @@ export function Dock({
   useEffect(() => () => disposeTree(frame), [frame]);
   useEffect(() => () => disposeTree(plate), [plate]);
   useEffect(() => () => disposeTree(leaf), [leaf]);
-  const facadeZ = -hallOf(layout).depth / 2;
   const pointer = (on: boolean) => (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     setHover(on);
     document.body.style.cursor = on ? "pointer" : "";
   };
   return (
-    <group position={[door.x, 0, facadeZ]}>
+    <group position={[door.x, 0, door.y]} rotation-y={facingRotation(facingOf(layout, door))}>
       <primitive object={frame} />
       <primitive object={leaf} />
       {/* parcels at the threshold, beside the trailer, so they are visible from the yard */}

@@ -172,7 +172,7 @@ function ShadowView() {
       </div>
 
       <div className={`${panel} z-20 md:top-3 md:right-3 md:left-3`}>
-        <TopBar depot={code} live={live.data} onSearch={search} onScenario={canAct && l.depot.kind === "depot" ? () => setScenario(true) : undefined} />
+        <TopBar depot={code} live={live.data} onSearch={search} onScenario={canAct && live.data?.kpis ? () => setScenario(true) : undefined} />
       </div>
 
       <div className={`${panel} flex flex-col gap-2 md:top-[76px] md:left-3 md:w-60`}>

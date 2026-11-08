@@ -1,7 +1,7 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import { WithModel } from "./gltf";
-import { hallOf, type DepotLayout } from "./layout";
+import { facingRotation, hallOf, type DepotLayout } from "./layout";
 import { MODELS } from "./models";
 import { box, disposeTree, mat } from "./parts";
 import { useShadowStore } from "./store";
@@ -18,20 +18,25 @@ function PrimitiveVan() {
 }
 
 /**
- * Courier vans parked in the yard and being loaded (from 06:30, ADR-041, phase 7b) stand outside
- * the south wall behind their staging bay (KE-0N -> SB-0N) until they leave. Positions come from
- * the telematics "vehicles" channel, not from the plan.
+ * Courier vans of the depot (ADR-041, phases 7b and 7c): parked on the yard's van parking
+ * overnight and after the round, from 06:30 loading in front of their staging bay (KE-0N -> SB-0N),
+ * until they leave. Places come from the layout, states from the telematics "vehicles" channel.
  */
 export function CourierVans({ layout }: { layout: DepotLayout }) {
   const vans = useShadowStore((s) => s.vans);
   const south = hallOf(layout).depth / 2;
+  const bays = layout.doors.filter((d) => d.kind === "staging_bay");
+  const yard = layout.layout.yard;
   return (
     <>
       {Object.values(vans).map((v) => {
-        const bay = layout.doors.find((d) => d.kind === "staging_bay" && (d.code === v.doorCode || d.directionCode === v.directionCode));
-        if (!bay) return null;
+        const bay = bays.find((d) => d.code === v.doorCode || d.directionCode === v.directionCode);
+        if (!bay) return null; // a van of another depot
+        const index = bays.indexOf(bay);
+        const slot = v.status === "parked" ? yard?.vanParking[index] : yard?.vanLoading.find((s) => s.bay === bay.code);
+        const [x, z, rot] = slot ? [slot.x, slot.y, facingRotation(slot.heading)] : [bay.x, south + 4, Math.PI];
         return (
-          <group key={v.plate} position={[bay.x, 0, south + 4]} rotation-y={Math.PI}>
+          <group key={v.plate} position={[x, 0, z]} rotation-y={rot}>
             <WithModel fallback={<PrimitiveVan />}>
               <Van />
             </WithModel>

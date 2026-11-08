@@ -10,7 +10,7 @@ import { Dock, StagingBay } from "./Dock";
 import { FpsProbe } from "./FpsProbe";
 import { Hall, YardGround } from "./Hall";
 import { Highlight } from "./Highlight";
-import { devicePosition, hallOf, type DepotLayout } from "./layout";
+import { devicePosition, facingOf, facingRotation, hallOf, inFront, type DepotLayout } from "./layout";
 import { ParcelFlow } from "./ParcelFlow";
 import { cssColor } from "./parts";
 import { useShadowStore } from "./store";
@@ -78,6 +78,8 @@ interface TruckSpot {
   key: string;
   x: number;
   z: number;
+  /** rotation-y: the truck is modelled backed into a north door */
+  rot: number;
   type: string;
   door: string;
 }
@@ -116,7 +118,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       const door = doors.get(d.code);
       if (t && door && (t.status === "at_door" || t.status === "loading")) {
         // 1 m gap for the dock leveler between the trailer and the facade
-        trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y - 1, type: t.directionType, door: d.code });
+        trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y, rot: facingRotation(facingOf(layout, door)), type: t.directionType, door: d.code });
       }
     }
   } else {
@@ -125,7 +127,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
     const here = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
     here.slice(0, ramps.length).forEach((t, i) => {
       const r = ramps[i];
-      if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, type: "linehaul", door: r.code });
+      if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, rot: facingRotation(facingOf(layout, r)), type: "linehaul", door: r.code });
     });
   }
   return trucks;
@@ -134,7 +136,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
 
   const ringAt = (code: string): [number, number] | null => {
     const door = doors.get(code);
-    if (door) return [door.x, door.kind === "loading_dock" ? door.y - 3 : door.y];
+    if (door) return door.kind === "loading_dock" ? inFront(layout, door, 3) : [door.x, door.y];
     const dev = devices[code];
     return dev ? devicePosition(layout, dev) : null;
   };
@@ -161,10 +163,14 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
         ) : null,
       )}
       {trucks.map((t) => (
-        <Truck key={t.key} x={t.x} z={t.z} directionType={t.type} onSelect={() => selectDock(t.door)} />
+        <group key={t.key} position={[t.x, 0, t.z]} rotation-y={t.rot}>
+          <Truck x={0} z={-1} directionType={t.type} onSelect={() => selectDock(t.door)} />
+        </group>
       ))}
       {departing.map((t) => (
-        <Truck key={`leaving-${t.key}`} x={t.x} z={t.z} directionType={t.type} leaving />
+        <group key={`leaving-${t.key}`} position={[t.x, 0, t.z]} rotation-y={t.rot}>
+          <Truck x={0} z={-1} directionType={t.type} leaving />
+        </group>
       ))}
       {Object.values(devices).map((d) => {
         const p = devicePosition(layout, d);

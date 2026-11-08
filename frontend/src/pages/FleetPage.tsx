@@ -44,7 +44,8 @@ function Camera({ target, view }: { target: [number, number] | null; view: strin
   if (!map) return null;
   const btn = "bg-surface shadow-card hover:bg-canvas flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap";
   return (
-    <div className="absolute top-3 left-14 z-10 flex flex-wrap gap-2">
+    // one row that scrolls sideways on a phone: five depots do not wrap over the map
+    <div className="absolute top-3 right-3 left-14 z-10 flex gap-2 overflow-x-auto pb-1">
       <button type="button" className={btn} onClick={() => map.fitBounds(SLOVAKIA, { padding: 30, pitch: 45, duration: 1200 })}>
         <Maximize2 size={14} /> Celé Slovensko
       </button>

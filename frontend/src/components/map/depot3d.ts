@@ -9,7 +9,7 @@
 import * as maplibregl from "maplibre-gl";
 import type { CustomLayerInterface, Map as MapLibreMap } from "maplibre-gl";
 import * as THREE from "three";
-import { devicePosition, type DepotLayout, type DeviceStatus } from "../../shadow/layout";
+import { devicePosition, facingOf, facingRotation, type DepotLayout, type DeviceStatus } from "../../shadow/layout";
 import { cardboardPile, cssColor, hallStatic, pinModel, TRUCK_COLOR, truckModel, warehouseMarker } from "../../shadow/parts";
 
 export type { DepotLayout, LayoutDoor } from "../../shadow/layout";
@@ -40,7 +40,8 @@ export interface DepotLayerHandle {
 }
 
 export function createDepotLayer(id: string, layout: DepotLayout): DepotLayerHandle {
-  const { lat, lon } = layout.depot;
+  // the hall is drawn around its centre; the depot's lat/lon is its routing point (ADR-064)
+  const [lat, lon] = layout.layout.origin ?? [layout.depot.lat, layout.depot.lon];
   const origin = maplibregl.MercatorCoordinate.fromLngLat([lon, lat], 0);
   const scale = origin.meterInMercatorCoordinateUnits();
   const rotation = ((layout.layout.hall?.rotationDeg ?? 0) * Math.PI) / 180;
@@ -65,7 +66,11 @@ export function createDepotLayer(id: string, layout: DepotLayout): DepotLayerHan
     if (layout.depot.kind === "depot") {
       for (const o of state.occupied) {
         const d = doors.get(o.doorCode);
-        if (d) live.add(at(truckModel(TRUCK_COLOR[o.directionType] ?? 0x8a8a86), d.x, d.y));
+        if (d) {
+          const truck = at(truckModel(TRUCK_COLOR[o.directionType] ?? 0x8a8a86), d.x, d.y);
+          truck.rotation.y = facingRotation(facingOf(layout, d));
+          live.add(truck);
+        }
       }
       for (const s of state.staged) {
         const d = doors.get(s.doorCode);

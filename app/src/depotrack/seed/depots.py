@@ -382,6 +382,8 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
             lo = -w / 2 + spec.reserved_end[1]
 
     doors: list[DoorPlace] = []
+    # direction every wall door faces (degrees in the hall frame: 0 = +x, 90 = +y, 180, 270 = -y)
+    facing: dict[str, float] = {}
     van_loading: list[dict[str, object]] = []
     ramp_sides: set[tuple[str, int]] = set()
     for g in spec.doors:
@@ -402,6 +404,7 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
                 vx, vy = _pt(axis, sign, along, sign * wc + 4)
                 van_loading.append({"bay": code, "x": _r(vx), "y": _r(vy), "heading": heading})
             doors.append(DoorPlace(code, g.kind, _r(x), _r(y), *g.equipment))
+            facing[code] = heading
 
     # gate: where a line from the hall side meets the site boundary
     g_axis, g_sign = frame.side(spec.gate[0])
@@ -472,6 +475,7 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
         "footprint": [[_r(x), _r(y)] for x, y in footprint],
         "site": [[_r(x), _r(y)] for x, y in site],
         "yardGate": list(gate),
+        "doorFacing": facing,
         "yard": yard,
         "source": {
             "hallWay": osm["hallWay"],

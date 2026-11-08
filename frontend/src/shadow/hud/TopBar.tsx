@@ -1,6 +1,6 @@
-import { Building2, FlaskConical, Search, Warehouse } from "lucide-react";
+import { Building2, ChevronDown, FlaskConical, Search, Warehouse } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { useDepots } from "../../api/depots";
 import type { Shadow } from "../../api/shadow";
 import { Button } from "../../components/ui";
@@ -31,25 +31,34 @@ function occupancy(live: Shadow | undefined): string | null {
  */
 export function TopBar({ depot, live, onSearch, onScenario }: Props) {
   const depots = useDepots();
+  const navigate = useNavigate();
+  const current = depots.data?.find((d) => d.code === depot);
   const { now } = useSimClock();
   const [text, setText] = useState("");
   const time = now ? now.toLocaleTimeString("sk-SK", { timeZone: "Europe/Bratislava" }) : "—";
   return (
     <div className="bg-surface shadow-card flex flex-wrap items-center gap-2 rounded-2xl p-2">
-      <div className="flex items-center gap-1" role="group" aria-label="Sklad">
-        {depots.data?.map((d) => (
-          <Link
-            key={d.code}
-            to={`/shadow?depot=${d.code}`}
-            title={d.kind === "hub" ? `${d.name} · hub Bratislava` : undefined}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm whitespace-nowrap ${d.code === depot ? "bg-brand-100 text-brand-700 font-semibold" : "text-ink-muted hover:bg-canvas"}`}
-          >
-            {d.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}
-            {d.name}
-            {d.kind === "hub" && <span className="text-ink-muted hidden text-[11px] font-normal xl:inline">hub Bratislava</span>}
-          </Link>
-        ))}
-      </div>
+      {/* depot switch: a drop-down, the list of depots does not fit as pills (phase 7c) */}
+      <label className="bg-brand-100 text-brand-700 relative flex items-center gap-1.5 rounded-xl py-2 pr-8 pl-3 text-sm font-semibold whitespace-nowrap">
+        {current?.kind === "hub" ? <Building2 size={15} /> : <Warehouse size={15} />}
+        <span className="sr-only">Sklad</span>
+        <select
+          value={depot}
+          onChange={(e) => void navigate(`/shadow?depot=${e.target.value}`)}
+          className="absolute inset-0 cursor-pointer opacity-0"
+          aria-label="Sklad"
+        >
+          {depots.data?.map((d) => (
+            <option key={d.code} value={d.code}>
+              {d.name}
+              {d.kind === "hub" ? " · hub Bratislava" : ""}
+            </option>
+          ))}
+        </select>
+        <span aria-hidden>{current?.name ?? depot}</span>
+        {current?.kind === "hub" && <span className="hidden text-[11px] font-normal xl:inline">hub Bratislava</span>}
+        <ChevronDown size={14} className="pointer-events-none absolute right-2.5" aria-hidden />
+      </label>
       <span className="text-ink-muted hidden px-1 text-xs whitespace-nowrap lg:inline">{occupancy(live)}</span>
       <form
         className="border-line flex min-w-40 flex-1 items-center gap-2 rounded-xl border px-3 py-1.5"

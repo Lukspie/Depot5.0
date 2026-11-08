@@ -255,7 +255,7 @@ Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 4 skladov:
 - BUD a BAH: spresnenie z OSM (footprint, areál). Strany a počty rámp, vjazd a státia podľa satelitu, keď ho dodáš. Dovtedy ostane súčasný predpoklad a ADR to povie.
 - Migrácia (upsert skladov, brán a layoutu) a seed z toho istého `depots.json`, test, že čistá DB aj existujúca DB skončia rovnako (ako `test_depots.py`). ADR-064.
 
-**Krok 2 – UI (mapa a tieň), bez novej prevádzky**
+**Krok 2 – UI (mapa a tieň), bez novej prevádzky** *(hotové)*
 - Flotila: piny a 3D haly všetkých skladov, tlačidlá skladov nad mapou, pri priblížení areál (vjazd, státia, parkovisko, pruhy) z layoutu.
 - Tieň: prepínač skladov ako rozbaľovací zoznam (4 sklady sa do pilulky pri 390 px nezmestia bez zalamovania), scéna kreslí areál z layoutu, KPI a taby sa vzťahujú na zvolený sklad. Vzhľad podľa `docs/design/maketa-tien/`.
 - Komponenty nemajú nič natvrdo: všetko z `/api/layout`.

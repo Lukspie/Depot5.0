@@ -30,11 +30,12 @@ export interface DoorReading {
   at: string;
 }
 
-/** a courier van loading at the depot (vehicles channel) */
+/** a courier van in the depot yard: parked or loading (vehicles channel) */
 export interface DepotVan {
   plate: string;
   directionCode: string | null;
   doorCode: string | null;
+  status: "parked" | "loading";
 }
 
 export interface YardCar {
@@ -85,11 +86,12 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
   van: (p) => {
     // in the yard: parked overnight, loading in the morning (phase 7b), until it leaves
     const here = p.kind === "van" && (p.status === "loading" || p.status === "parked");
-    const known = p.plate in get().vans;
-    if (here === known) return; // only changes reach React (positions arrive every second)
+    const known = get().vans[p.plate];
+    // only changes reach React (positions arrive every second)
+    if (here === (known !== undefined) && (!here || known?.status === p.status)) return;
     set((s) => {
       const vans = { ...s.vans };
-      if (here) vans[p.plate] = { plate: p.plate, directionCode: p.directionCode, doorCode: p.doorCode };
+      if (here) vans[p.plate] = { plate: p.plate, directionCode: p.directionCode, doorCode: p.doorCode, status: p.status === "parked" ? "parked" : "loading" };
       else delete vans[p.plate];
       return { vans };
     });

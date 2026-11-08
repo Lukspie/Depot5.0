@@ -8,7 +8,7 @@
  */
 
 import * as THREE from "three";
-import { beltZ, hallOf, type DepotLayout, type DeviceStatus, type LayoutDoor } from "./layout";
+import { beltZ, facingOf, facingRotation, hallOf, headingVec, type DepotLayout, type DeviceStatus, type LayoutDoor, type YardSlot } from "./layout";
 
 export const STATUS_COLOR: Record<DeviceStatus, number> = { online: 0x23874f, degraded: 0xd99a1e, offline: 0xc93434, maintenance: 0x7c5cd6 };
 export const TRUCK_COLOR: Record<string, number> = { linehaul: 0x2f5be9, transit: 0x23874f, local: 0x8a8a86 };
@@ -27,6 +27,49 @@ export function box(w: number, h: number, d: number, material: THREE.Material, x
   m.castShadow = true;
   m.receiveShadow = true;
   return m;
+}
+
+/** Flat polygon in the yard plane (points x, z), `y` metres above the ground. */
+export function flatPolygon(points: [number, number][], material: THREE.Material, y: number): THREE.Mesh {
+  const shape = new THREE.Shape(points.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(shape), material);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = y;
+  m.receiveShadow = true;
+  return m;
+}
+
+/** Prism over a polygon (points x, z) from `y0` to `y1`. */
+export function prism(points: [number, number][], material: THREE.Material, y0: number, y1: number): THREE.Mesh {
+  const shape = new THREE.Shape(points.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: y1 - y0, bevelEnabled: false }), material);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = y0;
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+/** Straight piece from a to b (x, z): a wall when tall, a painted line when flat. */
+export function segment(a: [number, number], b: [number, number], width: number, height: number, material: THREE.Material, y: number): THREE.Mesh {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(len, height, width), material);
+  m.position.set((a[0] + b[0]) / 2, y + height / 2, (a[1] + b[1]) / 2);
+  m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
+  m.castShadow = height > 0.5;
+  m.receiveShadow = true;
+  return m;
+}
+
+/** Outline of a parking slot (length along its heading). */
+function slotOutline(s: YardSlot, length: number, width: number, paint: THREE.Material): THREE.Group {
+  const g = new THREE.Group();
+  const [fx, fz] = headingVec(s.heading);
+  const [sx, sz] = [-fz, fx];
+  const c = (u: number, v: number): [number, number] => [s.x + fx * u + sx * v, s.y + fz * u + sz * v];
+  const corners = [c(-length / 2, -width / 2), c(length / 2, -width / 2), c(length / 2, width / 2), c(-length / 2, width / 2)];
+  corners.forEach((p, i) => g.add(segment(p, corners[(i + 1) % 4] ?? p, 0.15, 0.02, paint, 0.11)));
+  return g;
 }
 
 /** Truck (cab + trailer) backed into a door at (0, 0), pointing north (-z). */
@@ -79,9 +122,42 @@ export function pinModel(status: DeviceStatus, height: number): THREE.Group {
 export function yardGround(l: DepotLayout): THREE.Object3D {
   const { width: w, depth: d } = hallOf(l);
   const g = new THREE.Group();
+  const site = l.layout.site;
+  if (site && site.length >= 3) {
+    // the depot's plot from OSM (or the assumed yard), with its stands, parking and lanes
+    g.add(flatPolygon(site, mat(0xd6d9de), 0.05), yardMarkings(l), yardPlaces(l));
+    return g;
+  }
   const m = box(w * 1.6, 0.1, d * 3.2, mat(0xd6d9de), 0, 0.05, -d * 0.55);
   m.castShadow = false;
   g.add(m, yardMarkings(l));
+  return g;
+}
+
+/** Trailer stands, van and car parking, lanes and the gate house of the yard (ADR-064). */
+export function yardPlaces(l: DepotLayout): THREE.Group {
+  const g = new THREE.Group();
+  const yard = l.layout.yard;
+  if (!yard) return g;
+  const paint = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const lane = new THREE.MeshBasicMaterial({ color: 0xb9bdc4 });
+  for (const s of yard.truckStands) g.add(slotOutline(s, 17, 4, paint));
+  for (const s of [...yard.vanParking, ...yard.carParking]) g.add(slotOutline(s, s.code?.includes("-C") ? 5 : 6, s.code?.includes("-C") ? 2.5 : 2.8, paint));
+  for (const path of yard.lanes) {
+    for (let i = 0; i + 1 < path.length; i++) {
+      const a = path[i];
+      const b = path[i + 1];
+      if (a && b) g.add(segment(a, b, 0.25, 0.02, lane, 0.1));
+    }
+  }
+  if (yard.gatehouse) {
+    const island = flatPolygon(
+      [-4, 4, 4, -4].map((dx, i) => [yard.gatehouse![0] + dx, yard.gatehouse![1] + (i < 2 ? -3 : 3)] as [number, number]),
+      mat(0x9fc59a),
+      0.12,
+    );
+    g.add(island, box(3, 3, 3, mat(0xffffff), yard.gatehouse[0], 1.6, yard.gatehouse[1]));
+  }
   return g;
 }
 
@@ -91,6 +167,8 @@ export const OPENING_H = 4.6;
 
 /** Floor and full-height walls; the north facade has an opening at every loading door. */
 export function hallShell(l: DepotLayout, brand: THREE.Color): THREE.Group {
+  const outline = l.layout.footprint;
+  if (outline && outline.length >= 4) return outlineShell(l, outline, brand);
   const g = new THREE.Group();
   const { width: w, depth: d, height: h } = hallOf(l);
   const wall = mat(0xf4f4f2);
@@ -111,8 +189,41 @@ export function hallShell(l: DepotLayout, brand: THREE.Color): THREE.Group {
   return g;
 }
 
+/**
+ * Hall from its real outline (OSM, phase 7c): floor, a wall along every edge and a brand band over
+ * the walls with loading doors. The doors are drawn in front of the wall (dock frame and leaf).
+ */
+function outlineShell(l: DepotLayout, outline: [number, number][], brand: THREE.Color): THREE.Group {
+  const g = new THREE.Group();
+  const { height: h } = hallOf(l);
+  const ring = outline[0]?.[0] === outline.at(-1)?.[0] && outline[0]?.[1] === outline.at(-1)?.[1] ? outline.slice(0, -1) : outline;
+  g.add(flatPolygon(ring, mat(0xeceae5), 0.35));
+  const wall = mat(0xf4f4f2);
+  const docks = l.doors.filter((x) => x.kind === "loading_dock");
+  ring.forEach((a, i) => {
+    const b = ring[(i + 1) % ring.length] ?? a;
+    g.add(segment(a, b, 0.5, h, wall, 0));
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const near = docks.some((dk) => {
+      const t = ((dk.x - a[0]) * (b[0] - a[0]) + (dk.y - a[1]) * (b[1] - a[1])) / (len * len || 1);
+      const px = a[0] + t * (b[0] - a[0]);
+      const pz = a[1] + t * (b[1] - a[1]);
+      return t >= 0 && t <= 1 && Math.hypot(dk.x - px, dk.y - pz) < 1;
+    });
+    if (near) g.add(segment(a, b, 0.7, 0.6, mat(brand), h - 0.6));
+  });
+  return g;
+}
+
 /** Roof slab (hidden when the roof is "revealed" to look inside). */
 export function hallRoof(l: DepotLayout, brand: THREE.Color): THREE.Group {
+  const outline = l.layout.footprint;
+  if (outline && outline.length >= 4) {
+    const g = new THREE.Group();
+    const { height: h } = hallOf(l);
+    g.add(prism(outline, mat(0xe7e7e3), h, h + 0.4));
+    return g;
+  }
   const g = new THREE.Group();
   const { width: w, depth: d, height: h } = hallOf(l);
   g.add(box(w + 1, 0.4, d + 1, mat(0xe7e7e3), 0, h + 0.2, 0));
@@ -191,6 +302,18 @@ export function yardMarkings(l: DepotLayout): THREE.Group {
     g.add(m);
   };
   const stallDepth = 18;
+  if (l.layout.yard) {
+    // stalls in front of every ramp, whichever wall it is on
+    for (const door of l.doors.filter((x) => x.kind === "loading_dock")) {
+      const [fx, fz] = headingVec(facingOf(l, door));
+      const [sx, sz] = [-fz, fx];
+      for (const side of [-3, 3]) {
+        const a: [number, number] = [door.x + sx * side, door.y + sz * side];
+        g.add(segment(a, [a[0] + fx * stallDepth, a[1] + fz * stallDepth], 0.18, 0.02, paint, 0.11));
+      }
+    }
+    return g;
+  }
   for (const door of l.doors.filter((x) => x.kind === "loading_dock")) {
     line(stallDepth, door.x - 3, -d / 2 - stallDepth / 2, "z");
     line(stallDepth, door.x + 3, -d / 2 - stallDepth / 2, "z");
@@ -257,7 +380,7 @@ export function yardGate(brand: THREE.Color): THREE.Group {
 export function hallStatic(l: DepotLayout, brand: THREE.Color): THREE.Group {
   const g = new THREE.Group();
   g.add(yardGround(l), hallShell(l, brand), conveyor(l));
-  for (const door of l.doors) g.add(placeDoor(door, brand));
+  for (const door of l.doors) g.add(placeDoor(l, door, brand));
   const gate = l.layout.yardGate;
   if (gate) {
     const y = yardGate(brand);
@@ -267,9 +390,10 @@ export function hallStatic(l: DepotLayout, brand: THREE.Color): THREE.Group {
   return g;
 }
 
-function placeDoor(door: LayoutDoor, brand: THREE.Color): THREE.Object3D {
+function placeDoor(l: DepotLayout, door: LayoutDoor, brand: THREE.Color): THREE.Object3D {
   const o = door.kind === "loading_dock" ? dockFrame(brand) : door.kind === "staging_bay" ? stagingBay(brand) : new THREE.Group();
   o.position.set(door.x, o.position.y, door.y);
+  if (door.kind === "loading_dock") o.rotation.y = facingRotation(facingOf(l, door));
   return o;
 }
 
