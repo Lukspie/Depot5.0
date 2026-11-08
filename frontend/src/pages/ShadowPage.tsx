@@ -81,7 +81,8 @@ function ShadowView({ code }: { code: string }) {
   const [vehicle, setVehicle] = useState<string | null>(null);
   const parcel = useParcelLocate(barcode);
   const [fps, setFps] = useState<number | null>(null);
-  const [scenario, setScenario] = useState(false);
+  // ?scenario=1 opens the what-if panel (from the dispatching page and its alerts)
+  const [scenario, setScenario] = useState(() => params.get("scenario") === "1");
   const [roof, setRoof] = useState(false);
   const [affected, setAffected] = useState<string[] | null>(null);
   const camera = useRef<CameraApi | null>(null);

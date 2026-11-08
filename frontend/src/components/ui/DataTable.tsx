@@ -123,7 +123,8 @@ export function DataTable<T>({
     );
   };
   return (
-    <div className="overflow-x-auto">
+    // relative: the sr-only labels (absolute) stay inside the scrolling box, not the page
+    <div className="relative overflow-x-auto">
       <table className="w-full table-fixed border-collapse" style={{ minWidth: `${String(minWidth)}rem` }}>
         <colgroup>
           {visible.map((c) => (

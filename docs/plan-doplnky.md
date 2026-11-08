@@ -332,7 +332,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - Tmavý panel so schémou siete (SVG z polôh skladov), formulár so zobrazením hesla, chybové stavy: zlé údaje (401), zablokovaný účet (403), veľa pokusov (429 s časom), nedostupný server. Info o 8 h smene.
 - Pri demo režime rozbaľovací blok „Demo účty“ pod formulárom, v ostrom režime skrytý.
 
-**Krok 4 – Dispečing podľa makety** (app + frontend)
+**Krok 4 – Dispečing podľa makety** (app + frontend) *(hotové, ADR-069)*
 - `GET /api/dashboard/history?depot=`: KPI dňa v 30-min bodoch od 15:00 (balíky, naložené, kamióny pri bránach, čítanosť, alarmy) pre sparklines a zmenu.
 - Jazdy: taby Odchody / Príchody, filtre Všetky / Diaľkové / Prechody / S rizikom, skupiny „Večerné diaľkové odchody“ a „Ranné prechody“, relatívny čas, nenaložené balíky, „nakládka od“, ML odhad s odchýlkou, riziko (kaskáda, skener), menu akcií na riadku.
 - Štruktúrované alarmy (typ, čas, nadpis, čipy faktov, akcie Otvoriť scenár / Detail balíka / Poslať na údržbu / Potvrdiť), balíky podľa smerov (skladané pruhy), časová os dňa 15:00 → 15:00. Doplním, čo API ešte nevracia (fakty alarmu, nakládka od).

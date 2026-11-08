@@ -18,6 +18,7 @@ from depotrack.models.enums import (
     TripKind,
     UserRole,
 )
+from depotrack.schemas.dispatch import DispatchOut
 from depotrack.schemas.internal import AlertOut
 from depotrack.schemas.wms import (
     AlertListOut,
@@ -29,6 +30,7 @@ from depotrack.schemas.wms import (
 from depotrack.services import telematics
 from depotrack.services.alerts import alert_event
 from depotrack.services.depot_scope import alerts_of_depot, can_switch, main_depot, resolve_depot
+from depotrack.services.dispatch import dispatch
 from depotrack.services.kpis import day_overview, day_read_rate, open_alerts
 from depotrack.services.views import DONE, Lookup, clock, sort_key, trip_brief, trips_of
 
@@ -61,6 +63,16 @@ def dashboard(
         trips=[trip_brief(db, t, look, clk.sim_time, with_load=True) for t in trips],
         alerts=[AlertOut.model_validate(a) for a in alerts],
     )
+
+
+@router.get("/dispatch", response_model=DispatchOut, response_model_by_alias=True)
+def dispatch_view(
+    user: Dispatcher, db: DbSession, depot: Annotated[str | None, Query(max_length=8)] = None
+) -> DispatchOut:
+    """Dispatching of design system v2 (maketa-dispecing) for one depot (ADR-068): a
+    transshipment depot with waves and trucks, a delivery depot with its feeder truck and
+    couriers (phase 7d)."""
+    return dispatch(db, resolve_depot(db, user, depot))
 
 
 @router.get("/alerts", response_model=AlertListOut, response_model_by_alias=True)

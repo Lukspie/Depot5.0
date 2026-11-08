@@ -52,7 +52,7 @@ export function KpiCard({ label, value, unit, tone = "brand", spark, delta, cont
           <span className="text-[26px] leading-none font-extrabold tracking-tight tabular-nums">{value}</span>
           {unit !== undefined && <span className="text-ink-muted truncate text-[13px] font-semibold">{unit}</span>}
         </div>
-        {spark && <Sparkline values={spark} tone={tone} label={`${label}: vývoj dňa`} />}
+        {spark && <Sparkline values={spark} tone={tone} width={72} label={`${label}: vývoj dňa`} />}
       </div>
       {(delta || context !== undefined) && (
         <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap">

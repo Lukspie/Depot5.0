@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 from depotrack.core.clock import TZ
 from depotrack.core.config import Settings, get_settings
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import GateEvent, User
+from depotrack.models import GateEvent, User, Wave
 from depotrack.models.enums import UserRole
 from depotrack.schemas.internal import CamelModel
 from depotrack.services import gate as gate_rules
@@ -62,7 +62,9 @@ def shell(
     clk = clock()
     code = current_wave(clk.sim_time.astimezone(TZ))
     wave = None
-    if code is not None:
+    # only a depot with sorting waves (Budimír) shows one, not a delivery depot (phase 7d)
+    has_waves = db.execute(select(Wave.id).where(Wave.depot_id == d.id).limit(1)).first()
+    if code is not None and has_waves:
         name, (start, end) = WAVES[code]
         wave = WaveOut(code=code, name=name, start=f"{start:%H:%M}", end=f"{end:%H:%M}")
     alerts = None

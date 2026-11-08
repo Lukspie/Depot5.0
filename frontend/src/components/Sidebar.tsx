@@ -172,42 +172,45 @@ export function Sidebar({ user, depot, collapsed }: { user: User; depot: Depot |
   const ops = items.filter((n) => n.section === "ops");
   const system = items.filter((n) => n.section === "system");
   const board = shell.data?.boardUrl;
+  // the dark strip runs the whole page height, the navigation in it stays in view (sticky)
   return (
-    <aside
-      aria-label="Hlavná navigácia"
-      className={cn("bg-chrome text-chrome-ink sticky top-0 hidden h-screen shrink-0 flex-col gap-0.5 px-3 py-4 md:flex", collapsed ? "w-[72px]" : "w-[232px]")}
-    >
-      <div className={cn("flex items-center gap-2.5 pb-[18px]", collapsed ? "justify-center" : "px-2 pt-1")}>
-        <Logo size={34} />
-        {!collapsed && (
-          <div className="min-w-0 leading-tight">
-            <div className="text-[15px] font-extrabold">Depot 5.0</div>
-            <div className="text-chrome-muted truncate text-[11.5px]">{depot ? [depot.name, depot.label].filter(Boolean).join(" · ") : " "}</div>
-          </div>
-        )}
-      </div>
-      <nav aria-label="Obrazovky" className="flex flex-col gap-0.5">
-        {ops.length > 0 && <SectionLabel collapsed={collapsed} first>PREVÁDZKA</SectionLabel>}
-        {ops.map((n) => (
-          <Item
-            key={n.to}
-            to={n.to}
-            end={n.to === "/"}
-            label={navLabel(n, user.role)}
-            icon={ICONS[n.to] ?? Car}
-            collapsed={collapsed}
-            badge={n.to === "/gate" ? shell.data?.gateQueue : null}
-          />
-        ))}
-        {board && <Item to={board} label="Tabuľa príchodov" icon={MonitorPlay} collapsed={collapsed} external />}
-        {system.length > 0 && <SectionLabel collapsed={collapsed}>SYSTÉM</SectionLabel>}
-        {system.map((n) => (
-          <Item key={n.to} to={n.to} label={navLabel(n, user.role)} icon={ICONS[n.to] ?? Car} collapsed={collapsed} dot={n.to === "/system" && socket === "open"} />
-        ))}
-      </nav>
-      <span className="flex-1" />
-      <UserBlock user={user} collapsed={collapsed} />
-    </aside>
+    <div className="bg-chrome hidden shrink-0 md:block">
+      <aside
+        aria-label="Hlavná navigácia"
+        className={cn("bg-chrome text-chrome-ink sticky top-0 flex h-screen flex-col gap-0.5 px-3 py-4", collapsed ? "w-[72px]" : "w-[232px]")}
+      >
+        <div className={cn("flex items-center gap-2.5 pb-[18px]", collapsed ? "justify-center" : "px-2 pt-1")}>
+          <Logo size={34} />
+          {!collapsed && (
+            <div className="min-w-0 leading-tight">
+              <div className="text-[15px] font-extrabold">Depot 5.0</div>
+              <div className="text-chrome-muted truncate text-[11.5px]">{depot ? [depot.name, depot.label].filter(Boolean).join(" · ") : " "}</div>
+            </div>
+          )}
+        </div>
+        <nav aria-label="Obrazovky" className="flex flex-col gap-0.5">
+          {ops.length > 0 && <SectionLabel collapsed={collapsed} first>PREVÁDZKA</SectionLabel>}
+          {ops.map((n) => (
+            <Item
+              key={n.to}
+              to={n.to}
+              end={n.to === "/"}
+              label={navLabel(n, user.role)}
+              icon={ICONS[n.to] ?? Car}
+              collapsed={collapsed}
+              badge={n.to === "/gate" ? shell.data?.gateQueue : null}
+            />
+          ))}
+          {board && <Item to={board} label="Tabuľa príchodov" icon={MonitorPlay} collapsed={collapsed} external />}
+          {system.length > 0 && <SectionLabel collapsed={collapsed}>SYSTÉM</SectionLabel>}
+          {system.map((n) => (
+            <Item key={n.to} to={n.to} label={navLabel(n, user.role)} icon={ICONS[n.to] ?? Car} collapsed={collapsed} dot={n.to === "/system" && socket === "open"} />
+          ))}
+        </nav>
+        <span className="flex-1" />
+        <UserBlock user={user} collapsed={collapsed} />
+      </aside>
+    </div>
   );
 }
 

@@ -79,3 +79,32 @@ Bez prihlásenia, demo režim (`SIM_CONTROLS_ENABLED=true`), 1440 px. Formulár 
 ![Po: 1280 px](../screenshots/faza-7d/3-login-po-1280.png)
 
 ![Demo účty, chybový stav, telefón 390 px](../screenshots/faza-7d/3-login-stavy.png)
+
+## Krok 4 – dispečing (maketa-dispecing)
+
+Situácia `night-cascade` o 02:25 pri 30× (ako maketa), Budimír, dispečer, 1440 px.
+
+| Položka | Maketa | Pred | Čo sa zmenilo | Stav |
+| --- | --- | --- | --- | --- |
+| Nadpis a akcie | „Dispečing“, „Prevádzkový deň so 15. 3. · 3 diaľkové odchody hotové, 5 ranných prechodov pred nakládkou“, Scenár (čo ak), Export dňa | nadpis, vlna, vyhľadávanie balíka | súhrn dňa z dát, „Scenár (čo ak)“ otvorí scenár v tieni, „Export dňa“ stiahne CSV jázd | ✓ |
+| KPI | 5 kariet v riadku: značka, číslo s jednotkou, sparkline, zmena + kontext | 5 kariet s pastelovými ikonami bez histórie | `GET /api/dispatch`: história každých 30 min od 15:00 (balíky, naložené, kamióny pri bránach, čítanosť za poslednú hodinu, otvorené alarmy), zmena a kontext z dát (`+N` za hodinu, `25 %`, `LD-02`, „diaľkový BA vykladá“, `1 kritické`). 3 karty v riadku do 1280 px, 2 na telefóne | ✓ |
+| Jazdy dňa | taby Odchody / Príchody, filtre Všetky / Diaľkové / Prechody / S rizikom N | taby, bez filtrov a skupín | `SegmentedTabs`, `FilterChips`, filtre podľa typov v dátach | ✓ |
+| Skupiny jázd | „Večerné diaľkové odchody · 3 odišli“, „Ranné prechody · nakládka po nočnej vlne“ | jeden zoznam | skupiny so záhlavím a bodkou | ✓ |
+| Riadok jazdy | 52 px: plán + „o 3 h 20 min“, smer + ŠPZ · typ, brána, stav, nakládka (pruh, „7 nenaložených“ / „nakládka od 05:05“), odhad + odchýlka, riziko, ⋮ | 61 px, bez rizika a akcií | `DataTable` v2. Nakládka od = príchod kamióna k bráne z plánu (03:00, v makete ilustračné časy). Odhad prechodu z kaskády nočných kamiónov (predikcia ML + triedenie), riziko „Kaskáda“ / „Skener“ (skener brány nad prahom modelu). ⋮: tieň, Flotila | ✓ |
+| Alarmy | štruktúra: typ, čas · zdroj, nadpis jednou vetou, fakty ako čipy, akcia + Potvrdiť, filtre Všetky / Kritické / Varovania, „Zobraziť všetkých“ | odsek textu a Potvrdiť | `AlertItem`, nadpis a fakty z dát, na ktoré alarm odkazuje (kaskáda: nočný kamión, triedenie, odchod → odhad; zlý smer: balík, kamión, odchod; skener: čítanosť, riziko, ďalšia nakládka). Akcie: Otvoriť scenár, Detail balíka, Poslať na údržbu, Potvrdiť | ✓ |
+| Balíky podľa smerov | skladané pruhy naložené / odstavené / čaká, legenda so súčtami, kuriérske rajóny mesta v jednom riadku | tabuľka | `StackedBar`, „Košice – kuriéri“ spája rajóny | ✓ |
+| Prevádzkový deň | os 15:00 → 15:00 so značkou „teraz“, vlny, ranné odchody, odchod kuriérov so stavmi | – | `DayTimeline`: vlny skladu z DB (hotová / prebieha · 29 % / o …), ranné odchody (prvý–posledný prechod), odchod kuriérov 07:30 „nakládka od 06:30“ | ✓ |
+| Rozloženie | plná šírka, hlavný stĺpec + 340 px | úzky stĺpec v strede | mriežka podľa makety, pod 1100 px jeden stĺpec, na telefóne bez vodorovného posúvania | ✓ |
+| Depo bez triedenia (Žilina, Ivanka) | (požiadavka tímu) | rovnaké karty ako Budimír s nulami | rovnaký layout s obsahom depa: KPI Balíky z kamióna, Na doručenie, Doručené, Kuriéri na trase, Alarmy. Jazdy: kuriéri, nočný odchod, diaľkový kamión (príchod podľa brány skladu). Balíky podľa rajónov (doručené / na doručenie / v sklade). Časová os: príchod kamióna, nakládka kuriérov 06:30, rozvoz, večerný odchod. Žiadne vlny (ani v hornej lište) ani triedenie | ✓ |
+
+Rozdiely v číslach oproti makete sú dané stavom simulácie (iný deň, iné meškania). Rozloženie, komponenty a typy údajov sedia.
+
+![Pred: maketa vľavo, stav pred krokom 4 vpravo](../screenshots/faza-7d/4-dispecing-pred.png)
+
+![Po: maketa vľavo, implementácia vpravo (1440 px, celá stránka)](../screenshots/faza-7d/4-dispecing-po-1440.png)
+
+![Po: 1280 px](../screenshots/faza-7d/4-dispecing-po-1280.png)
+
+![Žilina: rovnaký layout, obsah depa bez triedenia](../screenshots/faza-7d/4-dispecing-zilina.png)
+
+![Telefón 390 px](../screenshots/faza-7d/4-dispecing-390.png)
