@@ -1,0 +1,6436 @@
+{
+"courierRoutes": {
+"day": "2026-10-23",
+"depot": {
+"code": "BUD",
+"lat": 48.79256,
+"lon": 21.3071,
+"name": "Budimír"
+},
+"routes": [
+{
+"courierUsername": "kurier01",
+"date": "2026-10-24",
+"districtCode": "KE-01",
+"routeId": 1,
+"stagingBay": "SB-01",
+"stops": [
+{
+"barcode": "DP26102300055",
+"deliveryType": "mailbox",
+"lat": 48.759427,
+"lon": 21.259498,
+"sequence": 1,
+"stopId": 1,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA092",
+"deliveryType": "mailbox",
+"lat": 48.757929,
+"lon": 21.260084,
+"sequence": 2,
+"stopId": 2,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB138",
+"deliveryType": "mailbox",
+"lat": 48.75643,
+"lon": 21.257598,
+"sequence": 3,
+"stopId": 3,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB084",
+"deliveryType": "handover",
+"lat": 48.732554,
+"lon": 21.253651,
+"sequence": 4,
+"stopId": 4,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB063",
+"deliveryType": "handover",
+"lat": 48.73298,
+"lon": 21.25548,
+"sequence": 5,
+"stopId": 5,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB047",
+"deliveryType": "handover",
+"lat": 48.7339,
+"lon": 21.254136,
+"sequence": 6,
+"stopId": 6,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA068",
+"deliveryType": "handover",
+"lat": 48.734941,
+"lon": 21.255681,
+"sequence": 7,
+"stopId": 7,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA023",
+"deliveryType": "handover",
+"lat": 48.73897,
+"lon": 21.254473,
+"sequence": 8,
+"stopId": 8,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB032",
+"deliveryType": "handover",
+"lat": 48.743663,
+"lon": 21.245786,
+"sequence": 9,
+"stopId": 9,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA100",
+"deliveryType": "handover",
+"lat": 48.752245,
+"lon": 21.247473,
+"sequence": 10,
+"stopId": 10,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA053",
+"deliveryType": "handover",
+"lat": 48.758329,
+"lon": 21.25796,
+"sequence": 11,
+"stopId": 11,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA061",
+"deliveryType": "handover",
+"lat": 48.760937,
+"lon": 21.260113,
+"sequence": 12,
+"stopId": 12,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB025",
+"deliveryType": "locker",
+"lat": 48.755486,
+"lon": 21.260263,
+"sequence": 13,
+"stopId": 13,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA054",
+"deliveryType": "mailbox",
+"lat": 48.755186,
+"lon": 21.262548,
+"sequence": 14,
+"stopId": 14,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA085",
+"deliveryType": "locker",
+"lat": 48.750886,
+"lon": 21.247305,
+"sequence": 15,
+"stopId": 15,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA031",
+"deliveryType": "mailbox",
+"lat": 48.75052,
+"lon": 21.245403,
+"sequence": 16,
+"stopId": 16,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA089",
+"deliveryType": "mailbox",
+"lat": 48.74112,
+"lon": 21.250198,
+"sequence": 17,
+"stopId": 17,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA007",
+"deliveryType": "locker",
+"lat": 48.739459,
+"lon": 21.250112,
+"sequence": 18,
+"stopId": 18,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA033",
+"deliveryType": "mailbox",
+"lat": 48.739277,
+"lon": 21.252535,
+"sequence": 19,
+"stopId": 19,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA097",
+"deliveryType": "locker",
+"lat": 48.737858,
+"lon": 21.25134,
+"sequence": 20,
+"stopId": 20,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA169",
+"deliveryType": "locker",
+"lat": 48.736629,
+"lon": 21.249624,
+"sequence": 21,
+"stopId": 21,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA143",
+"deliveryType": "mailbox",
+"lat": 48.741736,
+"lon": 21.254774,
+"sequence": 22,
+"stopId": 22,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300107",
+"deliveryType": "mailbox",
+"lat": 48.7348,
+"lon": 21.258955,
+"sequence": 23,
+"stopId": 23,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300014",
+"deliveryType": "mailbox",
+"lat": 48.731381,
+"lon": 21.260284,
+"sequence": 24,
+"stopId": 24,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB081",
+"deliveryType": "mailbox",
+"lat": 48.726083,
+"lon": 21.260425,
+"sequence": 25,
+"stopId": 25,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB085",
+"deliveryType": "mailbox",
+"lat": 48.767602,
+"lon": 21.243539,
+"sequence": 26,
+"stopId": 26,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB001",
+"deliveryType": "handover",
+"lat": 48.749913,
+"lon": 21.241444,
+"sequence": 27,
+"stopId": 27,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB055",
+"deliveryType": "handover",
+"lat": 48.750976,
+"lon": 21.242074,
+"sequence": 28,
+"stopId": 28,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB021",
+"deliveryType": "handover",
+"lat": 48.755828,
+"lon": 21.254085,
+"sequence": 29,
+"stopId": 29,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB004",
+"deliveryType": "handover",
+"lat": 48.759184,
+"lon": 21.260151,
+"sequence": 30,
+"stopId": 30,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA014",
+"deliveryType": "handover",
+"lat": 48.766925,
+"lon": 21.244452,
+"sequence": 31,
+"stopId": 31,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA019",
+"deliveryType": "handover",
+"lat": 48.767789,
+"lon": 21.244408,
+"sequence": 32,
+"stopId": 32,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA150",
+"deliveryType": "handover",
+"lat": 48.73901,
+"lon": 21.254566,
+"sequence": 33,
+"stopId": 33,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA012",
+"deliveryType": "handover",
+"lat": 48.73511,
+"lon": 21.255943,
+"sequence": 34,
+"stopId": 34,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA079",
+"deliveryType": "handover",
+"lat": 48.734669,
+"lon": 21.261499,
+"sequence": 35,
+"stopId": 35,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA101",
+"deliveryType": "handover",
+"lat": 48.730339,
+"lon": 21.259343,
+"sequence": 36,
+"stopId": 36,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA077",
+"deliveryType": "mailbox",
+"lat": 48.777131,
+"lon": 21.237534,
+"sequence": 37,
+"stopId": 37,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA017",
+"deliveryType": "handover",
+"lat": 48.735505,
+"lon": 21.260429,
+"sequence": 38,
+"stopId": 38,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB091",
+"deliveryType": "handover",
+"lat": 48.736847,
+"lon": 21.25517,
+"sequence": 39,
+"stopId": 39,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB118",
+"deliveryType": "handover",
+"lat": 48.738544,
+"lon": 21.254946,
+"sequence": 40,
+"stopId": 40,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB086",
+"deliveryType": "handover",
+"lat": 48.738592,
+"lon": 21.254873,
+"sequence": 41,
+"stopId": 41,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA070",
+"deliveryType": "handover",
+"lat": 48.738654,
+"lon": 21.255144,
+"sequence": 42,
+"stopId": 42,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA066",
+"deliveryType": "handover",
+"lat": 48.742663,
+"lon": 21.254144,
+"sequence": 43,
+"stopId": 43,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA082",
+"deliveryType": "handover",
+"lat": 48.741804,
+"lon": 21.250151,
+"sequence": 44,
+"stopId": 44,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB092",
+"deliveryType": "handover",
+"lat": 48.747342,
+"lon": 21.245705,
+"sequence": 45,
+"stopId": 45,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-301KR"
+},
+{
+"courierUsername": "kurier02",
+"date": "2026-10-24",
+"districtCode": "KE-02",
+"routeId": 2,
+"stagingBay": "SB-02",
+"stops": [
+{
+"barcode": "DP261024NBA060",
+"deliveryType": "locker",
+"lat": 48.760212,
+"lon": 21.285805,
+"sequence": 1,
+"stopId": 46,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA013",
+"deliveryType": "mailbox",
+"lat": 48.75837,
+"lon": 21.274306,
+"sequence": 2,
+"stopId": 47,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300121",
+"deliveryType": "handover",
+"lat": 48.727044,
+"lon": 21.26829,
+"sequence": 3,
+"stopId": 48,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA004",
+"deliveryType": "handover",
+"lat": 48.730316,
+"lon": 21.280138,
+"sequence": 4,
+"stopId": 49,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB087",
+"deliveryType": "handover",
+"lat": 48.729735,
+"lon": 21.287716,
+"sequence": 5,
+"stopId": 50,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA084",
+"deliveryType": "handover",
+"lat": 48.73286,
+"lon": 21.292138,
+"sequence": 6,
+"stopId": 51,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA042",
+"deliveryType": "handover",
+"lat": 48.756053,
+"lon": 21.268736,
+"sequence": 7,
+"stopId": 52,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300154",
+"deliveryType": "mailbox",
+"lat": 48.739918,
+"lon": 21.26601,
+"sequence": 8,
+"stopId": 53,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300096",
+"deliveryType": "mailbox",
+"lat": 48.737941,
+"lon": 21.269615,
+"sequence": 9,
+"stopId": 54,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA168",
+"deliveryType": "locker",
+"lat": 48.735871,
+"lon": 21.2704,
+"sequence": 10,
+"stopId": 55,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA123",
+"deliveryType": "mailbox",
+"lat": 48.739188,
+"lon": 21.277324,
+"sequence": 11,
+"stopId": 56,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA037",
+"deliveryType": "locker",
+"lat": 48.741122,
+"lon": 21.286427,
+"sequence": 12,
+"stopId": 57,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA011",
+"deliveryType": "locker",
+"lat": 48.736377,
+"lon": 21.286336,
+"sequence": 13,
+"stopId": 58,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA015",
+"deliveryType": "locker",
+"lat": 48.732086,
+"lon": 21.283346,
+"sequence": 14,
+"stopId": 59,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB042",
+"deliveryType": "mailbox",
+"lat": 48.729608,
+"lon": 21.287422,
+"sequence": 15,
+"stopId": 60,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA104",
+"deliveryType": "locker",
+"lat": 48.732405,
+"lon": 21.294005,
+"sequence": 16,
+"stopId": 61,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB116",
+"deliveryType": "mailbox",
+"lat": 48.734287,
+"lon": 21.294341,
+"sequence": 17,
+"stopId": 62,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA051",
+"deliveryType": "locker",
+"lat": 48.735619,
+"lon": 21.297736,
+"sequence": 18,
+"stopId": 63,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA088",
+"deliveryType": "locker",
+"lat": 48.729543,
+"lon": 21.304403,
+"sequence": 19,
+"stopId": 64,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA063",
+"deliveryType": "locker",
+"lat": 48.726992,
+"lon": 21.274921,
+"sequence": 20,
+"stopId": 65,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB036",
+"deliveryType": "mailbox",
+"lat": 48.724323,
+"lon": 21.269228,
+"sequence": 21,
+"stopId": 66,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA019",
+"deliveryType": "mailbox",
+"lat": 48.721094,
+"lon": 21.262096,
+"sequence": 22,
+"stopId": 67,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB097",
+"deliveryType": "mailbox",
+"lat": 48.719704,
+"lon": 21.261321,
+"sequence": 23,
+"stopId": 68,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA177",
+"deliveryType": "handover",
+"lat": 48.759335,
+"lon": 21.263935,
+"sequence": 24,
+"stopId": 69,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300172",
+"deliveryType": "handover",
+"lat": 48.758364,
+"lon": 21.266733,
+"sequence": 25,
+"stopId": 70,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA174",
+"deliveryType": "handover",
+"lat": 48.743284,
+"lon": 21.275656,
+"sequence": 26,
+"stopId": 71,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300083",
+"deliveryType": "handover",
+"lat": 48.737608,
+"lon": 21.277967,
+"sequence": 27,
+"stopId": 72,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA144",
+"deliveryType": "handover",
+"lat": 48.736769,
+"lon": 21.273339,
+"sequence": 28,
+"stopId": 73,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA053",
+"deliveryType": "handover",
+"lat": 48.727163,
+"lon": 21.277479,
+"sequence": 29,
+"stopId": 74,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB049",
+"deliveryType": "handover",
+"lat": 48.727748,
+"lon": 21.263837,
+"sequence": 30,
+"stopId": 75,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA138",
+"deliveryType": "handover",
+"lat": 48.728896,
+"lon": 21.263686,
+"sequence": 31,
+"stopId": 76,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA118",
+"deliveryType": "handover",
+"lat": 48.735058,
+"lon": 21.292263,
+"sequence": 32,
+"stopId": 77,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA102",
+"deliveryType": "locker",
+"lat": 48.748744,
+"lon": 21.340745,
+"sequence": 33,
+"stopId": 78,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA077",
+"deliveryType": "handover",
+"lat": 48.720674,
+"lon": 21.2633,
+"sequence": 34,
+"stopId": 79,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA059",
+"deliveryType": "handover",
+"lat": 48.728013,
+"lon": 21.263724,
+"sequence": 35,
+"stopId": 80,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA031",
+"deliveryType": "handover",
+"lat": 48.729238,
+"lon": 21.267704,
+"sequence": 36,
+"stopId": 81,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA130",
+"deliveryType": "handover",
+"lat": 48.739076,
+"lon": 21.265969,
+"sequence": 37,
+"stopId": 82,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300173",
+"deliveryType": "handover",
+"lat": 48.739198,
+"lon": 21.265215,
+"sequence": 38,
+"stopId": 83,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA042",
+"deliveryType": "handover",
+"lat": 48.743542,
+"lon": 21.26423,
+"sequence": 39,
+"stopId": 84,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300188",
+"deliveryType": "handover",
+"lat": 48.759041,
+"lon": 21.272815,
+"sequence": 40,
+"stopId": 85,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300018",
+"deliveryType": "handover",
+"lat": 48.736602,
+"lon": 21.293667,
+"sequence": 41,
+"stopId": 86,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB057",
+"deliveryType": "handover",
+"lat": 48.727129,
+"lon": 21.299852,
+"sequence": 42,
+"stopId": 87,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300098",
+"deliveryType": "handover",
+"lat": 48.750604,
+"lon": 21.340361,
+"sequence": 43,
+"stopId": 88,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-302KR"
+},
+{
+"courierUsername": "kurier03",
+"date": "2026-10-24",
+"districtCode": "KE-03",
+"routeId": 3,
+"stagingBay": "SB-03",
+"stops": [
+{
+"barcode": "DP261024NZA098",
+"deliveryType": "locker",
+"lat": 48.727509,
+"lon": 21.312204,
+"sequence": 1,
+"stopId": 89,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300001",
+"deliveryType": "handover",
+"lat": 48.719158,
+"lon": 21.291684,
+"sequence": 2,
+"stopId": 90,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300110",
+"deliveryType": "handover",
+"lat": 48.715587,
+"lon": 21.315898,
+"sequence": 3,
+"stopId": 91,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300076",
+"deliveryType": "handover",
+"lat": 48.709185,
+"lon": 21.328137,
+"sequence": 4,
+"stopId": 92,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300165",
+"deliveryType": "handover",
+"lat": 48.694793,
+"lon": 21.349333,
+"sequence": 5,
+"stopId": 93,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA075",
+"deliveryType": "handover",
+"lat": 48.691286,
+"lon": 21.347618,
+"sequence": 6,
+"stopId": 94,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA113",
+"deliveryType": "handover",
+"lat": 48.67286,
+"lon": 21.321625,
+"sequence": 7,
+"stopId": 95,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA034",
+"deliveryType": "handover",
+"lat": 48.676098,
+"lon": 21.313485,
+"sequence": 8,
+"stopId": 96,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB134",
+"deliveryType": "handover",
+"lat": 48.666894,
+"lon": 21.318121,
+"sequence": 9,
+"stopId": 97,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA115",
+"deliveryType": "handover",
+"lat": 48.713102,
+"lon": 21.266204,
+"sequence": 10,
+"stopId": 98,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA134",
+"deliveryType": "handover",
+"lat": 48.713262,
+"lon": 21.266316,
+"sequence": 11,
+"stopId": 99,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA154",
+"deliveryType": "mailbox",
+"lat": 48.715331,
+"lon": 21.267746,
+"sequence": 12,
+"stopId": 100,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA003",
+"deliveryType": "locker",
+"lat": 48.715306,
+"lon": 21.267971,
+"sequence": 13,
+"stopId": 101,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300158",
+"deliveryType": "mailbox",
+"lat": 48.71519,
+"lon": 21.268144,
+"sequence": 14,
+"stopId": 102,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA112",
+"deliveryType": "mailbox",
+"lat": 48.71786,
+"lon": 21.267207,
+"sequence": 15,
+"stopId": 103,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA007",
+"deliveryType": "mailbox",
+"lat": 48.709486,
+"lon": 21.280685,
+"sequence": 16,
+"stopId": 104,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300182",
+"deliveryType": "locker",
+"lat": 48.709004,
+"lon": 21.287403,
+"sequence": 17,
+"stopId": 105,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA125",
+"deliveryType": "mailbox",
+"lat": 48.702802,
+"lon": 21.294077,
+"sequence": 18,
+"stopId": 106,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA137",
+"deliveryType": "handover",
+"lat": 48.720465,
+"lon": 21.293393,
+"sequence": 19,
+"stopId": 107,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA100",
+"deliveryType": "handover",
+"lat": 48.7194,
+"lon": 21.291164,
+"sequence": 20,
+"stopId": 108,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA081",
+"deliveryType": "handover",
+"lat": 48.72307,
+"lon": 21.310017,
+"sequence": 21,
+"stopId": 109,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300166",
+"deliveryType": "handover",
+"lat": 48.710353,
+"lon": 21.330221,
+"sequence": 22,
+"stopId": 110,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB053",
+"deliveryType": "handover",
+"lat": 48.728876,
+"lon": 21.339388,
+"sequence": 23,
+"stopId": 111,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA167",
+"deliveryType": "handover",
+"lat": 48.706428,
+"lon": 21.287301,
+"sequence": 24,
+"stopId": 112,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA005",
+"deliveryType": "handover",
+"lat": 48.703006,
+"lon": 21.286486,
+"sequence": 25,
+"stopId": 113,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA128",
+"deliveryType": "handover",
+"lat": 48.697427,
+"lon": 21.284018,
+"sequence": 26,
+"stopId": 114,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA055",
+"deliveryType": "locker",
+"lat": 48.698,
+"lon": 21.283622,
+"sequence": 27,
+"stopId": 115,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA017",
+"deliveryType": "locker",
+"lat": 48.719657,
+"lon": 21.292013,
+"sequence": 28,
+"stopId": 116,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA064",
+"deliveryType": "mailbox",
+"lat": 48.715305,
+"lon": 21.317864,
+"sequence": 29,
+"stopId": 117,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB061",
+"deliveryType": "locker",
+"lat": 48.708003,
+"lon": 21.347505,
+"sequence": 30,
+"stopId": 118,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA086",
+"deliveryType": "mailbox",
+"lat": 48.692673,
+"lon": 21.34687,
+"sequence": 31,
+"stopId": 119,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA083",
+"deliveryType": "mailbox",
+"lat": 48.674346,
+"lon": 21.322348,
+"sequence": 32,
+"stopId": 120,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA124",
+"deliveryType": "handover",
+"lat": 48.692713,
+"lon": 21.345962,
+"sequence": 33,
+"stopId": 121,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA002",
+"deliveryType": "handover",
+"lat": 48.673773,
+"lon": 21.316627,
+"sequence": 34,
+"stopId": 122,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA129",
+"deliveryType": "handover",
+"lat": 48.672056,
+"lon": 21.319136,
+"sequence": 35,
+"stopId": 123,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300059",
+"deliveryType": "handover",
+"lat": 48.671854,
+"lon": 21.312548,
+"sequence": 36,
+"stopId": 124,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB067",
+"deliveryType": "handover",
+"lat": 48.695248,
+"lon": 21.28937,
+"sequence": 37,
+"stopId": 125,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300056",
+"deliveryType": "handover",
+"lat": 48.697458,
+"lon": 21.284488,
+"sequence": 38,
+"stopId": 126,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB039",
+"deliveryType": "handover",
+"lat": 48.715114,
+"lon": 21.320177,
+"sequence": 39,
+"stopId": 127,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB128",
+"deliveryType": "handover",
+"lat": 48.723944,
+"lon": 21.311224,
+"sequence": 40,
+"stopId": 128,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA055",
+"deliveryType": "mailbox",
+"lat": 48.731352,
+"lon": 21.346024,
+"sequence": 41,
+"stopId": 129,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA149",
+"deliveryType": "locker",
+"lat": 48.676434,
+"lon": 21.31523,
+"sequence": 42,
+"stopId": 130,
+"windowFrom": null
+}
+],
+"vehiclePlate": "KE-303KR"
+},
+{
+"courierUsername": "kurier04",
+"date": "2026-10-24",
+"districtCode": "KE-04",
+"routeId": 4,
+"stagingBay": "SB-04",
+"stops": [
+{
+"barcode": "DP26102300141",
+"deliveryType": "handover",
+"lat": 48.708323,
+"lon": 21.267961,
+"sequence": 1,
+"stopId": 131,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA043",
+"deliveryType": "handover",
+"lat": 48.711177,
+"lon": 21.266227,
+"sequence": 2,
+"stopId": 132,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA043",
+"deliveryType": "handover",
+"lat": 48.697967,
+"lon": 21.26664,
+"sequence": 3,
+"stopId": 133,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300134",
+"deliveryType": "handover",
+"lat": 48.683037,
+"lon": 21.256476,
+"sequence": 4,
+"stopId": 134,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300184",
+"deliveryType": "handover",
+"lat": 48.679757,
+"lon": 21.270027,
+"sequence": 5,
+"stopId": 135,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA062",
+"deliveryType": "handover",
+"lat": 48.675398,
+"lon": 21.266181,
+"sequence": 6,
+"stopId": 136,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300047",
+"deliveryType": "handover",
+"lat": 48.674046,
+"lon": 21.26599,
+"sequence": 7,
+"stopId": 137,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300086",
+"deliveryType": "mailbox",
+"lat": 48.674832,
+"lon": 21.266074,
+"sequence": 8,
+"stopId": 138,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB127",
+"deliveryType": "locker",
+"lat": 48.680482,
+"lon": 21.266134,
+"sequence": 9,
+"stopId": 139,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB088",
+"deliveryType": "mailbox",
+"lat": 48.680035,
+"lon": 21.272732,
+"sequence": 10,
+"stopId": 140,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300135",
+"deliveryType": "mailbox",
+"lat": 48.685124,
+"lon": 21.264291,
+"sequence": 11,
+"stopId": 141,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA025",
+"deliveryType": "mailbox",
+"lat": 48.680603,
+"lon": 21.258657,
+"sequence": 12,
+"stopId": 142,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA083",
+"deliveryType": "mailbox",
+"lat": 48.686691,
+"lon": 21.289728,
+"sequence": 13,
+"stopId": 143,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB006",
+"deliveryType": "locker",
+"lat": 48.686437,
+"lon": 21.292474,
+"sequence": 14,
+"stopId": 144,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA045",
+"deliveryType": "mailbox",
+"lat": 48.686347,
+"lon": 21.292751,
+"sequence": 15,
+"stopId": 145,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB041",
+"deliveryType": "mailbox",
+"lat": 48.686179,
+"lon": 21.292502,
+"sequence": 16,
+"stopId": 146,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB054",
+"deliveryType": "locker",
+"lat": 48.685814,
+"lon": 21.293272,
+"sequence": 17,
+"stopId": 147,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB109",
+"deliveryType": "mailbox",
+"lat": 48.67933,
+"lon": 21.296221,
+"sequence": 18,
+"stopId": 148,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA151",
+"deliveryType": "mailbox",
+"lat": 48.67699,
+"lon": 21.301748,
+"sequence": 19,
+"stopId": 149,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB094",
+"deliveryType": "handover",
+"lat": 48.709789,
+"lon": 21.261831,
+"sequence": 20,
+"stopId": 150,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA011",
+"deliveryType": "handover",
+"lat": 48.683962,
+"lon": 21.265964,
+"sequence": 21,
+"stopId": 151,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA021",
+"deliveryType": "handover",
+"lat": 48.683842,
+"lon": 21.290131,
+"sequence": 22,
+"stopId": 152,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB016",
+"deliveryType": "handover",
+"lat": 48.656506,
+"lon": 21.262725,
+"sequence": 23,
+"stopId": 153,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA056",
+"deliveryType": "handover",
+"lat": 48.710134,
+"lon": 21.261191,
+"sequence": 24,
+"stopId": 154,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA029",
+"deliveryType": "handover",
+"lat": 48.690986,
+"lon": 21.281851,
+"sequence": 25,
+"stopId": 155,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA082",
+"deliveryType": "handover",
+"lat": 48.68634,
+"lon": 21.292971,
+"sequence": 26,
+"stopId": 156,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB026",
+"deliveryType": "handover",
+"lat": 48.678356,
+"lon": 21.273645,
+"sequence": 27,
+"stopId": 157,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB020",
+"deliveryType": "handover",
+"lat": 48.656456,
+"lon": 21.26907,
+"sequence": 28,
+"stopId": 158,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-304KR"
+},
+{
+"courierUsername": "kurier05",
+"date": "2026-10-24",
+"districtCode": "KE-05",
+"routeId": 5,
+"stagingBay": "SB-05",
+"stops": [
+{
+"barcode": "DP261024NBA023",
+"deliveryType": "handover",
+"lat": 48.711528,
+"lon": 21.251212,
+"sequence": 1,
+"stopId": 159,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300157",
+"deliveryType": "handover",
+"lat": 48.704098,
+"lon": 21.258667,
+"sequence": 2,
+"stopId": 160,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA122",
+"deliveryType": "handover",
+"lat": 48.685975,
+"lon": 21.219325,
+"sequence": 3,
+"stopId": 161,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA120",
+"deliveryType": "mailbox",
+"lat": 48.685528,
+"lon": 21.214814,
+"sequence": 4,
+"stopId": 162,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300050",
+"deliveryType": "locker",
+"lat": 48.687633,
+"lon": 21.209961,
+"sequence": 5,
+"stopId": 163,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300024",
+"deliveryType": "locker",
+"lat": 48.690702,
+"lon": 21.205277,
+"sequence": 6,
+"stopId": 164,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA057",
+"deliveryType": "mailbox",
+"lat": 48.686607,
+"lon": 21.195208,
+"sequence": 7,
+"stopId": 165,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA106",
+"deliveryType": "mailbox",
+"lat": 48.701436,
+"lon": 21.231972,
+"sequence": 8,
+"stopId": 166,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300030",
+"deliveryType": "mailbox",
+"lat": 48.701605,
+"lon": 21.2321,
+"sequence": 9,
+"stopId": 167,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB002",
+"deliveryType": "mailbox",
+"lat": 48.703913,
+"lon": 21.234856,
+"sequence": 10,
+"stopId": 168,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB070",
+"deliveryType": "mailbox",
+"lat": 48.704932,
+"lon": 21.235499,
+"sequence": 11,
+"stopId": 169,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA034",
+"deliveryType": "mailbox",
+"lat": 48.70359,
+"lon": 21.247811,
+"sequence": 12,
+"stopId": 170,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB120",
+"deliveryType": "mailbox",
+"lat": 48.70539,
+"lon": 21.25022,
+"sequence": 13,
+"stopId": 171,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA010",
+"deliveryType": "locker",
+"lat": 48.703236,
+"lon": 21.256195,
+"sequence": 14,
+"stopId": 172,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA044",
+"deliveryType": "locker",
+"lat": 48.703897,
+"lon": 21.257841,
+"sequence": 15,
+"stopId": 173,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA099",
+"deliveryType": "locker",
+"lat": 48.70983,
+"lon": 21.248575,
+"sequence": 16,
+"stopId": 174,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300005",
+"deliveryType": "locker",
+"lat": 48.711024,
+"lon": 21.250758,
+"sequence": 17,
+"stopId": 175,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300062",
+"deliveryType": "handover",
+"lat": 48.702525,
+"lon": 21.23456,
+"sequence": 18,
+"stopId": 176,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA020",
+"deliveryType": "handover",
+"lat": 48.707679,
+"lon": 21.242854,
+"sequence": 19,
+"stopId": 177,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA064",
+"deliveryType": "handover",
+"lat": 48.70343,
+"lon": 21.255729,
+"sequence": 20,
+"stopId": 178,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA040",
+"deliveryType": "handover",
+"lat": 48.703582,
+"lon": 21.257587,
+"sequence": 21,
+"stopId": 179,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA091",
+"deliveryType": "handover",
+"lat": 48.707471,
+"lon": 21.259055,
+"sequence": 22,
+"stopId": 180,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA063",
+"deliveryType": "handover",
+"lat": 48.715107,
+"lon": 21.259441,
+"sequence": 23,
+"stopId": 181,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300097",
+"deliveryType": "handover",
+"lat": 48.687987,
+"lon": 21.202627,
+"sequence": 24,
+"stopId": 182,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA036",
+"deliveryType": "handover",
+"lat": 48.687286,
+"lon": 21.206383,
+"sequence": 25,
+"stopId": 183,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA098",
+"deliveryType": "handover",
+"lat": 48.674502,
+"lon": 21.227307,
+"sequence": 26,
+"stopId": 184,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA046",
+"deliveryType": "handover",
+"lat": 48.699159,
+"lon": 21.25562,
+"sequence": 27,
+"stopId": 185,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300112",
+"deliveryType": "handover",
+"lat": 48.703903,
+"lon": 21.258088,
+"sequence": 28,
+"stopId": 186,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300013",
+"deliveryType": "handover",
+"lat": 48.711242,
+"lon": 21.250929,
+"sequence": 29,
+"stopId": 187,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-305KR"
+},
+{
+"courierUsername": "kurier06",
+"date": "2026-10-24",
+"districtCode": "KE-06",
+"routeId": 6,
+"stagingBay": "SB-06",
+"stops": [
+{
+"barcode": "DP261024NBA099",
+"deliveryType": "handover",
+"lat": 48.712795,
+"lon": 21.239689,
+"sequence": 1,
+"stopId": 188,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB052",
+"deliveryType": "handover",
+"lat": 48.712052,
+"lon": 21.24851,
+"sequence": 2,
+"stopId": 189,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB034",
+"deliveryType": "handover",
+"lat": 48.702935,
+"lon": 21.222892,
+"sequence": 3,
+"stopId": 190,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA156",
+"deliveryType": "handover",
+"lat": 48.704959,
+"lon": 21.217214,
+"sequence": 4,
+"stopId": 191,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB011",
+"deliveryType": "handover",
+"lat": 48.689808,
+"lon": 21.193142,
+"sequence": 5,
+"stopId": 192,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300191",
+"deliveryType": "handover",
+"lat": 48.705127,
+"lon": 21.177951,
+"sequence": 6,
+"stopId": 193,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA073",
+"deliveryType": "handover",
+"lat": 48.708465,
+"lon": 21.179599,
+"sequence": 7,
+"stopId": 194,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA097",
+"deliveryType": "mailbox",
+"lat": 48.706192,
+"lon": 21.184104,
+"sequence": 8,
+"stopId": 195,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB015",
+"deliveryType": "mailbox",
+"lat": 48.694563,
+"lon": 21.194615,
+"sequence": 9,
+"stopId": 196,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA030",
+"deliveryType": "locker",
+"lat": 48.695333,
+"lon": 21.207188,
+"sequence": 10,
+"stopId": 197,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB131",
+"deliveryType": "mailbox",
+"lat": 48.693454,
+"lon": 21.208625,
+"sequence": 11,
+"stopId": 198,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB051",
+"deliveryType": "mailbox",
+"lat": 48.698127,
+"lon": 21.218851,
+"sequence": 12,
+"stopId": 199,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA018",
+"deliveryType": "mailbox",
+"lat": 48.705923,
+"lon": 21.223628,
+"sequence": 13,
+"stopId": 200,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB008",
+"deliveryType": "mailbox",
+"lat": 48.708578,
+"lon": 21.224286,
+"sequence": 14,
+"stopId": 201,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300090",
+"deliveryType": "locker",
+"lat": 48.708444,
+"lon": 21.231031,
+"sequence": 15,
+"stopId": 202,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA049",
+"deliveryType": "mailbox",
+"lat": 48.709789,
+"lon": 21.233383,
+"sequence": 16,
+"stopId": 203,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA006",
+"deliveryType": "mailbox",
+"lat": 48.711722,
+"lon": 21.235385,
+"sequence": 17,
+"stopId": 204,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA081",
+"deliveryType": "mailbox",
+"lat": 48.712738,
+"lon": 21.23126,
+"sequence": 18,
+"stopId": 205,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA135",
+"deliveryType": "locker",
+"lat": 48.707244,
+"lon": 21.237859,
+"sequence": 19,
+"stopId": 206,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA103",
+"deliveryType": "mailbox",
+"lat": 48.713634,
+"lon": 21.219733,
+"sequence": 20,
+"stopId": 207,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA160",
+"deliveryType": "locker",
+"lat": 48.712047,
+"lon": 21.203877,
+"sequence": 21,
+"stopId": 208,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300089",
+"deliveryType": "handover",
+"lat": 48.713621,
+"lon": 21.23937,
+"sequence": 22,
+"stopId": 209,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA146",
+"deliveryType": "handover",
+"lat": 48.712358,
+"lon": 21.23155,
+"sequence": 23,
+"stopId": 210,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA153",
+"deliveryType": "handover",
+"lat": 48.706893,
+"lon": 21.223596,
+"sequence": 24,
+"stopId": 211,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300105",
+"deliveryType": "handover",
+"lat": 48.708797,
+"lon": 21.21723,
+"sequence": 25,
+"stopId": 212,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA161",
+"deliveryType": "handover",
+"lat": 48.705084,
+"lon": 21.235328,
+"sequence": 26,
+"stopId": 213,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300037",
+"deliveryType": "mailbox",
+"lat": 48.715312,
+"lon": 21.256912,
+"sequence": 27,
+"stopId": 214,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB031",
+"deliveryType": "mailbox",
+"lat": 48.707473,
+"lon": 21.204896,
+"sequence": 28,
+"stopId": 215,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA047",
+"deliveryType": "handover",
+"lat": 48.704867,
+"lon": 21.234634,
+"sequence": 29,
+"stopId": 216,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300064",
+"deliveryType": "handover",
+"lat": 48.704774,
+"lon": 21.23374,
+"sequence": 30,
+"stopId": 217,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB068",
+"deliveryType": "handover",
+"lat": 48.709464,
+"lon": 21.22971,
+"sequence": 31,
+"stopId": 218,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA076",
+"deliveryType": "handover",
+"lat": 48.710382,
+"lon": 21.228275,
+"sequence": 32,
+"stopId": 219,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB099",
+"deliveryType": "handover",
+"lat": 48.710313,
+"lon": 21.214768,
+"sequence": 33,
+"stopId": 220,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300052",
+"deliveryType": "handover",
+"lat": 48.712917,
+"lon": 21.204762,
+"sequence": 34,
+"stopId": 221,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB114",
+"deliveryType": "handover",
+"lat": 48.707931,
+"lon": 21.178836,
+"sequence": 35,
+"stopId": 222,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB030",
+"deliveryType": "handover",
+"lat": 48.694603,
+"lon": 21.195112,
+"sequence": 36,
+"stopId": 223,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-306KR"
+},
+{
+"courierUsername": "kurier07",
+"date": "2026-10-24",
+"districtCode": "KE-07",
+"routeId": 7,
+"stagingBay": "SB-07",
+"stops": [
+{
+"barcode": "DP261024NZA145",
+"deliveryType": "handover",
+"lat": 48.716858,
+"lon": 21.234925,
+"sequence": 1,
+"stopId": 224,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA074",
+"deliveryType": "handover",
+"lat": 48.717275,
+"lon": 21.235286,
+"sequence": 2,
+"stopId": 225,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB078",
+"deliveryType": "handover",
+"lat": 48.717436,
+"lon": 21.235457,
+"sequence": 3,
+"stopId": 226,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA016",
+"deliveryType": "handover",
+"lat": 48.718324,
+"lon": 21.238615,
+"sequence": 4,
+"stopId": 227,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB028",
+"deliveryType": "handover",
+"lat": 48.72519,
+"lon": 21.241062,
+"sequence": 5,
+"stopId": 228,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300103",
+"deliveryType": "handover",
+"lat": 48.72526,
+"lon": 21.241483,
+"sequence": 6,
+"stopId": 229,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB103",
+"deliveryType": "handover",
+"lat": 48.7266,
+"lon": 21.224895,
+"sequence": 7,
+"stopId": 230,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA058",
+"deliveryType": "handover",
+"lat": 48.731482,
+"lon": 21.227431,
+"sequence": 8,
+"stopId": 231,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300080",
+"deliveryType": "handover",
+"lat": 48.720559,
+"lon": 21.211527,
+"sequence": 9,
+"stopId": 232,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA173",
+"deliveryType": "handover",
+"lat": 48.717546,
+"lon": 21.189513,
+"sequence": 10,
+"stopId": 233,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB010",
+"deliveryType": "locker",
+"lat": 48.719985,
+"lon": 21.180298,
+"sequence": 11,
+"stopId": 234,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300152",
+"deliveryType": "mailbox",
+"lat": 48.729045,
+"lon": 21.233111,
+"sequence": 12,
+"stopId": 235,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA142",
+"deliveryType": "locker",
+"lat": 48.72832,
+"lon": 21.234508,
+"sequence": 13,
+"stopId": 236,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA067",
+"deliveryType": "locker",
+"lat": 48.725874,
+"lon": 21.235036,
+"sequence": 14,
+"stopId": 237,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB007",
+"deliveryType": "locker",
+"lat": 48.725284,
+"lon": 21.23994,
+"sequence": 15,
+"stopId": 238,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB113",
+"deliveryType": "mailbox",
+"lat": 48.723858,
+"lon": 21.239712,
+"sequence": 16,
+"stopId": 239,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA141",
+"deliveryType": "mailbox",
+"lat": 48.721939,
+"lon": 21.243896,
+"sequence": 17,
+"stopId": 240,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB043",
+"deliveryType": "locker",
+"lat": 48.719513,
+"lon": 21.246921,
+"sequence": 18,
+"stopId": 241,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300164",
+"deliveryType": "locker",
+"lat": 48.716048,
+"lon": 21.243545,
+"sequence": 19,
+"stopId": 242,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA096",
+"deliveryType": "mailbox",
+"lat": 48.716974,
+"lon": 21.235201,
+"sequence": 20,
+"stopId": 243,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB019",
+"deliveryType": "mailbox",
+"lat": 48.716018,
+"lon": 21.252946,
+"sequence": 21,
+"stopId": 244,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB017",
+"deliveryType": "handover",
+"lat": 48.718522,
+"lon": 21.226621,
+"sequence": 22,
+"stopId": 245,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB072",
+"deliveryType": "handover",
+"lat": 48.720812,
+"lon": 21.228005,
+"sequence": 23,
+"stopId": 246,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300075",
+"deliveryType": "handover",
+"lat": 48.717436,
+"lon": 21.235457,
+"sequence": 24,
+"stopId": 247,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA087",
+"deliveryType": "handover",
+"lat": 48.717039,
+"lon": 21.237633,
+"sequence": 25,
+"stopId": 248,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300185",
+"deliveryType": "handover",
+"lat": 48.717649,
+"lon": 21.239539,
+"sequence": 26,
+"stopId": 249,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB012",
+"deliveryType": "handover",
+"lat": 48.719544,
+"lon": 21.247033,
+"sequence": 27,
+"stopId": 250,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA148",
+"deliveryType": "handover",
+"lat": 48.725077,
+"lon": 21.241491,
+"sequence": 28,
+"stopId": 251,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA001",
+"deliveryType": "handover",
+"lat": 48.72488,
+"lon": 21.24014,
+"sequence": 29,
+"stopId": 252,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA028",
+"deliveryType": "handover",
+"lat": 48.725841,
+"lon": 21.235704,
+"sequence": 30,
+"stopId": 253,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA109",
+"deliveryType": "handover",
+"lat": 48.715621,
+"lon": 21.192637,
+"sequence": 31,
+"stopId": 254,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA033",
+"deliveryType": "handover",
+"lat": 48.717761,
+"lon": 21.212297,
+"sequence": 32,
+"stopId": 255,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA126",
+"deliveryType": "handover",
+"lat": 48.715721,
+"lon": 21.22057,
+"sequence": 33,
+"stopId": 256,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA094",
+"deliveryType": "handover",
+"lat": 48.717749,
+"lon": 21.234752,
+"sequence": 34,
+"stopId": 257,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA131",
+"deliveryType": "handover",
+"lat": 48.719684,
+"lon": 21.244515,
+"sequence": 35,
+"stopId": 258,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA079",
+"deliveryType": "handover",
+"lat": 48.719662,
+"lon": 21.246325,
+"sequence": 36,
+"stopId": 259,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA004",
+"deliveryType": "handover",
+"lat": 48.721908,
+"lon": 21.245868,
+"sequence": 37,
+"stopId": 260,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB045",
+"deliveryType": "handover",
+"lat": 48.722878,
+"lon": 21.246636,
+"sequence": 38,
+"stopId": 261,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA057",
+"deliveryType": "handover",
+"lat": 48.726333,
+"lon": 21.233982,
+"sequence": 39,
+"stopId": 262,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-307KR"
+},
+{
+"courierUsername": "kurier08",
+"date": "2026-10-24",
+"districtCode": "KE-08",
+"routeId": 8,
+"stagingBay": "SB-08",
+"stops": [
+{
+"barcode": "DP261024NBB125",
+"deliveryType": "mailbox",
+"lat": 48.768005,
+"lon": 21.220309,
+"sequence": 1,
+"stopId": 263,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA032",
+"deliveryType": "handover",
+"lat": 48.747327,
+"lon": 21.216644,
+"sequence": 2,
+"stopId": 264,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA022",
+"deliveryType": "handover",
+"lat": 48.740736,
+"lon": 21.21894,
+"sequence": 3,
+"stopId": 265,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300066",
+"deliveryType": "handover",
+"lat": 48.740553,
+"lon": 21.24167,
+"sequence": 4,
+"stopId": 266,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA159",
+"deliveryType": "handover",
+"lat": 48.733835,
+"lon": 21.239842,
+"sequence": 5,
+"stopId": 267,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB065",
+"deliveryType": "handover",
+"lat": 48.728316,
+"lon": 21.235475,
+"sequence": 6,
+"stopId": 268,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP26102300126",
+"deliveryType": "handover",
+"lat": 48.758799,
+"lon": 21.232264,
+"sequence": 7,
+"stopId": 269,
+"windowFrom": "2026-10-24T08:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA071",
+"deliveryType": "locker",
+"lat": 48.762563,
+"lon": 21.22292,
+"sequence": 8,
+"stopId": 270,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA054",
+"deliveryType": "mailbox",
+"lat": 48.769949,
+"lon": 21.215996,
+"sequence": 9,
+"stopId": 271,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300048",
+"deliveryType": "mailbox",
+"lat": 48.752253,
+"lon": 21.226888,
+"sequence": 10,
+"stopId": 272,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA038",
+"deliveryType": "mailbox",
+"lat": 48.751397,
+"lon": 21.229987,
+"sequence": 11,
+"stopId": 273,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA044",
+"deliveryType": "locker",
+"lat": 48.746302,
+"lon": 21.236376,
+"sequence": 12,
+"stopId": 274,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB027",
+"deliveryType": "mailbox",
+"lat": 48.747869,
+"lon": 21.240446,
+"sequence": 13,
+"stopId": 275,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300109",
+"deliveryType": "locker",
+"lat": 48.740864,
+"lon": 21.237875,
+"sequence": 14,
+"stopId": 276,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA052",
+"deliveryType": "mailbox",
+"lat": 48.739619,
+"lon": 21.239845,
+"sequence": 15,
+"stopId": 277,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA028",
+"deliveryType": "mailbox",
+"lat": 48.739903,
+"lon": 21.235517,
+"sequence": 16,
+"stopId": 278,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB121",
+"deliveryType": "mailbox",
+"lat": 48.736022,
+"lon": 21.240355,
+"sequence": 17,
+"stopId": 279,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA035",
+"deliveryType": "locker",
+"lat": 48.734733,
+"lon": 21.239618,
+"sequence": 18,
+"stopId": 280,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA104",
+"deliveryType": "locker",
+"lat": 48.730292,
+"lon": 21.248715,
+"sequence": 19,
+"stopId": 281,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBB058",
+"deliveryType": "locker",
+"lat": 48.728189,
+"lon": 21.246926,
+"sequence": 20,
+"stopId": 282,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA024",
+"deliveryType": "mailbox",
+"lat": 48.727405,
+"lon": 21.248226,
+"sequence": 21,
+"stopId": 283,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA140",
+"deliveryType": "mailbox",
+"lat": 48.725762,
+"lon": 21.247165,
+"sequence": 22,
+"stopId": 284,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300145",
+"deliveryType": "locker",
+"lat": 48.725721,
+"lon": 21.253597,
+"sequence": 23,
+"stopId": 285,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NBA074",
+"deliveryType": "handover",
+"lat": 48.753327,
+"lon": 21.237545,
+"sequence": 24,
+"stopId": 286,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA040",
+"deliveryType": "handover",
+"lat": 48.752294,
+"lon": 21.23517,
+"sequence": 25,
+"stopId": 287,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA176",
+"deliveryType": "handover",
+"lat": 48.760034,
+"lon": 21.225287,
+"sequence": 26,
+"stopId": 288,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA101",
+"deliveryType": "handover",
+"lat": 48.764195,
+"lon": 21.223005,
+"sequence": 27,
+"stopId": 289,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA089",
+"deliveryType": "handover",
+"lat": 48.764274,
+"lon": 21.220367,
+"sequence": 28,
+"stopId": 290,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP26102300067",
+"deliveryType": "handover",
+"lat": 48.76013,
+"lon": 21.218376,
+"sequence": 29,
+"stopId": 291,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB013",
+"deliveryType": "handover",
+"lat": 48.732434,
+"lon": 21.239221,
+"sequence": 30,
+"stopId": 292,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA015",
+"deliveryType": "handover",
+"lat": 48.729972,
+"lon": 21.231796,
+"sequence": 31,
+"stopId": 293,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB126",
+"deliveryType": "handover",
+"lat": 48.725431,
+"lon": 21.241363,
+"sequence": 32,
+"stopId": 294,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB093",
+"deliveryType": "handover",
+"lat": 48.725428,
+"lon": 21.241447,
+"sequence": 33,
+"stopId": 295,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA152",
+"deliveryType": "handover",
+"lat": 48.725834,
+"lon": 21.246551,
+"sequence": 34,
+"stopId": 296,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA073",
+"deliveryType": "handover",
+"lat": 48.727912,
+"lon": 21.249889,
+"sequence": 35,
+"stopId": 297,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA163",
+"deliveryType": "handover",
+"lat": 48.724141,
+"lon": 21.254244,
+"sequence": 36,
+"stopId": 298,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA170",
+"deliveryType": "handover",
+"lat": 48.723036,
+"lon": 21.252151,
+"sequence": 37,
+"stopId": 299,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA076",
+"deliveryType": "handover",
+"lat": 48.721725,
+"lon": 21.254917,
+"sequence": 38,
+"stopId": 300,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA014",
+"deliveryType": "handover",
+"lat": 48.720866,
+"lon": 21.254861,
+"sequence": 39,
+"stopId": 301,
+"windowFrom": "2026-10-24T10:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA087",
+"deliveryType": "locker",
+"lat": 48.743455,
+"lon": 21.215924,
+"sequence": 40,
+"stopId": 302,
+"windowFrom": null
+},
+{
+"barcode": "DP26102300181",
+"deliveryType": "locker",
+"lat": 48.747918,
+"lon": 21.214863,
+"sequence": 41,
+"stopId": 303,
+"windowFrom": null
+},
+{
+"barcode": "DP261024NZA139",
+"deliveryType": "handover",
+"lat": 48.725427,
+"lon": 21.252397,
+"sequence": 42,
+"stopId": 304,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA039",
+"deliveryType": "handover",
+"lat": 48.727994,
+"lon": 21.24968,
+"sequence": 43,
+"stopId": 305,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBA051",
+"deliveryType": "handover",
+"lat": 48.717531,
+"lon": 21.258959,
+"sequence": 44,
+"stopId": 306,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300027",
+"deliveryType": "handover",
+"lat": 48.738866,
+"lon": 21.239663,
+"sequence": 45,
+"stopId": 307,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB062",
+"deliveryType": "handover",
+"lat": 48.7399,
+"lon": 21.24116,
+"sequence": 46,
+"stopId": 308,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NZA116",
+"deliveryType": "handover",
+"lat": 48.742599,
+"lon": 21.239872,
+"sequence": 47,
+"stopId": 309,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP26102300123",
+"deliveryType": "handover",
+"lat": 48.74595,
+"lon": 21.242492,
+"sequence": 48,
+"stopId": 310,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+},
+{
+"barcode": "DP261024NBB136",
+"deliveryType": "handover",
+"lat": 48.75886,
+"lon": 21.211197,
+"sequence": 49,
+"stopId": 311,
+"windowFrom": "2026-10-24T12:00:00+02:00"
+}
+],
+"vehiclePlate": "KE-308KR"
+}
+]
+},
+"day": "2026-10-23",
+"manifests": {
+"BA": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300002",
+"weightKg": 5.98
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300003",
+"weightKg": 4.64
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300004",
+"weightKg": 2.41
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300008",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300010",
+"weightKg": 0.66
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300023",
+"weightKg": 2.28
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300034",
+"weightKg": 1.32
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300036",
+"weightKg": 7.19
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300038",
+"weightKg": 13.58
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300042",
+"weightKg": 0.85
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300046",
+"weightKg": 2.72
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300049",
+"weightKg": 1.57
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300073",
+"weightKg": 1.67
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300081",
+"weightKg": 0.27
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300085",
+"weightKg": 3.66
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300102",
+"weightKg": 0.23
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300111",
+"weightKg": 3.51
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300120",
+"weightKg": 1.88
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300133",
+"weightKg": 4.34
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300143",
+"weightKg": 0.58
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300174",
+"weightKg": 10.25
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300176",
+"weightKg": 0.91
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300180",
+"weightKg": 5.24
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300186",
+"weightKg": 1.03
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300192",
+"weightKg": 3.17
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300193",
+"weightKg": 0.62
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300194",
+"weightKg": 1.29
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300198",
+"weightKg": 1.05
+}
+],
+"BB": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300007",
+"weightKg": 2.71
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300015",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300022",
+"weightKg": 2.67
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300025",
+"weightKg": 2.99
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300026",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300029",
+"weightKg": 1.34
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300031",
+"weightKg": 2.74
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300041",
+"weightKg": 10.42
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300058",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300060",
+"weightKg": 2.27
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300063",
+"weightKg": 0.33
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300077",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300093",
+"weightKg": 1.26
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300094",
+"weightKg": 0.32
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300129",
+"weightKg": 3.37
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300130",
+"weightKg": 4.32
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300132",
+"weightKg": 0.3
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300146",
+"weightKg": 1.7
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300156",
+"weightKg": 2.47
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300162",
+"weightKg": 1.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300189",
+"weightKg": 0.3
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300190",
+"weightKg": 0.53
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300196",
+"weightKg": 3.24
+}
+],
+"HE": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300006",
+"weightKg": 2.38
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300011",
+"weightKg": 1.55
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300017",
+"weightKg": 1.76
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300033",
+"weightKg": 0.5
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300070",
+"weightKg": 3.75
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300079",
+"weightKg": 3.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300087",
+"weightKg": 4.24
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300108",
+"weightKg": 5.59
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300114",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300116",
+"weightKg": 3.63
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300118",
+"weightKg": 2.51
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300124",
+"weightKg": 0.66
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300125",
+"weightKg": 1.85
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300127",
+"weightKg": 2.99
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300136",
+"weightKg": 0.93
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300139",
+"weightKg": 3.55
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300148",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300155",
+"weightKg": 0.43
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300197",
+"weightKg": 0.45
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA010",
+"weightKg": 1.67
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA022",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA024",
+"weightKg": 1.03
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA039",
+"weightKg": 1.06
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA046",
+"weightKg": 8.55
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA048",
+"weightKg": 1.69
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA049",
+"weightKg": 0.87
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA056",
+"weightKg": 4.44
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA065",
+"weightKg": 2.63
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA069",
+"weightKg": 5.63
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA070",
+"weightKg": 6.8
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA090",
+"weightKg": 1.4
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA001",
+"weightKg": 6.18
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA026",
+"weightKg": 2.47
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA037",
+"weightKg": 1.05
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA041",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA048",
+"weightKg": 1.61
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA058",
+"weightKg": 0.9
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA061",
+"weightKg": 1.21
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA062",
+"weightKg": 2.38
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA084",
+"weightKg": 0.9
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA085",
+"weightKg": 2.95
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA110",
+"weightKg": 1.75
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA127",
+"weightKg": 0.89
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA157",
+"weightKg": 1.36
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA158",
+"weightKg": 1.41
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA162",
+"weightKg": 3.8
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA175",
+"weightKg": 1.02
+}
+],
+"KE-01": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300014",
+"weightKg": 17.9
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300055",
+"weightKg": 0.78
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300107",
+"weightKg": 0.46
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA014",
+"weightKg": 0.73
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA031",
+"weightKg": 4.07
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA053",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA054",
+"weightKg": 1.29
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA061",
+"weightKg": 0.98
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA079",
+"weightKg": 0.99
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA082",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA085",
+"weightKg": 2.75
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA092",
+"weightKg": 4.13
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA097",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA101",
+"weightKg": 1.62
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB001",
+"weightKg": 1.84
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB004",
+"weightKg": 4.56
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB021",
+"weightKg": 1.78
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB025",
+"weightKg": 2.1
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB032",
+"weightKg": 0.96
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB047",
+"weightKg": 2.43
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB055",
+"weightKg": 3.84
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB063",
+"weightKg": 3.34
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB081",
+"weightKg": 1.27
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB084",
+"weightKg": 4.78
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB085",
+"weightKg": 4.08
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB086",
+"weightKg": 1.0
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB091",
+"weightKg": 2.45
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB092",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB118",
+"weightKg": 5.02
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB138",
+"weightKg": 3.06
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA007",
+"weightKg": 8.61
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA012",
+"weightKg": 1.87
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA017",
+"weightKg": 2.15
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA019",
+"weightKg": 1.18
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA023",
+"weightKg": 1.51
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA033",
+"weightKg": 6.42
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA066",
+"weightKg": 1.7
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA068",
+"weightKg": 0.5
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA070",
+"weightKg": 8.92
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA077",
+"weightKg": 0.3
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA089",
+"weightKg": 4.85
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA100",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA143",
+"weightKg": 1.09
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA150",
+"weightKg": 2.07
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA169",
+"weightKg": 2.11
+}
+],
+"KE-02": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300018",
+"weightKg": 2.14
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300083",
+"weightKg": 4.36
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300096",
+"weightKg": 2.78
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300098",
+"weightKg": 0.85
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300121",
+"weightKg": 1.02
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300154",
+"weightKg": 0.94
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300172",
+"weightKg": 0.54
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300173",
+"weightKg": 1.2
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300188",
+"weightKg": 3.21
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA013",
+"weightKg": 3.9
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA015",
+"weightKg": 2.47
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA019",
+"weightKg": 1.9
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA037",
+"weightKg": 3.77
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA042",
+"weightKg": 0.81
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA059",
+"weightKg": 2.76
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA060",
+"weightKg": 6.04
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA063",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA077",
+"weightKg": 1.43
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA084",
+"weightKg": 1.74
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB036",
+"weightKg": 3.88
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB042",
+"weightKg": 0.42
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB049",
+"weightKg": 7.37
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB057",
+"weightKg": 0.79
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB087",
+"weightKg": 1.47
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB097",
+"weightKg": 3.48
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB116",
+"weightKg": 0.52
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA004",
+"weightKg": 0.39
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA011",
+"weightKg": 2.64
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA031",
+"weightKg": 4.16
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA042",
+"weightKg": 3.77
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA051",
+"weightKg": 1.22
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA053",
+"weightKg": 1.64
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA088",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA102",
+"weightKg": 0.8
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA104",
+"weightKg": 1.67
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA118",
+"weightKg": 1.03
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA123",
+"weightKg": 0.18
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA130",
+"weightKg": 1.34
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA138",
+"weightKg": 0.71
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA144",
+"weightKg": 3.01
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA168",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA174",
+"weightKg": 2.93
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA177",
+"weightKg": 6.28
+}
+],
+"KE-03": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300001",
+"weightKg": 2.1
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300056",
+"weightKg": 2.95
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300059",
+"weightKg": 1.47
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300076",
+"weightKg": 0.84
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300110",
+"weightKg": 5.15
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300158",
+"weightKg": 3.94
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300165",
+"weightKg": 1.66
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300166",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300182",
+"weightKg": 0.6
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA002",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA005",
+"weightKg": 2.83
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA007",
+"weightKg": 7.73
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA017",
+"weightKg": 0.79
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA055",
+"weightKg": 1.11
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA081",
+"weightKg": 1.47
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA083",
+"weightKg": 1.68
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA086",
+"weightKg": 1.65
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA100",
+"weightKg": 2.98
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB039",
+"weightKg": 2.92
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB053",
+"weightKg": 4.2
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB061",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB067",
+"weightKg": 2.33
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB128",
+"weightKg": 1.07
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB134",
+"weightKg": 1.93
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA003",
+"weightKg": 1.19
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA034",
+"weightKg": 7.58
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA055",
+"weightKg": 2.66
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA064",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA075",
+"weightKg": 4.94
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA098",
+"weightKg": 1.02
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA112",
+"weightKg": 3.95
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA113",
+"weightKg": 3.63
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA115",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA124",
+"weightKg": 2.4
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA125",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA128",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA129",
+"weightKg": 3.96
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA134",
+"weightKg": 2.89
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA137",
+"weightKg": 1.67
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA149",
+"weightKg": 0.82
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA154",
+"weightKg": 4.04
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA167",
+"weightKg": 3.06
+}
+],
+"KE-04": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300047",
+"weightKg": 5.77
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300086",
+"weightKg": 0.85
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300134",
+"weightKg": 2.22
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300135",
+"weightKg": 1.83
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300141",
+"weightKg": 3.89
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300184",
+"weightKg": 1.11
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA011",
+"weightKg": 0.53
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA025",
+"weightKg": 1.25
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA029",
+"weightKg": 2.64
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA043",
+"weightKg": 3.13
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA045",
+"weightKg": 1.72
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA062",
+"weightKg": 20.9
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB006",
+"weightKg": 3.42
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB016",
+"weightKg": 0.6
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB020",
+"weightKg": 0.49
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB026",
+"weightKg": 1.98
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB041",
+"weightKg": 1.65
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB054",
+"weightKg": 3.72
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB088",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB094",
+"weightKg": 0.25
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB109",
+"weightKg": 1.7
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB127",
+"weightKg": 3.51
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA021",
+"weightKg": 1.47
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA043",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA056",
+"weightKg": 2.01
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA082",
+"weightKg": 2.55
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA083",
+"weightKg": 7.47
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA151",
+"weightKg": 1.37
+}
+],
+"KE-05": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300005",
+"weightKg": 1.93
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300013",
+"weightKg": 0.52
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300024",
+"weightKg": 0.79
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300030",
+"weightKg": 0.73
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300050",
+"weightKg": 1.16
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300062",
+"weightKg": 0.79
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300097",
+"weightKg": 1.16
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300112",
+"weightKg": 0.7
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300157",
+"weightKg": 2.04
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA023",
+"weightKg": 1.25
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA034",
+"weightKg": 0.99
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA064",
+"weightKg": 1.26
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA091",
+"weightKg": 1.12
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA098",
+"weightKg": 3.56
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA106",
+"weightKg": 1.18
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB002",
+"weightKg": 0.39
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB070",
+"weightKg": 1.65
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB120",
+"weightKg": 0.95
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA010",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA020",
+"weightKg": 0.69
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA036",
+"weightKg": 0.87
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA040",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA044",
+"weightKg": 2.71
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA046",
+"weightKg": 1.64
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA057",
+"weightKg": 2.24
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA063",
+"weightKg": 1.1
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA099",
+"weightKg": 2.94
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA120",
+"weightKg": 2.98
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA122",
+"weightKg": 1.81
+}
+],
+"KE-06": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300037",
+"weightKg": 2.78
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300052",
+"weightKg": 3.35
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300064",
+"weightKg": 0.39
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300089",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300090",
+"weightKg": 0.37
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300105",
+"weightKg": 2.94
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300191",
+"weightKg": 2.34
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA018",
+"weightKg": 0.35
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA076",
+"weightKg": 1.05
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA099",
+"weightKg": 2.2
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB008",
+"weightKg": 2.29
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB011",
+"weightKg": 1.56
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB015",
+"weightKg": 0.39
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB030",
+"weightKg": 3.96
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB031",
+"weightKg": 0.92
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB034",
+"weightKg": 0.88
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB051",
+"weightKg": 1.78
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB052",
+"weightKg": 1.47
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB068",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB099",
+"weightKg": 3.17
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB114",
+"weightKg": 0.98
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB131",
+"weightKg": 1.13
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA006",
+"weightKg": 0.71
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA030",
+"weightKg": 7.22
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA047",
+"weightKg": 4.23
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA049",
+"weightKg": 4.36
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA073",
+"weightKg": 1.04
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA081",
+"weightKg": 3.98
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA097",
+"weightKg": 1.01
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA103",
+"weightKg": 8.94
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA135",
+"weightKg": 5.56
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA146",
+"weightKg": 1.48
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA153",
+"weightKg": 2.98
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA156",
+"weightKg": 1.0
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA160",
+"weightKg": 0.52
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA161",
+"weightKg": 1.5
+}
+],
+"KE-07": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300075",
+"weightKg": 0.75
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300080",
+"weightKg": 0.92
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300103",
+"weightKg": 1.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300152",
+"weightKg": 4.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300164",
+"weightKg": 3.09
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300185",
+"weightKg": 6.73
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA001",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA004",
+"weightKg": 2.65
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA033",
+"weightKg": 0.35
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA057",
+"weightKg": 2.42
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA058",
+"weightKg": 2.57
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA067",
+"weightKg": 1.11
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA087",
+"weightKg": 1.99
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA094",
+"weightKg": 1.71
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB007",
+"weightKg": 3.46
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB010",
+"weightKg": 1.92
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB012",
+"weightKg": 0.72
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB017",
+"weightKg": 9.16
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB019",
+"weightKg": 2.97
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB028",
+"weightKg": 0.48
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB043",
+"weightKg": 1.45
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB045",
+"weightKg": 3.99
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB072",
+"weightKg": 3.94
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB078",
+"weightKg": 0.69
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB103",
+"weightKg": 1.23
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB113",
+"weightKg": 3.66
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA016",
+"weightKg": 3.26
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA028",
+"weightKg": 1.54
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA074",
+"weightKg": 0.69
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA079",
+"weightKg": 3.9
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA096",
+"weightKg": 2.15
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA109",
+"weightKg": 1.14
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA126",
+"weightKg": 0.99
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA131",
+"weightKg": 5.99
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA141",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA142",
+"weightKg": 1.93
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA145",
+"weightKg": 1.9
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA148",
+"weightKg": 1.44
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA173",
+"weightKg": 1.07
+}
+],
+"KE-08": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300027",
+"weightKg": 1.18
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300048",
+"weightKg": 1.24
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300066",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300067",
+"weightKg": 4.12
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300109",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300123",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300126",
+"weightKg": 2.85
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300145",
+"weightKg": 1.32
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300181",
+"weightKg": 0.8
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA028",
+"weightKg": 3.35
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA040",
+"weightKg": 0.95
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA044",
+"weightKg": 3.6
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA051",
+"weightKg": 6.69
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA073",
+"weightKg": 1.15
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA074",
+"weightKg": 0.68
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA089",
+"weightKg": 0.18
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA104",
+"weightKg": 0.99
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB013",
+"weightKg": 2.28
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB027",
+"weightKg": 15.57
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB058",
+"weightKg": 2.84
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB062",
+"weightKg": 9.76
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB065",
+"weightKg": 2.92
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB093",
+"weightKg": 5.43
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB121",
+"weightKg": 1.59
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB125",
+"weightKg": 2.03
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB126",
+"weightKg": 0.67
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB136",
+"weightKg": 3.19
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA014",
+"weightKg": 11.87
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA015",
+"weightKg": 2.27
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA022",
+"weightKg": 2.0
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA024",
+"weightKg": 0.67
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA032",
+"weightKg": 0.35
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA035",
+"weightKg": 6.15
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA038",
+"weightKg": 0.81
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA039",
+"weightKg": 0.91
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA052",
+"weightKg": 2.44
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA054",
+"weightKg": 2.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA071",
+"weightKg": 5.48
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA076",
+"weightKg": 3.06
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA087",
+"weightKg": 1.55
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA101",
+"weightKg": 1.65
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA116",
+"weightKg": 3.34
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA139",
+"weightKg": 1.92
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA140",
+"weightKg": 1.53
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA152",
+"weightKg": 1.97
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA159",
+"weightKg": 1.73
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA163",
+"weightKg": 2.5
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA170",
+"weightKg": 4.61
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA176",
+"weightKg": 0.34
+}
+],
+"MI": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300009",
+"weightKg": 2.3
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300043",
+"weightKg": 1.71
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300044",
+"weightKg": 0.7
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300054",
+"weightKg": 1.71
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300057",
+"weightKg": 1.34
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300071",
+"weightKg": 1.83
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300072",
+"weightKg": 1.49
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300106",
+"weightKg": 3.29
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300113",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300122",
+"weightKg": 1.92
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300144",
+"weightKg": 0.54
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300149",
+"weightKg": 1.0
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300151",
+"weightKg": 0.88
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300159",
+"weightKg": 0.68
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300179",
+"weightKg": 7.33
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300183",
+"weightKg": 1.98
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300199",
+"weightKg": 1.15
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA008",
+"weightKg": 3.97
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA009",
+"weightKg": 1.77
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA016",
+"weightKg": 1.23
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA026",
+"weightKg": 2.79
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA027",
+"weightKg": 4.04
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA038",
+"weightKg": 3.65
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA041",
+"weightKg": 1.43
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA047",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA050",
+"weightKg": 1.93
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA052",
+"weightKg": 1.35
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA068",
+"weightKg": 7.18
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA095",
+"weightKg": 5.57
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA096",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA102",
+"weightKg": 1.34
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA103",
+"weightKg": 3.59
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA105",
+"weightKg": 2.44
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA108",
+"weightKg": 0.58
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA110",
+"weightKg": 0.46
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA111",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB005",
+"weightKg": 2.61
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB018",
+"weightKg": 1.84
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB023",
+"weightKg": 2.65
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB029",
+"weightKg": 1.13
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB035",
+"weightKg": 0.75
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB037",
+"weightKg": 2.02
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB044",
+"weightKg": 2.77
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB069",
+"weightKg": 3.58
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB071",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB075",
+"weightKg": 0.82
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB077",
+"weightKg": 0.97
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB079",
+"weightKg": 0.87
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB082",
+"weightKg": 2.32
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB083",
+"weightKg": 4.14
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB090",
+"weightKg": 4.89
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB096",
+"weightKg": 7.72
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB101",
+"weightKg": 4.56
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB105",
+"weightKg": 0.61
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB108",
+"weightKg": 1.22
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB111",
+"weightKg": 1.41
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB123",
+"weightKg": 3.68
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB129",
+"weightKg": 3.9
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB130",
+"weightKg": 2.85
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB137",
+"weightKg": 2.96
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA005",
+"weightKg": 0.82
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA008",
+"weightKg": 0.76
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA025",
+"weightKg": 1.63
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA027",
+"weightKg": 3.63
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA029",
+"weightKg": 5.37
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA045",
+"weightKg": 2.87
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA059",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA060",
+"weightKg": 0.88
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA065",
+"weightKg": 2.03
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA080",
+"weightKg": 2.48
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA086",
+"weightKg": 1.78
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA091",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA092",
+"weightKg": 3.35
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA093",
+"weightKg": 7.04
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA094",
+"weightKg": 0.57
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA095",
+"weightKg": 2.99
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA105",
+"weightKg": 4.34
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA106",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA107",
+"weightKg": 4.58
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA108",
+"weightKg": 0.98
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA117",
+"weightKg": 1.52
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA119",
+"weightKg": 4.03
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA132",
+"weightKg": 1.26
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA133",
+"weightKg": 1.34
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA155",
+"weightKg": 3.26
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA164",
+"weightKg": 0.73
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA165",
+"weightKg": 0.38
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA166",
+"weightKg": 2.32
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA172",
+"weightKg": 4.1
+}
+],
+"SE": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300020",
+"weightKg": 2.69
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300021",
+"weightKg": 0.76
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300084",
+"weightKg": 2.33
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300100",
+"weightKg": 1.36
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300137",
+"weightKg": 1.17
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300150",
+"weightKg": 1.06
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300160",
+"weightKg": 2.9
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300169",
+"weightKg": 2.68
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300170",
+"weightKg": 4.66
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300175",
+"weightKg": 2.43
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA020",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA032",
+"weightKg": 3.38
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA066",
+"weightKg": 1.84
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA071",
+"weightKg": 2.74
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA075",
+"weightKg": 0.57
+}
+],
+"SL": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300012",
+"weightKg": 1.38
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300016",
+"weightKg": 4.38
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300032",
+"weightKg": 1.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300051",
+"weightKg": 1.95
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300069",
+"weightKg": 0.68
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300082",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300088",
+"weightKg": 0.5
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300092",
+"weightKg": 0.99
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300119",
+"weightKg": 1.84
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300138",
+"weightKg": 2.87
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300161",
+"weightKg": 2.27
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300163",
+"weightKg": 0.91
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300171",
+"weightKg": 4.11
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB003",
+"weightKg": 5.16
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB009",
+"weightKg": 0.75
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB024",
+"weightKg": 1.32
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB033",
+"weightKg": 1.61
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB038",
+"weightKg": 2.23
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB046",
+"weightKg": 1.26
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB056",
+"weightKg": 1.35
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB059",
+"weightKg": 0.91
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB064",
+"weightKg": 0.39
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB089",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB095",
+"weightKg": 3.81
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB102",
+"weightKg": 2.69
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB104",
+"weightKg": 0.89
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB107",
+"weightKg": 9.39
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB110",
+"weightKg": 1.41
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB119",
+"weightKg": 1.31
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB122",
+"weightKg": 0.76
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA002",
+"weightKg": 1.03
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA009",
+"weightKg": 2.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA013",
+"weightKg": 1.72
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA018",
+"weightKg": 2.24
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA050",
+"weightKg": 1.46
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA067",
+"weightKg": 1.04
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA069",
+"weightKg": 1.27
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA072",
+"weightKg": 0.41
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA078",
+"weightKg": 2.81
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA090",
+"weightKg": 5.55
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA111",
+"weightKg": 0.62
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA114",
+"weightKg": 7.17
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA121",
+"weightKg": 2.14
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA136",
+"weightKg": 9.23
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA147",
+"weightKg": 1.16
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA171",
+"weightKg": 1.31
+},
+{
+"arrivesWithTripId": 11,
+"barcode": "DP261024NZA178",
+"weightKg": 2.54
+}
+],
+"TV": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300040",
+"weightKg": 1.27
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300045",
+"weightKg": 4.33
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300053",
+"weightKg": 2.0
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300061",
+"weightKg": 3.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300065",
+"weightKg": 8.4
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300068",
+"weightKg": 3.6
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300074",
+"weightKg": 5.23
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300078",
+"weightKg": 1.69
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300091",
+"weightKg": 0.3
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300095",
+"weightKg": 2.27
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300115",
+"weightKg": 1.07
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300117",
+"weightKg": 1.22
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300153",
+"weightKg": 2.84
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300167",
+"weightKg": 0.6
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300187",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300195",
+"weightKg": 1.4
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA003",
+"weightKg": 0.97
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA006",
+"weightKg": 1.4
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA012",
+"weightKg": 1.2
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA021",
+"weightKg": 5.62
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA030",
+"weightKg": 1.73
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA035",
+"weightKg": 0.7
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA036",
+"weightKg": 0.97
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA072",
+"weightKg": 0.79
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA078",
+"weightKg": 2.18
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA080",
+"weightKg": 0.8
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA088",
+"weightKg": 2.26
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA093",
+"weightKg": 1.35
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA107",
+"weightKg": 0.88
+},
+{
+"arrivesWithTripId": 9,
+"barcode": "DP261024NBA109",
+"weightKg": 0.8
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB014",
+"weightKg": 1.32
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB022",
+"weightKg": 1.45
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB040",
+"weightKg": 1.56
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB048",
+"weightKg": 1.43
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB050",
+"weightKg": 13.99
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB060",
+"weightKg": 1.01
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB066",
+"weightKg": 1.22
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB073",
+"weightKg": 2.38
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB074",
+"weightKg": 0.83
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB076",
+"weightKg": 1.85
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB080",
+"weightKg": 6.39
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB098",
+"weightKg": 4.62
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB100",
+"weightKg": 1.81
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB106",
+"weightKg": 2.3
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB112",
+"weightKg": 0.74
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB115",
+"weightKg": 0.76
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB117",
+"weightKg": 7.35
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB124",
+"weightKg": 2.02
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB132",
+"weightKg": 3.5
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB133",
+"weightKg": 1.22
+},
+{
+"arrivesWithTripId": 7,
+"barcode": "DP261024NBB135",
+"weightKg": 4.34
+}
+],
+"ZA": [
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300019",
+"weightKg": 1.71
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300028",
+"weightKg": 1.5
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300035",
+"weightKg": 5.31
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300039",
+"weightKg": 0.55
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300099",
+"weightKg": 0.6
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300101",
+"weightKg": 2.69
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300104",
+"weightKg": 4.37
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300128",
+"weightKg": 2.53
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300131",
+"weightKg": 0.64
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300140",
+"weightKg": 0.51
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300142",
+"weightKg": 1.4
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300147",
+"weightKg": 0.3
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300168",
+"weightKg": 0.86
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300177",
+"weightKg": 2.56
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300178",
+"weightKg": 4.03
+},
+{
+"arrivesWithTripId": null,
+"barcode": "DP26102300200",
+"weightKg": 0.51
+}
+]
+},
+"plan": {
+"cascadeBufferMin": 30,
+"day": "2026-10-23",
+"depot": {
+"code": "BUD",
+"lat": 48.79256,
+"lon": 21.3071,
+"name": "Budimír"
+},
+"destinations": {
+"BA": [
+48.19404,
+17.22834
+],
+"BB": [
+48.7363,
+19.1462
+],
+"HE": [
+48.9371,
+21.9063
+],
+"MI": [
+48.7543,
+21.9195
+],
+"SE": [
+48.6794,
+17.3667
+],
+"SL": [
+49.2986,
+20.6866
+],
+"TV": [
+48.6286,
+21.7178
+],
+"ZA": [
+49.2232,
+18.7394
+]
+},
+"localDirections": [
+"KE-01",
+"KE-02",
+"KE-03",
+"KE-04",
+"KE-05",
+"KE-06",
+"KE-07",
+"KE-08"
+],
+"trips": [
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"ZA",
+"BB"
+],
+"directionCode": "MI",
+"directionName": "Michalovce",
+"directionType": "transit",
+"doorCode": "LD-04",
+"id": 1,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T13:45:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-201TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"BB"
+],
+"directionCode": "TV",
+"directionName": "Trebišov",
+"directionType": "transit",
+"doorCode": "LD-05",
+"id": 2,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T14:00:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-202TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"ZA"
+],
+"directionCode": "HE",
+"directionName": "Humenné",
+"directionType": "transit",
+"doorCode": "LD-06",
+"id": 3,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T14:15:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-203TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"ZA",
+"BB"
+],
+"directionCode": "SL",
+"directionName": "Stará Ľubovňa",
+"directionType": "transit",
+"doorCode": "LD-07",
+"id": 4,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T14:30:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-204TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA"
+],
+"directionCode": "SE",
+"directionName": "Senica",
+"directionType": "transit",
+"doorCode": "LD-08",
+"id": 5,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T14:45:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-205TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "BB",
+"directionName": "Banská Bystrica",
+"directionType": "linehaul",
+"doorCode": "LD-01",
+"id": 6,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T15:00:00Z",
+"plannedDeparture": "2026-10-23T18:30:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-101LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "BB",
+"directionName": "Banská Bystrica",
+"directionType": "linehaul",
+"doorCode": "LD-01",
+"id": 7,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T23:00:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-104LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "BA",
+"directionName": "Bratislava",
+"directionType": "linehaul",
+"doorCode": "LD-02",
+"id": 8,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T15:00:00Z",
+"plannedDeparture": "2026-10-23T19:30:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-102LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "BA",
+"directionName": "Bratislava",
+"directionType": "linehaul",
+"doorCode": "LD-02",
+"id": 9,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T23:30:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-105LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "ZA",
+"directionName": "Žilina",
+"directionType": "linehaul",
+"doorCode": "LD-03",
+"id": 10,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-23T15:00:00Z",
+"plannedDeparture": "2026-10-23T19:00:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-103LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [],
+"directionCode": "ZA",
+"directionName": "Žilina",
+"directionType": "linehaul",
+"doorCode": "LD-03",
+"id": 11,
+"kind": "inbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T00:00:00Z",
+"plannedDeparture": null,
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-106LH"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"ZA",
+"BB"
+],
+"directionCode": "MI",
+"directionName": "Michalovce",
+"directionType": "transit",
+"doorCode": "LD-04",
+"id": 12,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T01:00:00Z",
+"plannedDeparture": "2026-10-24T04:00:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-201TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"BB"
+],
+"directionCode": "TV",
+"directionName": "Trebišov",
+"directionType": "transit",
+"doorCode": "LD-05",
+"id": 13,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T01:00:00Z",
+"plannedDeparture": "2026-10-24T04:15:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-202TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA",
+"ZA"
+],
+"directionCode": "HE",
+"directionName": "Humenné",
+"directionType": "transit",
+"doorCode": "LD-06",
+"id": 14,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T01:00:00Z",
+"plannedDeparture": "2026-10-24T04:00:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-203TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"ZA",
+"BB"
+],
+"directionCode": "SL",
+"directionName": "Stará Ľubovňa",
+"directionType": "transit",
+"doorCode": "LD-07",
+"id": 15,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T01:00:00Z",
+"plannedDeparture": "2026-10-24T03:45:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-204TR"
+},
+{
+"actualArrival": null,
+"actualDeparture": null,
+"dependsOnLinehaul": [
+"BA"
+],
+"directionCode": "SE",
+"directionName": "Senica",
+"directionType": "transit",
+"doorCode": "LD-08",
+"id": 16,
+"kind": "outbound",
+"operatingDay": "2026-10-23",
+"plannedArrival": "2026-10-24T01:00:00Z",
+"plannedDeparture": "2026-10-24T04:30:00Z",
+"predictedArrival": null,
+"status": "planned",
+"vehicleKind": "truck",
+"vehiclePlate": "KE-205TR"
+}
+]
+}
+}

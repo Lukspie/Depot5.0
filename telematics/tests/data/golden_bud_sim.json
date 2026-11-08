@@ -1,0 +1,29 @@
+{
+ "simTime": "2026-10-23T16:30:00.000Z",
+ "scans": 27,
+ "scansHash": "4efbd28693a0af1b",
+ "trips": 16,
+ "tripStates": {
+  "1": "completed",
+  "2": "completed",
+  "3": "at_door",
+  "4": "completed",
+  "5": "completed",
+  "6": "loading",
+  "7": "planned",
+  "8": "loading",
+  "9": "planned",
+  "10": "loading",
+  "11": "planned",
+  "12": "planned",
+  "13": "planned",
+  "14": "planned",
+  "15": "planned",
+  "16": "planned"
+ },
+ "tripsHash": "2cc5b73dd19f9850",
+ "gate": 7,
+ "gateHash": "65070e1487c71a4c",
+ "alerts": [],
+ "couriers": 0
+}
