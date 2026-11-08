@@ -678,3 +678,17 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Kontrakt kanála `vehicles`:** dodávka bez bežiaceho kola má `status: "parked"` (predtým `null`), polohu na svojom mieste a `routeId: null`. Frontend má štítok „Zaparkovaná v depe“, tieň ukazuje zaparkované aj nakladané dodávky za odstavnými plochami.
   - **Dispečeri:** `dispecer` (ranná), `dispecer2` (poobedná), `dispecer3` (nočná). Spoločné heslo `SEED_DISPATCHER_PASSWORD` ako pri kuriéroch. Stĺpec `users.shift` (`morning` / `afternoon` / `night`) smie mať len dispečer, o tom rozhoduje backend (422, pri zmene roly sa zmaže). Krok seedu `users:v2` doplní účty do existujúcej DB a heslá existujúcich účtov nemení.
 - **Dôsledok:** Ranná scéna ukazuje celý tok: dodávky stoja v areáli, nakladajú sa, zákazníci dostávajú SMS, dodávky odchádzajú. Miesta v areáli sú schematické, presné státia patria k layoutom skladov (7b bod 5, po odovzdaní).
+
+## ADR-064 Layouty skladov z OSM: hala, areál a dvor ako dáta (Fáza 7c, krok 1)
+- **Kontext:** Tieň a 3D mapa kreslili schematické haly (Budimír 86 × 40 m bez natočenia). Fáza 7c chce skutočné layouty 4 skladov vrátane areálu (vjazd, státia kamiónov, parkovisko dodávok, jazdné pruhy), nič natvrdo v komponentoch, a rovnaký výsledok na čistej aj existujúcej DB.
+- **Rozhodnutie:**
+  - `tools/osm/extract_depots.py` vytiahne z OSM extraktu obrys haly a areálu podľa `tools/osm/depots.json` (way id, alebo bod v hale, ktorý musí ležať práve v jednej budove, inak skript skončí a vypíše kandidátov). Výsledok `seed/data/depots_osm.json` je v gite, za behu sa OSM nečíta.
+    - BUD: bod depa leží v hale way `650270157` (sklad, Priemyselná 6), 120,6 × 30,7 m, areál way `1557423627`,
+    - BAH: hala way `52070792`, areál way `42931494` „Logistické centrum Ivanka pri Dunaji“,
+    - ZIL: hala way `321455829`, 127,5 × 33,1 m, areál way `810621382` (SPS).
+  - `seed/depots.py` z geometrie a krátkych poznámok (strany ako svetové strany, napr. rampy na západ) vypočíta layout v súradniciach haly: `origin` (stred haly), `hall` s `rotationDeg`, `site` (polygón areálu), `doors`, `yard` (`gate`, `truckStands`, `vanParking`, `vanLoading`, `lanes`), pás a `source` (OSM id a zoznam predpokladov). Státia a parkovanie sa ukladajú len tam, kde sa celé zmestia do areálu (test).
+  - Strany podľa voľného miesta medzi halou a areálom: Budimír má rampy na východ (52–57 m dvora) a južný dvor 122 m pre návesy a dodávky. Ivanka má rampy na západ (85 m, na východe len 28 m), ADR-051 malo opačnú stranu ako predpoklad. Žilina podľa tímu: rampy na západnej strane k ulici SNP, administratíva na južnom konci (20 m bez brán), návesy na východe.
+  - **Smerovací bod skladu (`depots.lat/lon`) Budimíra a Ivanky sa nemení:** simulátor z neho počíta trasy a krok 3 má golden test. Mapa kreslí halu od `layout.origin`. Nový sklad dostane za smerovací bod stred haly.
+  - Krok seedu `depot-layouts:<verzia dát>` zapíše layouty a brány na čistej aj existujúcej DB (verzia je hash geometrie a poznámok, pri zmene sa krok spustí znova). Schéma DB sa nemení, layout je JSONB a brány sú v existujúcej tabuľke.
+- **Predpoklady do dodania satelitných snímok:** počty rámp a kuriérskych brán, vjazd, státia a parkovisko pre BUD a BAH. Pri ZIL počty brán a vjazd. Každý layout ich má v `source.assumed`.
+- **Dôsledok:** Tieň a mapa sú pre všetky sklady z rovnakých dát a nový sklad je len poznámka v `seed/depots.py` a riadok v `tools/osm/depots.json`. Kódy brán Budimíra (LD, SB, GATE-01) a ich smery ostávajú, menia sa len polohy.

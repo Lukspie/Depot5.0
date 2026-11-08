@@ -27,7 +27,8 @@ from depotrack.seed import (
     seed_waves,
     step,
 )
-from depotrack.seed.geo import seed_geo
+from depotrack.seed.depots import data_version
+from depotrack.seed.geo import seed_depot_layouts, seed_geo
 from depotrack.services.alerts import close_stale_alerts
 from depotrack.services.couriers import build_courier_routes, replan_routes, reset_routes
 from depotrack.services.gate import close_stale_events, delete_day
@@ -62,6 +63,7 @@ def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
     step(db, "users:v2", lambda: seed_users_v2(db, settings))
     step(db, "geo:v1", lambda: seed_geo(db))
     step(db, "gate-plates:v1", lambda: seed_gate_plates(db))
+    step(db, f"depot-layouts:{data_version()}", lambda: seed_depot_layouts(db))
     ensure_operating_day(db, settings, day)
 
 

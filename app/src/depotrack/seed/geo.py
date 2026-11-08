@@ -10,7 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from depotrack.models import Depot, Direction, Door, Vehicle
-from depotrack.models.enums import DockEquipment, DoorKind
+from depotrack.models.enums import DepotKind, DockEquipment, DoorDrive, DoorKind
+from depotrack.seed.depots import built_depots
 from depotrack.seed.reference import HUB_RAMPS, LINEHAUL, TRANSIT
 
 ADDRESSES_FILE = Path(__file__).with_name("data") / "addresses.json.gz"
@@ -69,3 +70,31 @@ def seed_geo(db: Session) -> None:
         )
     for v in db.execute(select(Vehicle).where(Vehicle.depot_id.is_(None))).scalars():
         v.depot_id = bud.id
+
+
+def seed_depot_layouts(db: Session) -> None:
+    """Layouts of all depots from OSM (seed/depots.py, ADR-064). Runs on clean and existing
+    databases alike (the step key carries the data version), so both end up equal. New depots get
+    the centre of the hall as their routing point; Budimír and Ivanka keep theirs (the simulator
+    computes the routes from it)."""
+    depots = {d.code: d for d in db.execute(select(Depot)).scalars()}
+    doors = {d.code: d for d in db.execute(select(Door)).scalars()}
+    for code, b in built_depots().items():
+        depot = depots.get(code)
+        if depot is None:
+            depot = Depot(
+                code=code, name=b.name, kind=DepotKind(b.kind), lat=b.origin[0], lon=b.origin[1]
+            )
+            db.add(depot)
+            db.flush()
+        depot.name = b.name
+        depot.layout = b.layout
+        for p in b.doors:
+            door = doors.get(p.code)
+            if door is None:
+                door = Door(code=p.code, kind=DoorKind(p.kind), depot_id=depot.id)
+                db.add(door)
+            door.depot_id = depot.id
+            door.position_x, door.position_y = p.x, p.y
+            door.door_drive = DoorDrive(p.door_drive)
+            door.dock_equipment = DockEquipment(p.dock_equipment)

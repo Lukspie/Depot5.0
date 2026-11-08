@@ -101,7 +101,10 @@ def shadow(depot: DepotCode, user: Viewer, db: DbSession) -> ShadowOut:
     docks: list[ShadowDock] = []
     kpis = None
     if d.kind == DepotKind.DEPOT:
-        trips = sorted(trips_of(db, clk.operating_day), key=sort_key)
+        # KPIs of the chosen depot only (phase 7c: more depots than Budimír)
+        trips = sorted(
+            (t for t in trips_of(db, clk.operating_day) if t.depot_id == d.id), key=sort_key
+        )
         kpis, _rows = day_overview(db, clk.operating_day, trips, look, clk.sim_time)
         doors = sorted(
             (

@@ -33,3 +33,13 @@ Rýchlosti kamióna podľa triedy cesty (km/h): diaľnica 85, rýchlostná 75, I
 ## Licencia
 
 Dáta © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), licencia **ODbL 1.0**. Odvodené súbory sa šíria pod rovnakou licenciou. Atribúcia je v UI mapy aj v README.
+
+## Layouty skladov (Fáza 7c, ADR-064)
+
+`tools/osm/depots.json` hovorí, ktorá budova je hala a ktorý polygón areál každého skladu (way id, alebo bod v hale). Skript vypíše a uloží geometriu do `app/src/depotrack/seed/data/depots_osm.json`:
+
+```bash
+docker run --rm -v "$PWD:/repo" -w /repo python:3.12-slim sh -c   "apt-get update -qq && apt-get install -y -qq libexpat1 && pip install -q 'osmium>=4' &&    python tools/osm/extract_depots.py tools/osm/cache/slovakia-latest.osm.pbf"
+```
+
+Bod, ktorý neleží práve v jednej budove, skript zastaví a vypíše budovy okolo (nehádame). Rampy, vjazd a parkoviská dopĺňa `app/src/depotrack/seed/depots.py` podľa popisu a satelitných snímok tímu.
