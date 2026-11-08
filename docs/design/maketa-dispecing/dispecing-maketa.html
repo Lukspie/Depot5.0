@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="sk"><head><meta charset="utf-8"><title>Digitálny tieň – maketa</title>
+
+<style>
+body{margin:0}
+a{color:#a85f00}a:hover{color:#7a4500}
+button{font-family:inherit;cursor:pointer;white-space:nowrap}
+.ds *,.ds{box-sizing:border-box}
+.ds{display:flex;min-height:1320px;background:#f4f4f2;font-family:Inter,system-ui,sans-serif;color:#1d1d1b;font-feature-settings:"tnum" 1}
+.ds-side{width:232px;flex:none}
+.ds-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.ds-kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.ds-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.ds-row{display:grid;grid-template-columns:76px minmax(130px,1.4fr) 50px 98px minmax(130px,1fr) 104px 92px 24px;align-items:center;gap:10px;padding:0 14px;min-width:802px}
+@media (max-width:1280px){.ds-kpi{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1100px){.ds-grid{grid-template-columns:minmax(0,1fr)}.ds-tablewrap{overflow-x:auto}}
+@media (max-width:760px){.ds{flex-direction:column}.ds-side{display:none}.ds-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ds-hide-sm{display:none}}
+</style>
+</head><body><div id="root">
+<div class="ds">
+
+<nav class="ds-side" aria-label="Hlavná navigácia" style="background:#1d1d1b;color:#e9e8e4;display:flex;flex-direction:column;padding:16px 12px;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:4px 8px 18px">
+<span style="width:34px;height:34px;border-radius:10px;background:#f39200;display:grid;place-items:center;color:#1d1d1b;flex:none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<div style="line-height:1.2"><div style="font-size:15px;font-weight:800;color:#ffffff">Depot 5.0</div><div style="font-size:11.5px;color:#a3a29d">Budimír · prekládkové depo</div></div>
+</div>
+<div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8a8984;padding:8px 10px 6px">PREVÁDZKA</div>
+<a href="#" aria-current="page" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;background:#2c2a26;color:#ffb54d;font-size:13.5px;font-weight:600;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>Dispečing</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg>Digitálny tieň</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>Flotila</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg>Nakládka</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>Brána<span style="margin-left:auto;font-size:11px;font-weight:700;color:#1d1d1b;background:#ffb54d;border-radius:999px;padding:1px 7px">1</span></a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg>Kuriéri</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="15" x="2" y="7" rx="2"></rect><path d="m17 2-5 5-5-5"></path></svg>Tabuľa príchodov</a>
+<div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8a8984;padding:18px 10px 6px">SYSTÉM</div>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>Administrácia</a>
+<a href="#" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#c9c8c3;font-size:13.5px;font-weight:500;text-decoration:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>Stav systému<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#3fb86f"></span></a>
+<span style="flex:1"></span>
+<div style="display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid #34322e">
+<span style="width:32px;height:32px;border-radius:50%;background:#3a3127;color:#f39200;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none">MK</span>
+<div style="line-height:1.25;min-width:0"><div style="font-size:13px;font-weight:600;color:#ffffff">Martin Kováč</div><div style="font-size:11.5px;color:#a3a29d">Dispečer · nočná zmena</div></div>
+</div>
+</nav>
+
+<div class="ds-main">
+<header style="height:60px;display:flex;align-items:center;gap:12px;padding:0 24px;background:#ffffff;border-bottom:1px solid #e7e6e2">
+<button type="button" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid #e7e6e2;border-radius:8px;background:#ffffff;font-size:13px;font-weight:600;color:#1d1d1b;white-space:nowrap"><span style="width:8px;height:8px;border-radius:2px;background:#f39200"></span>Budimír<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6b68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<span style="color:#c9c8c3">/</span>
+<span style="font-size:13px;font-weight:600;color:#1d1d1b">Dispečing</span>
+<label style="margin-left:12px;flex:1 1 280px;max-width:420px;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid #e7e6e2;border-radius:8px;background:#fafaf8;color:#6b6b68">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hľadať</span>
+<input type="search" placeholder="Hľadať balík, ŠPZ, jazdu…" style="flex: 1 1 0%; min-width: 0px; border: 0px; background: transparent; font-family: inherit; font-size: 13px; color: rgb(29, 29, 27); outline: none;">
+<kbd style="font-family:inherit;font-size:11px;font-weight:600;color:#6b6b68;border:1px solid #e7e6e2;border-radius:5px;padding:0 5px;background:#ffffff">Ctrl K</kbd>
+</label>
+<span style="flex:1"></span>
+<span style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:999px;background:#fff6eb;color:#8a4e00;font-size:12px;font-weight:700;white-space:nowrap">Nočná vlna · 01:00–06:00</span>
+<span style="display:flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:999px;background:#e8f6ee;color:#17603a;font-size:12px;font-weight:700;white-space:nowrap"><span style="width:7px;height:7px;border-radius:50%;background:#23874f;box-shadow:0 0 0 3px rgba(35,135,79,0.18)"></span>02:25 · 30×</span>
+<button type="button" aria-label="Alarmy, 7 aktívnych" style="position:relative;width:34px;height:34px;border:1px solid #e7e6e2;border-radius:8px;background:#ffffff;display:grid;place-items:center;color:#1d1d1b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg><span style="position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:9px;background:#c93434;color:#ffffff;font-size:10px;font-weight:700;line-height:17px;text-align:center;border:2px solid #ffffff">7</span></button>
+</header>
+
+<main style="padding:24px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+<div style="flex:1;min-width:240px">
+<h1 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.01em">Dispečing</h1>
+<div style="margin-top:4px;font-size:13px;color:#6b6b68">Prevádzkový deň so 15. 3. · 3 diaľkové odchody hotové, 5 ranných prechodov pred nakládkou</div>
+</div>
+<button type="button" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:1px solid #e7e6e2;border-radius:8px;background:#ffffff;font-size:13px;font-weight:600;color:#1d1d1b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>Scenár (čo ak)</button>
+<button type="button" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:0;border-radius:8px;background:#1d1d1b;font-size:13px;font-weight:600;color:#ffffff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>Export dňa</button>
+</div>
+
+<section class="ds-kpi" aria-label="Ukazovatele">
+
+<div style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(29,29,27,0.04)">
+<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5c5c58"><span style="width:8px;height:8px;border-radius:2px;background:#f39200"></span>Balíky dňa</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1">1 989</span><span style="font-size:13px;font-weight:600;color:#6b6b68"></span></div>
+<svg width="84" height="28" viewBox="0 0 84 28" aria-hidden="true"><polyline points="1,27 1,25 11,22 22,19 32,17 42,14 52,12 63,9 73,7 83,4 83,27" style="fill:rgba(243,146,0,0.10);stroke:none"></polyline><polyline points="1,25 11,22 22,19 32,17 42,14 52,12 63,9 73,7 83,4" style="fill:none;stroke:#f39200;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"></polyline></svg>
+</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;overflow:hidden"><span style="font-weight:700;padding:1px 6px;border-radius:5px;background:#e8f6ee;color:#17603a">+186</span><span style="color:#6b6b68;overflow:hidden;text-overflow:ellipsis">495 čaká na triedenie</span></div>
+</div>
+
+<div style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(29,29,27,0.04)">
+<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5c5c58"><span style="width:8px;height:8px;border-radius:2px;background:#f39200"></span>Naložené</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1">476</span><span style="font-size:13px;font-weight:600;color:#6b6b68">/ 1 989</span></div>
+<svg width="84" height="28" viewBox="0 0 84 28" aria-hidden="true"><polyline points="1,27 1,25 11,22 22,18 32,14 42,10 52,7 63,4 73,4 83,4 83,27" style="fill:rgba(243,146,0,0.10);stroke:none"></polyline><polyline points="1,25 11,22 22,18 32,14 42,10 52,7 63,4 73,4 83,4" style="fill:none;stroke:#f39200;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"></polyline></svg>
+</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;overflow:hidden"><span style="font-weight:700;padding:1px 6px;border-radius:5px;background:#f1f1ee;color:#5c5c58">24 %</span><span style="color:#6b6b68;overflow:hidden;text-overflow:ellipsis">59 nenaložených</span></div>
+</div>
+
+<div style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(29,29,27,0.04)">
+<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5c5c58"><span style="width:8px;height:8px;border-radius:2px;background:#2f5be9"></span>Kamióny pri bránach</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1">1</span><span style="font-size:13px;font-weight:600;color:#6b6b68">/ 8 brán</span></div>
+<svg width="84" height="28" viewBox="0 0 84 28" aria-hidden="true"><polyline points="1,27 1,8 11,4 22,11 32,15 42,22 52,25 63,22 73,18 83,22 83,27" style="fill:rgba(47,91,233,0.08);stroke:none"></polyline><polyline points="1,8 11,4 22,11 32,15 42,22 52,25 63,22 73,18 83,22" style="fill:none;stroke:#2f5be9;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"></polyline></svg>
+</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;overflow:hidden"><span style="font-weight:700;padding:1px 6px;border-radius:5px;background:#eaf0ff;color:#2347c2">LD-02</span><span style="color:#6b6b68;overflow:hidden;text-overflow:ellipsis">nočný BA vykladá</span></div>
+</div>
+
+<div style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(29,29,27,0.04)">
+<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5c5c58"><span style="width:8px;height:8px;border-radius:2px;background:#c97f00"></span>Čítanosť skenerov</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1">88,9</span><span style="font-size:13px;font-weight:600;color:#6b6b68">%</span></div>
+<svg width="84" height="28" viewBox="0 0 84 28" aria-hidden="true"><polyline points="1,27 1,4 11,5 22,7 32,10 42,14 52,17 63,21 73,23 83,25 83,27" style="fill:rgba(201,127,0,0.10);stroke:none"></polyline><polyline points="1,4 11,5 22,7 32,10 42,14 52,17 63,21 73,23 83,25" style="fill:none;stroke:#c97f00;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"></polyline></svg>
+</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;overflow:hidden"><span style="font-weight:700;padding:1px 6px;border-radius:5px;background:#fdf3d8;color:#8a5800">↓ 1,6</span><span style="color:#6b6b68;overflow:hidden;text-overflow:ellipsis">LD-05 degraduje</span></div>
+</div>
+
+<div style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(29,29,27,0.04)">
+<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5c5c58"><span style="width:8px;height:8px;border-radius:2px;background:#c93434"></span>Alarmy</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1">7</span><span style="font-size:13px;font-weight:600;color:#6b6b68">aktívnych</span></div>
+<svg width="84" height="28" viewBox="0 0 84 28" aria-hidden="true"><polyline points="1,27 1,25 11,25 22,21 32,21 42,17 52,12 63,12 73,8 83,4 83,27" style="fill:rgba(201,52,52,0.08);stroke:none"></polyline><polyline points="1,25 11,25 22,21 32,21 42,17 52,12 63,12 73,8 83,4" style="fill:none;stroke:#c93434;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"></polyline></svg>
+</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;overflow:hidden"><span style="font-weight:700;padding:1px 6px;border-radius:5px;background:#fdecec;color:#a32727">2 kritické</span><span style="color:#6b6b68;overflow:hidden;text-overflow:ellipsis">kaskáda · zlý smer</span></div>
+</div>
+
+</section>
+
+<div class="ds-grid">
+<section aria-label="Jazdy dňa" style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;box-shadow:0 1px 2px rgba(29,29,27,0.04);overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #efeee9;flex-wrap:wrap">
+<h2 style="margin:0;font-size:15px;font-weight:700">Jazdy dňa</h2>
+<div role="tablist" aria-label="Smer jázd" style="display:flex;gap:2px;padding:3px;background:#f1f1ee;border-radius:8px">
+<button type="button" role="tab" aria-selected="true" style="height:26px;padding:0 10px;border:0;border-radius:6px;background:#ffffff;box-shadow:0 1px 2px rgba(29,29,27,0.12);font-size:12.5px;font-weight:700;color:#1d1d1b">Odchody 8</button>
+<button type="button" role="tab" aria-selected="false" style="height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:12.5px;font-weight:600;color:#5c5c58">Príchody 8</button>
+</div>
+<span style="flex:1"></span>
+<span style="display:flex;gap:6px">
+<button type="button" aria-pressed="true" style="height:26px;padding:0 10px;border:1px solid #1d1d1b;border-radius:999px;background:#1d1d1b;font-size:12px;font-weight:600;color:#ffffff">Všetky</button>
+<button type="button" aria-pressed="false" style="height:26px;padding:0 10px;border:1px solid #e7e6e2;border-radius:999px;background:#ffffff;font-size:12px;font-weight:600;color:#5c5c58">Diaľkové</button>
+<button type="button" aria-pressed="false" style="height:26px;padding:0 10px;border:1px solid #e7e6e2;border-radius:999px;background:#ffffff;font-size:12px;font-weight:600;color:#5c5c58">Prechody</button>
+<button type="button" aria-pressed="false" style="height:26px;padding:0 10px;border:1px solid #f3d9a8;border-radius:999px;background:#fff6eb;font-size:12px;font-weight:700;color:#8a4e00">S rizikom 3</button>
+</span>
+</div>
+<div class="ds-tablewrap">
+<div class="ds-row" style="height:34px;background:#fafaf8;border-bottom:1px solid #efeee9;font-size:11px;font-weight:700;letter-spacing:0.05em;color:#6b6b68">
+<span>PLÁN</span><span>SMER</span><span>BRÁNA</span><span>STAV</span><span>NAKLÁDKA</span><span>ODHAD</span><span>RIZIKO</span><span></span>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 16px;background:#fcfcfb;border-bottom:1px solid #efeee9;font-size:12px;font-weight:700;color:#5c5c58"><span style="width:6px;height:6px;border-radius:50%;background:#8a8984"></span>Večerné diaľkové odchody<span style="font-weight:600;color:#8a8984">· 3 odišli</span></div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">20:30</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap"></span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Banská Bystrica</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-104LH · diaľkový</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-01</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#f7f7f5;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#8a8984"></span>Odišiel</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#23874f;width:95%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">143 / 150</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">7 nenaložených</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">20:34</span><span style="font-size:11px;font-weight:700;padding:1px 5px;border-radius:5px;background:#fdf3d8;color:#8a5800">+4 min</span></span>
+<span><span style="color:#b5b4af">—</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">21:00</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap"></span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Žilina</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-106LH · diaľkový</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-03</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#f7f7f5;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#8a8984"></span>Odišiel</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#23874f;width:92%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">156 / 169</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">13 nenaložených</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">20:59</span><span style="font-size:11px;font-weight:700;padding:1px 5px;border-radius:5px;background:#e8f6ee;color:#17603a">−1 min</span></span>
+<span><span style="color:#b5b4af">—</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">21:30</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap"></span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bratislava</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-105LH · diaľkový</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-02</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#f7f7f5;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#8a8984"></span>Odišiel</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#c97f00;width:82%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">177 / 216</span></span><span style="font-size:11px;font-weight:600;color:#8a5800;white-space:nowrap">39 nenaložených</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">21:34</span><span style="font-size:11px;font-weight:700;padding:1px 5px;border-radius:5px;background:#fdf3d8;color:#8a5800">+4 min</span></span>
+<span><span style="color:#b5b4af">—</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+
+<div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 16px;background:#fcfcfb;border-bottom:1px solid #efeee9;font-size:12px;font-weight:700;color:#5c5c58"><span style="width:6px;height:6px;border-radius:50%;background:#f39200"></span>Ranné prechody<span style="font-weight:600;color:#8a8984">· nakládka po nočnej vlne</span></div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">05:45</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap">o 3 h 20 min</span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Stará Ľubovňa</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-204TR · prechod</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-07</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#ffffff;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#c9c8c3"></span>Plánovaná</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">0 / 133</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">nakládka od 05:05</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">06:06</span><span style="font-size:11px;font-weight:700;padding:1px 5px;border-radius:5px;background:#fdecec;color:#a32727">+21 min</span></span>
+<span><span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font-size:11.5px;font-weight:700;white-space:nowrap;background:#fdecec;color:#a32727"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path></svg>Kaskáda</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">06:00</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap">o 3 h 35 min</span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Michalovce</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-201TR · prechod</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-04</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#ffffff;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#c9c8c3"></span>Plánovaná</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">0 / 218</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">nakládka od 05:10</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">06:06</span><span style="font-size:11px;font-weight:700;padding:1px 5px;border-radius:5px;background:#fdf3d8;color:#8a5800">+6 min</span></span>
+<span><span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font-size:11.5px;font-weight:700;white-space:nowrap;background:#fdf3d8;color:#8a5800"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path></svg>Kaskáda</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">06:00</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap">o 3 h 35 min</span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Humenné</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-203TR · prechod</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-06</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#ffffff;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#c9c8c3"></span>Plánovaná</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">0 / 160</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">nakládka od 05:15</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">06:00</span></span>
+<span><span style="color:#b5b4af">—</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">06:15</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap">o 3 h 50 min</span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Trebišov</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-202TR · prechod</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-05</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#ffffff;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#c9c8c3"></span>Plánovaná</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">0 / 139</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">nakládka od 05:20</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">06:15</span></span>
+<span><span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font-size:11.5px;font-weight:700;white-space:nowrap;background:#fdf3d8;color:#8a5800"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path></svg>Skener</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+<div class="ds-row" style="height:52px;border-bottom:1px solid #f1f0ec;font-size:13px">
+<span style="display:flex;flex-direction:column;line-height:1.2"><span style="font-weight:700">06:30</span><span style="font-size:11px;color:#6b6b68;white-space:nowrap">o 4 h 05 min</span></span>
+<span style="display:flex;flex-direction:column;min-width:0;line-height:1.25"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Senica</span><span style="font-size:11.5px;color:#6b6b68;white-space:nowrap">KE-206TR · prechod</span></span>
+<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:600;color:#3d3c39">LD-02</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:#ffffff;color:#3d3c39;border:1px solid #e7e6e2"><span style="width:6px;height:6px;border-radius:50%;background:#c9c8c3"></span>Plánovaná</span></span>
+<span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:6px;border-radius:3px;background:#efeee9;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:#f39200;width:0%"></span></span><span style="font-size:12px;font-weight:600;color:#3d3c39;white-space:nowrap">0 / 72</span></span><span style="font-size:11px;font-weight:600;color:#6b6b68;white-space:nowrap">nakládka od 05:40</span></span>
+<span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-weight:600">06:30</span></span>
+<span><span style="color:#b5b4af">—</span></span>
+<button type="button" aria-label="Akcie jazdy" style="width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button>
+</div>
+
+
+</div>
+</section>
+
+<section aria-label="Alarmy" style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;box-shadow:0 1px 2px rgba(29,29,27,0.04);overflow:hidden">
+<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid #efeee9">
+<h2 style="margin:0;font-size:15px;font-weight:700">Alarmy</h2>
+<span style="font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:#fdecec;color:#a32727">7</span>
+<span style="flex:1"></span>
+<div role="tablist" aria-label="Závažnosť" style="display:flex;gap:2px;padding:3px;background:#f1f1ee;border-radius:8px">
+<button type="button" role="tab" aria-selected="true" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:#ffffff;box-shadow:0 1px 2px rgba(29,29,27,0.12);font-size:12px;font-weight:700;color:#1d1d1b">Všetky</button>
+<button type="button" role="tab" aria-selected="false" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:transparent;font-size:12px;font-weight:600;color:#5c5c58">Kritické 2</button>
+<button type="button" role="tab" aria-selected="false" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:transparent;font-size:12px;font-weight:600;color:#5c5c58">Varovania 5</button>
+</div>
+</div>
+<div>
+
+<div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f0ec">
+<span style="width:4px;align-self:stretch;border-radius:2px;background:#c93434;flex:none"></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span style="font-weight:700;padding:1px 7px;border-radius:5px;background:#fdecec;color:#a32727;white-space:nowrap">Kaskáda meškania</span><span style="color:#6b6b68">23:51 · ML predikcia</span></div>
+<div style="font-size:13.5px;font-weight:700;line-height:1.35">Prechod Stará Ľubovňa odíde o ~21 min neskôr</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">nočný BB príde 05:36</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">triedenie 30 min</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">odchod 05:45 → 06:06</span>
+</div>
+<div style="display:flex;gap:8px;margin-top:2px">
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;background:#1d1d1b;color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Otvoriť scenár</a>
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid #e7e6e2;color:#1d1d1b;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Potvrdiť</a>
+</div>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f0ec">
+<span style="width:4px;align-self:stretch;border-radius:2px;background:#c93434;flex:none"></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span style="font-weight:700;padding:1px 7px;border-radius:5px;background:#fdecec;color:#a32727;white-space:nowrap">Zlý smer</span><span style="color:#6b6b68">21:12 · LD-02</span></div>
+<div style="font-size:13.5px;font-weight:700;line-height:1.35">Balík pre Trebišov naložený do kamióna na Bratislavu</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">DP27031500949</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">KE-105LH</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">odišiel 21:34</span>
+</div>
+<div style="display:flex;gap:8px;margin-top:2px">
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;background:#1d1d1b;color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Detail balíka</a>
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid #e7e6e2;color:#1d1d1b;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Potvrdiť</a>
+</div>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f0ec">
+<span style="width:4px;align-self:stretch;border-radius:2px;background:#c97f00;flex:none"></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span style="font-weight:700;padding:1px 7px;border-radius:5px;background:#fdf3d8;color:#8a5800;white-space:nowrap">Kaskáda meškania</span><span style="color:#6b6b68">23:51 · ML predikcia</span></div>
+<div style="font-size:13.5px;font-weight:700;line-height:1.35">Prechod Michalovce odíde o ~6 min neskôr</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">nočný BB príde 05:36</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">odchod 06:00 → 06:06</span>
+</div>
+<div style="display:flex;gap:8px;margin-top:2px">
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;background:#1d1d1b;color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Otvoriť scenár</a>
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid #e7e6e2;color:#1d1d1b;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Potvrdiť</a>
+</div>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f0ec">
+<span style="width:4px;align-self:stretch;border-radius:2px;background:#c97f00;flex:none"></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span style="font-weight:700;padding:1px 7px;border-radius:5px;background:#fdf3d8;color:#8a5800;white-space:nowrap">Údržba skenera</span><span style="color:#6b6b68">01:40 · IsolationForest</span></div>
+<div style="font-size:13.5px;font-weight:700;line-height:1.35">DOCK-SCN-05 pri LD-05 stráca čítanosť</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">čítanosť 86 %</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">riziko poruchy 0,78</span><span style="font-size:11.5px;font-weight:600;color:#3d3c39;background:#f4f4f2;border:1px solid #ebeae6;border-radius:6px;padding:2px 7px;white-space:nowrap">nakládka TV 05:20</span>
+</div>
+<div style="display:flex;gap:8px;margin-top:2px">
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;background:#1d1d1b;color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Poslať na údržbu</a>
+<a href="#" style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:1px solid #e7e6e2;color:#1d1d1b;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Potvrdiť</a>
+</div>
+</div>
+</div>
+
+</div>
+<a href="#" style="display:flex;align-items:center;justify-content:center;height:40px;font-size:12.5px;font-weight:700;text-decoration:none">Zobraziť všetkých 7 alarmov →</a>
+</section>
+</div>
+
+<div class="ds-grid">
+<section aria-label="Balíky podľa smerov" style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;box-shadow:0 1px 2px rgba(29,29,27,0.04);padding:14px 16px 16px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+<h2 style="margin:0;font-size:15px;font-weight:700">Balíky podľa smerov</h2>
+<span style="flex:1"></span>
+<span style="display:flex;gap:14px;font-size:12px;font-weight:600;color:#5c5c58">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#f39200"></span>Naložené 476</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#6f6e69"></span>Odstavené 1 018</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#e2e0da"></span>Čaká 495</span>
+</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Košice – kuriéri</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:100%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:48.224043715846996%"></span><span style="height:100%;background:#e2e0da;width:51.775956284153004%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">732</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Michalovce</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:30%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:82.56880733944955%"></span><span style="height:100%;background:#e2e0da;width:17.431192660550458%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">218</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bratislava</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:30%"><span style="height:100%;background:#f39200;width:81.94444444444444%"></span><span style="height:100%;background:#6f6e69;width:0%"></span><span style="height:100%;background:#e2e0da;width:18.055555555555554%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">216</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Žilina</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:23%"><span style="height:100%;background:#f39200;width:92.3076923076923%"></span><span style="height:100%;background:#6f6e69;width:0%"></span><span style="height:100%;background:#e2e0da;width:7.6923076923076925%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">169</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Humenné</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:22%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:100%"></span><span style="height:100%;background:#e2e0da;width:0%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">160</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Banská Bystrica</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:20%"><span style="height:100%;background:#f39200;width:95.33333333333334%"></span><span style="height:100%;background:#6f6e69;width:0%"></span><span style="height:100%;background:#e2e0da;width:4.666666666666667%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">150</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Trebišov</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:19%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:86.33093525179856%"></span><span style="height:100%;background:#e2e0da;width:13.66906474820144%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">139</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Stará Ľubovňa</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:18%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:100%"></span><span style="height:100%;background:#e2e0da;width:0%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">133</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:12px;font-size:12.5px">
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Senica</span>
+<span style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#f4f4f2;width:10%"><span style="height:100%;background:#f39200;width:0%"></span><span style="height:100%;background:#6f6e69;width:100%"></span><span style="height:100%;background:#e2e0da;width:0%"></span></span>
+<span style="text-align:right;font-weight:700;color:#3d3c39">72</span>
+</div>
+
+</div>
+</section>
+
+<section aria-label="Vlny dnes" style="background:#ffffff;border:1px solid #e7e6e2;border-radius:12px;box-shadow:0 1px 2px rgba(29,29,27,0.04);padding:14px 16px 16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:8px"><h2 style="margin:0;font-size:15px;font-weight:700">Prevádzkový deň</h2><span style="font-size:12px;color:#6b6b68">15:00 → 15:00</span></div>
+<div style="position:relative;height:56px">
+<div style="position:absolute;left:0;right:0;top:18px;height:16px;border-radius:5px;background:#f4f4f2"></div>
+
+<div title="Večerná vlna" style="position:absolute;top:18px;height:16px;border-radius:5px;left:2.083333333333333%;width:27.083333333333332%;background:#c9c8c3"></div>
+
+<div title="Nočná vlna" style="position:absolute;top:18px;height:16px;border-radius:5px;left:41.66666666666667%;width:20.833333333333336%;background:#f39200"></div>
+
+<div title="Ranné odchody prechodov" style="position:absolute;top:18px;height:16px;border-radius:5px;left:61.458333333333336%;width:3.125%;background:#1d1d1b"></div>
+
+<div title="Odchod kuriérov" style="position:absolute;top:18px;height:16px;border-radius:5px;left:68.75%;width:2.083333333333333%;background:#2f5be9"></div>
+
+<div style="position:absolute;top:8px;bottom:14px;left:47.6%;width:2px;background:#1d1d1b;border-radius:1px"></div>
+<span style="position:absolute;top:-6px;left:47.6%;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:#1d1d1b;background:#ffffff;padding:0 3px;white-space:nowrap">teraz 02:25</span>
+
+<span style="position:absolute;bottom:0;left:2%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">15</span>
+
+<span style="position:absolute;bottom:0;left:12.5%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">18</span>
+
+<span style="position:absolute;bottom:0;left:25%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">21</span>
+
+<span style="position:absolute;bottom:0;left:37.5%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">00</span>
+
+<span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">03</span>
+
+<span style="position:absolute;bottom:0;left:62.5%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">06</span>
+
+<span style="position:absolute;bottom:0;left:75%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">09</span>
+
+<span style="position:absolute;bottom:0;left:87.5%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">12</span>
+
+<span style="position:absolute;bottom:0;left:98%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#8a8984">15</span>
+
+</div>
+<div style="display:flex;flex-direction:column">
+
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f0ec;font-size:12.5px">
+<span style="width:10px;height:10px;border-radius:3px;background:#c9c8c3;flex:none"></span>
+<span style="font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Večerná vlna</span>
+<span style="color:#6b6b68;white-space:nowrap">15:30–22:00</span>
+<span style="font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap;background:#f1f1ee;color:#5c5c58">hotová</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f0ec;font-size:12.5px">
+<span style="width:10px;height:10px;border-radius:3px;background:#f39200;flex:none"></span>
+<span style="font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Nočná vlna</span>
+<span style="color:#6b6b68;white-space:nowrap">01:00–06:00</span>
+<span style="font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap;background:#fdf3d8;color:#8a5800">prebieha · 28 %</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f0ec;font-size:12.5px">
+<span style="width:10px;height:10px;border-radius:3px;background:#1d1d1b;flex:none"></span>
+<span style="font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Ranné odchody prechodov</span>
+<span style="color:#6b6b68;white-space:nowrap">05:45–06:30</span>
+<span style="font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap;background:#f1f1ee;color:#5c5c58">o 3 h 20 min</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f0ec;font-size:12.5px">
+<span style="width:10px;height:10px;border-radius:3px;background:#2f5be9;flex:none"></span>
+<span style="font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Odchod kuriérov</span>
+<span style="color:#6b6b68;white-space:nowrap">07:30</span>
+<span style="font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap;background:#eaf0ff;color:#2347c2">nakládka od 06:30</span>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</div></body></html>

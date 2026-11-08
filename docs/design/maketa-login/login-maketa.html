@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="sk"><head><meta charset="utf-8"><title>Digitálny tieň – maketa</title>
+
+<style>
+body{margin:0}
+a{color:#a85f00}a:hover{color:#7a4500}
+button{font-family:inherit;cursor:pointer;white-space:nowrap}
+.lg *,.lg{box-sizing:border-box}
+.lg{display:flex;min-height:900px;font-family:Inter,system-ui,sans-serif;color:#1d1d1b;background:#ffffff}
+.lg-brand{flex:1.25;min-width:0}
+.lg-form{flex:1;min-width:0}
+@media (max-width:900px){.lg{flex-direction:column}.lg-brand{min-height:360px}.lg-hide-sm{display:none}}
+</style>
+</head><body><div id="root">
+<div class="lg">
+<section class="lg-brand" aria-label="Depot 5.0" style="position:relative;overflow:hidden;background:#1d1d1b;color:#ffffff;padding:40px 48px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;position:relative">
+<span style="width:40px;height:40px;border-radius:11px;background:#f39200;display:grid;place-items:center;color:#1d1d1b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<span style="font-size:18px;font-weight:800;letter-spacing:-0.01em">Depot 5.0</span>
+</div>
+<svg class="lg-hide-sm" viewBox="0 0 760 420" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:24px;right:24px;top:150px;width:calc(100% - 48px);height:420px" role="img" aria-label="Schéma siete skladov na Slovensku: Ivanka pri Dunaji, Dunajská Streda, Trenčín, Žilina a Budimír, prepojené diaľkovými a napájacími trasami">
+<defs><pattern id="g" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#2a2926" stroke-width="1"></path></pattern></defs>
+<rect x="0" y="0" width="760" height="420" fill="url(#g)"></rect>
+
+<line x1="111" y1="302" x2="563" y2="192" style="stroke:#f39200;stroke-width:2.5;stroke-dasharray:0;stroke-linecap:round"></line>
+
+<line x1="291" y1="121" x2="563" y2="192" style="stroke:#f39200;stroke-width:2.5;stroke-dasharray:0;stroke-linecap:round"></line>
+
+<line x1="111" y1="302" x2="291" y2="121" style="stroke:#f39200;stroke-width:2.5;stroke-dasharray:0;stroke-linecap:round"></line>
+
+<line x1="111" y1="302" x2="157" y2="337" style="stroke:#6b6a65;stroke-width:1.6;stroke-dasharray:4 6;stroke-linecap:round"></line>
+
+<line x1="111" y1="302" x2="201" y2="176" style="stroke:#6b6a65;stroke-width:1.6;stroke-dasharray:4 6;stroke-linecap:round"></line>
+
+
+<circle cx="111" cy="302" r="18" style="fill:rgba(243,146,0,0.14)"></circle>
+<circle cx="111" cy="302" r="9" style="fill:#f39200;stroke:#1d1d1b;stroke-width:2"></circle>
+<text x="51" y="358" style="font-family:Inter,sans-serif;font-size:13px;font-weight:700;fill:#ffffff;text-anchor:start">Ivanka pri Dunaji</text>
+<text x="51" y="373" style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;fill:#a3a29d;text-anchor:start">hub Bratislava</text>
+
+<circle cx="157" cy="337" r="15" style="fill:rgba(243,146,0,0.14)"></circle>
+<circle cx="157" cy="337" r="6" style="fill:#f39200;stroke:#1d1d1b;stroke-width:2"></circle>
+<text x="171" y="339" style="font-family:Inter,sans-serif;font-size:13px;font-weight:700;fill:#ffffff;text-anchor:start">Dunajská Streda</text>
+<text x="171" y="354" style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;fill:#a3a29d;text-anchor:start">depo</text>
+
+<circle cx="201" cy="176" r="15" style="fill:rgba(243,146,0,0.14)"></circle>
+<circle cx="201" cy="176" r="6" style="fill:#f39200;stroke:#1d1d1b;stroke-width:2"></circle>
+<text x="187" y="180" style="font-family:Inter,sans-serif;font-size:13px;font-weight:700;fill:#ffffff;text-anchor:end">Trenčín</text>
+<text x="187" y="195" style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;fill:#a3a29d;text-anchor:end">depo</text>
+
+<circle cx="291" cy="121" r="16" style="fill:rgba(243,146,0,0.14)"></circle>
+<circle cx="291" cy="121" r="7" style="fill:#f39200;stroke:#1d1d1b;stroke-width:2"></circle>
+<text x="305" y="103" style="font-family:Inter,sans-serif;font-size:13px;font-weight:700;fill:#ffffff;text-anchor:start">Žilina</text>
+<text x="305" y="118" style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;fill:#a3a29d;text-anchor:start">depo</text>
+
+<circle cx="563" cy="192" r="18" style="fill:rgba(243,146,0,0.14)"></circle>
+<circle cx="563" cy="192" r="9" style="fill:#f39200;stroke:#1d1d1b;stroke-width:2"></circle>
+<text x="581" y="196" style="font-family:Inter,sans-serif;font-size:13px;font-weight:700;fill:#ffffff;text-anchor:start">Budimír</text>
+<text x="581" y="211" style="font-family:Inter,sans-serif;font-size:11px;font-weight:500;fill:#a3a29d;text-anchor:start">prekládkové depo Košice</text>
+
+</svg>
+<span style="flex:1"></span>
+<div style="position:relative;max-width:520px">
+<h1 style="margin:0;font-size:36px;font-weight:800;line-height:1.15;letter-spacing:-0.02em">Prekládková sieť<br>pod kontrolou.</h1>
+<p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#c9c8c3">Nakládka, telematika a digitálny tieň pre všetky depá na jednom mieste. Predikcie meškaní a údržby skenerov skôr, než sa niečo pokazí.</p>
+<div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap">
+<span style="display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:#2a2926;font-size:12.5px;font-weight:600;color:#e9e8e4"><span style="width:7px;height:7px;border-radius:50%;background:#f39200"></span>5 skladov</span>
+<span style="display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:#2a2926;font-size:12.5px;font-weight:600;color:#e9e8e4"><span style="width:7px;height:7px;border-radius:50%;background:#3fb86f"></span>Telemetria naživo</span>
+<span style="display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:#2a2926;font-size:12.5px;font-weight:600;color:#e9e8e4"><span style="width:7px;height:7px;border-radius:50%;background:#6f8fff"></span>4 ML modely</span>
+</div>
+</div>
+</section>
+
+<section class="lg-form" aria-label="Prihlásenie" style="display:flex;flex-direction:column;padding:40px 48px">
+<div style="display:flex;justify-content:flex-end;font-size:12.5px;color:#6b6b68;gap:6px;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#23874f"></span>Všetky služby v prevádzke</div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<form style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:18px">
+<div>
+<h2 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.01em">Prihlásenie</h2>
+<p style="margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#6b6b68">Použite svoje firemné konto. Prístup je možný len z firemnej siete alebo cez VPN.</p>
+</div>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Používateľské meno
+<input type="text" value="dispecer" autocomplete="username" style="height: 42px; padding: 0px 12px; border: 1px solid rgb(243, 146, 0); border-radius: 9px; font-family: inherit; font-size: 14px; color: rgb(29, 29, 27); background: rgb(255, 255, 255); outline: none; box-shadow: rgba(243, 146, 0, 0.18) 0px 0px 0px 3px;">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">
+<span style="display:flex;justify-content:space-between"><span>Heslo</span><a href="#" style="font-weight:600;font-size:12.5px">Zabudnuté heslo?</a></span>
+<span style="position:relative;display:flex">
+<input type="password" value="heslo1234" autocomplete="current-password" style="flex: 1 1 0%; height: 42px; padding: 0px 42px 0px 12px; border: 1px solid rgb(217, 216, 211); border-radius: 9px; font-family: inherit; font-size: 14px; color: rgb(29, 29, 27); background: rgb(255, 255, 255); outline: none;">
+<button type="button" aria-label="Zobraziť heslo" style="position:absolute;right:4px;top:4px;width:34px;height:34px;border:0;border-radius:7px;background:transparent;display:grid;place-items:center;color:#6b6b68"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+</span>
+</label>
+<button type="submit" style="height:44px;border:0;border-radius:9px;background:#1d1d1b;color:#ffffff;font-size:14px;font-weight:700">Prihlásiť sa</button>
+<p style="margin:0;font-size:12.5px;line-height:1.5;color:#6b6b68">Relácia platí 8 hodín (dĺžka smeny). Po prihlásení uvidíte svoj sklad, dispečeri a administrátori môžu sklady prepínať.</p>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #e7e6e2;border-radius:10px;background:#fafaf8">
+<span style="width:32px;height:32px;border-radius:8px;background:#fff6eb;display:grid;place-items:center;color:#a85f00;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></span>
+<span style="font-size:12.5px;line-height:1.45;color:#3d3c39"><b>Čakáte zásielku?</b> Sledujte ju cez odkaz zo SMS, prihlásenie nepotrebujete.</span>
+</div>
+</form>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b6b68"><span>Depot 5.0 · interný systém</span><a href="#" style="color:#6b6b68">Stav systému</a></div>
+</section>
+</div>
+</div></body></html>
