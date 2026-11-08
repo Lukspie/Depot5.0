@@ -566,5 +566,69 @@
     18.8482688
    ]
   ]
+ },
+ {
+  "code": "DS",
+  "hallWay": "w388660269",
+  "hallTags": {
+   "addr:city": "Malé Dvorníky",
+   "addr:conscriptionnumber": "610",
+   "addr:country": "SK",
+   "addr:housenumber": "610",
+   "addr:place": "Malé Dvorníky",
+   "addr:postcode": "92901",
+   "building": "industrial",
+   "ref:minvskaddress": "7100777079",
+   "source": "kapor2",
+   "source:addr": "minvskaddress 2023-02"
+  },
+  "hall": {
+   "lat": 48.004617,
+   "lon": 17.636319,
+   "width": 30.0,
+   "depth": 15.6,
+   "angleCcw": 60.7
+  },
+  "hallRing": [
+   [
+    48.004533,
+    17.6361304
+   ],
+   [
+    48.0044954,
+    17.6362325
+   ],
+   [
+    48.0045263,
+    17.6362576
+   ],
+   [
+    48.0044965,
+    17.6363383
+   ],
+   [
+    48.0047015,
+    17.6365088
+   ],
+   [
+    48.004741,
+    17.6364031
+   ],
+   [
+    48.0046148,
+    17.6362989
+   ],
+   [
+    48.0046437,
+    17.6362208
+   ],
+   [
+    48.004533,
+    17.6361304
+   ]
+  ],
+  "siteWay": null,
+  "siteTags": null,
+  "siteRing": null
  }
 ]

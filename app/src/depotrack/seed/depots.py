@@ -44,6 +44,8 @@ class Spec:
     vans: tuple[str, int]  # side of the yard for the courier vans, count
     belt: bool
     assumed: tuple[str, ...]
+    # no plot of the depot in OSM: the yard is the hall plus these margins (compass -> metres)
+    yard_margins: tuple[tuple[str, float], ...] = ()
 
 
 # Budimír: ramps to the east (52-57 m of yard), courier bays along the west wall, the large south
@@ -110,7 +112,37 @@ ZIL = Spec(
     assumed=("ramp and courier door counts", "gate", "van parking"),
 )
 
-SPECS = (BUD, BAH, ZIL)
+# Dunajská Streda (Malé Dvorníky 610): a small depot fed from Ivanka. OSM has the hall (way
+# 388660269, 30 x 15.6 m) but no plot of its own, only a shared industrial zone of 512 x 429 m:
+# the yard is a rectangle around the hall until the team's satellite picture is checked.
+DS = Spec(
+    code="DS",
+    name="Dunajská Streda",
+    kind="depot",
+    height=7,
+    ramp_side="W",
+    ramps=("DS-R01", "DS-R02"),
+    ramp_equipment=(("electric", "dock_leveler"),) * 2,
+    courier_side="E",
+    courier_bays=("DS-SB01", "DS-SB02", "DS-SB03"),
+    reserved_end=None,
+    gate=("W", 0.0),
+    gate_code="DS-GATE",
+    stands=("S", 2),
+    vans=("E", 3),
+    belt=False,
+    assumed=(
+        "yard outline",
+        "ramps side and count",
+        "courier doors",
+        "gate",
+        "trailer stands",
+        "van parking",
+    ),
+    yard_margins=(("W", 32.0), ("E", 18.0), ("N", 8.0), ("S", 26.0)),
+)
+
+SPECS = (BUD, BAH, ZIL, DS)
 
 
 @dataclass(frozen=True)
@@ -228,10 +260,16 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
     origin = (float(hall["lat"]), float(hall["lon"]))
     frame = Frame(origin, rotation)
     w, d = float(hall["width"]), float(hall["depth"])
-    site_ring = osm.get("siteRing") or osm["hallRing"]
-    assert isinstance(site_ring, list)
-    site = [frame.local(float(p[0]), float(p[1])) for p in site_ring]
     half = {"x": w / 2, "y": d / 2}
+    site_ring = osm.get("siteRing")
+    if site_ring:
+        assert isinstance(site_ring, list)
+        site = [frame.local(float(p[0]), float(p[1])) for p in site_ring]
+    else:
+        m = {frame.side(c): v for c, v in spec.yard_margins}
+        x0, x1 = -w / 2 - m.get(("x", -1), 5.0), w / 2 + m.get(("x", 1), 5.0)
+        y0, y1 = -d / 2 - m.get(("y", -1), 5.0), d / 2 + m.get(("y", 1), 5.0)
+        site = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
 
     # usable length of a long wall: minus offices at one end
     lo, hi = -w / 2 + 4, w / 2 - 4

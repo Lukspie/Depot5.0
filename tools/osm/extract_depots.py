@@ -5,7 +5,7 @@
        python tools/osm/extract_depots.py tools/osm/cache/slovakia-latest.osm.pbf"
 
 Reads tools/osm/depots.json (which OSM way is the hall and which the site of every depot, or a
-point inside the hall) and writes app/src/depotrack/seed/data/depots_osm.json: hall and site
+point inside the hall; "siteWay": null when OSM has no plot of the depot, only a shared zone) and writes app/src/depotrack/seed/data/depots_osm.json: hall and site
 outlines in lat/lon, the hall's oriented bounding box (centre, width >= depth, angle of the long
 side counter-clockwise from east). Nothing is guessed: a point that lies in no building, or in
 more than one, stops the script and lists the buildings around it. The output is in git, the
@@ -111,7 +111,8 @@ def main() -> None:
         hall_tags, hall_ring = c.areas[hall_id]
         box = obb(hall_ring)
         if "siteWay" in d:
-            site_id = f"w{d['siteWay']}"
+            # null: the depot has no plot of its own in OSM (only a shared industrial zone)
+            site_id = f"w{d['siteWay']}" if d["siteWay"] else None
         else:
             # the smallest landuse / amenity area that contains the whole hall
             sites = [

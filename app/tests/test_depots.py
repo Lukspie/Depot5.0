@@ -66,7 +66,7 @@ def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("seeded")
-@pytest.mark.parametrize("code", ["BUD", "BAH", "ZIL"])
+@pytest.mark.parametrize("code", ["BUD", "BAH", "ZIL", "DS"])
 def test_every_depot_layout_is_inside_its_site(user: TestClient, code: str) -> None:
     body = user.get(f"/api/layout?depot={code}").json()
     layout = body["layout"]
@@ -115,6 +115,19 @@ def test_zilina_from_osm_and_the_teams_description(user: TestClient) -> None:
     assert max(d["x"] for d in ramps + bays) < 127.5 / 2 - 20
     assert all(s["y"] < -33.1 / 2 for s in layout["yard"]["truckStands"])  # trailers to the east
     assert user.get("/api/depots/ZIL/state").status_code == 200
+
+
+@pytest.mark.usefixtures("seeded")
+def test_dunajska_streda_small_depot_without_an_osm_plot(user: TestClient) -> None:
+    ds = user.get("/api/layout?depot=DS").json()
+    assert ds["depot"]["name"] == "Dunajská Streda"
+    # the building at Malé Dvorníky 610; OSM has only a shared industrial zone around it
+    assert ds["layout"]["source"]["hallWay"] == "w388660269"
+    assert ds["layout"]["source"]["siteWay"] is None
+    assert "yard outline" in ds["layout"]["source"]["assumed"]
+    assert ds["layout"]["hall"]["width"] == 30.0 and len(ds["layout"]["site"]) == 4
+    kinds = [d["kind"] for d in ds["doors"]]
+    assert kinds.count("loading_dock") == 2 and kinds.count("staging_bay") == 3
 
 
 @pytest.mark.usefixtures("seeded")

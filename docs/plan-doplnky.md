@@ -247,7 +247,7 @@ Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 4 skladov:
 - Offline cestná sieť má ulice len pri Košiciach, inde diaľnice a cesty I. a II. triedy (ADR-038).
 - Satelitné snímky v `docs/design/` zatiaľ nie sú (`satelit-zilina.png`, `satelit-dunajska-streda.png`). Bez nich sú strany rámp, vjazd a parkoviská predpoklad a tak budú aj označené.
 
-**Krok 1 – geometria a dáta layoutu (app, tools/osm)** *(hotové pre BUD, BAH, ZIL, ADR-064; DS čaká na súradnice)*
+**Krok 1 – geometria a dáta layoutu (app, tools/osm)** *(hotové pre BUD, BAH, ZIL, DS, ADR-064; strany rámp a dvory BUD, BAH, DS čakajú na satelit)*
 - `tools/osm/build_depot_layouts.py`: z OSM extraktu vytiahne footprint haly a polygón areálu (way id v súbore anotácií), prevedie ich do lokálnych metrov skladu (x na východ, y na juh, ako dnes) a zlúči s ručnými anotáciami `tools/osm/depots.json` (strana a počet rámp, typ brán podľa ADR-050, kuriérske brány, odstavné plochy, vjazd, státia kamiónov, parkovisko dodávok, jazdné pruhy). Výsledok `app/src/depotrack/seed/data/depots.json` je v gite, za behu sa nič nesťahuje.
 - Layout JSON rozšírim o areál: `site` (polygón), `gate` (vjazd so závorou a kamerou, smer), `truckStands`, `vanParking`, `lanes`. Staré polia (`hall`, `belt`, `yardGate`) ostanú kompatibilné.
 - ZIL: areál way `810621382`, hala way `321455829` (127 × 33 m), rampy na západnej dlhej strane (k ulici SNP), administratíva na južnom konci, návesy parkujú na východnej strane.
