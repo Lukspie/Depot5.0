@@ -11,6 +11,7 @@ import { addDays, zonedToUtc } from "../clock/time.js";
 import type { GateRow } from "../db/telemetry.js";
 import type { CourierSchedule } from "./couriers.js";
 import { rngFor } from "./rng.js";
+import type { TripSchedule } from "./scenario.js";
 
 /** The same plates as ALLOWED_PLATES in the app seed (app/src/depotrack/seed/reference.py). */
 export const ALLOWED_EXTERNAL: readonly { plate: string; type: "truck" | "van" | "car" }[] = [
@@ -90,5 +91,41 @@ export function gateMix(base: GateRow[], couriers: CourierSchedule[], day: strin
       });
     }
   }
+  return out;
+}
+
+/**
+ * The gate of another depot (phase 7c, ADR-065), e.g. Žilina: the linehaul trucks that end there
+ * come in when they arrive and leave with the night trip, the depot's courier vans leave in the
+ * morning and come back, now and then an unknown car. Its own random stream per depot, so
+ * Budimír's gate keeps its numbers.
+ */
+export function depotGateMix(depot: string, trucks: TripSchedule[], couriers: CourierSchedule[], day: string, seed: number): GateRow[] {
+  const rng = rngFor(seed, day, "gate-mix", depot);
+  const out: GateRow[] = [];
+  const row = (at: number, direction: "in" | "out", vehicleType: string, plate: string | null, expected: boolean): GateRow => ({
+    at,
+    direction,
+    vehicleType,
+    vehicleConfidence: conf(rng.float(0.72, 0.97)),
+    plate,
+    plateConfidence: plate === null ? null : conf(rng.float(0.86, 0.99)),
+    snapshotPath: null,
+    expected,
+    depot,
+  });
+  for (const s of [...trucks].sort((a, b) => a.trip.id - b.trip.id)) {
+    // outbound from Budimír arrives here, inbound to Budimír leaves from here
+    if (s.trip.kind === "outbound" && s.arriveDestination !== undefined) out.push(row(s.arriveDestination, "in", "truck", s.trip.vehiclePlate, true));
+    if (s.trip.kind === "inbound" && s.departOrigin !== undefined) out.push(row(s.departOrigin, "out", "truck", s.trip.vehiclePlate, true));
+  }
+  for (const c of [...couriers].sort((a, b) => a.route.routeId - b.route.routeId)) {
+    out.push(row(c.depart, "out", "van", c.route.vehiclePlate, true), row(c.returnAt, "in", "van", c.route.vehiclePlate, true));
+  }
+  // an unknown car in the afternoon on two days of three
+  const car = rng.chance(0.66);
+  const carAt = Math.round(rng.float(zonedToUtc(addDays(day, 1), "09:00"), zonedToUtc(addDays(day, 1), "14:00")));
+  const carPlate = `${rng.pick(["ZA", "MT", "PB", "CA"])}-${String(rng.int(100, 999))}${rng.pick(["AB", "EF", "KL", "XY"])}`;
+  if (car) out.push(row(carAt, "in", "car", carPlate, false));
   return out;
 }

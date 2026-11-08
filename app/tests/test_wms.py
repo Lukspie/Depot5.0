@@ -347,7 +347,7 @@ def test_public_board_needs_the_key(client: TestClient, monkeypatch: pytest.Monk
 @pytest.mark.usefixtures("seeded", "at_time")
 def test_fleet_vehicle_cargo_and_parcel_timeline(dispatcher: TestClient, db: Session) -> None:
     vehicles = dispatcher.get("/api/fleet/vehicles").json()
-    assert len(vehicles) == 20
+    assert len(vehicles) == 20 + 4  # + the vans of Žilina (phase 7c)
     ba_trip = trip(db, "BA", "outbound")
     send_trip(dispatcher, ba_trip.id, "loading", local(17, 10))
     loaded = parcels_of(db, "BA")[:3]

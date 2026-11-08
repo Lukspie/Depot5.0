@@ -37,6 +37,7 @@ from depotrack.models import (
     Vehicle,
 )
 from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, StopOutcome, UserRole
+from depotrack.seed.operations import ZIL_OPS, DepotOps, district_of
 from depotrack.services import tracking
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.routing import Stop, Visit, plan_tour
@@ -44,6 +45,25 @@ from depotrack.services.routing import Stop, Visit, plan_tour
 LOADING_START = time(6, 30)
 DEPARTURE = time(7, 30)
 COURIER_USERNAME = re.compile(r"^kurier(\d{2})$")
+
+
+@dataclass(frozen=True)
+class Scheme:
+    """Who drives what in a depot: courier N -> district N and van N (phase 7c, ADR-065)."""
+
+    depot: str
+    username: re.Pattern[str]
+    district: str  # format with n, e.g. "KE-{n}"
+    van: str
+    # None: the parcels carry the district as their direction (Budimír); otherwise the parcels of
+    # the feeder direction, split into districts by their address
+    ops: DepotOps | None
+
+
+SCHEMES = (
+    Scheme("BUD", COURIER_USERNAME, "KE-{n}", "KE-3{n}KR", None),
+    Scheme("ZIL", re.compile(r"^kurierza(\d{2})$"), "ZA-{n}", "ZA-3{n}KR", ZIL_OPS),
+)
 
 
 def delivery_date(day: date) -> date:
@@ -63,7 +83,11 @@ class Assignment:
 
 
 def assignments(db: Session, depot: Depot) -> list[Assignment]:
-    """kurier0N -> district KE-0N and van KE-30NKR (active couriers only)."""
+    """kurier0N -> district KE-0N and van KE-30NKR (active couriers only); in Žilina
+    kurierza0N -> ZA-0N and ZA-30NKR."""
+    scheme = next((s for s in SCHEMES if s.depot == depot.code), None)
+    if scheme is None:
+        return []
     districts = {
         d.code: d
         for d in db.execute(select(Direction).where(Direction.depot_id == depot.id)).scalars()
@@ -76,27 +100,66 @@ def assignments(db: Session, depot: Depot) -> list[Assignment]:
     ).scalars()
     out = []
     for user in couriers:
-        m = COURIER_USERNAME.match(user.username)
+        m = scheme.username.match(user.username)
         if not m:
             continue
-        district = districts.get(f"KE-{m.group(1)}")
-        van = vans.get(f"KE-3{m.group(1)}KR")
+        district = districts.get(scheme.district.format(n=m.group(1)))
+        van = vans.get(scheme.van.format(n=m.group(1)))
         if district is not None and van is not None:
             out.append(Assignment(user, district, van))
     return out
 
 
-def build_courier_routes(db: Session, day: date) -> list[CourierRoute]:
-    """Routes of the district couriers for parcels of operating day `day` (caller commits)."""
-    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+def build_courier_routes(
+    db: Session, day: date, only: tuple[str, ...] | None = None
+) -> list[CourierRoute]:
+    """Routes of the district couriers for parcels of operating day `day` (caller commits).
+    Budimír first, so its route ids stay as before phase 7c. A depot that already has routes for
+    the day is skipped (a depot added later gets its routes for a day already planned)."""
     when = delivery_date(day)
     routes: list[CourierRoute] = []
-    for a in assignments(db, depot):
-        parcels = list(
+    for scheme in SCHEMES:
+        if only is not None and scheme.depot not in only:
+            continue
+        depot = db.execute(select(Depot).where(Depot.code == scheme.depot)).scalar_one_or_none()
+        if depot is None:
+            continue
+        districts = select(Direction.id).where(Direction.depot_id == depot.id)
+        planned = db.execute(
+            select(CourierRoute.id)
+            .where(CourierRoute.date == when, CourierRoute.rajon_direction_id.in_(districts))
+            .limit(1)
+        ).first()
+        if planned is None:
+            routes += _depot_routes(db, day, when, depot, scheme)
+    db.flush()
+    return routes
+
+
+def _depot_routes(
+    db: Session, day: date, when: date, depot: Depot, scheme: Scheme
+) -> list[CourierRoute]:
+    feeder: list[Parcel] = []
+    if scheme.ops is not None:
+        feeder_id = db.execute(
+            select(Direction.id).where(Direction.code == scheme.ops.feeder)
+        ).scalar_one_or_none()
+        feeder = list(
             db.execute(
-                select(Parcel).where(Parcel.direction_id == a.district.id, in_day(day))
+                select(Parcel).where(Parcel.direction_id == feeder_id, in_day(day))
             ).scalars()
         )
+    routes: list[CourierRoute] = []
+    for a in assignments(db, depot):
+        if scheme.ops is None:
+            parcels = list(
+                db.execute(
+                    select(Parcel).where(Parcel.direction_id == a.district.id, in_day(day))
+                ).scalars()
+            )
+        else:
+            ops = scheme.ops
+            parcels = [p for p in feeder if district_of(ops, p.lat, p.lon) == a.district.code]
         if not parcels:
             continue
         route = CourierRoute(
@@ -112,8 +175,14 @@ def build_courier_routes(db: Session, day: date) -> list[CourierRoute]:
             p = by_barcode[v.stop.key]
             db.add(RouteStop(route_id=route.id, parcel_id=p.id, sequence=seq, planned_eta=v.eta))
         routes.append(route)
-    db.flush()
     return routes
+
+
+def depot_of_route(db: Session, route: CourierRoute) -> Depot:
+    """The depot the route starts from: the home depot of its district."""
+    district = db.get(Direction, route.rajon_direction_id)
+    assert district is not None
+    return db.get_one(Depot, district.depot_id)
 
 
 def _tour(depot: Depot, when: date, parcels: list[Parcel]) -> list[Visit]:
@@ -135,9 +204,9 @@ def _tour(depot: Depot, when: date, parcels: list[Parcel]) -> list[Visit]:
 def replan_routes(db: Session, day: date) -> int:
     """Routes built before ADR-062 (nearest neighbour) get the window-aware order, if nothing of
     them happened yet (not departed, nothing loaded, no stop finished). Seed step and day reset."""
-    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
     changed = 0
     for route in routes_of_day(db, day):
+        depot = depot_of_route(db, route)
         if route.departed_at is not None:
             continue
         rows = list(
@@ -193,7 +262,8 @@ def load_parcel(
     """The courier scans the parcel into the van: out_for_delivery + tracking link by SMS.
     Idempotent: a parcel already in the van (or delivered) is left alone."""
     parcel = db.get(Parcel, stop.parcel_id)
-    if parcel is None or parcel.status not in LOADABLE:
+    # LOADED: a parcel that came on the linehaul truck to the courier's depot (Žilina, ADR-065)
+    if parcel is None or parcel.status not in (*LOADABLE, ParcelStatus.LOADED):
         return None
     parcel.status = ParcelStatus.OUT_FOR_DELIVERY
     db.add(

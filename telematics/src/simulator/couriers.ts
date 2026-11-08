@@ -26,6 +26,10 @@ export interface CourierPlanStop {
 }
 
 export interface CourierPlanRoute {
+  /** phase 7c (ADR-065): the depot of the round, where the van parks and where it loads */
+  depot?: { code: string; name: string; lat: number; lon: number } | null;
+  parking?: LatLon | null;
+  loading?: LatLon | null;
   routeId: number;
   /** delivery date (YYYY-MM-DD) */
   date: string;
@@ -74,7 +78,11 @@ export interface CourierSchedule {
   legEnd: number[];
   /** where the van stands in the depot yard overnight and while it is loaded (phase 7b) */
   parking: LatLon;
+  /** in front of the staging bay while the van is loaded */
+  loading: LatLon;
   depot: LatLon;
+  /** code of the depot the round starts from (BUD unless the plan says otherwise) */
+  depotCode: string;
 }
 
 export const SUCCESS_RATE = 0.9;
@@ -99,7 +107,6 @@ function dwellMinutes(u: number): number {
 }
 
 export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; router: RoadRouter | null }): CourierSchedule[] {
-  const depot: LatLon = [plan.depot.lat, plan.depot.lon];
   return plan.routes
     .filter((r) => r.stops.length > 0)
     .map((route) => {
@@ -115,8 +122,12 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
       const legStart: number[] = [];
       const legEnd: number[] = [];
       const visits: StopVisit[] = [];
+      // every route starts from its own depot (phase 7c); the plan's depot for older plans
+      const home = route.depot ?? plan.depot;
+      const depot: LatLon = [home.lat, home.lon];
       // the round starts and ends at the van's own place in the yard, not on the depot point
-      const parking = parkingSpot(depot, route);
+      const parking = route.parking ?? parkingSpot(depot, route);
+      const loading = route.loading ?? parking;
       let here = parking;
       let t = depart;
       for (const stop of route.stops) {
@@ -151,7 +162,7 @@ export function buildCourierSchedules(plan: CourierPlan, opts: { seed: number; r
       legStart.push(t);
       t = Math.round(t + back.minutes * MINUTE);
       legEnd.push(t);
-      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot, parking };
+      return { route, loadStart, loadAt, depart, visits, returnAt: t, legs, legStart, legEnd, depot, parking, loading, depotCode: home.code };
     });
 }
 
@@ -198,7 +209,7 @@ function parked(at: LatLon): Position {
 export function courierStateAt(s: CourierSchedule, t: number): CourierState {
   const done = s.visits.filter((v) => v.leave <= t).length;
   if (t < s.loadStart || t >= s.returnAt) return { pos: parked(s.parking), status: "parked", done };
-  if (t < s.depart) return { pos: parked(s.parking), status: "loading", done };
+  if (t < s.depart) return { pos: parked(s.loading), status: "loading", done };
   for (let i = 0; i < s.legs.length; i++) {
     const start = s.legStart[i] ?? 0;
     const end = s.legEnd[i] ?? 0;

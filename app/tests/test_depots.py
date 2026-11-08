@@ -138,6 +138,28 @@ def test_zilina_from_osm_and_the_satellite_picture(user: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("seeded")
+def test_the_za_truck_arrives_at_the_zilina_depot(user: TestClient, db: Session) -> None:
+    """Phase 7c (ADR-065): the ZA linehaul ends in Žilina, so the depot shows it arriving."""
+    from depotrack.models import Direction, Trip
+    from depotrack.models.enums import TripKind, TripStatus
+
+    za = db.execute(select(Direction).where(Direction.code == "ZA")).scalar_one()
+    trip = (
+        db.execute(select(Trip).where(Trip.direction_id == za.id, Trip.kind == TripKind.OUTBOUND))
+        .scalars()
+        .first()
+    )
+    assert trip is not None
+    trip.status = TripStatus.DEPARTED
+    db.commit()
+    state = user.get("/api/depots/ZIL/state").json()
+    states = {t["tripId"]: t["state"] for t in state["trucks"]}
+    # the evening truck on its way, the night truck loading in Žilina for Budimír
+    assert states[trip.id] == "arriving" and "loading_at_hub" in states.values()
+    assert user.get("/api/depots/BUD/state").json()["trucks"] == []
+
+
+@pytest.mark.usefixtures("seeded")
 def test_dunajska_streda_small_depot_without_an_osm_plot(user: TestClient) -> None:
     ds = user.get("/api/layout?depot=DS").json()
     assert ds["depot"]["name"] == "Dunajská Streda"
@@ -179,8 +201,9 @@ def test_budimir_keeps_its_routing_point_the_hall_comes_from_osm(user: TestClien
 
 
 def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient) -> None:
-    """A database from before phase 7c (only Budimír and Ivanka, schematic layouts) ends with the
-    same depots and doors, every field, as a clean one."""
+    """A database from before the depot layouts (schematic layouts, Dunajská Streda and Trenčín
+    missing) ends with the same depots and doors, every field, as a clean one. Žilina stays: its
+    districts, vans and routes depend on it."""
     from sqlalchemy import delete, update
 
     from depotrack.models import Depot, Door, SeedMeta
@@ -208,9 +231,7 @@ def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient
     settings = get_settings()
     run_seed(db, settings, DAY)
     clean = snapshot()
-    new = [
-        d.id for d in db.execute(select(Depot).where(Depot.code.not_in(["BUD", "BAH"]))).scalars()
-    ]
+    new = [d.id for d in db.execute(select(Depot).where(Depot.code.in_(["DS", "TN"]))).scalars()]
     db.execute(delete(Door).where(Door.depot_id.in_(new)))
     db.execute(delete(Depot).where(Depot.id.in_(new)))
     db.execute(update(Depot).values(layout={"hall": {"width": 86, "depth": 40, "height": 10}}))

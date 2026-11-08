@@ -277,3 +277,19 @@ def test_day_reset_removes_passages_and_old_holds_expire(client: TestClient, db:
         db.execute(select(GateEvent.external_key).where(GateEvent.source == "sim")).scalar_one()
         == "old"
     )
+
+
+@pytest.mark.usefixtures("seeded", "at_time")
+def test_every_depot_has_its_own_gate(client: TestClient, guard: TestClient, db: Session) -> None:
+    """Phase 7c: the simulator sends the passages of the Žilina gate with depot ZIL."""
+    send(
+        client,
+        passage("bud", local(16, 0), vehicleType="car", plate="ZA-999XY", plateConfidence=0.9),
+    )
+    zil = passage("zil", local(16, 5), vehicleType="van", plate="ZA-301KR", plateConfidence=0.95)
+    assert send(client, zil | {"depot": "ZIL"})["decisions"] == {"auto_pass": 1}  # a Žilina van
+    events = guard.get("/api/gate/events?depot=ZIL").json()
+    assert [(e["plate"], e["depot"]) for e in events] == [("ZA-301KR", "ZIL")]
+    assert [e["depot"] for e in guard.get("/api/gate/queue?depot=BUD").json()] == ["BUD"]
+    assert guard.get("/api/gate/queue?depot=ZIL").json() == []
+    assert guard.get("/api/gate/events?depot=XX").status_code == 404

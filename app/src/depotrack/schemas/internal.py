@@ -48,6 +48,8 @@ class PlanDepot(CamelModel):
 
 class PlanOut(CamelModel):
     day: date
+    # direction -> depot where its trucks end (BA -> BAH, ZA -> ZIL; phase 7c)
+    destination_depots: dict[str, str] = {}
     cascade_buffer_min: int
     trips: list[PlanTripOut]
     # where trucks start (Budimír) and where each direction drives to (ADR-039)
@@ -114,6 +116,8 @@ class GatePassageIn(CamelModel):
 
     key: str = Field(max_length=80)
     at: AwareDatetime
+    # whose gate: Budimír unless telematics says otherwise (phase 7c)
+    depot: str = Field(default="BUD", max_length=8)
     direction: Literal["in", "out"]
     vehicle_type: Literal["car", "van", "truck", "bus"] | None
     vehicle_confidence: float | None = Field(default=None, ge=0, le=1)
@@ -183,6 +187,11 @@ class CourierPlanRoute(CamelModel):
     district_code: str
     staging_bay: str | None
     stops: list[CourierPlanStop]
+    # phase 7c (ADR-065): the depot the round starts from, where the van parks overnight and
+    # where it stands while loaded (from the depot's layout)
+    depot: PlanDepot | None = None
+    parking: tuple[float, float] | None = None
+    loading: tuple[float, float] | None = None
 
 
 class CourierPlanOut(CamelModel):

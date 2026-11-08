@@ -26,7 +26,7 @@ from depotrack.models import (
     User,
     Vehicle,
 )
-from depotrack.models.enums import DirectionType, EventSource, ParcelStatus, StopOutcome
+from depotrack.models.enums import DirectionType, DoorKind, EventSource, ParcelStatus, StopOutcome
 from depotrack.schemas.internal import (
     AlertIn,
     AlertOut,
@@ -47,11 +47,18 @@ from depotrack.schemas.internal import (
     TripEventsIn,
     TripEventsOut,
 )
+from depotrack.seed.depots import to_latlon
 from depotrack.services import gate as gate_rules
 from depotrack.services import telematics
 from depotrack.services.alerts import AlertChange, alert_event, resolve_alert, upsert_alert
 from depotrack.services.cascade import evaluate_cascade
-from depotrack.services.couriers import complete_stop, load_parcel, routes_of_day, staging_bay
+from depotrack.services.couriers import (
+    complete_stop,
+    depot_of_route,
+    load_parcel,
+    routes_of_day,
+    staging_bay,
+)
 from depotrack.services.loading import line_scan, loading_dock, process_scan, scan_event
 from depotrack.services.ml_eta import ML, TELEMATICS
 from depotrack.services.operating_day import ensure_operating_day, reset_operating_day
@@ -107,17 +114,27 @@ def get_plan(day: Annotated[date, Query()], db: DbSession, settings: SettingsDep
         )
         for t, v, d, door_code in rows
     ]
-    local = db.execute(
-        select(Direction.code).where(Direction.type == DirectionType.LOCAL).order_by(Direction.code)
-    ).scalars()
     depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+    # the courier districts of Budimír (other depots have their own, phase 7c)
+    local = db.execute(
+        select(Direction.code)
+        .where(Direction.type == DirectionType.LOCAL, Direction.depot_id == depot.id)
+        .order_by(Direction.code)
+    ).scalars()
     destinations = {
         d.code: (d.dest_lat, d.dest_lon)
         for d in db.execute(select(Direction).where(Direction.depot_id == depot.id)).scalars()
         if d.dest_lat is not None and d.dest_lon is not None
     }
+    codes = {d.id: d.code for d in db.execute(select(Depot)).scalars()}
+    ends = {
+        d.code: codes[d.destination_depot_id]
+        for d in db.execute(select(Direction).where(Direction.depot_id == depot.id)).scalars()
+        if d.destination_depot_id is not None
+    }
     return PlanOut(
         day=day,
+        destination_depots=ends,
         cascade_buffer_min=settings.cascade_buffer_min,
         trips=trips,
         local_directions=list(local),
@@ -251,6 +268,7 @@ def gate_events(body: GateEventsIn, db: DbSession, background: BackgroundTasks) 
             at=p.at,
             source="sim",
             external_key=p.key,
+            depot=p.depot,
         )
         if stored is None:
             duplicates += 1
@@ -306,6 +324,7 @@ def courier_plan(
                     )
                     for st, p in stops
                 ],
+                **_route_places(db, route, bay.code if bay else None),
             )
         )
     return CourierPlanOut(
@@ -313,6 +332,31 @@ def courier_plan(
         depot=PlanDepot(code=depot.code, name=depot.name, lat=depot.lat, lon=depot.lon),
         routes=out,
     )
+
+
+def _route_places(db: DbSession, route: CourierRoute, bay: str | None) -> dict[str, object]:
+    """Depot of the round and the van's parking and loading spot from the layout (ADR-064/065)."""
+    home = depot_of_route(db, route)
+    out: dict[str, object] = {
+        "depot": PlanDepot(code=home.code, name=home.name, lat=home.lat, lon=home.lon)
+    }
+    layout = home.layout if isinstance(home.layout, dict) else {}
+    yard = layout.get("yard")
+    if not isinstance(yard, dict) or "origin" not in layout:
+        return out
+    bays = sorted(
+        d.code
+        for d in db.execute(select(Door).where(Door.depot_id == home.id)).scalars()
+        if d.kind == DoorKind.STAGING_BAY
+    )
+    parking = yard.get("vanParking") or []
+    if bay in bays and bays.index(bay) < len(parking):
+        p = parking[bays.index(bay)]
+        out["parking"] = to_latlon(layout, float(p["x"]), float(p["y"]))
+    loading = next((s for s in yard.get("vanLoading") or [] if s.get("bay") == bay), None)
+    if loading:
+        out["loading"] = to_latlon(layout, float(loading["x"]), float(loading["y"]))
+    return out
 
 
 @router.post("/events/couriers", response_model=CourierEventsOut, response_model_by_alias=True)

@@ -41,6 +41,8 @@ export interface DepotVan {
 export interface YardCar {
   plate: string;
   since: string;
+  /** the depot whose gate the car came through (phase 7c) */
+  depot: string;
 }
 
 const RECENT = 20;
@@ -67,7 +69,7 @@ interface ShadowStore {
   setDevices(list: DeviceInfo[]): void;
   device(info: DeviceInfo): void;
   scan(s: LiveScan): void;
-  gate(p: { direction: "in" | "out"; vehicleType: string; plate: string | null; at: string }): void;
+  gate(p: { direction: "in" | "out"; vehicleType: string; plate: string | null; at: string; depot?: string }): void;
   /** take the queued parcels (called by the scene every frame) */
   takeFlow(): FlowItem[];
   /** fps stress test (?fps=stress): synthetic parcels on the belt, no simulation involved */
@@ -110,7 +112,7 @@ export const useShadowStore = create<ShadowStore>((set, get) => ({
     const plate = p.plate;
     set((s) =>
       p.direction === "in"
-        ? { yard: [...s.yard.filter((c) => c.plate !== plate), { plate, since: p.at }].slice(-MAX_CARS) }
+        ? { yard: [...s.yard.filter((c) => c.plate !== plate), { plate, since: p.at, depot: p.depot ?? "BUD" }].slice(-MAX_CARS) }
         : { yard: s.yard.filter((c) => c.plate !== plate) },
     );
   },

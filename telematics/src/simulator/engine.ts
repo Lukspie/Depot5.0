@@ -28,7 +28,7 @@ import {
   type CourierEvent,
   type CourierSchedule,
 } from "./couriers.js";
-import { gateMix } from "./gatemix.js";
+import { depotGateMix, gateMix } from "./gatemix.js";
 import { rngFor } from "./rng.js";
 import type { RoadRouter } from "./roads.js";
 import type { LatLon, RouteBook } from "./routes.js";
@@ -987,7 +987,16 @@ export class Engine {
         expected: false,
       });
     }
-    state.gate = gateMix(gate, state.couriers, plan.day, this.seedValue).sort((a, b) => a.at - b.at);
+    // Budimír: the same draws as before phase 7c (golden test); other depots: their own stream
+    const home = state.couriers.filter((c) => c.depotCode === "BUD");
+    const rows = gateMix(gate, home, plan.day, this.seedValue);
+    const ends = plan.destinationDepots ?? {};
+    const others = [...new Set([...state.couriers.map((c) => c.depotCode), ...Object.values(ends)])].filter((c) => c !== "BUD" && c !== "BAH");
+    for (const code of others.sort()) {
+      const trucks = [...scenario.schedules.values()].filter((s) => ends[s.trip.directionCode] === code);
+      rows.push(...depotGateMix(code, trucks, state.couriers.filter((c) => c.depotCode === code), plan.day, this.seedValue));
+    }
+    state.gate = rows.sort((a, b) => a.at - b.at);
   }
 
   /** Recompute future scans after the read-rate model or the plan changed. */
@@ -1079,7 +1088,8 @@ export class Engine {
       const at = iso(g.at);
       this.gateQueue.push({
         // an unread plate: the random confidence keeps two such passages in one ms apart
-        key: `${at}:${g.direction}:${g.plate ?? `${g.vehicleType}-${String(g.vehicleConfidence ?? 0)}`}`,
+        key: `${g.depot && g.depot !== "BUD" ? `${g.depot}:` : ""}${at}:${g.direction}:${g.plate ?? `${g.vehicleType}-${String(g.vehicleConfidence ?? 0)}`}`,
+        ...(g.depot && g.depot !== "BUD" ? { depot: g.depot } : {}),
         at,
         direction: g.direction,
         vehicleType: g.vehicleType,
@@ -1340,7 +1350,8 @@ export class Engine {
     if (forward) this.forwardGate(rows);
     for (const g of rows) {
       if (this.replayTarget !== null) break;
-      this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), device: "GATE-CAM-01" });
+      const depot = g.depot ?? "BUD";
+      this.deps.hub.publish("devices", "gate_passage", { ...g, at: iso(g.at), depot, device: depot === "BUD" ? "GATE-CAM-01" : `${depot}-GATE-CAM` });
     }
     await this.safe("gate", () => this.sink.insertGatePassages(rows));
   }

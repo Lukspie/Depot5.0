@@ -19,6 +19,8 @@ class GateEvent(Base):
     # simulated time
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     source: Mapped[str] = mapped_column(String(8))  # camera | sim
+    # the depot whose gate it is (phase 7c); None only in a database before the migration
+    depot_id: Mapped[int | None] = mapped_column(ForeignKey("depots.id"), index=True)
     # idempotency key of a simulated passage (telematics may resend a batch)
     external_key: Mapped[str | None] = mapped_column(String(80), unique=True)
     direction: Mapped[str] = mapped_column(String(3))  # in | out

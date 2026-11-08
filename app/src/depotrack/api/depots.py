@@ -147,8 +147,14 @@ def depot_state(code: str, _: CurrentUser, db: DbSession) -> DepotState:
         for door in look.doors.values()
         if door.depot_id == d.id and door.kind == DoorKind.STAGING_BAY and door.direction_id
     ]
+    # trucks of other depots' directions that end here (Žilina: the ZA linehaul, ADR-065)
+    arriving = (
+        _hub_state(db, d, look, day).trucks
+        if any(x.destination_depot_id == d.id for x in look.directions.values())
+        else []
+    )
     return DepotState(
-        depot=_out(d), sim_time=clk.sim_time, occupied=occupied, staged=staged, trucks=[]
+        depot=_out(d), sim_time=clk.sim_time, occupied=occupied, staged=staged, trucks=arriving
     )
 
 

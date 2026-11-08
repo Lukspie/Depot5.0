@@ -8,6 +8,8 @@ interface GatePassage {
   vehicleType: string;
   plate: string | null;
   at: string;
+  /** whose gate (phase 7c); Budimír when absent */
+  depot?: string;
 }
 
 /**

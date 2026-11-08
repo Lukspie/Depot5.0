@@ -8,13 +8,13 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import Field
-from sqlalchemy import or_, select
+from sqlalchemy import ColumnElement, or_, select
 from sqlalchemy.orm import Session
 
 from depotrack.core.clock import TZ
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.ml.gate import decode_image, gate_models, normalize_plate
-from depotrack.models import GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
+from depotrack.models import Depot, GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
 from depotrack.models.enums import UserRole
 from depotrack.schemas.internal import CamelModel
 from depotrack.services import gate as rules
@@ -62,6 +62,7 @@ class GateEventOut(CamelModel):
     id: int
     at: datetime
     source: str
+    depot: str | None  # code of the depot whose gate it is (phase 7c)
     direction: str
     vehicle_type: str | None
     vehicle_confidence: float | None
@@ -208,6 +209,7 @@ def _broadcast(background: BackgroundTasks, alert: AlertChange | None) -> None:
 
 def _events_out(db: Session, events: list[GateEvent]) -> list[GateEventOut]:
     ids = [e.id for e in events]
+    depots = {d.id: d.code for d in db.execute(select(Depot)).scalars()}
     audits = list(
         db.execute(
             select(GateAudit).where(GateAudit.event_id.in_(ids)).order_by(GateAudit.id)
@@ -238,6 +240,7 @@ def _events_out(db: Session, events: list[GateEvent]) -> list[GateEventOut]:
             id=e.id,
             at=e.at,
             source=e.source,
+            depot=depots.get(e.depot_id) if e.depot_id else None,
             direction=e.direction,
             vehicle_type=e.vehicle_type,
             vehicle_confidence=e.vehicle_confidence,
@@ -266,10 +269,22 @@ def _events_out(db: Session, events: list[GateEvent]) -> list[GateEventOut]:
     ]
 
 
+DepotFilter = Annotated[str | None, Query(max_length=8)]
+
+
+def _of_depot(db: Session, depot: str | None) -> list[ColumnElement[bool]]:
+    if depot is None:
+        return []
+    depot_id = db.execute(select(Depot.id).where(Depot.code == depot)).scalar_one_or_none()
+    if depot_id is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown depot")
+    return [GateEvent.depot_id == depot_id]
+
+
 @router.get("/queue", response_model=list[GateEventOut], response_model_by_alias=True)
-def queue(_: Guard, db: DbSession) -> list[GateEventOut]:
+def queue(_: Guard, db: DbSession, depot: DepotFilter = None) -> list[GateEventOut]:
     """Open decisions for security, oldest first: held vehicles and lorries to verify (not the
-    ones of a later day, after a jump back in the simulation)."""
+    ones of a later day, after a jump back in the simulation); `depot` keeps one depot's gate."""
     events = list(
         db.execute(
             select(GateEvent)
@@ -277,6 +292,7 @@ def queue(_: Guard, db: DbSession) -> list[GateEventOut]:
                 GateEvent.resolution.is_(None),
                 GateEvent.decision != rules.AUTO_PASS,
                 GateEvent.at <= telematics.sim_now(),
+                *_of_depot(db, depot),
             )
             .order_by(GateEvent.at, GateEvent.id)
             .limit(100)
@@ -287,7 +303,10 @@ def queue(_: Guard, db: DbSession) -> list[GateEventOut]:
 
 @router.get("/events", response_model=list[GateEventOut], response_model_by_alias=True)
 def events(
-    _: Guard, db: DbSession, limit: Annotated[int, Query(ge=1, le=200)] = 40
+    _: Guard,
+    db: DbSession,
+    limit: Annotated[int, Query(ge=1, le=200)] = 40,
+    depot: DepotFilter = None,
 ) -> list[GateEventOut]:
     """Passages of the current operating day with their decisions and audit, newest first."""
     day = operating_day_of(telematics.sim_now())
@@ -295,7 +314,9 @@ def events(
         db.execute(
             select(GateEvent)
             .where(
-                GateEvent.at >= day_start(day), GateEvent.at < day_start(day + timedelta(days=1))
+                GateEvent.at >= day_start(day),
+                GateEvent.at < day_start(day + timedelta(days=1)),
+                *_of_depot(db, depot),
             )
             .order_by(GateEvent.at.desc(), GateEvent.id.desc())
             .limit(limit)

@@ -23,6 +23,20 @@ def test_budimir_plan_equals_the_pre_depots_golden(db: Session, client: TestClie
     run_seed(db, get_settings(), date.fromisoformat(GOLDEN_DAY))
     now = json.loads(json.dumps(budimir_inputs(client), ensure_ascii=False, sort_keys=True))
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
+    # the one deliberate change (ADR-065): the linehaul ZA ends in the Žilina depot, not in a point
+    # of the town; the evening-peak golden of the simulator stays equal (telematics/tests)
+    assert now["plan"]["destinations"].pop("ZA") != golden["plan"]["destinations"].pop("ZA")
+    # new in phase 7c: which depot the trucks of a direction end in (for the gates of the depots)
+    assert now["plan"].pop("destinationDepots") == {"BA": "BAH", "ZA": "ZIL"}
     assert now["plan"] == golden["plan"]
     assert now["manifests"] == golden["manifests"]
-    assert now["courierRoutes"] == golden["courierRoutes"]
+    # other depots add routes, and every route gained its depot and van places (ADR-065):
+    # Budimír's routes must equal the golden ones in everything they had before
+    routes = {r["routeId"]: r for r in now["courierRoutes"]["routes"]}
+    for old in golden["courierRoutes"]["routes"]:
+        new = routes[old["routeId"]]
+        assert {k: new[k] for k in old} == old
+        assert new["depot"]["code"] == "BUD"
+    assert {k: v for k, v in now["courierRoutes"].items() if k != "routes"} == {
+        k: v for k, v in golden["courierRoutes"].items() if k != "routes"
+    }

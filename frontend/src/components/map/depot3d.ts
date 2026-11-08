@@ -80,15 +80,15 @@ export function createDepotLayer(id: string, layout: DepotLayout): DepotLayerHan
         const p = devicePosition(layout, dev);
         if (p) live.add(at(pinModel(dev.status, dev.kind === "dock_scanner" ? 6.5 : 5), p[0], p[1]));
       }
-    } else {
-      // hub: trucks fill the ramps from the left
-      const ramps = layout.doors.filter((d) => d.kind === "loading_dock");
-      ramps.slice(0, state.trucksAtHub).forEach((r) => {
-        const truck = at(truckModel(TRUCK_COLOR.linehaul ?? 0), r.x, r.y);
-        truck.rotation.y = facingRotation(facingOf(layout, r));
-        live.add(truck);
-      });
     }
+    // trucks of other depots' directions that end here (hub, Žilina): free ramps from the left
+    const busy = new Set(state.occupied.map((o) => o.doorCode));
+    const free = layout.doors.filter((d) => d.kind === "loading_dock" && !busy.has(d.code));
+    free.slice(0, state.trucksAtHub).forEach((r) => {
+      const truck = at(truckModel(TRUCK_COLOR.linehaul ?? 0), r.x, r.y);
+      truck.rotation.y = facingRotation(facingOf(layout, r));
+      live.add(truck);
+    });
     map?.triggerRepaint();
   }
 

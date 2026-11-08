@@ -12,7 +12,7 @@ const alertCount = (n: number | undefined) => (n === undefined ? "—" : n >= AL
 
 /** KPI cards in the top left corner (zadanie §7): wave parcels, trucks on site, read rate, alarms. */
 export function KpiStack({ data }: { data: Shadow | undefined }) {
-  const cars = useShadowStore((s) => s.yard.length);
+  const cars = useShadowStore((s) => s.yard.filter((c) => c.depot === (data?.depot.code ?? "BUD")).length);
   const k = data?.kpis;
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-1">

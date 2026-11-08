@@ -23,7 +23,8 @@ function KitCar({ index }: { index: number }) {
 
 /** Unexpected cars that entered through the yard gate (and have not left), parked by the gate. */
 export function YardCars({ layout }: { layout: DepotLayout }) {
-  const yard = useShadowStore((s) => s.yard);
+  const all = useShadowStore((s) => s.yard);
+  const yard = all.filter((c) => c.depot === layout.depot.code);
   const gate = layout.layout.yardGate;
   if (!gate) return null;
   // inside the gate: 10 m in along the way in, then a row beside the lane

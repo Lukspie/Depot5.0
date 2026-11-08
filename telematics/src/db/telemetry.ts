@@ -55,6 +55,8 @@ export interface GateRow {
   expected: boolean;
   /** confidence of the vehicle type model; goes to the app for the decision, not stored here */
   vehicleConfidence?: number | null;
+  /** the depot whose gate it is (phase 7c); Budimír when absent; not stored here */
+  depot?: string;
 }
 
 export interface SensorRow {

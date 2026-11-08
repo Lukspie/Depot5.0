@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from depotrack.core.clock import TZ
 from depotrack.core.config import get_settings
-from depotrack.models import Alert, GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
+from depotrack.models import Alert, Depot, GateAllowedPlate, GateAudit, GateEvent, User, Vehicle
 from depotrack.models.enums import AlertKind, AlertSeverity
 from depotrack.services.alerts import AlertChange, day_start, resolve_alert, upsert_alert
 
@@ -127,7 +127,13 @@ class Recorded:
 
 
 def record(
-    db: Session, r: Reading, *, at: datetime, source: str, external_key: str | None = None
+    db: Session,
+    r: Reading,
+    *,
+    at: datetime,
+    source: str,
+    external_key: str | None = None,
+    depot: str = "BUD",
 ) -> Recorded | None:
     """Decide and store one passage with its audit row; None if the key was already stored.
     A held vehicle also raises an alert for the dispatch (closed when security decides)."""
@@ -135,6 +141,7 @@ def record(
     values: dict[str, Any] = {
         "at": at,
         "source": source,
+        "depot_id": db.execute(select(Depot.id).where(Depot.code == depot)).scalar_one(),
         "external_key": external_key,
         "direction": r.direction,
         "vehicle_type": r.vehicle_type,

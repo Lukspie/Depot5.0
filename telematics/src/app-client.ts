@@ -22,6 +22,8 @@ export interface PlanDepot {
 
 export interface PlanWithLocal extends Plan {
   localDirections: string[];
+  /** direction -> depot where its trucks end (BA -> BAH, ZA -> ZIL; phase 7c) */
+  destinationDepots?: Record<string, string>;
   /** depot the plan belongs to (routes start here) */
   depot?: PlanDepot;
   /** destination point of every direction (hub for linehaul BA) */
@@ -47,6 +49,8 @@ export interface ScanForward {
 export interface GateForward {
   /** idempotency key: a resent batch is not stored twice */
   key: string;
+  /** whose gate (phase 7c); Budimír when absent */
+  depot?: string;
   at: string;
   direction: "in" | "out";
   vehicleType: string;

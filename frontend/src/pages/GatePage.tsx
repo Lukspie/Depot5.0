@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Check, ChevronDown, ScanLine, ShieldAlert, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getJson, isApiError, sendJson } from "../api/client";
+import { useDepots } from "../api/depots";
 import { Badge, Button, Card, EmptyState, Spinner, type Tone } from "../components/ui";
 import { useChannel } from "../hooks/telematics";
 
@@ -30,6 +31,8 @@ interface GateEvent {
   id: number;
   at: string;
   source: "camera" | "sim";
+  /** whose gate (phase 7c) */
+  depot: string | null;
   direction: "in" | "out";
   vehicleType: string | null;
   vehicleConfidence: number | null;
@@ -162,7 +165,7 @@ function QueueItem({ e, onDone }: { e: GateEvent; onDone: () => void }) {
 }
 
 /** A passage of today with its decision; the audit opens on click. */
-function EventRow({ e }: { e: GateEvent }) {
+function EventRow({ e, depotName }: { e: GateEvent; depotName?: (code: string) => string }) {
   const [open, setOpen] = useState(false);
   const s = state(e);
   return (
@@ -173,6 +176,7 @@ function EventRow({ e }: { e: GateEvent }) {
           <span className="text-ink-muted block text-xs">
             {hhmm(e.at)} · {e.direction === "in" ? "vjazd" : "výjazd"} · {e.allowedHolder ?? REASON[e.reason] ?? e.reason}
             {e.source === "camera" && " · fotka"}
+            {e.depot && depotName ? ` · ${depotName(e.depot)}` : null}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -265,8 +269,13 @@ export function GatePage() {
   const [direction, setDirection] = useState<"in" | "out">("in");
   const refresh = () => void qc.invalidateQueries({ queryKey: ["gate"] });
   const run = useMutation({ mutationFn: (f: File) => detect(f, direction), onSuccess: refresh });
-  const queue = useQuery({ queryKey: ["gate", "queue"], queryFn: () => getJson<GateEvent[]>("/api/gate/queue"), refetchInterval: 10_000 });
-  const events = useQuery({ queryKey: ["gate", "events"], queryFn: () => getJson<GateEvent[]>("/api/gate/events?limit=25"), refetchInterval: 15_000 });
+  // which depot's gate: all by default (phase 7c, every depot has its own gate)
+  const [depot, setDepot] = useState("");
+  const depots = useDepots();
+  const nameOf = (code: string) => depots.data?.find((d) => d.code === code)?.name ?? code;
+  const filter = depot ? `depot=${depot}` : "";
+  const queue = useQuery({ queryKey: ["gate", "queue", depot], queryFn: () => getJson<GateEvent[]>(`/api/gate/queue?${filter}`), refetchInterval: 10_000 });
+  const events = useQuery({ queryKey: ["gate", "events", depot], queryFn: () => getJson<GateEvent[]>(`/api/gate/events?limit=25&${filter}`), refetchInterval: 15_000 });
 
   // the object URL of the preview is released when it changes and on leaving the page
   useEffect(
@@ -402,7 +411,7 @@ export function GatePage() {
           ) : (
             <ul className="divide-line divide-y">
               {(events.data ?? []).map((e) => (
-                <EventRow key={e.id} e={e} />
+                <EventRow key={e.id} e={e} depotName={depot ? undefined : nameOf} />
               ))}
             </ul>
           )}
@@ -417,6 +426,21 @@ export function GatePage() {
             </span>
           }
           subtitle="Rozhodnite s dôvodom alebo potvrďte overenie."
+          actions={
+            <select
+              value={depot}
+              onChange={(e) => setDepot(e.target.value)}
+              aria-label="Brána skladu"
+              className="border-line bg-surface focus:border-brand-500 rounded-xl border px-2 py-1.5 text-sm"
+            >
+              <option value="">Všetky brány</option>
+              {depots.data?.map((d) => (
+                <option key={d.code} value={d.code}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          }
         >
           {queue.isPending ? (
             <Spinner className="py-6" />

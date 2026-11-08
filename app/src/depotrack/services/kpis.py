@@ -6,7 +6,7 @@ from datetime import date, datetime
 from sqlalchemy import ColumnElement, exists, func, select
 from sqlalchemy.orm import Session
 
-from depotrack.models import Alert, LoadingScan, Parcel, ParcelEvent, Trip
+from depotrack.models import Alert, Depot, LoadingScan, Parcel, ParcelEvent, Trip
 from depotrack.models.enums import ParcelStatus, ScanResult, TripKind, TripStatus
 from depotrack.schemas.wms import DashboardKpis, DirectionRow
 from depotrack.services.alerts import current_alerts
@@ -77,7 +77,10 @@ def day_overview(
         per_dir.setdefault(direction_id, Counter())[st] += n
 
     rows: list[DirectionRow] = []
-    for d in sorted(look.directions.values(), key=lambda d: (d.type.value, d.code)):
+    # the directions of Budimír (the courier districts of other depots are theirs, phase 7c)
+    home = db.execute(select(Depot.id).where(Depot.code == "BUD")).scalar_one()
+    own = (d for d in look.directions.values() if d.depot_id == home)
+    for d in sorted(own, key=lambda d: (d.type.value, d.code)):
         c = per_dir.get(d.id, Counter())
         loadable = sum(c[s] for s in LOADABLE)
         missing = loadable if d.id in departed_dirs else 0

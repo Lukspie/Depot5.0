@@ -22,6 +22,7 @@ from depotrack.main import create_app
 from depotrack.models import (
     CourierRoute,
     CustomerNotification,
+    Depot,
     Direction,
     Parcel,
     RouteStop,
@@ -127,7 +128,12 @@ def courier_login(client: TestClient, username: str = "kurier01") -> None:
 
 @pytest.mark.usefixtures("seeded")
 def test_every_district_gets_a_route_that_keeps_the_windows(db: Session) -> None:
-    routes = list(db.execute(select(CourierRoute)).scalars())
+    budimir = select(Direction.id).where(Direction.code.like("KE-%"))
+    routes = list(
+        db.execute(
+            select(CourierRoute).where(CourierRoute.rajon_direction_id.in_(budimir))
+        ).scalars()
+    )
     assert len(routes) == 8
     assert {r.date for r in routes} == {DELIVERY}
     local = {
@@ -235,7 +241,8 @@ def test_window_heuristic_beats_nearest_neighbour_on_windows() -> None:
 @pytest.mark.usefixtures("seeded")
 def test_internal_courier_plan(client: TestClient) -> None:
     routes = courier_plan(client)
-    assert len(routes) == 8
+    assert len(routes) == 8 + 4  # Budimír and Žilina (phase 7c)
+    assert {r["depot"]["code"] for r in routes} == {"BUD", "ZIL"}
     first = routes[0]
     assert first["vehiclePlate"] == "KE-301KR"
     assert first["courierUsername"] == "kurier01"
@@ -243,6 +250,52 @@ def test_internal_courier_plan(client: TestClient) -> None:
     assert first["stagingBay"] == "SB-01"
     assert first["stops"][0]["sequence"] == 1
     assert client.get(f"/internal/courier-routes?day={DAY}").status_code == 401
+
+
+@pytest.mark.usefixtures("seeded")
+def test_zilina_couriers_deliver_the_parcels_of_the_za_truck(
+    client: TestClient, db: Session, at: SetTime
+) -> None:
+    """Phase 7c (ADR-065): the parcels of direction ZA ride the evening truck to Žilina, the 4
+    couriers of Žilina deliver them the next morning, each in a quadrant around the town."""
+    from depotrack.seed.depots import built_depots, inside
+    from depotrack.seed.operations import ZIL_OPS, district_of
+
+    za = db.execute(select(Direction).where(Direction.code == "ZA")).scalar_one()
+    zil = db.execute(select(Depot).where(Depot.code == "ZIL")).scalar_one()
+    assert za.destination_depot_id == zil.id and (za.dest_lat, za.dest_lon) == (zil.lat, zil.lon)
+    za_parcels = {
+        p.barcode: p
+        for p in db.execute(select(Parcel).where(Parcel.direction_id == za.id)).scalars()
+    }
+    routes = [r for r in courier_plan(client) if r["depot"]["code"] == "ZIL"]
+    assert [r["courierUsername"] for r in routes] == [f"kurierza0{i}" for i in range(1, 5)][
+        : len(routes)
+    ]
+    delivered = [s["barcode"] for r in routes for s in r["stops"]]
+    assert sorted(delivered) == sorted(za_parcels)  # every ZA parcel, exactly once
+    for r in routes:
+        assert r["vehiclePlate"].startswith("ZA-3") and r["stagingBay"].startswith("ZI-SB")
+        assert all(
+            district_of(ZIL_OPS, s["lat"], s["lon"]) == r["districtCode"] for s in r["stops"]
+        )
+        # the van parks and loads inside the Žilina yard
+        layout = built_depots()["ZIL"].layout
+        site = [tuple(p) for p in layout["site"]]
+        from depotrack.seed.depots import Frame
+
+        frame = Frame(tuple(layout["origin"]), layout["hall"]["rotationDeg"])
+        assert inside(frame.local(*r["parking"]), site) and inside(frame.local(*r["loading"]), site)
+
+    # the courier of Žilina loads a parcel that came on the linehaul truck (status loaded)
+    first = za_parcels[routes[0]["stops"][0]["barcode"]]
+    first.status = ParcelStatus.LOADED
+    db.commit()
+    at("06:40")
+    courier_login(client, "kurierza01")
+    res = client.post("/api/courier/scan", json={"barcode": first.barcode})
+    assert res.status_code == 200, res.text
+    assert res.json()["action"] == "loaded"
 
 
 # ------------------------------------------------------------------ token lifecycle
@@ -643,7 +696,7 @@ def test_reset_day_restores_routes_and_removes_links(
     load_all(client, route, at("07:05"))
     post_events(client, [{"routeId": route["routeId"], "kind": "departed", "at": iso(at("07:30"))}])
     result = reset_operating_day(db, DAY)
-    assert result["courierRoutes"] == 8
+    assert result["courierRoutes"] == 8 + 4  # Budimír and Žilina
     assert db.execute(select(TrackingToken)).first() is None
     assert db.execute(select(CustomerNotification)).first() is None
     r = db.get(CourierRoute, route["routeId"])

@@ -121,15 +121,15 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
         trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y, rot: facingRotation(facingOf(layout, door)), type: t.directionType, door: d.code });
       }
     }
-  } else {
-    // hub: trucks standing at the hub fill the ramps from the left
-    const ramps = layout.doors.filter((d) => d.kind === "loading_dock");
-    const here = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
-    here.slice(0, ramps.length).forEach((t, i) => {
-      const r = ramps[i];
-      if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, rot: facingRotation(facingOf(layout, r)), type: "linehaul", door: r.code });
-    });
   }
+  // trucks of other depots' directions that end here (hub, Žilina): the free ramps from the left
+  const busy = new Set(trucks.map((t) => t.door));
+  const ramps = layout.doors.filter((d) => d.kind === "loading_dock" && !busy.has(d.code));
+  const here = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
+  here.slice(0, ramps.length).forEach((t, i) => {
+    const r = ramps[i];
+    if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, rot: facingRotation(facingOf(layout, r)), type: "linehaul", door: r.code });
+  });
   return trucks;
   }, [layout, live, doors]);
   const departing = useDepartures(trucks);

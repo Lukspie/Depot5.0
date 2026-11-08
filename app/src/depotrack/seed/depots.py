@@ -240,6 +240,19 @@ class Frame:
         return max(sides, key=lambda k: sides[k][0] * want[0] + sides[k][1] * want[1])
 
 
+def to_latlon(layout: dict[str, object], x: float, y: float) -> tuple[float, float]:
+    """A point of the hall frame (x along the hall, y across) back to lat / lon."""
+    origin = layout["origin"]
+    hall = layout["hall"]
+    assert isinstance(origin, list) and isinstance(hall, dict)
+    lat0, lon0 = float(origin[0]), float(origin[1])
+    t = math.radians(float(hall.get("rotationDeg", 0.0)))
+    c, s = math.cos(t), math.sin(t)
+    east, south = x * c - y * s, x * s + y * c
+    kx = 111_320 * math.cos(math.radians(lat0))
+    return (round(lat0 - south / 110_574, 6), round(lon0 + east / kx, 6))
+
+
 def inside(p: tuple[float, float], ring: list[tuple[float, float]]) -> bool:
     x, y = p
     hit = False

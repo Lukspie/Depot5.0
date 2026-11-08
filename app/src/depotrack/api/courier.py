@@ -13,7 +13,7 @@ from sqlalchemy import select
 from depotrack.core.clock import TZ
 from depotrack.core.config import get_settings
 from depotrack.core.rbac import DbSession, require_role
-from depotrack.models import CourierRoute, Depot, Direction, Parcel, RouteStop, User, Vehicle
+from depotrack.models import CourierRoute, Direction, Parcel, RouteStop, User, Vehicle
 from depotrack.models.enums import EventSource, ParcelStatus, StopOutcome, UserRole
 from depotrack.schemas.delivery import (
     CourierRouteBrief,
@@ -30,6 +30,7 @@ from depotrack.services.couriers import (
     DEPARTURE,
     LOADING_START,
     complete_stop,
+    depot_of_route,
     load_parcel,
     staging_bay,
 )
@@ -151,7 +152,7 @@ def my_route(
     stops = _stops(db, route)
     van = db.get(Vehicle, route.vehicle_id)
     pos = telematics.vehicle_position(van.plate) if van else None
-    depot = db.execute(select(Depot).where(Depot.code == "BUD")).scalar_one()
+    depot = depot_of_route(db, route)
     return CourierRouteOut(
         **_brief(db, route, stops).model_dump(),
         vehicle=(
