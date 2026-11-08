@@ -17,7 +17,7 @@ function loginErrorMessage(err: unknown): string {
   return "Prihlásenie zlyhalo. Skúste to znova.";
 }
 
-/** "4 ML modely", "1 ML model", "5 skladov" */
+/** "1 sklad", "2 sklady", "5 skladov" */
 function plural(n: number, one: string, few: string, many: string): string {
   return `${String(n)} ${n === 1 ? one : n >= 2 && n <= 4 ? few : many}`;
 }
@@ -54,7 +54,7 @@ function BrandPanel({ info }: { info: LoginInfo | undefined }) {
           <div className="mt-5 flex flex-wrap gap-2.5">
             <Pill color="#f39200">{plural(info.depots.length, "sklad", "sklady", "skladov")}</Pill>
             <Pill color={info.telemetryLive ? "#3fb86f" : "#8a8984"}>{info.telemetryLive ? "Telemetria naživo" : "Telemetria nedostupná"}</Pill>
-            <Pill color="#6f8fff">{plural(info.mlModels, "ML model", "ML modely", "ML modelov")}</Pill>
+            <Pill color="#6f8fff">Predikcie ML</Pill>
           </div>
         )}
       </div>
