@@ -51,6 +51,8 @@ export function useLogin() {
     onSuccess: (user) => {
       qc.clear();
       qc.setQueryData(ME_KEY, user);
+      // the login answer has no allowed depots (ADR-068): load the full /me
+      void qc.invalidateQueries({ queryKey: ME_KEY });
     },
   });
 }

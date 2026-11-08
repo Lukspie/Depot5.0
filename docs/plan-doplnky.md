@@ -327,7 +327,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - `/api/auth/me` vráti domovský sklad a zoznam povolených skladov. Admin nastaví domovský sklad v správe používateľov.
 - UI: bez natvrdo písaného „Budimír“. Bočná lišta ukazuje zvolený sklad, prepínač skladu v hornej lište len pre roly, ktoré smú prepínať. Zvolený sklad je v URL (`?depot=`) a pamätá sa. Tabuľa na fasáde tieňa „Depot 5.0 · <SKLAD>“.
 
-**Krok 3 – Login podľa makety** (app + frontend)
+**Krok 3 – Login podľa makety** (app + frontend) *(hotové)*
 - Verejný endpoint `GET /api/public/login-info` (bez prihlásenia, s rate limitom): sklady (názov, typ, poloha z DB), spojenia siete z dát (smery s cieľovým skladom, pre sklady bez prevádzky prerušovane), stav služieb a príznak demo režimu. App dostane `SIM_CONTROLS_ENABLED` z compose.
 - Tmavý panel so schémou siete (SVG z polôh skladov), formulár so zobrazením hesla, chybové stavy: zlé údaje (401), zablokovaný účet (403), veľa pokusov (429 s časom), nedostupný server. Info o 8 h smene.
 - Pri demo režime rozbaľovací blok „Demo účty“ pod formulárom, v ostrom režime skrytý.

@@ -24,6 +24,7 @@ from depotrack.api import (
     loading,
     ml,
     notifications,
+    public,
     search,
     shadow,
     shell,
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(system.router)
     app.include_router(shell.router)
     app.include_router(search.router)
+    app.include_router(public.router)
     app.include_router(auth.router)
     app.include_router(admin_users.router)
     app.include_router(admin_directions.router)

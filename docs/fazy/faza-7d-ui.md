@@ -48,3 +48,34 @@ Maketa ukazuje v hornej lište sklad so šípkou (prepínač). Prihlásený disp
 ![Prepínač skladu dispečera](../screenshots/faza-7d/2-prepinac-skladu.png)
 
 Poistky po kroku 2: golden test Budimíra prechádza, demo scenáre z `docs/demo.md` prejdené v prehliadači ako administrátor, dispečer, operátor, ochranka a kuriéri Budimíra a Žiliny (večerná špička aj ranní kuriéri): všetky obrazovky bez chýb v konzole, bez chybových odpovedí API a bez vodorovného posúvania.
+
+## Krok 3 – login (maketa-login)
+
+Bez prihlásenia, demo režim (`SIM_CONTROLS_ENABLED=true`), 1440 px. Formulár vyplnený ako v makete (meno „dispecer“, fokus na mene).
+
+| Položka | Maketa | Pred | Čo sa zmenilo | Stav |
+| --- | --- | --- | --- | --- |
+| Rozloženie | tmavý panel vľavo (1,25 : 1), biely formulár vpravo | malá karta v strede na farebnom pozadí | dva panely, pod 768 px pod sebou | ✓ |
+| Logo | oranžový štvorec, „Depot 5.0“ 18/800 | logo a „Prekládková sieť“ | podľa makety | ✓ |
+| Schéma siete | 5 skladov s halo, názov + typ, plné spojenia, prerušované napájanie, mriežka | – | `NetworkMap` z `/api/public/login-info`: polohy z DB, plné čiary = diaľkové smery do iného skladu (Budimír → Ivanka, Budimír → Žilina), prerušované = plánované napájanie skladov bez prevádzky z hubu (Ivanka → Dunajská Streda, Trenčín). Štítky sa vyhýbajú čiaram aj sebe. **Rozdiel v obsahu, nie v dizajne:** maketa má navyše čiaru Ivanka–Žilina a „prekládkové depo Košice“; v dátach taký smer ani mesto skladu nie je, schéma kreslí len dáta (zadanie „z /api/depots, nie natvrdo“) | ✓ |
+| Nadpis a text | „Prekládková sieť pod kontrolou.“ 36/800, popis 15 px | – | podľa makety | ✓ |
+| Pilulky | 5 skladov · Telemetria naživo · 4 ML modely | – | z dát: počet skladov, spojenie s telematikou, načítané modely (meškanie, brána YOLOX + OCR, skenery) | ✓ |
+| Stav služieb | „● Všetky služby v prevádzke“ vpravo hore | – | DB a telematika; pri výpadku jantárové „Niektoré služby nebežia“ | ✓ |
+| Formulár | nadpis 26/800, polia 42 px radius 9, fokus oranžový prstenec | polia 38 px, oranžové tlačidlo | podľa makety | ✓ |
+| Zobrazenie hesla | ikona oka v poli | – | prepínač zobraziť / skryť (`aria-pressed`) | ✓ |
+| Zabudnuté heslo | odkaz vpravo nad heslom | – | vysvetlenie v popoveri: heslo obnoví administrátor (žiadny falošný formulár) | ✓ |
+| Tlačidlo | čierne 44 px | oranžové | čierne, pri neúplných údajoch neaktívne | ✓ |
+| Chybové stavy | – | 401, 403, 429 | zlé údaje (401), zablokovaný účet (403), veľa pokusov (429), nedostupný server, nevyplnené údaje | ✓ |
+| Info o smene | „Relácia platí 8 hodín…“ | – | dĺžka relácie z nastavení servera | ✓ |
+| Sledovanie zásielky | box „Čakáte zásielku?“ | – | podľa makety | ✓ |
+| Demo účty | (nie je v makete, požiadavka tímu) | – | rozbaľovací blok pod formulárom len v demo režime: mená, roly a sklad, klik vyplní meno. Heslá API nikdy neposiela (test) | ✓ |
+| Pätka | „Depot 5.0 · interný systém“, „Stav systému“ | – | stav WMS, telematiky a modelov v popoveri | ✓ |
+| Telefón (390 px) | (panel nad formulárom, výška 360 px) | – | panel so schémou nad formulárom, bez vodorovného posúvania | ✓ |
+
+![Pred: maketa vľavo, stav pred krokom 3 vpravo](../screenshots/faza-7d/3-login-pred.png)
+
+![Po: maketa vľavo, implementácia vpravo (1440 px)](../screenshots/faza-7d/3-login-po-1440.png)
+
+![Po: 1280 px](../screenshots/faza-7d/3-login-po-1280.png)
+
+![Demo účty, chybový stav, telefón 390 px](../screenshots/faza-7d/3-login-stavy.png)

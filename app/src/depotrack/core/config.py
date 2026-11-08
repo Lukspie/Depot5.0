@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     # key in the URL of the public ETA board (/board?key=…); empty = board disabled
     board_key: str = ""
 
+    # demo mode (the same variable as telematics, ADR-053): the login page lists the demo
+    # accounts (names and roles, never passwords); false in production
+    sim_controls_enabled: bool = True
+
     # base of the customer tracking links in the simulated SMS (/track/<token>)
     public_base_url: str = "http://localhost:8000"
     # public tracking endpoint (ADR-042): requests per valid link, failed lookups per client IP
