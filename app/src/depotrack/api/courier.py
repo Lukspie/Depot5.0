@@ -247,6 +247,10 @@ def scan(body: ScanIn, user: Courier, db: DbSession) -> ScanOut:
             at=now,
             door=staging_bay(db, route.rajon_direction_id),
         )
+        if parcel.status != ParcelStatus.OUT_FOR_DELIVERY:
+            # e.g. a parcel that did not come on the linehaul truck to this depot (ADR-065)
+            db.rollback()
+            raise HTTPException(status.HTTP_409_CONFLICT, "Parcel is not in this depot")
         db.commit()
         action = "loaded"
     return ScanOut(action=action, stop=_stop_out(stop, parcel, route.date))

@@ -263,6 +263,7 @@ Cieľ: mapa a digitálny tieň so skutočnými layoutmi a prevádzkou 5 skladov:
 
 **Krok 3 – prevádzka v každom sklade (app + telematika)**
 - 3a **cestná sieť:** `build_osm_data.py` dostane ďalšie výrezy s ulicami okolo Žiliny, Dunajskej Stredy a Ivanky (rovnaký postup ako Košice). `roads.json.gz` narastie odhadom o 0,5–1 MB. Overím, že trasy kamiónov BUD sa nezmenili (determinizmus). Ak by výrez nešiel, dodávky pôjdu po hlavných cestách a zapíšem to ako obmedzenie.
+- *(Žilina hotová: kuriéri, brána, kamióny ZA, ADR-065)*
 - 3b **vlastní kuriéri skladov:** rajóny okolo mesta (ZIL napr. 4, DS 3, BAH 4), dodávky a kuriéri v seede, balíky pre tieto rajóny (vlastný prúd generátora, BUD sa nezmení), trasy s oknami z ADR-062. Telematika: plán kuriérov pre všetky sklady (každá trasa má svoj sklad), parkovanie podľa `vanParking` z layoutu, nakládka od 6:30, odchod, večerný návrat.
 - **Trenčín (TN):** nový sklad ako Dunajská Streda (vlastní kuriéri, brána so 7b). Napájacia jazda **z Ivanky po D1** (~125 km): Ivanka je centrálny hub a napája aj Dunajskú Stredu. Žilina je depo, nie hub (ZA tam končí z Budimíra), preto nie zo Žiliny. Poradie prevádzky v kroku 3: Žilina → Ivanka → Dunajská Streda → Trenčín.
 - 3c **kamióny:** diaľkový ZA končí a začína v ZIL (státie na rampe, odchod), BA v BAH ako dnes. DS: **návrh** napájacia jazda BAH ↔ DS (DS nemá vlastný smer z Budimíra). Animácia príjazdu cez bránu skladu, státie na rampe, odchod.

@@ -287,8 +287,12 @@ def test_zilina_couriers_deliver_the_parcels_of_the_za_truck(
         frame = Frame(tuple(layout["origin"]), layout["hall"]["rotationDeg"])
         assert inside(frame.local(*r["parking"]), site) and inside(frame.local(*r["loading"]), site)
 
-    # the courier of Žilina loads a parcel that came on the linehaul truck (status loaded)
+    # a parcel that missed the ZA truck is still in Budimír: the courier of Žilina cannot load it
+    at("06:40")
+    courier_login(client, "kurierza01")
     first = za_parcels[routes[0]["stops"][0]["barcode"]]
+    assert client.post("/api/courier/scan", json={"barcode": first.barcode}).status_code == 409
+    # the courier of Žilina loads a parcel that came on the linehaul truck (status loaded)
     first.status = ParcelStatus.LOADED
     db.commit()
     at("06:40")

@@ -262,8 +262,10 @@ def load_parcel(
     """The courier scans the parcel into the van: out_for_delivery + tracking link by SMS.
     Idempotent: a parcel already in the van (or delivered) is left alone."""
     parcel = db.get(Parcel, stop.parcel_id)
-    # LOADED: a parcel that came on the linehaul truck to the courier's depot (Žilina, ADR-065)
-    if parcel is None or parcel.status not in (*LOADABLE, ParcelStatus.LOADED):
+    # in another depot (Žilina, ADR-065) only a parcel that came on the linehaul truck (LOADED) is
+    # there to load; one that missed the truck is still in Budimír
+    loadable = LOADABLE if depot_of_route(db, route).code == "BUD" else (ParcelStatus.LOADED,)
+    if parcel is None or parcel.status not in loadable:
         return None
     parcel.status = ParcelStatus.OUT_FOR_DELIVERY
     db.add(

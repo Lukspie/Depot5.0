@@ -377,7 +377,7 @@ function ScanTab({
         const text = isApiError(err, 404)
           ? `${barcode}: nie je na vašej dnešnej trase`
           : isApiError(err, 409)
-            ? `${barcode}: teraz sa nenakladá (nakládka od 6:30 do odchodu)`
+            ? `${barcode}: teraz sa nedá naložiť (mimo nakládky 6:30 až odchod, alebo balík neprišiel do tohto skladu)`
             : `${barcode}: sken sa nepodarilo uložiť`;
         setLog((l) => [{ text, tone: "danger" as Tone }, ...l].slice(0, 6));
       },
