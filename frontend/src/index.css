@@ -108,6 +108,18 @@
   --color-chrome-line: #e3e7ef;
 }
 
+/* KPI row over the digital shadow (maketa-tien): four in a row, two rows below 1380 px */
+.shadow-kpis {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1379px) {
+  .shadow-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* dispatching grids (maketa-dispecing): 5 KPIs in a row, 3 up to 1280 px, 2 on phones; the
    main column next to the 340 px column, one column up to 1100 px. minmax(0, 1fr) keeps wide
    tables inside their cards instead of widening the page. */

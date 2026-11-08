@@ -35,18 +35,6 @@ function foundAt(layout: DepotLayout, p: ParcelLocate | undefined): [number, num
   return null;
 }
 
-function Legend() {
-  const dot = "inline-block h-2.5 w-2.5 rounded-full";
-  return (
-    <div className="bg-surface/90 shadow-card hidden flex-wrap gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-[11px] md:flex">
-      <span className="flex items-center gap-1.5"><i className={`${dot} bg-ok-600`} />online</span>
-      <span className="flex items-center gap-1.5"><i className={`${dot} bg-warn-600`} />degradované</span>
-      <span className="flex items-center gap-1.5"><i className={`${dot} bg-danger-600`} />offline</span>
-      <span className="flex items-center gap-1.5"><i className={`${dot} bg-[#7c5cd6]`} />údržba</span>
-    </div>
-  );
-}
-
 /**
  * Digital shadow of a depot (zadanie §7, ADR-045, layout plan-doplnky 5c): the scene fills the area
  * under the top bar, everything else floats above it like in docs/design/reference.png. Reality ->
@@ -117,7 +105,11 @@ function ShadowView({ code }: { code: string }) {
     if (!at) return;
     initialFocus.current = null;
     // after the initial fit of <Bounds> (it would overwrite an earlier focus)
-    const t = window.setTimeout(() => camera.current?.focus(at[0], at[1]), 900);
+    // the home view first (its zoom), then the object in it (maketa-tien keeps the overview)
+    const t = window.setTimeout(() => {
+      camera.current?.home();
+      camera.current?.focus(at[0], at[1]);
+    }, 900);
     return () => window.clearTimeout(t);
   }, [cameraReady, layout.data]);
 
@@ -174,13 +166,13 @@ function ShadowView({ code }: { code: string }) {
         />
       </div>
 
-      <div className={`${panel} z-20 md:top-3 md:right-3 md:left-3`}>
+      <div className={`${panel} z-20 md:top-4 md:right-4 md:left-4`}>
         <TopBar depot={code} live={live.data} onSearch={search} onScenario={canAct && live.data?.kpis ? () => setScenario(true) : undefined} />
       </div>
 
-      <div className={`${panel} flex flex-col gap-2 md:top-[76px] md:left-3 md:w-60`}>
+      {/* KPI row under the top bar, left of the detail panel (maketa-tien) */}
+      <div className={`${panel} flex flex-col gap-2 md:top-[76px] md:left-4 ${selection ? "md:right-[452px]" : "md:right-[76px]"}`}>
         <KpiStack data={live.data} />
-        <Legend />
         {measuring && (
           <div data-testid="fps" className="bg-ink w-fit rounded-lg px-2 py-1 font-mono text-xs text-white">
             {fps === null ? "… fps" : `${String(fps)} fps`}
@@ -188,18 +180,18 @@ function ShadowView({ code }: { code: string }) {
         )}
       </div>
 
-      <div className="absolute top-[76px] right-3 z-10 hidden md:block">
+      <div className="absolute top-[76px] right-4 z-10 hidden md:block">
         <CameraControls api={getCamera} roofOpen={roofOpen} onRoof={() => setRoof(!roof)} />
       </div>
 
       {barcode && (
-        <div className={`${panel} md:bottom-3 md:left-3 md:w-[min(560px,45%)]`}>
+        <div className={`${panel} md:bottom-4 md:left-4 md:w-[min(620px,calc(100%-460px))]`}>
           <ParcelTrack barcode={barcode} result={parcel.data} error={parcel.error} canOpen={canAct} onClose={() => setBarcode(null)} />
         </div>
       )}
 
       {vehicle && (
-        <div className={`${panel} md:bottom-3 md:left-3 md:w-[min(560px,45%)]`}>
+        <div className={`${panel} md:bottom-4 md:left-4 md:w-[min(620px,calc(100%-460px))]`}>
           <div className="bg-surface shadow-card flex items-center gap-3 rounded-2xl p-4 text-sm">
             <span className="min-w-0 flex-1">
               Vozidlo <b className="font-mono">{vehicle}</b> práve nestojí pri bráne tohto skladu.
@@ -216,9 +208,9 @@ function ShadowView({ code }: { code: string }) {
         </div>
       )}
 
-      {/* the list gives way to the detail panel on the right */}
-      <div className={`${panel} md:right-3 md:bottom-3 md:h-[40%] md:w-[360px] ${selection ? "md:hidden" : ""}`}>
-        <ObjectList live={live.data} onPick={pick} />
+      {/* the list in the bottom right corner stays next to the detail (maketa-tien) */}
+      <div className={`${panel} md:right-4 md:bottom-4 md:h-[38%] md:min-h-[260px] md:w-[400px]`}>
+        <ObjectList live={live.data} onPick={pick} selected={selection?.code ?? null} />
       </div>
 
       {selection?.kind === "device" && <DevicePanel code={selection.code} alerts={live.data?.alerts ?? []} onClose={close} />}

@@ -2,7 +2,7 @@ import type { ThreeElements } from "@react-three/fiber";
 
 type Tone = "select" | "affected" | "found";
 
-const COLOR: Record<Tone, string> = { select: "#1d1d1b", affected: "#c93434", found: "#2f5be9" };
+const COLOR: Record<Tone, string> = { select: "#f39200", affected: "#c93434", found: "#2f5be9" };
 
 /** Ring on the floor around a selected / affected object (static: no frame loop needed). */
 export function Highlight({ x, z, radius = 4, tone = "select", ...rest }: { x: number; z: number; radius?: number; tone?: Tone } & ThreeElements["group"]) {

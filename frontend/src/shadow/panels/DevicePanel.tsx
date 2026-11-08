@@ -6,6 +6,7 @@ import { hhmmss } from "../../domain/labels";
 import { useShadowStore, type LiveScan } from "../store";
 import { useCanAct } from "../permissions";
 import { AlertList, Maintenance } from "./Actions";
+import { SHADOW_PANEL } from "./placement";
 import { Sparkline } from "./Sparkline";
 import { pct } from "../../lib/format";
 
@@ -59,7 +60,7 @@ export function DevicePanel({ code, alerts, onClose }: { code: string; alerts: A
     <SidePanel
       open
       onClose={onClose}
-      inset="md:top-[76px] md:right-[68px]"
+      inset={SHADOW_PANEL}
       icon={<ScanLine size={22} />}
       eyebrow={KIND[d?.kind ?? ""] ?? "Zariadenie"}
       title={code}

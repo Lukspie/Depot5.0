@@ -3,10 +3,15 @@ import { useThree } from "@react-three/fiber";
 import { useEffect, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 
-/** camera from the yard side (doors and trucks face the viewer), ~38° above the ground */
-const POSITION: [number, number, number] = [40, 85, -100];
+/**
+ * Isometric camera from the yard side (maketa-tien): 45° to the facade with the doors, so the
+ * facade runs diagonally through the view, ~40° above the ground.
+ */
+const POSITION: [number, number, number] = [-72, 88, -72];
 const POLAR = Math.atan2(Math.hypot(POSITION[0], POSITION[2]), POSITION[1]);
 const MIN_ZOOM = 2;
+/** the home view keeps some room round the doors: the diagonal view projects them longer */
+const HOME_MARGIN = 1.05;
 const MAX_ZOOM = 40;
 
 /** Camera buttons of the floating panel (+, −, rotate, home) and "focus on an object". */
@@ -29,11 +34,13 @@ function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: Camer
   const bounds = useBounds();
   const get = useThree((s) => s.get);
   const homed = useRef(false);
+  // zoom of the home view: a focus never zooms out beyond it (the first fit shows the whole yard)
+  const homeZoom = useRef<number | null>(null);
   // azimuth of the default camera (it looks at doors on the north wall); turned by homeTurn
   const baseAzimuth = useRef<number | null>(null);
   useEffect(() => {
     /** look at the box: orbit target to its centre, zoom so that it fills the view (no animation) */
-    const view = (box?: THREE.Box3) => {
+    const view = (box?: THREE.Box3, margin = 1.15) => {
       if (!box) {
         bounds.refresh().fit();
         return;
@@ -48,12 +55,24 @@ function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: Camer
         orbit.target.copy(center);
         camera.position.copy(center).add(offset);
       }
-      const extent = Math.max(size.x, size.z) * 1.15;
+      const extent = Math.max(size.x, size.z) * margin;
       const zoom = Math.min((ortho.right - ortho.left) / extent, (ortho.top - ortho.bottom) / (extent * 0.6));
       ortho.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+      if (margin === HOME_MARGIN) homeZoom.current = ortho.zoom;
       ortho.updateProjectionMatrix();
       orbit?.update();
       invalidate();
+    };
+    /**
+     * The home box widened to the screen right and down: the panels on the right (detail, list)
+     * and the KPI row on top cover part of the view, so the doors end up in the free part.
+     */
+    const shifted = (box: THREE.Box3): THREE.Box3 => {
+      const size = box.getSize(new THREE.Vector3());
+      const camera = get().camera;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize();
+      const k = Math.max(size.x, size.z);
+      return box.clone().union(box.clone().translate(right.multiplyScalar(k * 0.22)));
     };
     /** turn the camera to the wall with the ramps (phase 7c: they are not always on the north) */
     const turnHome = () => {
@@ -80,15 +99,27 @@ function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: Camer
       },
       home() {
         turnHome();
-        view(homeBox);
+        view(homeBox && shifted(homeBox), HOME_MARGIN);
       },
       focus(x, z) {
-        // the detail panel covers the right part of the view: extend the box to the screen right,
-        // so the object ends up left of the panel
-        const right = new THREE.Vector3().setFromMatrixColumn(get().camera.matrixWorld, 0).setY(0).normalize().multiplyScalar(14);
-        const box = new THREE.Box3(new THREE.Vector3(x - 14, 0, z - 20), new THREE.Vector3(x + 14, 8, z + 8));
-        box.union(box.clone().translate(right));
-        view(box);
+        // move the view to the object and keep the zoom (maketa-tien: the overview stays); the
+        // panels on the right cover part of the screen, so the object goes a bit left of centre
+        const { camera, controls, invalidate } = get();
+        const orbit = controls as unknown as Orbit | null;
+        if (!orbit) return;
+        const ortho = camera as THREE.OrthographicCamera;
+        if (homeZoom.current !== null && ortho.zoom < homeZoom.current) {
+          ortho.zoom = homeZoom.current;
+          ortho.updateProjectionMatrix();
+        }
+        const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize();
+        const shift = ((ortho.right - ortho.left) / ortho.zoom) * 0.14;
+        const target = new THREE.Vector3(x, 0, z).add(right.multiplyScalar(shift));
+        const offset = camera.position.clone().sub(orbit.target);
+        orbit.target.copy(target);
+        camera.position.copy(target).add(offset);
+        orbit.update();
+        invalidate();
       },
     });
     // the first view is the facade with the doors (reference), not the whole yard; only once
@@ -97,7 +128,7 @@ function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: Camer
       const t = window.setTimeout(() => {
         homed.current = true;
         turnHome();
-        view(homeBox);
+        view(shifted(homeBox), HOME_MARGIN);
         // after the fit animation of <Bounds> (maxDuration 0.6 s), which would turn the camera back
       }, 800);
       return () => window.clearTimeout(t);

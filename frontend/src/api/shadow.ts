@@ -53,6 +53,10 @@ export interface ParcelLocate {
   directionType: DirectionType;
   place: { kind: "belt" | "door" | "bay" | "outside"; code: string | null };
   events: { status: ParcelStatus; at: string; doorCode: string | null }[];
+  weightKg: number | null;
+  /** the truck the parcel rides in, and when it leaves (tracking card of the scene) */
+  vehiclePlate: string | null;
+  plannedDeparture: string | null;
 }
 
 export interface MetricBucket {

@@ -772,3 +772,13 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - **Fakty alarmu** sa skladajú z dát, na ktoré alarm odkazuje, nie z textu správy. Text správy ostáva ako záloha.
   - Príchod kamióna do depa a odchod z neho sa berú z brány depa (prejazd ŠPZ), lebo jazda nesie len časy v Budimíri. Vlna v hornej lište sa ukáže len v sklade, ktorý má vlny.
 - **Dôsledok:** Dispečing Žiliny a Ivanky ukazuje rozvoz (balíky z kamióna, kuriéri, rajóny), nie triedenie. Pri kamiónoch je „pri bráne od“ plánovaný príchod k bráne (03:00, maketa mala ilustračné „nakládka od“), pri kuriéroch „nakládka od 06:30“. Tím schválil, že dáta majú prednosť pred ilustráciou v makete (aj schéma siete na logine). Výpočet histórie je jeden dotaz na každý zdroj a beží pri každom obnovení (5 s). Pri jednom sklade a stovkách jázd to stačí, pri väčšej sieti by sa história ukladala priebežne.
+
+## ADR-070 Digitálny tieň podľa makety: vzhľad z dát, kamera a štítky (Fáza 7d, krok 5)
+- **Kontext:** Tieň z Fáz 5b a 5c nebol postavený podľa schválenej makety (`docs/design/maketa-tien/`). Maketa je ilustrácia (SVG), v R3F treba trafiť jej vzhľad, nie kopírovať kresbu.
+- **Rozhodnutie:**
+  - **HUD:** horná lišta v jednom riadku, štyri nízke KPI pod ňou (pod 1380 px dva riadky), detail 360 px vpravo pod lištou vedľa stĺpca kamery, zoznam s legendou vpravo dole (ostáva aj pri detaile), sledovanie balíka vľavo dole. V sklade bez vĺn a vlastných jázd sa nezobrazujú prázdne karty.
+  - **Scéna:** jedna paleta `PAL` v `shadow/parts.ts` podľa tabuľky makety, zdieľaná s mapou Flotily. Rebrá fasády sú textúra z canvasu, nie stovky objektov. Tabuľky čísel brán a tabuľa „Depot 5.0 · <SKLAD>“ sú canvas textúry, za behu sa nesťahuje písmo. Tri odtiene dáva svetlo (hemisférické + smerové zľava zhora), nie tri materiály.
+  - **Kamera:** izometrická, 45° k stene s bránami. Domov = brány s dvorom pred nimi, posunuté vľavo od panelov. Výber objektu kameru len posunie a nikdy nepriblíži pod zoom domova, takže prehľad ostáva ako v makete.
+  - **Štítky** v scéne len pre to, čo je dôležité teraz: vybraný kamión (oranžový obrys vrchu, štítok s naplnenosťou), degradované zariadenie (s čítanosťou), prichádzajúci kamión. `/api/depots/{code}/state` pridáva vlastné kamióny skladu na ceste s príchodom do 30 min. Čakajúci kamión pred bránou sa nesimuluje, takže jeho štítok sa nezobrazí.
+  - Poloha balíka (`/api/shadow/parcels/{barcode}`) vracia aj hmotnosť, kamión a plánovaný odchod pre kartu sledovania.
+- **Dôsledok:** Scéna má rovnaké rozloženie a vzhľad ako maketa, počty sa líšia podľa stavu simulácie. Mapa Flotily má rovnaké farby kamiónov. Veľká rovina „zeme“ je len v tieni (na mape by zakryla podklad).

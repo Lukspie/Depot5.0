@@ -108,3 +108,38 @@ Rozdiely v číslach oproti makete sú dané stavom simulácie (iný deň, iné 
 ![Žilina: rovnaký layout, obsah depa bez triedenia](../screenshots/faza-7d/4-dispecing-zilina.png)
 
 ![Telefón 390 px](../screenshots/faza-7d/4-dispecing-390.png)
+
+## Krok 5 – digitálny tieň (maketa-tien)
+
+Situácia `evening-peak` okolo 18:40 pri 30×, Budimír, dispečer, vybraný kamión pri LD-02 a sledovaný balík v ňom (ako maketa), 1440 px. Kontrolný zoznam z [README makety](../design/maketa-tien/README.md).
+
+| Položka | Maketa | Pred | Čo sa zmenilo | Stav |
+| --- | --- | --- | --- | --- |
+| Navigácia | zbalená na pruh 72 px | 72 px (krok 1) | bez zmeny | ✓ |
+| Scéna | cez celú plochu, bez scrollu pri 1280 / 1440 | áno | bez vodorovného aj zvislého posúvania (merané) | ✓ |
+| Horná lišta | jeden riadok: sklad, „5/8 brán obsadených“, hľadanie (`/`), čas + vlna + rýchlosť, Scenár (čo ak), alarmy s počtom | sklad, brány, hľadanie, čas, Scenár | doplnená vlna a rýchlosť v pilulke času, skratka `/`, zvonček s počtom a zoznamom alarmov skladu. Sklad je rozbaľovací zoznam: päť skladov sa do segmentov nezmestí (schválené vo Fáze 7c) | ✓ |
+| KPI | 4 nízke karty v jednom riadku, pod 1380 px v dvoch | 4 karty pod sebou vľavo | riadok pod lištou: balíky vo vlne, kamióny v areáli (+ prichádza), čítanosť skenerov (ktorý klesá), alarmy (typy). Sklad bez vĺn a vlastných jázd (Žilina, hub) ukáže len kamióny a alarmy, žiadne prázdne karty | ✓ |
+| Detail objektu | vpravo 360 px pod lištou, vedľa stĺpca kamery | 26 rem, zakrýval zoznam | 360 px, štruktúra makety: typ, ŠPZ, trasa a brána, stav a odchod (relatívne), box Balíky / Hmotnosť, riadky Brána, Vybavenie, Chýbajúce balíky (zobraziť), Zlý smer, Kaskáda, tlačidlá „Nakládka pri bráne“ (administrátor, inak „Vozidlo na mape“) a „Presunúť bránu“ | ✓ |
+| Stĺpec kamery | +, −, otočiť, domov, odkryť strechu | áno | bez zmeny, zarovnaný s detailom | ✓ |
+| Taby vpravo dole | Brány / Kamióny / Zariadenia s legendou stavov, vybraný riadok `#fff6eb` | taby, legenda zvlášť vľavo, pri detaile skryté | legenda v karte dole, karta ostáva aj pri detaile, vybraný riadok zvýraznený | ✓ |
+| Sledovanie balíka | vľavo dole: balík, hmotnosť, kde je, kroky ako krúžky na čiare, Odchod s plánom | čísla krokov v krúžkoch | hotové kroky s fajkou, aktuálny s prstencom, „Odchod · plán 21:30“ pre balík v kamióne (hmotnosť, ŠPZ a plánovaný odchod pribudli v API) | ✓ |
+| Kamera | izometria zo strany dvora, fasáda diagonálne stredom | pohľad spredu na fasádu | 45° k fasáde s bránami. Domovský pohľad je stena s bránami a dvor pred ňou, posunutý vľavo od panelov. Výber objektu kameru len posunie, prehľad ostáva | ✓ |
+| Strecha | predvolene zatvorená | áno | bez zmeny (otvorí sa pri hľadanom balíku alebo zariadení v hale) | ✓ |
+| Farby scény | svetlé prostredie, sýte objekty (tabuľka) | sivé plochy, modré a zelené ťahače | paleta `PAL` podľa tabuľky (zem, asfalt, fasáda, sokel, strecha, svetlíky, atika, brány, tabuľky, státia, náves, ťahače, sklo) | ✓ |
+| Tri odtiene, tiene | vrch najsvetlejší, fasáda stredná, bok najtmavší; ContactShadows | jedno svetlo zhora | hemisférické + smerové svetlo zľava zhora, mäkké `ContactShadows` | ✓ |
+| Fasáda | rebrovaný plech, oranžová atika, rámy brán, tmavé tabuľky s číslami brán, tabuľa „Depot 5.0 · BUDIMÍR“, otvorené brány s krabicami | biele steny, oranžový pás len nad bránami | rebrá (textúra), sokel, atika okolo celej haly, tabuľky „02 BA“, tabuľa s názvom skladu z dát, otvorené brány tmavé s krabicami | ✓ |
+| Dvor | žlté státia, prerušovaný jazdný pruh, závora a vrátnica | biele čiary, plný sivý pruh | žlté státia pred bránami a pre návesy, biely prerušovaný pruh, závora a vrátnica na ostrovčeku (podľa layoutu), stromy na okraji | ✓ |
+| Kamióny a dodávky | biele návesy, ťahače tmavé (diaľkové) a oranžové (prechody), dodávky biele s oranžovým pruhom | farebné ťahače podľa témy | podľa makety, rovnaké aj na mape Flotily | ✓ |
+| Piny | kvapka (zelená, jantárová, červená, fialová), biely obrys, degradovaný s prstencom | kvapka | jantárová `#c97f00`, prstenec pri degradovanom, vybraný s oranžovým obrysom | ✓ |
+| Popisky | len pri hoveri | áno | áno (brány, zariadenia) | ✓ |
+| Plávajúce štítky | vybraný kamión (oranžový obrys), degradované zariadenie, prichádzajúci a čakajúci kamión | – | vybraný kamión: oranžový obrys vrchu a štítok „KE-102LH · Bratislava · 3 %“; degradované zariadenie: štítok s čítanosťou; prichádzajúci kamión: štítok pri vjazde (vlastné kamióny do 30 min, nové pole v stave skladu). **Čakajúci kamión pred bránou** simulácia nemá (kamión ide z cesty rovno k bráne), štítok sa ukáže, keď taký stav pribudne. Zásada „dáta majú prednosť“ | ✓ |
+
+Rozdiely v počtoch (5/8 vs. 3/8 brán, viac kamiónov a návesov v makete) sú stav simulácie, nie rozloženie.
+
+![Pred: maketa vľavo, stav pred krokom 5 vpravo](../screenshots/faza-7d/5-tien-pred.png)
+
+![Po: maketa vľavo, implementácia vpravo (1440 px)](../screenshots/faza-7d/5-tien-po-1440.png)
+
+![Po: 1280 px (KPI v dvoch riadkoch)](../screenshots/faza-7d/5-tien-po-1280.png)
+
+![Telefón 390 px a Žilina (bez prázdnych kariet)](../screenshots/faza-7d/5-tien-390-zilina.png)

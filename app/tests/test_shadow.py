@@ -76,6 +76,9 @@ def test_shadow_locates_a_parcel(viewer: TestClient, db: Session) -> None:
     assert (
         loaded["events"][-1]["status"] == "loaded" and loaded["events"][-1]["doorCode"] == "LD-02"
     )
+    # the tracking card of the scene (phase 7d): weight, the truck and its planned departure
+    assert loaded["weightKg"] == ba.weight_kg
+    assert loaded["vehiclePlate"] and loaded["plannedDeparture"]
 
     send_trip(viewer, ba_trip.id, "departed", local(21, 40))
     gone = viewer.get(f"/api/shadow/parcels/{ba.barcode}").json()
@@ -191,3 +194,23 @@ def test_stale_trip_of_the_previous_day_does_not_block_the_door(
         .all()
     )
     assert scans == [today.id]
+
+
+@pytest.mark.usefixtures("seeded")
+def test_arriving_own_truck_in_the_depot_state(viewer: TestClient, db: Session, at_time) -> None:  # type: ignore[no-untyped-def]
+    """Phase 7d: the shadow labels a truck of the depot arriving within half an hour."""
+    from depotrack.models.enums import TripStatus
+
+    night = trip(db, "BB", "inbound")
+    at_time(local(0, 50, DAY + timedelta(days=1)))
+    night.status = TripStatus.EN_ROUTE
+    night.predicted_arrival = local(1, 10, DAY + timedelta(days=1))
+    db.commit()
+    state = viewer.get("/api/depots/BUD/state").json()
+    arriving = [t for t in state["trucks"] if t["state"] == "arriving"]
+    assert [t["tripId"] for t in arriving] == [night.id]
+    night.predicted_arrival = local(2, 30, DAY + timedelta(days=1))  # more than 30 min away
+    db.commit()
+    assert not [
+        t for t in viewer.get("/api/depots/BUD/state").json()["trucks"] if t["state"] == "arriving"
+    ]

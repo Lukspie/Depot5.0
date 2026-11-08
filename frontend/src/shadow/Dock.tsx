@@ -32,7 +32,8 @@ export function Dock({
 }) {
   const [hover, setHover] = useState(false);
   const frame = useMemo(() => dockFrame(brand), [brand]);
-  const plate = useMemo(() => numberPlate(door.code.replace(/^\D+-?0?/, ""), brand), [door.code, brand]);
+  // "02 BA": the door number and the direction loading there (maketa-tien)
+  const plate = useMemo(() => numberPlate(`${door.code.replace(/^\D+-?/, "")}${label ? ` ${label}` : ""}`, brand), [door.code, label, brand]);
   const open = state === "open";
   const fault = state === "fault";
   // no valid reading (no sensor, switched off, not received yet): neutral, never a guess

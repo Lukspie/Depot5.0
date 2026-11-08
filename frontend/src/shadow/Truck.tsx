@@ -1,9 +1,11 @@
+import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import type * as THREE from "three";
-import { cssColor, disposeTree, truckModel } from "./parts";
+import * as THREE from "three";
+import { disposeTree, TRUCK_COLOR, truckModel } from "./parts";
 
 const ENTER_S = 1.6;
+const TOP_TRAILER = new THREE.BoxGeometry(2.7, 0.02, 13.7);
 const ENTER_FROM = -26;
 
 /** how long a departing truck stays in the scene (it drives away meanwhile) */
@@ -14,12 +16,26 @@ export const LEAVE_MS = ENTER_S * 1000;
  * arrival and away on departure (`leaving`); while moving it requests frames itself
  * (frameloop="demand").
  */
-export function Truck({ x, z, directionType, leaving = false, onSelect }: { x: number; z: number; directionType: string; leaving?: boolean; onSelect?: () => void }) {
-  // cab colour from the theme tokens (linehaul = info, transit = ok, others neutral)
-  const model = useMemo(
-    () => truckModel(cssColor(directionType === "linehaul" ? "--color-info-600" : directionType === "transit" ? "--color-ok-600" : "--color-neutral-600", "#8a8a86")),
-    [directionType],
-  );
+export function Truck({
+  x,
+  z,
+  directionType,
+  leaving = false,
+  onSelect,
+  selected = false,
+  label,
+}: {
+  x: number;
+  z: number;
+  directionType: string;
+  leaving?: boolean;
+  onSelect?: () => void;
+  /** orange outline of the top and the floating label (maketa-tien) */
+  selected?: boolean;
+  label?: string;
+}) {
+  // white trailer, tractor dark for linehaul and orange for transit trucks (maketa-tien)
+  const model = useMemo(() => truckModel(TRUCK_COLOR[directionType] ?? 0x8a8a86), [directionType]);
   useEffect(() => () => disposeTree(model), [model]);
   const group = useRef<THREE.Group>(null);
   const born = useRef<number | null>(null);
@@ -46,6 +62,29 @@ export function Truck({ x, z, directionType, leaving = false, onSelect }: { x: n
       }}
     >
       <primitive object={model} />
+      {selected && (
+        <>
+          {/* orange outline round the top of the trailer and the cab */}
+          <lineSegments position={[0, 4.12, -7.4]}>
+            <edgesGeometry args={[TOP_TRAILER]} />
+            <lineBasicMaterial color="#f39200" linewidth={2} />
+          </lineSegments>
+          <mesh position={[0, 4.13, -7.4]} rotation-x={-Math.PI / 2}>
+            <planeGeometry args={[2.6, 13.6]} />
+            <meshBasicMaterial color="#f39200" transparent opacity={0.18} depthWrite={false} />
+          </mesh>
+        </>
+      )}
+      {label && (
+        <Html position={[0, 6.2, -9]} center zIndexRange={[6, 3]} style={{ pointerEvents: "none" }}>
+          <div
+            className={`bg-surface flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-bold whitespace-nowrap shadow-md ${selected ? "border-brand-500 border-2" : "border-line border"}`}
+          >
+            <span className={`h-2 w-2 rounded-full ${selected ? "bg-brand-500" : "bg-neutral-600"}`} />
+            {label}
+          </div>
+        </Html>
+      )}
     </group>
   );
 }

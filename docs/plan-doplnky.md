@@ -338,7 +338,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - Štruktúrované alarmy (typ, čas, nadpis, čipy faktov, akcie Otvoriť scenár / Detail balíka / Poslať na údržbu / Potvrdiť), balíky podľa smerov (skladané pruhy), časová os dňa 15:00 → 15:00. Doplním, čo API ešte nevracia (fakty alarmu, nakládka od).
 - Export dňa: CSV jázd dňa.
 
-**Krok 5 – Digitálny tieň podľa makety** (frontend), kontrolný zoznam z README makety, všetko ✓:
+**Krok 5 – Digitálny tieň podľa makety** (frontend, ADR-070) *(hotové)*, kontrolný zoznam z README makety, všetko ✓:
 - 5a layout: zbalená navigácia 72 px, scéna cez celú plochu bez scrollu pri 1280/1440, horná lišta v jednom riadku, 4 nízke KPI v riadku (pod 1380 px dva), detail 360 px + stĺpec kamery, taby s legendou vpravo dole, sledovanie balíka vľavo dole,
 - 5b scéna: kamera izometria zo strany dvora, fasáda diagonálne stredom, strecha zatvorená; farby podľa tabuľky, tri odtiene na objekt, `ContactShadows`; fasáda (rebrovaný plech, oranžová atika, rámy brán, tmavé tabuľky čísel brán, tabuľa „Depot 5.0 · <SKLAD>“, otvorené brány s krabicami); dvor (žlté státia, prerušovaný pruh, závora, vrátnica); kamióny (biele návesy, ťahače tmavé a oranžové), dodávky biele s oranžovým pruhom,
 - 5c piny v tvare kvapky, popisky pri hoveri, plávajúce štítky len pre vybraný, degradovaný, prichádzajúci a čakajúci kamión.

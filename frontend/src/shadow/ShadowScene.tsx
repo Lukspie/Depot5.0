@@ -1,4 +1,4 @@
-import { ContactShadows } from "@react-three/drei";
+import { ContactShadows, Html } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -13,6 +13,7 @@ import { Highlight } from "./Highlight";
 import { devicePosition, facingOf, facingRotation, hallOf, inFront, type DepotLayout } from "./layout";
 import { ParcelFlow } from "./ParcelFlow";
 import { cssColor } from "./parts";
+import { hhmm } from "../lib/format";
 import { useShadowStore } from "./store";
 import { LEAVE_MS, Truck } from "./Truck";
 import { YardCars } from "./YardCars";
@@ -82,6 +83,27 @@ interface TruckSpot {
   rot: number;
   type: string;
   door: string;
+  /** "KE-102LH · Bratislava · 64 %" for the floating label of the selected truck */
+  label: string;
+}
+
+/** Trucks arriving within half an hour: labels by the yard gate (maketa-tien "prichádza"). */
+function Arriving({ layout, live }: { layout: DepotLayout; live: Shadow | undefined }) {
+  const gate = layout.layout.yardGate;
+  const coming = (live?.trucks ?? []).filter((t) => t.state === "arriving").slice(0, 3);
+  if (!gate || coming.length === 0) return null;
+  return (
+    <>
+      {coming.map((t, i) => (
+        <Html key={t.plate} position={[gate[0], 3 + i * 3.2, gate[1]]} center zIndexRange={[6, 3]} style={{ pointerEvents: "none" }}>
+          <div className="bg-surface border-line flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-bold whitespace-nowrap shadow-md">
+            <span className="bg-info-600 h-2 w-2 rounded-full" />
+            {t.plate} · prichádza{t.at ? ` · ${hhmm(t.at)}` : ""}
+          </div>
+        </Html>
+      ))}
+    </>
+  );
 }
 
 /** Trucks that just left stay for LEAVE_MS with `leaving`, so they drive away instead of vanishing. */
@@ -118,7 +140,16 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       const door = doors.get(d.code);
       if (t && door && (t.status === "at_door" || t.status === "loading")) {
         // 1 m gap for the dock leveler between the trailer and the facade
-        trucks.push({ key: `${t.vehiclePlate}-${String(t.id)}`, x: door.x, z: door.y, rot: facingRotation(facingOf(layout, door)), type: t.directionType, door: d.code });
+        const load = t.load && t.capacityParcels ? ` · ${String(Math.round((t.load.loaded / t.capacityParcels) * 100))} %` : "";
+        trucks.push({
+          key: `${t.vehiclePlate}-${String(t.id)}`,
+          x: door.x,
+          z: door.y,
+          rot: facingRotation(facingOf(layout, door)),
+          type: t.directionType,
+          door: d.code,
+          label: `${t.vehiclePlate} · ${t.directionName}${load}`,
+        });
       }
     }
   }
@@ -128,7 +159,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
   const here = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
   here.slice(0, ramps.length).forEach((t, i) => {
     const r = ramps[i];
-    if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, rot: facingRotation(facingOf(layout, r)), type: "linehaul", door: r.code });
+    if (r) trucks.push({ key: t.plate, x: r.x, z: r.y, rot: facingRotation(facingOf(layout, r)), type: "linehaul", door: r.code, label: t.plate });
   });
   return trucks;
   }, [layout, live, doors]);
@@ -140,7 +171,9 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
     const dev = devices[code];
     return dev ? devicePosition(layout, dev) : null;
   };
-  const selected = selection ? ringAt(selection.code) : null;
+  // a selected truck gets its outline and label; the ring stays for doors without one and devices
+  const selectedTruck = selection?.kind === "dock" ? trucks.find((t) => t.door === selection.code) : undefined;
+  const selected = selection && !selectedTruck ? ringAt(selection.code) : null;
 
   return (
     <group>
@@ -155,7 +188,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
             brand={brand}
             label={docks.get(door.code)?.trip?.directionCode ?? door.directionCode}
             state={devices[doorStates[door.code]?.device ?? ""]?.status === "offline" ? "unknown" : doorStates[door.code]?.state}
-            selected={selection?.kind === "dock" && selection.code === door.code}
+            selected={selection?.kind === "dock" && selection.code === door.code && !selectedTruck}
             onSelect={selectDock}
           />
         ) : door.kind === "staging_bay" ? (
@@ -164,7 +197,14 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       )}
       {trucks.map((t) => (
         <group key={t.key} position={[t.x, 0, t.z]} rotation-y={t.rot}>
-          <Truck x={0} z={-1} directionType={t.type} onSelect={() => selectDock(t.door)} />
+          <Truck
+            x={0}
+            z={-1}
+            directionType={t.type}
+            onSelect={() => selectDock(t.door)}
+            selected={selectedTruck?.key === t.key}
+            label={selectedTruck?.key === t.key ? t.label : undefined}
+          />
         </group>
       ))}
       {departing.map((t) => (
@@ -188,6 +228,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
         );
       })}
       <ParcelFlow layout={layout} />
+      <Arriving layout={layout} live={live} />
       <YardCars layout={layout} />
       <CourierVans layout={layout} />
       {selected && <Highlight x={selected[0]} z={selected[1]} radius={selection?.kind === "device" ? 2 : 3.5} />}
@@ -207,12 +248,19 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
 export function ShadowScene({ onFps, onCamera, ...props }: Props) {
   // home view: the hall with the doors and the trucks in front of them, whichever wall they are on
   const homeBox = useMemo(() => {
-    const { width: w, depth: d, height: h } = hallOf(props.layout);
-    const box = new THREE.Box3(new THREE.Vector3(-w / 2 - 2, 0, -d / 2), new THREE.Vector3(w / 2 + 2, h, d / 2));
+    // the doors, the trucks in front of them and a strip of the hall behind (maketa-tien)
+    const { height: h } = hallOf(props.layout);
+    const box = new THREE.Box3();
     for (const door of props.layout.doors) {
       if (door.kind !== "loading_dock") continue;
-      const [x, z] = inFront(props.layout, door, 20);
-      box.expandByPoint(new THREE.Vector3(x, 0, z));
+      for (const out of [24, -14]) {
+        const [x, z] = inFront(props.layout, door, out);
+        box.expandByPoint(new THREE.Vector3(x, out < 0 ? h : 0, z));
+      }
+    }
+    if (box.isEmpty()) {
+      const { width: w, depth: d } = hallOf(props.layout);
+      box.set(new THREE.Vector3(-w / 2, 0, -d / 2), new THREE.Vector3(w / 2, h, d / 2));
     }
     return box;
   }, [props.layout]);
@@ -240,10 +288,11 @@ export function ShadowScene({ onFps, onCamera, ...props }: Props) {
       }}
       aria-label="3D scéna haly"
     >
-      <hemisphereLight args={["#ffffff", "#d9dde3", 1.5]} />
+      {/* light from the top left of the view: tops brightest, facade middle, sides darkest */}
+      <hemisphereLight args={["#ffffff", "#e9e7e1", 1.25]} />
       <directionalLight
-        position={[-60, 120, -40]}
-        intensity={1.5}
+        position={[70, 140, -50]}
+        intensity={1.9}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-110}
@@ -255,7 +304,7 @@ export function ShadowScene({ onFps, onCamera, ...props }: Props) {
       <CameraRig onReady={onCamera} homeBox={homeBox} homeTurn={homeTurn}>
         <Depot {...props} />
       </CameraRig>
-      <ContactShadows position={[0, 0.12, -10]} scale={240} blur={2.4} opacity={0.3} far={18} resolution={1024} />
+      <ContactShadows position={[0, 0.12, -10]} scale={260} blur={2.2} opacity={0.35} far={16} resolution={1024} color="#3d3c39" />
       <Invalidator />
       {onFps && <FpsProbe onSample={onFps} />}
     </Canvas>

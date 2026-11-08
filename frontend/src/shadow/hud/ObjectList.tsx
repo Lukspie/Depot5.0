@@ -23,10 +23,15 @@ function DoorBadge({ state }: { state: string | undefined }) {
   return <StatusDot tone={s.tone}>{s.label}</StatusDot>;
 }
 
-function Row({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+function Row({ onClick, children, active = false }: { onClick: () => void; children: React.ReactNode; active?: boolean }) {
   return (
     <li>
-      <button type="button" onClick={onClick} className="hover:bg-canvas flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-current={active || undefined}
+        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm ${active ? "bg-brand-50" : "hover:bg-canvas"}`}
+      >
         {children}
         <ChevronRight size={15} className="text-ink-muted shrink-0" />
       </button>
@@ -38,7 +43,7 @@ function Row({ onClick, children }: { onClick: () => void; children: React.React
  * Bottom-right list (reference): tabs Brány x/y · Kamióny · Zariadenia; a row is code, state,
  * mini progress and "›". A click focuses the camera on the object and opens its detail.
  */
-export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick: (p: Pick) => void }) {
+export function ObjectList({ live, onPick, selected }: { live: Shadow | undefined; onPick: (p: Pick) => void; selected?: string | null }) {
   const [tab, setTab] = useState<Tab>("doors");
   const devices = useShadowStore((s) => s.devices);
   const doorReadings = useShadowStore((s) => s.doors);
@@ -50,7 +55,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
   const hubTrucks = (live?.trucks ?? []).filter((t) => t.state === "at_hub" || t.state === "loading_at_hub");
   const deviceList = Object.values(devices).sort((a, b) => a.code.localeCompare(b.code));
   return (
-    <div className="bg-surface shadow-card flex max-h-full flex-col rounded-2xl p-3">
+    <div className="bg-surface border-line shadow-card flex max-h-full flex-col rounded-2xl border p-3">
       <Tabs<Tab>
         active={tab}
         onChange={setTab}
@@ -64,7 +69,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
       <ul className="min-h-0 flex-1 overflow-y-auto">
         {tab === "doors" &&
           docks.map((d) => (
-            <Row key={d.code} onClick={() => onPick({ kind: "dock", code: d.code })}>
+            <Row key={d.code} active={selected === d.code} onClick={() => onPick({ kind: "dock", code: d.code })}>
               <span className="w-12 shrink-0 font-mono text-xs font-semibold">{d.code}</span>
               <span className="w-10 shrink-0 text-xs">{d.trip?.directionCode ?? d.defaultDirection ?? "—"}</span>
               {d.trip ? <Badge tone={TRIP_STATUS[d.trip.status].tone} size="sm">{TRIP_STATUS[d.trip.status].label}</Badge> : <Badge size="sm">voľná</Badge>}
@@ -92,7 +97,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
             <li className="text-ink-muted px-2 py-3 text-sm">Pri bránach nestojí žiadny kamión.</li>
           ) : (
             busy.map((d) => (
-              <Row key={d.code} onClick={() => onPick({ kind: "dock", code: d.code })}>
+              <Row key={d.code} active={selected === d.code} onClick={() => onPick({ kind: "dock", code: d.code })}>
                 <span className="w-20 shrink-0 font-mono text-xs font-semibold">{d.trip?.vehiclePlate}</span>
                 <span className="w-12 shrink-0 text-xs">{d.code}</span>
                 <Progress className="min-w-0 flex-1" value={Math.round(d.trip?.load?.loadedKg ?? 0)} max={d.trip?.capacityKg ?? 0} tone="brand" />
@@ -112,7 +117,7 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
           ))}
         {tab === "devices" &&
           deviceList.map((dev) => (
-            <Row key={dev.code} onClick={() => onPick({ kind: "device", code: dev.code })}>
+            <Row key={dev.code} active={selected === dev.code} onClick={() => onPick({ kind: "device", code: dev.code })}>
               <span className="w-24 shrink-0 font-mono text-xs font-semibold">{dev.code}</span>
               {dev.kind === "door_sensor" ? (
                 <DoorBadge state={dev.status === "offline" ? "unknown" : doorReadings[dev.doorCode ?? ""]?.state} />
@@ -125,6 +130,15 @@ export function ObjectList({ live, onPick }: { live: Shadow | undefined; onPick:
             </Row>
           ))}
       </ul>
+      {/* legend of the pins (maketa-tien: at the bottom of the tabs) */}
+      <div className="border-line-soft text-ink-muted mt-1 flex flex-wrap gap-x-3 gap-y-1 border-t px-1 pt-2 text-[11.5px]">
+        {(["online", "degraded", "offline", "maintenance"] as const).map((s) => (
+          <span key={s} className="flex items-center gap-1.5">
+            <i className={`inline-block h-2.5 w-2.5 rounded-full ${s === "online" ? "bg-ok-600" : s === "degraded" ? "bg-warn-600" : s === "offline" ? "bg-danger-600" : "bg-[#7c5cd6]"}`} />
+            {DEVICE_LABEL[s]}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

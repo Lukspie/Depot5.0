@@ -18,6 +18,9 @@ const LABEL: Record<DeviceStatus, string> = { online: "online", degraded: "degra
  */
 export function DevicePin({ code, x, z, height, selected, onSelect }: { code: string; x: number; z: number; height: number; selected: boolean; onSelect: (code: string) => void }) {
   const status = useShadowStore((s) => s.devices[code]?.status ?? "offline");
+  const rate = useShadowStore((s) => s.devices[code]?.readRate ?? null);
+  // the label is shown on hover, for the selected pin and always for a degraded device
+  const pinned = selected || status === "degraded";
   const ring = useRef<HTMLSpanElement>(null);
 
   useFrame((state) => {
@@ -51,14 +54,16 @@ export function DevicePin({ code, x, z, height, selected, onSelect }: { code: st
         >
           {/* drop: a rotated square with three round corners, the tip points down */}
           <span
-            className={`absolute inset-0.5 -rotate-45 rounded-[50%_50%_50%_0] border-2 border-white shadow-md ${DOT[status]} ${selected ? "outline-ink outline-2" : ""}`}
+            className={`absolute inset-0.5 -rotate-45 rounded-[50%_50%_50%_0] border-2 border-white shadow-md ${DOT[status]} ${selected ? "outline-brand-500 outline-2" : ""} ${status === "degraded" ? "ring-warn-600/30 ring-4" : ""}`}
           />
           <span className="relative h-2 w-2 rounded-full bg-white" />
           <span ref={ring} className={`pointer-events-none absolute inset-0 rounded-full opacity-0 ${DOT[status]}`} />
           <span
-            className={`bg-surface shadow-card text-ink pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${selected ? "block" : "hidden group-hover:block"}`}
+            className={`bg-surface text-ink pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-bold whitespace-nowrap shadow-md ${pinned ? "flex" : "hidden group-hover:flex"} ${status === "degraded" ? "border-warn-600 border" : ""}`}
           >
+            <i className={`inline-block h-2 w-2 rounded-full ${DOT[status]}`} />
             {code} · {LABEL[status]}
+            {rate !== null && status === "degraded" ? ` · ${String(Math.round(rate * 100))} %` : ""}
           </span>
         </button>
       </Html>

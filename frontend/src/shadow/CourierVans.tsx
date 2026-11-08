@@ -11,6 +11,20 @@ function Van() {
   return <Clone object={gltf.scene} scale={MODELS.van.scale} castShadow />;
 }
 
+/** The orange stripe along both sides of a courier van (maketa-tien: white vans, orange stripe). */
+function Stripe() {
+  return (
+    <>
+      {[-1.06, 1.06].map((x) => (
+        <mesh key={x} position={[x, 1.05, 0]}>
+          <boxGeometry args={[0.04, 0.32, 3.9]} />
+          <meshStandardMaterial color="#f39200" roughness={0.8} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
 function PrimitiveVan() {
   const model = useMemo(() => box(2, 2.4, 5.2, mat(0xf4f4f2), 0, 1.3, 0), []);
   useEffect(() => () => disposeTree(model), [model]);
@@ -41,6 +55,7 @@ export function CourierVans({ layout }: { layout: DepotLayout }) {
             <WithModel fallback={<PrimitiveVan />}>
               <Van />
             </WithModel>
+            <Stripe />
           </group>
         );
       })}
@@ -50,6 +65,7 @@ export function CourierVans({ layout }: { layout: DepotLayout }) {
           <WithModel fallback={<PrimitiveVan />}>
             <Van />
           </WithModel>
+          <Stripe />
         </group>
       ))}
     </>

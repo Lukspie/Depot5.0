@@ -6,6 +6,7 @@ GET /api/depots/{code}/state       live state: occupied doors and staged parcels
                                    arriving / waiting / leaving (hub)
 """
 
+from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query
@@ -172,6 +173,23 @@ def depot_state(code: str, user: CurrentUser, db: DbSession) -> DepotState:
         if any(x.destination_depot_id == d.id for x in look.directions.values())
         else []
     )
+    # own trucks arriving within half an hour (the label "prichádza" in the shadow, phase 7d)
+    soon = clk.sim_time + timedelta(minutes=30)
+    for t in db.execute(
+        select(Trip).where(
+            Trip.depot_id == d.id,
+            Trip.kind == TripKind.INBOUND,
+            Trip.status == TripStatus.EN_ROUTE,
+            Trip.operating_day.in_((day, day - timedelta(days=1))),
+        )
+    ).scalars():
+        eta = t.predicted_arrival or t.planned_arrival
+        if eta is not None and eta <= soon:
+            arriving.append(
+                HubTruck(
+                    plate=look.vehicles[t.vehicle_id].plate, trip_id=t.id, state="arriving", at=eta
+                )
+            )
     return DepotState(
         depot=_out(d), sim_time=clk.sim_time, occupied=occupied, staged=staged, trucks=arriving
     )

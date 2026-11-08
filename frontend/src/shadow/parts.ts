@@ -3,15 +3,41 @@
  * - the digital shadow (/shadow, React Three Fiber, wrapped as <primitive> in small components),
  * - the 3D hall on the MapLibre map (components/map/depot3d.ts, custom WebGL layer).
  *
- * Low-poly primitives in the style of docs/design/reference.png: light floor, white low walls,
- * transparent roof, dark belt, coloured doors, cardboard piles. Positions only from the layout.
+ * Low-poly primitives in the look of the approved mockup (docs/design/maketa-tien/README.md):
+ * a light, almost colourless environment and saturated objects (ribbed facade, orange parapet and
+ * door frames, dark number plates, white trailers, dark or orange tractors, yellow stall lines).
+ * Three shades per object come from the light (top brightest, facade middle, side darkest).
+ * Positions only from the layout.
  */
 
 import * as THREE from "three";
 import { beltZ, facingOf, facingRotation, hallOf, headingVec, type DepotLayout, type DeviceStatus, type LayoutDoor, type YardSlot } from "./layout";
 
-export const STATUS_COLOR: Record<DeviceStatus, number> = { online: 0x23874f, degraded: 0xd99a1e, offline: 0xc93434, maintenance: 0x7c5cd6 };
-export const TRUCK_COLOR: Record<string, number> = { linehaul: 0x2f5be9, transit: 0x23874f, local: 0x8a8a86 };
+export const STATUS_COLOR: Record<DeviceStatus, number> = { online: 0x23874f, degraded: 0xc97f00, offline: 0xc93434, maintenance: 0x7c5cd6 };
+/** tractor by direction type (maketa-tien): linehaul dark, transit orange */
+export const TRUCK_COLOR: Record<string, number> = { linehaul: 0x2f2e2c, transit: 0xf39200, local: 0x8a8a86 };
+
+/** Colours of the scene from the mockup's table (docs/design/maketa-tien/README.md). */
+export const PAL = {
+  ground: 0xf3f2ee,
+  grass: 0xe2ead6,
+  yard: 0xe4e3de,
+  ramp: 0xecebe7,
+  facade: 0xf8f7f4,
+  facadeRib: 0xe6e4df,
+  plinth: 0xd8d6d0,
+  roof: 0xebe9e4,
+  skylight: 0xdde2e5,
+  attic: 0xf39200,
+  doorClosed: 0xd4d2cc,
+  doorSlat: 0xc4c2bc,
+  doorOpen: 0x3a3936,
+  plate: 0x1d1d1b,
+  stall: 0xeebd45,
+  trailer: 0xfdfdfc,
+  glass: 0xa9bccb,
+  tree: 0xcfdfbf,
+} as const;
 
 export function cssColor(name: string, fallback: string): THREE.Color {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -75,10 +101,11 @@ function slotOutline(s: YardSlot, length: number, width: number, paint: THREE.Ma
 /** Truck (cab + trailer) backed into a door at (0, 0), pointing north (-z). */
 export function truckModel(cabColor: THREE.ColorRepresentation): THREE.Group {
   const g = new THREE.Group();
-  g.add(box(2.6, 3.7, 13.6, mat(0xf7f7f5), 0, 2.25, -7.4));
-  g.add(box(2.6, 0.5, 13.6, mat(0x5b5b58), 0, 0.25, -7.4));
+  g.add(box(2.6, 3.7, 13.6, mat(PAL.trailer, { roughness: 0.6 }), 0, 2.25, -7.4));
+  g.add(box(2.6, 0.5, 13.6, mat(0x3d3c39), 0, 0.25, -7.4));
   g.add(box(2.5, 3.0, 2.4, mat(cabColor), 0, 1.9, -15.6));
-  g.add(box(2.3, 0.9, 0.1, mat(0x1d1d1b), 0, 2.6, -16.85)); // windscreen
+  g.add(box(2.3, 0.9, 0.1, mat(PAL.glass, { roughness: 0.3 }), 0, 2.6, -16.85)); // windscreen
+  g.add(box(2.5, 0.35, 2.4, mat(0x1d1d1b), 0, 0.45, -15.6)); // bumper and wheels
   return g;
 }
 
@@ -119,16 +146,23 @@ export function pinModel(status: DeviceStatus, height: number): THREE.Group {
 }
 
 /** Yard asphalt around the hall (trucks stand on it north of the doors). */
-export function yardGround(l: DepotLayout): THREE.Object3D {
+export function yardGround(l: DepotLayout, surroundings = false): THREE.Object3D {
   const { width: w, depth: d } = hallOf(l);
   const g = new THREE.Group();
   const site = l.layout.site;
+  // the surroundings in the shadow: light ground (maketa-tien), the plot on it a shade darker;
+  // not on the map, where the map itself is around the plot
+  if (surroundings) {
+    const ground = box(1200, 0.05, 1200, mat(PAL.ground, { roughness: 1 }), 0, -0.05, 0);
+    ground.castShadow = false;
+    g.add(ground);
+  }
   if (site && site.length >= 3) {
     // the depot's plot from OSM (or the assumed yard), with its stands, parking and lanes
-    g.add(flatPolygon(site, mat(0xd6d9de), 0.05), yardMarkings(l), yardPlaces(l));
+    g.add(flatPolygon(site, mat(PAL.yard, { roughness: 1 }), 0.05), yardMarkings(l), yardPlaces(l), trees(site));
     return g;
   }
-  const m = box(w * 1.6, 0.1, d * 3.2, mat(0xd6d9de), 0, 0.05, -d * 0.55);
+  const m = box(w * 1.6, 0.1, d * 3.2, mat(PAL.yard, { roughness: 1 }), 0, 0.05, -d * 0.55);
   m.castShadow = false;
   g.add(m, yardMarkings(l));
   return g;
@@ -140,25 +174,26 @@ export function yardPlaces(l: DepotLayout): THREE.Group {
   const yard = l.layout.yard;
   if (!yard) return g;
   const paint = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const lane = new THREE.MeshBasicMaterial({ color: 0xb9bdc4 });
-  for (const s of yard.truckStands) g.add(slotOutline(s, 17, 4, paint));
+  const stall = new THREE.MeshBasicMaterial({ color: PAL.stall });
+  for (const s of yard.truckStands) g.add(slotOutline(s, 17, 4, stall));
   for (const s of yard.vanParking) g.add(slotOutline(s, 6, 2.8, paint));
   for (const s of yard.carParking) g.add(slotOutline(s, 5, 2.5, paint));
+  // driving lanes: white dashes (maketa-tien)
   for (const path of yard.lanes) {
     for (let i = 0; i + 1 < path.length; i++) {
       const a = path[i];
       const b = path[i + 1];
-      if (a && b) g.add(segment(a, b, 0.25, 0.02, lane, 0.1));
+      if (a && b) dashes(g, a, b, paint);
     }
   }
   const house = yard.gatehouse;
   if (house) {
     const island = flatPolygon(
       [-4, 4, 4, -4].map((dx, i): [number, number] => [house[0] + dx, house[1] + (i < 2 ? -3 : 3)]),
-      mat(0x9fc59a),
+      mat(PAL.grass),
       0.12,
     );
-    g.add(island, box(3, 3, 3, mat(0xffffff), house[0], 1.6, house[1]));
+    g.add(island, gatehouse(house[0], house[1]));
   }
   return g;
 }
@@ -199,20 +234,79 @@ function outlineShell(l: DepotLayout, outline: [number, number][], brand: THREE.
   const g = new THREE.Group();
   const { height: h } = hallOf(l);
   const ring = outline[0]?.[0] === outline.at(-1)?.[0] && outline[0]?.[1] === outline.at(-1)?.[1] ? outline.slice(0, -1) : outline;
-  g.add(flatPolygon(ring, mat(0xeceae5), 0.35));
-  const wall = mat(0xf4f4f2);
-  const docks = l.doors.filter((x) => x.kind === "loading_dock");
+  g.add(flatPolygon(ring, mat(PAL.ramp), 0.35));
+  const plinth = mat(PAL.plinth);
+  const attic = mat(brand);
   ring.forEach((a, i) => {
     const b = ring[(i + 1) % ring.length] ?? a;
-    g.add(segment(a, b, 0.5, h, wall, 0));
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const near = docks.some((dk) => {
-      const t = ((dk.x - a[0]) * (b[0] - a[0]) + (dk.y - a[1]) * (b[1] - a[1])) / (len * len || 1);
-      const px = a[0] + t * (b[0] - a[0]);
-      const pz = a[1] + t * (b[1] - a[1]);
-      return t >= 0 && t <= 1 && Math.hypot(dk.x - px, dk.y - pz) < 1;
-    });
-    if (near) g.add(segment(a, b, 0.7, 0.6, mat(brand), h - 0.6));
+    // ribbed sheet metal (maketa-tien): a striped texture repeated along the wall
+    g.add(segment(a, b, 0.5, h, ribbedWall(len, h), 0));
+    g.add(segment(a, b, 0.62, 0.9, plinth, 0));
+    // the orange parapet runs round the whole hall
+    g.add(segment(a, b, 0.7, 0.9, attic, h - 0.9));
+  });
+  return g;
+}
+
+/** Ribbed facade material: vertical ribs every 0.6 m, repeated over a wall of `len` × `h` m. */
+function ribbedWall(len: number, h: number): THREE.MeshStandardMaterial {
+  const tex = new THREE.CanvasTexture(ribCanvas());
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(Math.max(1, len / 0.6), 1);
+  void h;
+  return mat(0xffffff, { map: tex, roughness: 0.9 });
+}
+
+let ribs: HTMLCanvasElement | null = null;
+function ribCanvas(): HTMLCanvasElement {
+  if (ribs) return ribs;
+  ribs = document.createElement("canvas");
+  ribs.width = 32;
+  ribs.height = 4;
+  const ctx = ribs.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = `#${PAL.facade.toString(16)}`;
+    ctx.fillRect(0, 0, 32, 4);
+    ctx.fillStyle = `#${PAL.facadeRib.toString(16)}`;
+    ctx.fillRect(26, 0, 6, 4);
+  }
+  return ribs;
+}
+
+/** White dashes along a lane from a to b (3 m dash, 3 m gap). */
+function dashes(g: THREE.Group, a: [number, number], b: [number, number], paint: THREE.Material): void {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const [ux, uz] = [(b[0] - a[0]) / (len || 1), (b[1] - a[1]) / (len || 1)];
+  for (let t = 0; t + 3 <= len; t += 6) {
+    g.add(segment([a[0] + ux * t, a[1] + uz * t], [a[0] + ux * (t + 3), a[1] + uz * (t + 3)], 0.22, 0.02, paint, 0.1));
+  }
+}
+
+/** Gatehouse on its island (white box, dark roof edge, window). */
+function gatehouse(x: number, z: number): THREE.Group {
+  const g = new THREE.Group();
+  g.add(box(3, 3, 3, mat(PAL.facade), x, 1.6, z));
+  g.add(box(3.3, 0.3, 3.3, mat(0x3d3c39), x, 3.25, z));
+  g.add(box(3.05, 0.9, 2.2, mat(PAL.glass, { roughness: 0.3 }), x, 2.1, z));
+  return g;
+}
+
+/** A few low-poly trees on the edge of the plot (light green blocks, maketa-tien). */
+function trees(site: [number, number][]): THREE.Group {
+  const g = new THREE.Group();
+  const leaf = mat(PAL.tree, { roughness: 1 });
+  const cx = site.reduce((s, p) => s + p[0], 0) / site.length;
+  const cz = site.reduce((s, p) => s + p[1], 0) / site.length;
+  site.forEach(([x, z], i) => {
+    if (i % 2) return;
+    // a little outside the corner of the plot
+    const [dx, dz] = [x - cx, z - cz];
+    const k = 1 + 8 / Math.hypot(dx, dz);
+    const [tx, tz] = [cx + dx * k, cz + dz * k];
+    g.add(box(4, 4, 4, leaf, tx, 2, tz), box(2.6, 2.6, 2.6, leaf, tx + 2.2, 1.3, tz + 1.4));
   });
   return g;
 }
@@ -222,35 +316,40 @@ export function hallRoof(l: DepotLayout, brand: THREE.Color): THREE.Group {
   const outline = l.layout.footprint;
   if (outline && outline.length >= 4) {
     const g = new THREE.Group();
-    const { height: h } = hallOf(l);
-    g.add(prism(outline, mat(0xe7e7e3), h, h + 0.4));
+    const { width: w, depth: d, height: h } = hallOf(l);
+    g.add(prism(outline, mat(PAL.roof, { roughness: 1 }), h - 0.2, h + 0.2));
+    // skylight strips across the roof (in the hall frame)
+    const sky = mat(PAL.skylight, { roughness: 0.4 });
+    for (let x = -w / 2 + 8; x < w / 2 - 6; x += 12) g.add(box(2.4, 0.12, d * 0.62, sky, x, h + 0.26, 0));
     return g;
   }
   const g = new THREE.Group();
   const { width: w, depth: d, height: h } = hallOf(l);
-  g.add(box(w + 1, 0.4, d + 1, mat(0xe7e7e3), 0, h + 0.2, 0));
+  g.add(box(w + 1, 0.4, d + 1, mat(PAL.roof, { roughness: 1 }), 0, h + 0.2, 0));
   g.add(box(w + 1.2, 0.5, 0.6, mat(brand), 0, h + 0.45, -d / 2 - 0.3));
   return g;
 }
 
 /** Door number plate above an opening (canvas texture, no font download at runtime). */
 export function numberPlate(text: string, brand: THREE.Color): THREE.Mesh {
+  // dark plate with white text, e.g. "01 BB" (maketa-tien); `brand` kept for the map layer
+  void brand;
   const canvas = document.createElement("canvas");
-  canvas.width = 128;
+  canvas.width = 192;
   canvas.height = 64;
   const ctx = canvas.getContext("2d");
   if (ctx) {
-    ctx.fillStyle = `#${brand.getHexString()}`;
-    ctx.fillRect(0, 0, 128, 64);
+    ctx.fillStyle = `#${PAL.plate.toString(16).padStart(6, "0")}`;
+    ctx.fillRect(0, 0, 192, 64);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 44px Inter, system-ui, sans-serif";
+    ctx.font = "bold 38px Inter, system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, 64, 34);
+    ctx.fillText(text, 96, 34);
   }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), new THREE.MeshBasicMaterial({ map: tex }));
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.2), new THREE.MeshBasicMaterial({ map: tex }));
   m.rotation.y = Math.PI; // faces north, to the yard
   return m;
 }
@@ -258,13 +357,13 @@ export function numberPlate(text: string, brand: THREE.Color): THREE.Mesh {
 /** Sectional door: closed panel in the opening, or rolled up under the lintel when open. */
 export function doorLeaf(open: boolean): THREE.Group {
   const g = new THREE.Group();
-  const panel = mat(0xc9ced6);
+  const panel = mat(PAL.doorClosed);
   if (open) {
     g.add(box(OPENING_W - 0.2, 0.5, 0.3, panel, 0, OPENING_H - 0.3, 0.1));
     return g;
   }
   g.add(box(OPENING_W - 0.2, OPENING_H - 0.1, 0.15, panel, 0, OPENING_H / 2, 0));
-  for (let i = 1; i < 5; i++) g.add(box(OPENING_W - 0.2, 0.05, 0.17, mat(0x9aa1ab), 0, (OPENING_H / 5) * i, 0));
+  for (let i = 1; i < 6; i++) g.add(box(OPENING_W - 0.2, 0.06, 0.17, mat(PAL.doorSlat), 0, (OPENING_H / 6) * i, 0));
   return g;
 }
 
@@ -304,14 +403,15 @@ export function yardMarkings(l: DepotLayout): THREE.Group {
     g.add(m);
   };
   const stallDepth = 18;
+  const stall = new THREE.MeshBasicMaterial({ color: PAL.stall });
   if (l.layout.yard) {
-    // stalls in front of every ramp, whichever wall it is on
+    // yellow stalls in front of every ramp, whichever wall it is on (maketa-tien)
     for (const door of l.doors.filter((x) => x.kind === "loading_dock")) {
       const [fx, fz] = headingVec(facingOf(l, door));
       const [sx, sz] = [-fz, fx];
       for (const side of [-3, 3]) {
         const a: [number, number] = [door.x + sx * side, door.y + sz * side];
-        g.add(segment(a, [a[0] + fx * stallDepth, a[1] + fz * stallDepth], 0.18, 0.02, paint, 0.11));
+        g.add(segment(a, [a[0] + fx * stallDepth, a[1] + fz * stallDepth], 0.2, 0.02, stall, 0.11));
       }
     }
     return g;
@@ -358,7 +458,7 @@ export function dockFrame(brand: THREE.Color): THREE.Group {
   g.add(box(4.6, 0.5, 0.8, mat(brand), 0, 4.6, 0));
   g.add(box(0.5, 4.6, 0.8, mat(brand), -2.3, 2.3, 0));
   g.add(box(0.5, 4.6, 0.8, mat(brand), 2.3, 2.3, 0));
-  g.add(box(4.1, 4.3, 0.3, mat(0x3a3a37), 0, 2.2, -0.2)); // opening
+  g.add(box(4.1, 4.3, 0.3, mat(PAL.doorOpen), 0, 2.2, -0.2)); // opening
   return g;
 }
 
@@ -426,7 +526,41 @@ export function disposeTree(o: THREE.Object3D): void {
     if (c instanceof THREE.Mesh) {
       (c.geometry as THREE.BufferGeometry).dispose();
       const m = c.material as THREE.Material | THREE.Material[];
-      (Array.isArray(m) ? m : [m]).forEach((x) => x.dispose());
+      (Array.isArray(m) ? m : [m]).forEach((x) => {
+        // canvas textures (plates, sign, ribs) are freed with their material
+        if ("map" in x && x.map instanceof THREE.Texture) x.map.dispose();
+        x.dispose();
+      });
     }
   });
+}
+
+/**
+ * The sign "Depot 5.0 · <DEPOT>" on the facade (maketa-tien): a dark board with an orange mark and
+ * white text, canvas texture (no font download at runtime). Faces -z like the number plates.
+ */
+export function facadeSign(depot: string, brand: THREE.Color): THREE.Mesh {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = `#${PAL.plate.toString(16).padStart(6, "0")}`;
+    ctx.fillRect(0, 0, 1024, 160);
+    ctx.fillStyle = `#${brand.getHexString()}`;
+    ctx.fillRect(28, 32, 96, 96);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 76px Inter, system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Depot 5.0", 156, 84);
+    ctx.fillStyle = `#${brand.getHexString()}`;
+    ctx.font = "bold 58px Inter, system-ui, sans-serif";
+    ctx.fillText(depot.toUpperCase(), 560, 88);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(16, 2.5), new THREE.MeshBasicMaterial({ map: tex }));
+  m.rotation.y = Math.PI;
+  return m;
 }

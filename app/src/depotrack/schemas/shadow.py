@@ -76,6 +76,11 @@ class ParcelLocate(CamelModel):
     direction_type: DirectionType
     place: ParcelPlace
     events: list[ParcelStep]
+    # for the tracking card of the scene (maketa-tien): weight, the truck it rides in and when
+    # that truck leaves
+    weight_kg: float | None = None
+    vehicle_plate: str | None = None
+    planned_departure: datetime | None = None
 
 
 # ------------------------------------------------------------------ WMS actions from the scene

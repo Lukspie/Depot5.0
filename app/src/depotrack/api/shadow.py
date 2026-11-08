@@ -31,6 +31,7 @@ from depotrack.models.enums import (
     DoorKind,
     ParcelStatus,
     ScanResult,
+    TripKind,
     TripStatus,
     UserRole,
 )
@@ -250,6 +251,7 @@ def locate_parcel(barcode: Barcode, user: Viewer, db: DbSession) -> ParcelLocate
     )
     last_trip = next((e.trip_id for e in reversed(events) if e.trip_id is not None), None)
     direction = look.directions[parcel.direction_id]
+    trip = db.get(Trip, last_trip) if last_trip is not None else None
     return ParcelLocate(
         id=parcel.id,
         barcode=parcel.barcode,
@@ -258,6 +260,11 @@ def locate_parcel(barcode: Barcode, user: Viewer, db: DbSession) -> ParcelLocate
         direction_name=direction.name,
         direction_type=direction.type,
         place=_place(db, parcel, look, last_trip),
+        weight_kg=parcel.weight_kg,
+        vehicle_plate=look.vehicles[trip.vehicle_id].plate if trip else None,
+        planned_departure=trip.planned_departure
+        if trip and trip.kind == TripKind.OUTBOUND
+        else None,
         events=[
             ParcelStep(
                 status=e.status,
