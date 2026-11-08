@@ -34,6 +34,8 @@ def test_ws_ticket_is_short_lived_signed_jwt_with_role(
     )
     assert claims["role"] == "operator"
     assert claims["name"] == "operator1"
+    # bound to the home depot (Budimír without one); dispatchers get null (ADR-068)
+    assert claims["depot"] == "BUD"
     assert claims["exp"] - claims["iat"] == 60
     assert len(claims["jti"]) == 32
 

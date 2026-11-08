@@ -2,6 +2,8 @@
 
 > Pre koho: tím a reviewer. Pre každú obrazovku s maketou je tu tabuľka **položka | maketa | pred | čo sa zmenilo | stav** a screenshot vedľa makety. Stav ✓ znamená, že screenshot zodpovedá makete, ✗ nie. Obrazovka ide do commitu, až keď sú všetky položky ✓. Screenshoty sú v rovnakom stave ako maketa: dispečing v situácii `night-cascade` o 02:25 pri 30×, tieň v `evening-peak` okolo 18:40.
 
+Vysvetlenie fázy pre obhajobu: [faza-7d-ui-v2.md](faza-7d-ui-v2.md). Krok 6 (ostatné obrazovky) tím pre čas vynechal.
+
 Makety: [dispečing a design systém v2](../design/maketa-dispecing/README.md), [login](../design/maketa-login/), [digitálny tieň](../design/maketa-tien/README.md). Rozhodnutia: ADR-067 (design systém v2).
 
 ## Krok 1 – design systém v2 a shell (bočná lišta, horná lišta)
@@ -67,7 +69,7 @@ Bez prihlásenia, demo režim (`SIM_CONTROLS_ENABLED=true`), 1440 px. Formulár 
 | Tlačidlo | čierne 44 px | oranžové | čierne, pri neúplných údajoch neaktívne | ✓ |
 | Chybové stavy | – | 401, 403, 429 | zlé údaje (401), zablokovaný účet (403), veľa pokusov (429), nedostupný server, nevyplnené údaje | ✓ |
 | Info o smene | „Relácia platí 8 hodín…“ | – | dĺžka relácie z nastavení servera | ✓ |
-| Sledovanie zásielky | box „Čakáte zásielku?“ | – | podľa makety | ✓ |
+| Box pod formulárom | „Čakáte zásielku?“ | – | po kroku 5d nahradený „Len pre zamestnancov“: login je interný systém pre zamestnancov (rozhodnutie tímu) | ✓ |
 | Demo účty | (nie je v makete, požiadavka tímu) | – | rozbaľovací blok pod formulárom len v demo režime: mená, roly a sklad, klik vyplní meno. Heslá API nikdy neposiela (test) | ✓ |
 | Pätka | „Depot 5.0 · interný systém“, „Stav systému“ | – | stav WMS, telematiky a modelov v popoveri | ✓ |
 | Telefón (390 px) | (panel nad formulárom, výška 360 px) | – | panel so schémou nad formulárom, bez vodorovného posúvania | ✓ |
@@ -146,7 +148,7 @@ Rozdiely v počtoch (5/8 vs. 3/8 brán, viac kamiónov a návesov v makete) sú 
 
 ## Krok 5d – vnútro skladu (triediaca linka)
 
-Budimír, situácia `evening-peak` (18:56, pauza), dispečer, odkrytá strecha, 1440 px. Cieľ: [tien-maketa-strecha-odkryta.png](../design/maketa-tien/tien-maketa-strecha-odkryta.png) a opis tímu ([náčrt linky](../design/nacrt-linka-budimir.png), ADR-071).
+Budimír, situácia `evening-peak` (18:40–18:42, pauza), dispečer, odkrytá strecha, 1440 px. Fps s odkrytou strechou: 60 priemer aj minimum (`ROOF=1 node tools/fps/fps.mjs`, RTX 4070 SUPER, nočná vlna pri 60×, ~80 balíkov na linke). Cieľ: [tien-maketa-strecha-odkryta.png](../design/maketa-tien/tien-maketa-strecha-odkryta.png) a opis tímu ([náčrt linky](../design/nacrt-linka-budimir.png), ADR-071).
 
 | Položka | Maketa / zadanie | Pred | Čo sa zmenilo | Stav |
 | --- | --- | --- | --- | --- |
@@ -155,7 +157,7 @@ Budimír, situácia `evening-peak` (18:56, pauza), dispečer, odkrytá strecha, 
 | Plošina a zóny | – (opis tímu) | – | vyvýšená plošina nočných kamiónov, plocha ručného triedenia, kancelária, dekódovacie miesto (návrh) | ✓ |
 | Kontrolné body | piny zariadení | piny skenerov | piny kontrolných bodov podľa variantu, štítok s priepustnosťou za hodinu, klik otvorí panel (priepustnosť, čítanosť, nečítané, fronta) | ✓ |
 | Balíky po trase | krabice na páse | krabice podľa skenov, rovný pás | balíky idú po svojej trase podľa simulovaného času, čakajú pri ručnej práci, najviac 300 inštancií | ✓ |
-| Varianty | – (opis tímu) | – | prepínač „Súčasný stav / Návrh Depot 5.0“ a porovnanie celého dňa: priepustnosť v špičke, nečítané, čas vstup → odkladacia plocha, ručné manipulácie (rozdiel do 2 % bez farby) | ✓ |
+| Varianty | – (opis tímu) | – | prepínač „Súčasný stav / Návrh Depot 5.0“ a porovnanie celého dňa: priepustnosť v špičke, nečítané, čas vstup → odkladacia plocha, ručné manipulácie (v návrhu balíky, ktoré tunel neprečíta a po 2 kolách idú na dekódovanie), rozdiel do 2 % bez farby | ✓ |
 | Hľadaný balík | sledovanie balíka | značka pri páse | trasa modrou, posledný kontrolný bod s kužeľom, karta „na triediacej linke · …“, krok „Koniec zberného pásu · kontrolný bod“ | ✓ |
 | Kamera | izometria | domov = brány | odkrytie strechy otočí kameru o 90° k linke (stena s rampami ju nezakrýva), zatvorenie vráti domov | ✓ |
 | Ostatné sklady | – | rovný pás (Žilina, Trenčín) | linka podľa haly, len súčasný stav (Žilina: 83 balíkov kamióna ZA) | ✓ |

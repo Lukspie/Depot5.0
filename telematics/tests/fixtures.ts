@@ -314,10 +314,10 @@ const key = new TextEncoder().encode(SECRET);
 
 export async function ticket(
   role = "dispatcher",
-  opts: { secret?: Uint8Array; audience?: string; expSeconds?: number; jti?: string } = {},
+  opts: { secret?: Uint8Array; audience?: string; expSeconds?: number; jti?: string; depot?: string | null | undefined } = {},
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  return new SignJWT({ role, name: "tester" })
+  return new SignJWT({ role, name: "tester", ...(opts.depot !== undefined ? { depot: opts.depot } : {}) })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer("depotrack-app")
     .setAudience(opts.audience ?? "telematics")

@@ -12,12 +12,16 @@ import { SECRET, silentLog, ticket } from "./fixtures.js";
 describe("ticket verification", () => {
   const verifier = new TicketVerifier(SECRET);
 
-  it("accepts a valid ticket and returns the role", async () => {
-    expect(await verifier.verify(await ticket("operator"), { consume: false })).toEqual({
+  it("accepts a valid ticket and returns the role and the depot", async () => {
+    expect(await verifier.verify(await ticket("operator", { depot: "ZIL" }), { consume: false })).toEqual({
       userId: "7",
       name: "tester",
       role: "operator",
+      depot: "ZIL",
     });
+    // dispatchers switch depots (null); a bound role without the claim gets no depot
+    expect((await verifier.verify(await ticket("dispatcher"), { consume: false })).depot).toBeNull();
+    expect((await verifier.verify(await ticket("security"), { consume: false })).depot).toBe("");
   });
 
   it("rejects expired, foreign-signed, wrong-audience and unknown-role tickets", async () => {

@@ -98,6 +98,20 @@ describe("sorting line API and passages (ADR-071)", () => {
     await http.close();
   });
 
+  it("only dispatchers, admins and the security of the depot see its line (ADR-068)", async () => {
+    const as = async (role: string, depot?: string | null) => ({ authorization: `Bearer ${await ticket(role, { depot })}` });
+    const get = async (headers: Record<string, string>, url = "/line/BUD") => (await http.inject({ method: "GET", url, headers })).statusCode;
+    expect(await get(await as("security", "ZIL"))).toBe(403);
+    expect(await get(await as("security", "ZIL"), "/line/BUD/parcels/DP1")).toBe(403);
+    expect(await get(await as("security", "BUD"))).toBe(200);
+    expect(await get(await as("courier", "BUD"))).toBe(403);
+    expect(await get(await as("operator", "BUD"))).toBe(403);
+    // a ticket of a depot-bound role without the claim sees no depot
+    expect(await get(await as("security"))).toBe(403);
+    expect(await get(await as("dispatcher", null))).toBe(200);
+    expect(await get(await as("admin", null), "/line/BUD?variant=proposal")).toBe(200);
+  });
+
   it("needs a ticket and knows only depots with a line", async () => {
     expect((await http.inject({ method: "GET", url: "/line/BUD" })).statusCode).toBe(401);
     expect((await http.inject({ method: "GET", url: "/line/ZIL", headers: await bearer() })).statusCode).toBe(404);
@@ -161,7 +175,7 @@ describe("sorting line API and passages (ADR-071)", () => {
     const late = await makeEngine((a) => (a.failLines = 1));
     await late.runUntil(zonedToUtc(DAY, "19:00"));
     expect(late.app.checkpoints).toEqual([]);
-    late.advanceReal(31_000);
+    late.advanceReal(6000);
     await late.runUntil(zonedToUtc(DAY, "20:00"));
     const fresh = env.app.checkpoints.map((c) => `${c.checkpoint}|${c.barcode}|${c.at}`).sort();
     expect(late.app.checkpoints.map((c) => `${c.checkpoint}|${c.barcode}|${c.at}`).sort()).toEqual(fresh);

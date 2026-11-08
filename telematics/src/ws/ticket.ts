@@ -14,6 +14,8 @@ export interface TicketClaims {
   userId: string;
   name: string;
   role: Role;
+  /** the only depot the user may see (ADR-068); null = may switch (dispatcher, admin) */
+  depot: string | null;
 }
 
 export class TicketError extends Error {}
@@ -53,7 +55,10 @@ export class TicketVerifier {
       this.usedJti.set(jti, (payload.exp ?? 0) * 1000 + 5000);
     }
     const name = typeof payload.name === "string" ? payload.name : "";
-    return { userId: String(payload.sub), name, role: role as Role };
+    // a ticket without the claim binds a user who may not switch to no depot at all
+    const switcher = role === "admin" || role === "dispatcher";
+    const depot = typeof payload.depot === "string" ? payload.depot : switcher ? null : "";
+    return { userId: String(payload.sub), name, role: role as Role, depot };
   }
 
   private forgetExpired(): void {

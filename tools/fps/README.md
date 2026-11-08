@@ -9,6 +9,7 @@ npm init -y >/dev/null && npm i --no-save playwright@1.58   # jednorazovo, mimo 
 npx playwright install chromium                              # ak ešte nie je
 node fps.mjs dispecer <heslo>                                # živé dáta
 MODE=stress node fps.mjs dispecer <heslo>                    # plný pás (~300 balíkov)
+ROOF=1 node fps.mjs dispecer <heslo>                         # odkrytá strecha: triediaca linka s balíkmi (krok 5d)
 node fps.mjs dispecer <heslo> --headed                       # s oknom prehliadača
 ```
 

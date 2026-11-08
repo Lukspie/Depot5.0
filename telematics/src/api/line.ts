@@ -8,7 +8,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { Engine } from "../simulator/engine.js";
 import type { Variant } from "../simulator/line.js";
 import type { TicketVerifier } from "../ws/ticket.js";
-import { roleGuard } from "./guards.js";
+import { depotGuard } from "./guards.js";
 
 export interface LineRoutesDeps {
   engine: Engine;
@@ -28,7 +28,9 @@ const query = {
 } as const;
 
 export const lineRoutes: FastifyPluginAsync<LineRoutesDeps> = async (app, { engine, verifier, serviceToken }) => {
-  const anyRole = roleGuard(verifier, serviceToken, "any");
+  // like the digital shadow in the app (Viewer): dispatchers and security, security only for
+  // its own depot; admin always (ADR-068, ADR-071)
+  const anyRole = depotGuard(verifier, serviceToken, ["dispatcher", "security"], (req) => (req.params as { depot: string }).depot);
 
   app.get<{ Params: { depot: string }; Querystring: { variant?: Variant } }>(
     "/line/:depot",

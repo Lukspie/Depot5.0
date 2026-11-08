@@ -82,12 +82,14 @@ def me(user: CurrentUser, db: DbSession) -> MeOut:
 
 
 @router.post("/ws-ticket", response_model=WsTicketOut, response_model_by_alias=True)
-def ws_ticket(user: CurrentUser, settings: SettingsDep) -> WsTicketOut:
+def ws_ticket(user: CurrentUser, settings: SettingsDep, db: DbSession) -> WsTicketOut:
     """Short-lived ticket for the WebSocket connection to telematics (ADR-004)."""
     # http://host -> ws://host, https://host -> wss://host
     ws_base = settings.telematics_public_url.rstrip("/").replace("http", "ws", 1)
     return WsTicketOut(
-        ticket=issue_ws_ticket(user, settings),
+        ticket=issue_ws_ticket(
+            user, settings, None if can_switch(user) else home_depot(db, user).code
+        ),
         expires_in=settings.ws_ticket_ttl_seconds,
         ws_url=f"{ws_base}/ws",
     )

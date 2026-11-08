@@ -20,6 +20,31 @@ function hasServiceToken(req: FastifyRequest, token: string): boolean {
   return typeof header === "string" && sameSecret(header, token);
 }
 
+/**
+ * Role and depot: data of one depot (sorting line, ADR-071) only for the given roles and, for a
+ * user bound to a depot, only that depot (ADR-068). The depot comes from the route.
+ */
+export function depotGuard(verifier: TicketVerifier, serviceToken: string, roles: Role[], depotOf: (req: FastifyRequest) => string): preHandlerAsyncHookHandler {
+  return async (req: FastifyRequest, reply: FastifyReply) => {
+    if (hasServiceToken(req, serviceToken)) return;
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith("Bearer ")) {
+      await reply.code(401).send({ error: "missing ticket" });
+      return;
+    }
+    try {
+      const claims = await verifier.verify(auth.slice("Bearer ".length), { consume: false });
+      if (claims.role !== "admin" && !roles.includes(claims.role)) {
+        await reply.code(403).send({ error: "insufficient role" });
+      } else if (claims.depot !== null && claims.depot !== depotOf(req)) {
+        await reply.code(403).send({ error: "not your depot" });
+      }
+    } catch (err) {
+      await reply.code(401).send({ error: err instanceof TicketError ? err.message : "invalid ticket" });
+    }
+  };
+}
+
 export function serviceTokenGuard(token: string): preHandlerAsyncHookHandler {
   return async (req: FastifyRequest, reply: FastifyReply) => {
     if (!hasServiceToken(req, token)) {

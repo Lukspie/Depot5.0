@@ -7,10 +7,16 @@ import type { LineEdge, LineGraph, LineNode } from "./layout";
 import { box, disposeTree, mat } from "./parts";
 import { simNow } from "./simTime";
 
-/** heights (m): hall floor, top of a belt, the raised platform of the night trucks */
+/**
+ * heights (m): hall floor, top of a belt, the platform of the night trucks (below the belt tops,
+ * so the exit belts to the linehaul doors stay visible on it) and the belts from the platform,
+ * which run as a bridge over the exit belts
+ */
 const FLOOR = 0.36;
 const TOP = 1.2;
-const RAISE = 1.2;
+const PLATFORM = 0.55;
+const BRIDGE = 0.85;
+const DECK = 0.45;
 const LIMIT = 300;
 const WIDTH: Record<LineEdge["kind"], number> = { belt: 1.2, loop: 1.5, feed: 0.9, telescopic: 0.9, chute: 1.0, manual: 0 };
 
@@ -18,14 +24,36 @@ const C = {
   belt: 0x4f4f4c,
   beltTop: 0x8a8a86,
   chute: 0xbdbab3,
-  platform: 0xd2d0c9,
+  platform: 0xbfbcb3,
+  edge: 0xeebd45,
   bridge: 0x2f2f2d,
   office: 0xf4f3ef,
   table: 0xe9e2d4,
 } as const;
 
 function yOf(e: LineEdge): number {
-  return e.raised ? TOP + RAISE : TOP;
+  return e.raised ? TOP + BRIDGE : TOP;
+}
+
+/** Nodes where a bridge belt ends: a floor belt leaving one starts with a ramp down. */
+function bridgeEnds(g: LineGraph): Set<string> {
+  const raised = g.edges.filter((e) => e.raised && e.kind !== "chute");
+  return new Set(raised.flatMap((e) => [e.from, e.to]));
+}
+
+/** Height of a parcel / belt top on segment `k` of an edge at fraction `u` (ramps from a bridge). */
+function topAt(e: LineEdge, k: number, u: number, ends: Set<string>): number {
+  if (!e.raised && k === 1 && ends.has(e.from)) return TOP + BRIDGE * (1 - u);
+  return yOf(e);
+}
+
+/** A sloped segment from (x1, y1, z1) to (x2, y2, z2) (top surface), `h` thick. */
+function ramp(x1: number, z1: number, y1: number, x2: number, z2: number, y2: number, w: number, h: number, m: THREE.Material): THREE.Mesh {
+  const run = Math.hypot(x2 - x1, z2 - z1);
+  const s = box(Math.hypot(run, y2 - y1) + w * 0.5, h, w, m, (x1 + x2) / 2, (y1 + y2) / 2 - h / 2, (z1 + z2) / 2);
+  // Euler XYZ: the tilt (z) is applied before the turn (y)
+  s.rotation.set(0, -Math.atan2(z2 - z1, x2 - x1), Math.atan2(y2 - y1, run));
+  return s;
 }
 
 /** Direction of the line at a node: the first segment of the belt leaving it (or arriving). */
@@ -53,7 +81,14 @@ function lineModel(g: LineGraph, brand: THREE.Color): THREE.Group {
   const brandMat = mat(brand);
   for (const z of g.zones) {
     const [x0, y0, x1, y1] = z.rect;
-    if (z.kind === "platform") out.add(box(x1 - x0, RAISE, y1 - y0, mat(C.platform), (x0 + x1) / 2, FLOOR + RAISE / 2, (y0 + y1) / 2));
+    if (z.kind === "platform") {
+      out.add(box(x1 - x0, PLATFORM, y1 - y0, mat(C.platform), (x0 + x1) / 2, FLOOR + PLATFORM / 2, (y0 + y1) / 2));
+      // yellow safety edge round the platform (dock edge marking)
+      const e = mat(C.edge);
+      const yT = FLOOR + PLATFORM + 0.01;
+      out.add(box(x1 - x0, 0.03, 0.25, e, (x0 + x1) / 2, yT, y0 + 0.12), box(x1 - x0, 0.03, 0.25, e, (x0 + x1) / 2, yT, y1 - 0.12));
+      out.add(box(0.25, 0.03, y1 - y0, e, x0 + 0.12, yT, (y0 + y1) / 2), box(0.25, 0.03, y1 - y0, e, x1 - 0.12, yT, (y0 + y1) / 2));
+    }
     if (z.kind === "manual") {
       const m = box(x1 - x0, 0.04, y1 - y0, mat(brand, { transparent: true, opacity: 0.12 }), (x0 + x1) / 2, FLOOR + 0.03, (y0 + y1) / 2);
       m.castShadow = false;
@@ -65,10 +100,16 @@ function lineModel(g: LineGraph, brand: THREE.Color): THREE.Group {
       out.add(box(x1 - x0 + 0.2, 0.25, y1 - y0 + 0.2, brandMat, (x0 + x1) / 2, FLOOR + 3.1, (y0 + y1) / 2));
     }
   }
+  const ends = bridgeEnds(g);
+  const legs = mat(C.bridge);
   for (const e of g.edges) {
     if (e.kind === "manual") continue;
     const y = yOf(e);
     const w = WIDTH[e.kind];
+    if (e.raised && e.kind !== "chute") {
+      // a bridge: a deck on legs, the exit belts pass under it
+      for (const [px, pz] of e.points) out.add(box(0.22, y - DECK - FLOOR, 0.22, legs, px, FLOOR + (y - DECK - FLOOR) / 2, pz));
+    }
     for (let i = 1; i < e.points.length; i++) {
       const [x1, z1] = e.points[i - 1] as [number, number];
       const [x2, z2] = e.points[i] as [number, number];
@@ -77,8 +118,13 @@ function lineModel(g: LineGraph, brand: THREE.Color): THREE.Group {
         out.add(segment(x1, z1, x2, z2, w, 0.12, i === e.points.length - 1 ? FLOOR + 0.6 : TOP - 0.1, chute));
         continue;
       }
-      const body = segment(x1, z1, x2, z2, w, y - FLOOR - 0.3, y - 0.1, belt);
-      out.add(body);
+      if (!e.raised && i === 1 && ends.has(e.from)) {
+        // down from the bridge to the floor belts
+        out.add(ramp(x1, z1, TOP + BRIDGE - 0.1, x2, z2, TOP - 0.1, w, DECK, belt));
+        out.add(ramp(x1, z1, TOP + BRIDGE, x2, z2, TOP, w * 0.8, 0.08, top));
+        continue;
+      }
+      out.add(segment(x1, z1, x2, z2, w, e.raised ? DECK : y - FLOOR - 0.3, y - 0.1, belt));
       out.add(segment(x1, z1, x2, z2, w * 0.8, 0.08, y, top));
     }
   }
@@ -143,7 +189,7 @@ export function LineRoute({ graph, nodes }: { graph: LineGraph; nodes: string[] 
       seen.add(key);
       const e = graph.edges.find((x) => x.from === nodes[i - 1] && x.to === nodes[i]);
       if (!e) continue;
-      const y = e.kind === "manual" ? FLOOR + 0.06 : e.kind === "chute" ? TOP : yOf(e) + 0.06;
+      const y = e.kind === "manual" ? FLOOR + 0.06 : e.kind === "chute" ? TOP : e.raised ? yOf(e) + 0.06 : TOP + 0.06;
       for (let k = 1; k < e.points.length; k++) {
         const [x1, z1] = e.points[k - 1] as [number, number];
         const [x2, z2] = e.points[k] as [number, number];
@@ -223,6 +269,7 @@ const FOUND = new THREE.Color("#2f5be9");
 export function LineParcels({ graph, view, found }: { graph: LineGraph; view: LineView | undefined; found: string | null }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const scratch = useRef(new THREE.Object3D());
+  const ends = useMemo(() => bridgeEnds(graph), [graph]);
   const tracks = useMemo<Track[]>(() => {
     const edges = new Map(graph.edges.map((e) => [`${e.from}>${e.to}`, e]));
     return (view?.parcels ?? []).slice(0, LIMIT).map((p) => {
@@ -280,7 +327,7 @@ export function LineParcels({ graph, view, found }: { graph: LineGraph; view: Li
           const u = Math.min(1, Math.max(0, (d - a) / seg));
           const [x0, z0] = e.points[k - 1] as [number, number];
           const [x1, z1] = e.points[k] as [number, number];
-          const y = e.kind === "manual" ? FLOOR + 0.9 : e.kind === "chute" ? TOP - f * (TOP - FLOOR - 0.8) : yOf(e);
+          const y = e.kind === "manual" ? FLOOR + 0.9 : e.kind === "chute" ? TOP - f * (TOP - FLOOR - 0.8) : topAt(e, k, u, ends);
           dummy.position.set(x0 + (x1 - x0) * u, y + 0.25, z0 + (z1 - z0) * u);
           dummy.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
           dummy.scale.setScalar(t.found ? 1.6 : 1);

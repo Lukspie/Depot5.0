@@ -17,9 +17,13 @@ ISSUER = "depotrack-app"
 AUDIENCE = "telematics"
 
 
-def issue_ws_ticket(user: User, settings: Settings, now: datetime | None = None) -> str:
+def issue_ws_ticket(
+    user: User, settings: Settings, depot: str | None = None, now: datetime | None = None
+) -> str:
+    """`depot`: the only depot the user may see (ADR-068); None for dispatchers and admins, who
+    switch depots. Telematics checks it for depot data (sorting line, ADR-071)."""
     now = now or datetime.now(UTC)
-    claims = {
+    claims: dict[str, object] = {
         "iss": ISSUER,
         "aud": AUDIENCE,
         "sub": str(user.id),
@@ -28,5 +32,6 @@ def issue_ws_ticket(user: User, settings: Settings, now: datetime | None = None)
         "iat": now,
         "exp": now + timedelta(seconds=settings.ws_ticket_ttl_seconds),
         "jti": uuid.uuid4().hex,
+        "depot": depot,
     }
     return jwt.encode(claims, settings.ws_ticket_secret, algorithm="HS256")

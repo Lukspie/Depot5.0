@@ -1,4 +1,4 @@
-import { ChevronDown, Eye, EyeOff, Package } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { useLogin, useMe } from "../api/auth";
@@ -143,8 +143,10 @@ export function LoginPage() {
         <div className="flex flex-1 items-center justify-center py-8">
           <form onSubmit={onSubmit} noValidate className="flex w-full max-w-[360px] flex-col gap-[18px]">
             <div>
-              <h2 className="text-[26px] font-extrabold tracking-[-0.01em]">Prihlásenie</h2>
-              <p className="text-ink-muted mt-1.5 text-[13.5px] leading-normal">Použite svoje firemné konto. Prístup je možný len z firemnej siete alebo cez VPN.</p>
+              <h2 className="text-[26px] font-extrabold tracking-[-0.01em]">Prihlásenie zamestnanca</h2>
+              <p className="text-ink-muted mt-1.5 text-[13.5px] leading-normal">
+                Interný systém skladov Depot 5.0. Prihláste sa svojím pracovným kontom, prístup je možný len z firemnej siete alebo cez VPN.
+              </p>
             </div>
             <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
               Používateľské meno
@@ -225,10 +227,10 @@ export function LoginPage() {
             )}
             <div className="border-line bg-subtle flex items-center gap-2.5 rounded-[10px] border px-3.5 py-3">
               <span className="bg-brand-50 text-brand-700 grid h-8 w-8 shrink-0 place-items-center rounded-lg">
-                <Package size={16} aria-hidden="true" />
+                <ShieldCheck size={16} aria-hidden="true" />
               </span>
               <span className="text-ink-soft text-[12.5px] leading-[1.45]">
-                <b>Čakáte zásielku?</b> Sledujte ju cez odkaz zo SMS, prihlásenie nepotrebujete.
+                <b>Len pre zamestnancov.</b> Konto a prístup podľa roly a skladu prideľuje administrátor, zákazníci sa sem neprihlasujú.
               </span>
             </div>
           </form>

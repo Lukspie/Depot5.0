@@ -83,7 +83,7 @@ export function LinePanel({ view, variant, onVariant, hasProposal }: { view: Lin
       )}
       <p className="text-ink-muted mt-2 text-[11.5px] leading-snug">
         {cur ? `${num(cur.parcels)} balíkov celého prevádzkového dňa` : ""}
-        {pro ? " · návrh počíta s tými istými balíkmi (simulácia, dáta skladu nemení)" : ""}
+        {pro ? " · návrh počíta s tými istými balíkmi (simulácia, dáta skladu nemení), ručne len štítky, ktoré tunel neprečíta" : ""}
       </p>
     </div>
   );

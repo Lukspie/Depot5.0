@@ -376,7 +376,7 @@ Vizuálne ciele sú schválené makety: `docs/design/maketa-dispecing/` (README 
 - 7c (ADR-066): prevádzka **Dunajskej Stredy** (vlastní kuriéri, napájacia jazda Ivanka ↔ DS ráno a večer, brána) a **Trenčína** (kuriéri, napájacia jazda z Ivanky po D1, brána so 7b). Rozmery haly DS z merania tímu a popis Budimíra dodá tím, potom spresniť layout a ADR-064.
 - 7c (záverečný reviewer, odporúčané):
   - test aktualizácie z DB pred Fázou 7c s už naplánovaným dňom (kroky `depot-ops:*`, `couriers-depots:*`),
-  - stĺpec sklad pri prejazdoch v db-telemetry (migrácia `008`),
+  - stĺpec sklad pri prejazdoch v db-telemetry (migrácia `009`),
   - počet pripravených balíkov pri kuriérskych bránach Žiliny a Ivanky (dnes 0, balíky majú smer ZA / BA),
   - cieľ smeru ZA pri zmene stredu haly Žiliny (krok `depot-ops` ho nastaví len raz),
   - limit áut na dvore v tieni pre každý sklad zvlášť.

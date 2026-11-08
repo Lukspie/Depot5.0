@@ -1089,7 +1089,9 @@ export class Engine {
       }
       const runs = lineRuns(line, parcels, { seed: this.seedValue, day: plan.day, depot, lineRate });
       state.line.set(depot, runs);
-      for (const r of runs.current) for (const x of r.passages) if (x.forward) state.passages.push(x);
+      // a scanner that did not read the label cannot name the parcel: like the line scans, an
+      // unread pass makes no event in the app (review 7d)
+      for (const r of runs.current) for (const x of r.passages) if (x.forward && x.read !== false) state.passages.push(x);
     }
     state.passages.sort((a, b) => a.at - b.at || a.checkpoint.localeCompare(b.checkpoint) || a.barcode.localeCompare(b.barcode));
   }
@@ -1101,8 +1103,8 @@ export class Engine {
       this.lines = await this.deps.app.getLines();
       return true;
     } catch (err) {
-      this.linesRetryAt = this.realNow() + 30_000;
-      this.deps.log.warn({ err: String(err) }, "sorting lines not loaded, retry in 30 s");
+      this.linesRetryAt = this.realNow() + 5000;
+      this.deps.log.warn({ err: String(err) }, "sorting lines not loaded, retry in 5 s");
       return false;
     }
   }
@@ -1120,7 +1122,10 @@ export class Engine {
 
   private forwardPassages(list: readonly Passage[]): void {
     for (const x of list) this.checkpointQueue.push({ checkpoint: x.checkpoint, barcode: x.barcode, at: iso(x.at) });
-    if (this.checkpointQueue.length > MAX_SCAN_QUEUE) this.checkpointQueue = this.checkpointQueue.slice(-MAX_SCAN_QUEUE);
+    if (this.checkpointQueue.length > MAX_SCAN_QUEUE) {
+      this.deps.log.warn({ dropped: this.checkpointQueue.length - MAX_SCAN_QUEUE }, "checkpoint queue full, dropping oldest");
+      this.checkpointQueue = this.checkpointQueue.slice(-MAX_SCAN_QUEUE);
+    }
   }
 
   private async flushCheckpoints(): Promise<void> {

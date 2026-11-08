@@ -20,6 +20,11 @@ const gpu = await page.evaluate(() => {
   const ext = gl?.getExtension("WEBGL_debug_renderer_info");
   return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "unknown";
 });
+// ROOF=1: the roof open with the sorting line and its parcels (phase 7d step 5d)
+if (process.env.ROOF === "1") {
+  await page.waitForTimeout(3000);
+  await page.click("button[aria-label^='Odkryť strechu']");
+}
 await page.waitForTimeout(5000); // warm-up
 await page.evaluate(() => { window.__shadowFps = []; });
 const t0 = Date.now();

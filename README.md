@@ -126,7 +126,7 @@ Mapa Flotily: `/fleet?view=BUD` otvorí priblížené depo Budimír s 3D halou, 
 Sledovanie zásielky: kuriéri nakladajú ráno od 6:30 (v admine situácia *Kuriéri ráno*, 06:55). Každý balík naskenovaný do dodávky „pošle“ zákazníkovi SMS s odkazom `/track/<token>`. Odkazy sú v *Administrácia → Notifikácie* (tlačidlo „Otvoriť“).
 Platný odkaz zvládne 60 požiadaviek za minútu (asi 5 otvorených okien), neplatné odkazy sú obmedzené na 10 za minútu z jednej IP (ADR-042). Za reverznou proxy nastav `FORWARDED_ALLOW_IPS`.
 
-Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji, `ZIL` Žilina, `DS` Dunajská Streda, `TN` Trenčín (sklady v [docs/fazy/faza-7c-sklady.md](docs/fazy/faza-7c-sklady.md)).
+Digitálny tieň: `/shadow?depot=BUD&door=LD-02` otvorí panel kamióna, `&device=DOCK-SCN-02` panel skenera, `&fps=1` ukáže fps scény. Demo za 2 minúty je v [docs/fazy/faza-5-digitalny-tien.md](docs/fazy/faza-5-digitalny-tien.md), tieň v2 (layout, brány so senzormi, GLTF modely, hub Ivanka) v [docs/fazy/faza-5c-tien-v2.md](docs/fazy/faza-5c-tien-v2.md). `/shadow?depot=BAH` je hub v Ivanke pri Dunaji, `ZIL` Žilina, `DS` Dunajská Streda, `TN` Trenčín (sklady v [docs/fazy/faza-7c-sklady.md](docs/fazy/faza-7c-sklady.md)). Tlačidlo *Odkryť strechu* ukáže triediacu linku a v Budimíre prepínač *Súčasný stav / Návrh Depot 5.0* (ADR-071).
 
 **Digitálny tieň, nie dvojča:** 3D pohľad automaticky zrkadlí realitu (skeny, vozidlá, zariadenia), ale do fyzického sveta zasahuje len cez rozhodnutia človeka v bežných obrazovkách WMS. Rozdiel model / tieň / dvojča vysvetľuje ADR-045.
 
@@ -215,3 +215,4 @@ cd frontend && npm ci && npm run dev
 - [ ] Fáza 7: dokončenie
 - [x] Fáza 7b: demo (brána s pravidlami a ochrankou, mobilná appka kuriéra, 3 dispečeri, ranná nakládka)
 - [x] Fáza 7c: sklady (layouty 5 skladov z OSM, prevádzka Žiliny a Ivanky, brána každého skladu)
+- [x] Fáza 7d: UI/UX v2 podľa makiet (design systém, sieť skladov, login, dispečing, tieň) a vnútro skladu (triediaca linka, kontrolné body, návrh Depot 5.0; [docs/fazy/faza-7d-ui-v2.md](docs/fazy/faza-7d-ui-v2.md))

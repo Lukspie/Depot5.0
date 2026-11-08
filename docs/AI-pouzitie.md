@@ -199,6 +199,9 @@ Tím zadal skutočné layouty a prevádzku skladov Budimír, Ivanka pri Dunaji, 
 
 Agent pred zmenami zachytil „golden“ výstup Budimíra zo stavu pred fázou (tag `pre-depots`), ktorý test porovnáva po každom kroku. V Dunajskej Strede agent v OSM sklad nenašiel a vypísal kandidátov. Adresu, strany rámp a vjazd dodal tím zo satelitu a z reálu, v Žiline tím potvrdil areál a halu. Kvôli termínu tím zmenil poradie: Žilina a Ivanka majú plnú prevádzku (kuriéri, brána), Dunajská Streda a Trenčín len layout so zaparkovanými dodávkami. Ich prevádzka a ulice ďalších miest sú v „Po odovzdaní“. Kontrola naživo našla chybu: kuriér Žiliny mohol naložiť balík, ktorý kamión nezobral. Chyba je opravená a pokrytá testom. Vzniklo ADR-064 až 066.
 
+### Fáza 7d – UI/UX v2 a vnútro skladu (8. 11.)
+Tím dodal schválené makety (dispečing, login, tieň) a pravidlo: pred kódom screenshot pri 1440 px vedľa makety, potom tabuľka ✓/✗ a commit, až keď je všetko ✓. Agent postavil design systém v2, sieť skladov s domovským skladom (prístup rieši server), login, dispečing a tieň podľa makiet. Dvakrát tím rozhodol odchýlku v prospech dát („čakajúci kamión“ simulácia nemá). Do plánu tím doplnil vnútro skladu: náčrt skutočnej linky Budimíra a druhý variant „návrh Depot 5.0“. Agent linku previedol na graf v dátach, nejasné miesta náčrtu („M“, brána „G“) zapísal ako predpoklady do ADR-071 a golden test Budimíra ostal nezmenený. Tím pri kontrole opravil metriku: ručné manipulácie v návrhu nie sú 0, počítajú sa balíky, ktoré tunel neprečíta. Tím tiež určil, že login je len pre zamestnancov (bez odkazu pre zákazníkov). Agent pri kontrole našiel a opravil zapustené pásy v plošine a pretekanie stránky na telefóne. Reviewer zachytil, že nové API linky v telematike nekontrolovalo sklad (ochranka Žiliny by videla linku Budimíra), a že simulátor posielal do WMS aj prechody, pri ktorých skener štítok neprečítal. Obe chyby sú opravené a pokryté testom. Krok 6 (ostatné obrazovky) tím pre čas vynechal. Vzniklo ADR-067 až 071.
+
 ## 6. Čo rozhodol a opravil tím (príklady)
 
 | Situácia | Čo urobil tím |
@@ -212,11 +215,12 @@ Agent pred zmenami zachytil „golden“ výstup Budimíra zo stavu pred fázou 
 | Hub Bratislava | pravidlo „nehádať budovu“: použila sa len budova jednoznačne označená v OSM |
 | Sklady (7c) | tím určil budovy (Žilina, Dunajská Streda, Trenčín), strany rámp a vjazdy podľa satelitu a z reálu. Pre termín zúžil prevádzku na Žilinu a Ivanku |
 | Termín | tím zúžil rozsah a určil poradie: ML pred dizajnom |
+| Linka Budimíra (7d) | tím nakreslil skutočnú linku a zadal návrh Depot 5.0, opravil metriku ručných manipulácií v návrhu |
 | Azure | voľba databázy (telemetria), vytvorenie servera, kontrola nákladov (bezplatná ponuka) |
 
 ## 7. Kontrola kvality
 
-- **Automatické testy:** 184 testov hlavného backendu (pytest) a 125 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript). Stav k 8. 11. 2026 po Fáze 7c, vrátane golden testov Budimíra zo stavu pred fázou.
+- **Automatické testy:** 201 testov hlavného backendu (pytest) a 142 testov telematiky (vitest), lint (ruff, eslint) a typy (mypy strict, strict TypeScript). Stav k 9. 11. 2026 po Fáze 7d, vrátane golden testov Budimíra zo stavu pred Fázou 7c.
 - **Hooks:** lint po každej úprave, typecheck a testy pred koncom každej odpovede agenta.
 - **Reviewer:** po každej fáze. Našiel napríklad rozsah dôveryhodných proxy, ktorý by umožnil obísť limit prihlásení, skeny prichádzajúce do WMS až po odchode kamióna, model meškania bez zimných dát alebo chybný štart simulácie na novej Azure DB. Všetky blokujúce nálezy sú opravené.
 - **Test z čistého klonu** pred odovzdaním a ručné overenie hlavných scenárov v aplikácii.

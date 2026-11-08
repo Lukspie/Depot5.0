@@ -233,18 +233,16 @@ function walk(r: LineRouter, p: LineParcel, input: string, ctx: LineContext, var
     if (attempts[0]) {
       ids = join(toScanner, r.path(sc.id, target.id));
     } else if (r.reject) {
-      // proposal: another round, read again; still unread after the rounds -> decoding station
+      // proposal: the tunnel reads every side, so a label it misses is damaged or missing and
+      // another round does not help: two rounds (as designed), then the decoding station by hand.
+      // The draws for the rounds stay drawn above (fixed count per parcel, ADR-047).
       const rounds: (string[] | null)[] = [toScanner];
-      let ok = false;
-      for (let k = 1; k <= RECIRCULATIONS && !ok; k++) {
+      for (let k = 1; k <= RECIRCULATIONS; k++) {
         rounds.push(r.path(sc.id, sc.id, true));
-        ok = (reads[k] as number) < rate;
-        attempts.push(ok);
+        attempts.push(false);
       }
       const decode = r.graph.nodes.find((n) => n.kind === "decode");
-      ids = ok
-        ? join(...rounds, r.path(sc.id, target.id))
-        : join(...rounds, r.path(sc.id, r.reject.id), decode ? r.path(r.reject.id, decode.id) : null, decode ? r.path(decode.id, target.id) : null);
+      ids = join(...rounds, r.path(sc.id, r.reject.id), decode ? r.path(r.reject.id, decode.id) : null, decode ? r.path(decode.id, target.id) : null);
     } else {
       // current: no decision, the default exit (manual area) sorts it by hand
       const fb = r.fallback;
@@ -468,7 +466,7 @@ export function checkpointViews(graph: LineGraph, runs: readonly ParcelRun[], no
         perHour: hour.length,
         today: all.length,
         readRate: reads.length ? reads.filter((x) => x.read).length / reads.length : null,
-        unread: all.filter((x) => x.read === false).length,
+        unread: new Set(all.filter((x) => x.read === false).map((x) => x.barcode)).size,
         queue,
       };
     });

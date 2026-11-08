@@ -105,6 +105,14 @@ describe("lineRuns", () => {
     const decoded = p.filter((r) => r.hops.some((h) => h.node === "DK"));
     expect(p.some((r) => r.rounds > 0)).toBe(true);
     expect(decoded.length).toBeGreaterThan(0);
+    // a label the tunnel misses stays unread: two rounds, then decoding by hand (counted as manual)
+    for (const r of p.filter((x) => x.unread)) {
+      expect(r.rounds).toBe(2);
+      expect(r.manual).toBe(true);
+      expect(r.hops.some((h) => h.node === "DK")).toBe(true);
+    }
+    expect(variantKpis(p).manual).toBe(variantKpis(p).unread);
+    expect(variantKpis(p).manual).toBeGreaterThan(0);
     // up to two extra rounds: three readings at most at the tunnel
     for (const r of p) expect(r.passages.filter((x) => x.checkpoint === "CP-BUD-TUN").length).toBeLessThanOrEqual(3);
     // one worker: decoding never overlaps
