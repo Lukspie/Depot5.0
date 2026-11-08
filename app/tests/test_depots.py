@@ -55,7 +55,9 @@ def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
     assert {eq[f"SB-0{i}"] for i in range(1, 9)} == {("manual", "none")}
     assert eq["LD-06"] == ("electric", "none")
     hub = user.get("/api/layout?depot=BAH").json()
-    assert [d["code"] for d in hub["doors"]] == [f"BA-R0{i}" for i in range(1, 7)]
+    assert sorted(d["code"] for d in hub["doors"]) == ["BA-GATE"] + [
+        f"BA-R0{i}" for i in range(1, 7)
+    ] + [f"BA-SB0{i}" for i in range(1, 4)]  # + courier doors and gate of Ivanka (ADR-066)
     # the hub in Ivanka pri Dunaji from OSM (ADR-051, 064); the routing point stays
     assert hub["depot"]["name"] == HUB_NAME
     assert (hub["depot"]["lat"], hub["depot"]["lon"]) == (HUB_LAT, HUB_LON)
@@ -175,6 +177,28 @@ def test_dunajska_streda_small_depot_without_an_osm_plot(user: TestClient) -> No
 
 
 @pytest.mark.usefixtures("seeded")
+def test_depots_without_operations_show_their_vans_parked(user: TestClient) -> None:
+    """Dunajská Streda and Trenčín (ADR-066): layout and vans standing on their parking spots,
+    no couriers; the depots the simulator drives get no assumed places."""
+    for code, count in (("DS", 6), ("TN", 4)):
+        lay = user.get(f"/api/layout?depot={code}").json()
+        spots = lay["layout"]["yard"]["vanParking"]
+        plates = [f"{code}-30{i}KR" for i in range(1, count + 1)]
+        assert [p["plate"] for p in lay["parked"]] == plates
+        assert [(p["x"], p["y"], p["heading"]) for p in lay["parked"]] == [
+            (s["x"], s["y"], s["heading"]) for s in spots[:count]
+        ]
+    for code in ("BUD", "BAH", "ZIL"):
+        assert user.get(f"/api/layout?depot={code}").json()["parked"] == []
+    vehicles = {v["plate"]: v for v in user.get("/api/fleet/vehicles").json()}
+    lat, lon = vehicles["DS-301KR"]["parkedAt"]
+    ds = user.get("/api/depots").json()
+    centre = next(d["center"] for d in ds if d["code"] == "DS")
+    assert abs(lat - centre[0]) < 0.001 and abs(lon - centre[1]) < 0.0015  # in the DS yard
+    assert vehicles["KE-301KR"]["parkedAt"] is None and vehicles["BA-301KR"]["parkedAt"] is None
+
+
+@pytest.mark.usefixtures("seeded")
 def test_trencin_from_osm(user: TestClient) -> None:
     tn = user.get("/api/layout?depot=TN").json()
     assert tn["depot"]["name"] == "Trenčín" and tn["depot"]["kind"] == "depot"
@@ -206,9 +230,9 @@ def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient
     districts, vans and routes depend on it."""
     from sqlalchemy import delete, update
 
-    from depotrack.models import Depot, Door, SeedMeta
+    from depotrack.models import Depot, Door, SeedMeta, Vehicle
 
-    def snapshot() -> tuple[dict[str, object], dict[str, object]]:
+    def snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
         depots = {d.id: d.code for d in db.execute(select(Depot)).scalars()}
         return (
             {
@@ -226,6 +250,7 @@ def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient
                 )
                 for d in db.execute(select(Door)).scalars()
             },
+            {v.plate: depots[v.depot_id] for v in db.execute(select(Vehicle)).scalars()},
         )
 
     settings = get_settings()
@@ -233,10 +258,12 @@ def test_existing_database_ends_like_a_clean_one(db: Session, client: TestClient
     clean = snapshot()
     new = [d.id for d in db.execute(select(Depot).where(Depot.code.in_(["DS", "TN"]))).scalars()]
     db.execute(delete(Door).where(Door.depot_id.in_(new)))
+    db.execute(delete(Vehicle).where(Vehicle.depot_id.in_(new)))
     db.execute(delete(Depot).where(Depot.id.in_(new)))
     db.execute(update(Depot).values(layout={"hall": {"width": 86, "depth": 40, "height": 10}}))
     db.execute(update(Door).values(position_x=0, position_y=0))
     db.execute(delete(SeedMeta).where(SeedMeta.key.like("depot-layouts:%")))
+    db.execute(delete(SeedMeta).where(SeedMeta.key.like("depot-fleet:%")))
     db.commit()
     run_seed(db, settings, DAY)
     assert snapshot() == clean

@@ -206,7 +206,12 @@ export function FleetPage() {
       delayMin: trips.get(p.plate)?.trip?.delayMin ?? null,
       label: `${p.plate}${p.directionCode ? ` · ${p.directionCode}` : ""}`,
     }));
-    const missing = (vehicles.data ?? []).filter((v) => !positions[v.plate]);
+    const missing = (vehicles.data ?? []).filter((v) => !positions[v.plate] && !v.parkedAt);
+    // vans of a depot without simulated operations stand on their parking spot (ADR-066)
+    for (const v of vehicles.data ?? []) {
+      if (!v.parkedAt || positions[v.plate]) continue;
+      list.push({ plate: v.plate, kind: v.kind, lat: v.parkedAt[0], lon: v.parkedAt[1], status: null, delayMin: null, label: `${v.plate} · zaparkovaná` });
+    }
     missing.forEach((v, i) => {
       if (!home) return;
       const angle = (2 * Math.PI * i) / Math.max(missing.length, 1);

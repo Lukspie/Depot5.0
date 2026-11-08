@@ -712,3 +712,18 @@ Nové rozhodnutia pridávaj na koniec, staré neprepisuj. Ak sa rozhodnutie zmen
   - Sklad pridaný neskôr dostane trasy aj pre deň, ktorý už bol naplánovaný (krok seedu `couriers-depots:<deň>`).
 - **Overenie naživo (8. 11. 2026, situácia „Kuriéri ráno“):** 4 trasy Žiliny, 148 zastávok. Od 6:30 sa nakladá, dodávky stoja pri kuriérskych bránach a v tieni sú pri rampách oba kamióny ZA. Dodávky vyrazili 7:32–7:34 bránou Žiliny (automaticky, vozidlá vozového parku).
 - **Dôsledok:** Ďalšie sklady (Ivanka, Dunajská Streda, Trenčín) pôjdu rovnakým spôsobom: schéma kuriérov, `DepotOps` a mix brány. Cestná sieť má ulice len pri Košiciach, dodávky Žiliny jazdia po hlavných cestách a priamych spojniciach (rozšírenie siete je v pláne, krok 3a).
+
+## ADR-066 Ivanka v plnej prevádzke, Dunajská Streda a Trenčín len layout (Fáza 7c, krok 3)
+- **Kontext:** Pre odovzdanie 8. 11. 2026 tím zmenil poradie. Ivanka má mať plnú prevádzku (kuriéri Bratislava-východ a Senec, vlastná brána). Dunajská Streda a Trenčín budú len layout v tieni a na mape so zaparkovanými vozidlami. Ich kuriéri, napájacie jazdy z Ivanky a ulice ďalších miest (krok 3a) idú do „Po odovzdaní“.
+- **Rozhodnutie:**
+  - **Kuriéri Ivanky** (rovnaký mechanizmus ako Žilina, ADR-065) rozvážajú balíky smeru BA, ktoré prišli večerným kamiónom do hubu. Rajón určuje PSČ adresy, nie kvadrant, lebo „Bratislava-východ“ a „Senec“ sú správne celky:
+    - BA-01 Ružinov, Vrakuňa, Podunajské Biskupice (okres Bratislava II, PSČ 82x xx),
+    - BA-02 Nové Mesto, Rača, Vajnory (okres Bratislava III, 83x xx),
+    - BA-03 obce okresu Senec v adresnom súbore: Ivanka pri Dunaji, Rovinka, Chorvátsky Grob, Most pri Bratislave (900 25/28/41/46).
+
+    Ostatné balíky BA (Staré Mesto, Petržalka, Karlova Ves …) ostávajú v hube ako doteraz, ich rozvoz sa nesimuluje. Mesto Senec (903 01) v adresnom súbore nie je (výrez okolo Bratislavy).
+  - Kuriéri `kurierba01` až `kurierba03` (heslo `SEED_COURIER_PASSWORD`), dodávky BA-301KR až BA-303KR, kuriérske brány BA-SB01 až BA-SB03 na severnom konci haly pri parkovisku dodávok (predpoklad, kým nepríde satelit Ivanky). Bežný deň: ~115 zastávok (56 / 45 / 14).
+  - **Brána Ivanky** BA-GATE: kamióny BA (príchod v noci, odchod večerného spoja), dodávky a občas neznáme auto. Vlastný prúd `rngFor(seed, deň, "gate-mix", "BAH")`, pravidlá zo 7b. ŠPZ neznámych áut podľa okolia skladu.
+  - **Dunajská Streda a Trenčín:** dodávky DS-301KR až DS-306KR a TN-301KR až TN-304KR (toľko, koľko má layout parkovacích miest) bez kuriérov a trás. Server ich pošle s layoutom (`/api/layout` → `parked`) a vo Flotile (`parkedAt`). Tieň aj mapa ich kreslia na parkovisku. Miesto dostanú **len** sklady, ktorých dodávky simulátor nevedie. Pri prevádzkovaných skladoch polohu vždy hlási telematika, nič sa nepredpokladá.
+- **Overenie naživo (situácia „Kuriéri ráno“):** BA kamión KE-102LH prišiel bránou Ivanky o 02:31. Pri nakládke o 6:55 stoja v tieni pri rampách 2 kamióny a dodávky pri kuriérskych bránach. Dodávky vyrazili 7:31 až 7:34 (automaticky), všetky 3 trasy odišli. 101 zo 115 balíkov je na rozvoze, zvyšok kamión nezobral a ostal v Budimíri (pravidlo z ADR-065).
+- **Dôsledok:** Budimír sa nemení (golden test prechádza). Prevádzka DS a TN (kuriéri, napájacie jazdy Ivanka ↔ DS ráno a večer, Ivanka → TN po D1) a ulice ďalších miest sú v „Po odovzdaní“. Dovtedy dodávky Žiliny a Ivanky jazdia po hlavných cestách a priamych spojniciach.

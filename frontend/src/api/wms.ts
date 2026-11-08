@@ -144,6 +144,8 @@ export interface Vehicle {
   capacityKg: number;
   capacityParcels: number;
   trip: TripBrief | null;
+  /** [lat, lon] of the parking spot of a van in a depot without simulated operations (ADR-066) */
+  parkedAt?: [number, number] | null;
 }
 
 export interface VehicleDetail extends Vehicle {

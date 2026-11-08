@@ -11,6 +11,7 @@ from depotrack.core.clock import TZ
 from depotrack.core.rbac import DbSession, require_role
 from depotrack.models import (
     CourierRoute,
+    Depot,
     LoadingScan,
     Parcel,
     ParcelEvent,
@@ -34,6 +35,8 @@ from depotrack.schemas.wms import (
     VehicleDetail,
     VehicleOut,
 )
+from depotrack.seed.depots import to_latlon
+from depotrack.seed.operations import parked_spots
 from depotrack.services.views import Lookup, clock, parcel_brief, scan_out, trip_brief
 
 router = APIRouter(prefix="/api", tags=["fleet"])
@@ -68,6 +71,10 @@ def current_trip(db: DbSession, vehicle: Vehicle, day: date) -> Trip | None:
 def vehicles(_: Dispatcher, db: DbSession) -> list[VehicleOut]:
     clk = clock()
     look = Lookup(db)
+    parked: dict[str, tuple[float, float]] = {}
+    for depot in db.execute(select(Depot)).scalars():
+        for plate, s in parked_spots(db, depot).items():
+            parked[plate] = to_latlon(depot.layout, float(s["x"]), float(s["y"]))
     out = []
     for v in sorted(look.vehicles.values(), key=lambda v: (v.kind.value, v.plate)):
         trip = current_trip(db, v, clk.operating_day)
@@ -78,6 +85,7 @@ def vehicles(_: Dispatcher, db: DbSession) -> list[VehicleOut]:
                 capacity_kg=v.capacity_kg,
                 capacity_parcels=v.capacity_parcels,
                 trip=trip_brief(db, trip, look, clk.sim_time) if trip else None,
+                parked_at=parked.get(v.plate),
             )
         )
     return out

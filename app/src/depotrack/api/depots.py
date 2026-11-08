@@ -28,8 +28,10 @@ from depotrack.schemas.wms import (
     LayoutDoor,
     LayoutOut,
     OccupiedDoor,
+    ParkedVehicle,
     StagedBay,
 )
+from depotrack.seed.operations import parked_spots
 from depotrack.services.parcels import in_day
 from depotrack.services.views import Lookup, clock
 
@@ -84,6 +86,12 @@ def layout(
                 dock_equipment=door.dock_equipment,
             )
             for door in doors
+        ],
+        parked=[
+            ParkedVehicle(
+                plate=plate, x=float(s["x"]), y=float(s["y"]), heading=float(s["heading"])
+            )
+            for plate, s in parked_spots(db, d).items()
         ],
     )
 

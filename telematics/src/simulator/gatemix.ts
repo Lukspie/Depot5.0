@@ -94,6 +94,14 @@ export function gateMix(base: GateRow[], couriers: CourierSchedule[], day: strin
   return out;
 }
 
+/** district prefixes of the plates of unknown cars around a depot */
+const REGION_PLATES: Record<string, string[]> = {
+  ZIL: ["ZA", "MT", "PB", "CA"],
+  BAH: ["BA", "BL", "SC", "PK"],
+  DS: ["DS", "GA", "KN", "SC"],
+  TN: ["TN", "IL", "NM", "PB"],
+};
+
 /**
  * The gate of another depot (phase 7c, ADR-065), e.g. Žilina: the linehaul trucks that end there
  * come in when they arrive and leave with the night trip, the depot's courier vans leave in the
@@ -125,7 +133,7 @@ export function depotGateMix(depot: string, trucks: TripSchedule[], couriers: Co
   // an unknown car in the afternoon on two days of three
   const car = rng.chance(0.66);
   const carAt = Math.round(rng.float(zonedToUtc(addDays(day, 1), "09:00"), zonedToUtc(addDays(day, 1), "14:00")));
-  const carPlate = `${rng.pick(["ZA", "MT", "PB", "CA"])}-${String(rng.int(100, 999))}${rng.pick(["AB", "EF", "KL", "XY"])}`;
+  const carPlate = `${rng.pick(REGION_PLATES[depot] ?? ["ZA", "MT", "PB", "CA"])}-${String(rng.int(100, 999))}${rng.pick(["AB", "EF", "KL", "XY"])}`;
   if (car) out.push(row(carAt, "in", "car", carPlate, false));
   return out;
 }

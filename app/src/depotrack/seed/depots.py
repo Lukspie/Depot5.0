@@ -99,20 +99,25 @@ BUD = Spec(
     assumed=("ramps side and count", "gate", "trailer stands", "van parking"),
 )
 
-# Ivanka pri Dunaji: 85 m of yard to the west, only 28 m to the east: the ramps face west.
+# Ivanka pri Dunaji: 85 m of yard to the west, only 28 m to the east: the ramps face west. The
+# couriers of Ivanka (Bratislava-východ and Senec, ADR-066) load at the north end, next to their
+# vans.
 BAH = Spec(
     code="BAH",
     name="Ivanka pri Dunaji",
     kind="hub",
     height=12,
-    doors=(Doors("W", "loading_dock", tuple(f"BA-R{i:02d}" for i in range(1, 7))),),
+    doors=(
+        Doors("W", "loading_dock", tuple(f"BA-R{i:02d}" for i in range(1, 7))),
+        Doors("N", "staging_bay", tuple(f"BA-SB{i:02d}" for i in range(1, 4)), MANUAL),
+    ),
     reserved_end=None,
     gate=("W", 0.6),
-    gate_code=None,
+    gate_code="BA-GATE",
     stands=(Slots("W", 8),),
     vans=(Slots("N", 6),),
     belt=False,
-    assumed=("ramps side and count", "gate", "trailer stands", "van parking"),
+    assumed=("ramps side and count", "gate", "trailer stands", "van parking", "courier doors"),
 )
 
 # Žilina (team + docs/design/satelit/satelit-zilina.png): ~12 ramps on the west long side towards

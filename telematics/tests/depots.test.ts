@@ -75,6 +75,9 @@ describe("phase 7c: a second depot with its own couriers and gate", () => {
     expect(bud.some((g) => g.plate === "ZA-301KR")).toBe(false);
     // the evening ZA truck came in at Žilina
     expect(zil.some((g) => g.vehicleType === "truck" && g.direction === "in")).toBe(true);
+    // the hub in Ivanka has its own gate too: the evening BA truck comes in there (ADR-066)
+    const bah = app.gate.filter((g) => g.depot === "BAH");
+    expect(bah.some((g) => g.vehicleType === "truck" && g.direction === "in")).toBe(true);
     expect(app.courierEvents.some((e) => e.routeId === 900 && e.kind === "departed")).toBe(true);
     expect(new Set(app.gate.map((g) => g.key)).size).toBe(app.gate.length);
 

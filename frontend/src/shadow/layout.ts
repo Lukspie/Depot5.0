@@ -58,6 +58,8 @@ export interface DepotLayout {
     yard?: Yard;
   };
   doors: LayoutDoor[];
+  /** vans of a depot without simulated operations, on their parking spot (ADR-066) */
+  parked?: { plate: string; x: number; y: number; heading: number }[];
 }
 
 export type DeviceStatus = "online" | "degraded" | "offline" | "maintenance";

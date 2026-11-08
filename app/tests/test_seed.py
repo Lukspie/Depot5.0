@@ -31,13 +31,15 @@ def test_seed_is_idempotent_and_complete(db: Session) -> None:
     run_seed(db, settings, DAY)
     assert {m: _count(db, m) for m in counts} == counts
 
-    assert counts[Direction] == 3 + 5 + 8 + 4  # + the 4 courier districts of Žilina
-    # Budimír docks, staging bays, gate; Bratislava hub ramps; Žilina 12 ramps, 4 courier doors,
-    # gate; Dunajská Streda 1 ramp, 6 courier doors, gate; Trenčín 6 ramps, 4 courier doors, gate
-    assert counts[Door] == 8 + 8 + 1 + 6 + (12 + 4 + 1) + (1 + 6 + 1) + (6 + 4 + 1)
-    assert counts[Vehicle] == 12 + 8 + 4  # + the vans of Žilina
-    # admin, 3 dispatchers (one per shift), operator, security; couriers of Budimír and Žilina
-    assert counts[User] == 6 + 8 + 4
+    assert counts[Direction] == 3 + 5 + 8 + 4 + 3  # + the courier districts of Žilina and Ivanka
+    # Budimír docks, staging bays, gate; Bratislava hub ramps, 3 courier doors, gate; Žilina
+    # 12 ramps, 4 courier doors, gate; Dunajská Streda 1 ramp, 6 courier doors, gate; Trenčín
+    # 6 ramps, 4 courier doors, gate
+    assert counts[Door] == 8 + 8 + 1 + (6 + 3 + 1) + (12 + 4 + 1) + (1 + 6 + 1) + (6 + 4 + 1)
+    # + the vans of Žilina, Ivanka, and the parked vans of Dunajská Streda and Trenčín
+    assert counts[Vehicle] == 12 + 8 + 4 + 3 + 6 + 4
+    # admin, 3 dispatchers (one per shift), operator, security; couriers of Budimír, Žilina, Ivanka
+    assert counts[User] == 6 + 8 + 4 + 3
     assert counts[Wave] == 2
     # 200 collected parcels + parcels brought by the 3 night trucks; one event each
     assert counts[Parcel] == counts[ParcelEvent]
@@ -129,7 +131,7 @@ def test_new_day_adds_parcels_but_not_reference_data(db: Session) -> None:
     first = _count(db, Parcel)
     run_seed(db, settings, date(2026, 10, 24))
     assert _count(db, Parcel) - first >= 20
-    assert _count(db, Direction) == 16 + 4
+    assert _count(db, Direction) == 16 + 4 + 3
 
 
 def test_generated_parcels_are_plausible() -> None:

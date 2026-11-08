@@ -37,7 +37,7 @@ from depotrack.models import (
     Vehicle,
 )
 from depotrack.models.enums import DoorKind, EventSource, ParcelStatus, StopOutcome, UserRole
-from depotrack.seed.operations import ZIL_OPS, DepotOps, district_of
+from depotrack.seed.operations import BAH_OPS, ZIL_OPS, DepotOps, district_of
 from depotrack.services import tracking
 from depotrack.services.parcels import LOADABLE, in_day
 from depotrack.services.routing import Stop, Visit, plan_tour
@@ -63,6 +63,7 @@ class Scheme:
 SCHEMES = (
     Scheme("BUD", COURIER_USERNAME, "KE-{n}", "KE-3{n}KR", None),
     Scheme("ZIL", re.compile(r"^kurierza(\d{2})$"), "ZA-{n}", "ZA-3{n}KR", ZIL_OPS),
+    Scheme("BAH", re.compile(r"^kurierba(\d{2})$"), "BA-{n}", "BA-3{n}KR", BAH_OPS),
 )
 
 
@@ -84,7 +85,7 @@ class Assignment:
 
 def assignments(db: Session, depot: Depot) -> list[Assignment]:
     """kurier0N -> district KE-0N and van KE-30NKR (active couriers only); in Žilina
-    kurierza0N -> ZA-0N and ZA-30NKR."""
+    kurierza0N -> ZA-0N and ZA-30NKR, in Ivanka kurierba0N -> BA-0N and BA-30NKR."""
     scheme = next((s for s in SCHEMES if s.depot == depot.code), None)
     if scheme is None:
         return []
@@ -159,7 +160,9 @@ def _depot_routes(
             )
         else:
             ops = scheme.ops
-            parcels = [p for p in feeder if district_of(ops, p.lat, p.lon) == a.district.code]
+            parcels = [
+                p for p in feeder if district_of(ops, p.lat, p.lon, p.address) == a.district.code
+            ]
         if not parcels:
             continue
         route = CourierRoute(
@@ -262,8 +265,8 @@ def load_parcel(
     """The courier scans the parcel into the van: out_for_delivery + tracking link by SMS.
     Idempotent: a parcel already in the van (or delivered) is left alone."""
     parcel = db.get(Parcel, stop.parcel_id)
-    # in another depot (Žilina, ADR-065) only a parcel that came on the linehaul truck (LOADED) is
-    # there to load; one that missed the truck is still in Budimír
+    # in another depot (Žilina, Ivanka, ADR-065) only a parcel that came on the linehaul truck
+    # (LOADED) is there to load; one that missed the truck is still in Budimír
     loadable = LOADABLE if depot_of_route(db, route).code == "BUD" else (ParcelStatus.LOADED,)
     if parcel is None or parcel.status not in loadable:
         return None

@@ -991,7 +991,7 @@ export class Engine {
     const home = state.couriers.filter((c) => c.depotCode === "BUD");
     const rows = gateMix(gate, home, plan.day, this.seedValue);
     const ends = plan.destinationDepots ?? {};
-    const others = [...new Set([...state.couriers.map((c) => c.depotCode), ...Object.values(ends)])].filter((c) => c !== "BUD" && c !== "BAH");
+    const others = [...new Set([...state.couriers.map((c) => c.depotCode), ...Object.values(ends)])].filter((c) => c !== "BUD");
     for (const code of others.sort()) {
       const trucks = [...scenario.schedules.values()].filter((s) => ends[s.trip.directionCode] === code);
       rows.push(...depotGateMix(code, trucks, state.couriers.filter((c) => c.depotCode === code), plan.day, this.seedValue));

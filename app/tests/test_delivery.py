@@ -241,8 +241,8 @@ def test_window_heuristic_beats_nearest_neighbour_on_windows() -> None:
 @pytest.mark.usefixtures("seeded")
 def test_internal_courier_plan(client: TestClient) -> None:
     routes = courier_plan(client)
-    assert len(routes) == 8 + 4  # Budimír and Žilina (phase 7c)
-    assert {r["depot"]["code"] for r in routes} == {"BUD", "ZIL"}
+    assert len(routes) == 8 + 4 + 3  # Budimír, Žilina and Ivanka (phase 7c)
+    assert {r["depot"]["code"] for r in routes} == {"BUD", "ZIL", "BAH"}
     first = routes[0]
     assert first["vehiclePlate"] == "KE-301KR"
     assert first["courierUsername"] == "kurier01"
@@ -300,6 +300,38 @@ def test_zilina_couriers_deliver_the_parcels_of_the_za_truck(
     res = client.post("/api/courier/scan", json={"barcode": first.barcode})
     assert res.status_code == 200, res.text
     assert res.json()["action"] == "loaded"
+
+
+@pytest.mark.usefixtures("seeded")
+def test_ivanka_couriers_deliver_bratislava_east_and_senec(client: TestClient, db: Session) -> None:
+    """Phase 7c (ADR-066): the couriers of the Bratislava hub deliver the BA parcels addressed to
+    Bratislava-východ and the villages of okres Senec, by postcode; the rest of Bratislava stays."""
+    from depotrack.seed.depots import Frame, built_depots, inside
+    from depotrack.seed.operations import BAH_OPS, district_of, postcode_of
+
+    ba = db.execute(select(Direction).where(Direction.code == "BA")).scalar_one()
+    bah = db.execute(select(Depot).where(Depot.code == "BAH")).scalar_one()
+    assert ba.destination_depot_id == bah.id
+    parcels = list(db.execute(select(Parcel).where(Parcel.direction_id == ba.id)).scalars())
+    ours = {p.barcode for p in parcels if district_of(BAH_OPS, p.lat, p.lon, p.address)}
+    assert ours and len(ours) < len(parcels)  # Staré Mesto, Petržalka … are not Ivanka's
+    routes = [r for r in courier_plan(client) if r["depot"]["code"] == "BAH"]
+    assert {r["courierUsername"] for r in routes} <= {"kurierba01", "kurierba02", "kurierba03"}
+    assert sorted(s["barcode"] for r in routes for s in r["stops"]) == sorted(ours)
+    by_barcode = {p.barcode: p for p in parcels}
+    layout = built_depots()["BAH"].layout
+    frame = Frame(tuple(layout["origin"]), layout["hall"]["rotationDeg"])
+    site = [tuple(p) for p in layout["site"]]
+    for r in routes:
+        assert r["vehiclePlate"].startswith("BA-3") and r["stagingBay"].startswith("BA-SB")
+        for s in r["stops"]:
+            p = by_barcode[s["barcode"]]
+            assert district_of(BAH_OPS, p.lat, p.lon, p.address) == r["districtCode"]
+        assert inside(frame.local(*r["parking"]), site) and inside(frame.local(*r["loading"]), site)
+    assert postcode_of("Ružinovská 1, 821 05 Bratislava") == "82105"
+    assert postcode_of("Hlavná 5, 90028 Ivanka pri Dunaji") == "90028"
+    assert district_of(BAH_OPS, 0, 0, "Obchodná 1, 811 06 Bratislava") is None
+    assert district_of(BAH_OPS, 0, 0, "Hlavná 5, 900 41 Rovinka") == "BA-03"
 
 
 # ------------------------------------------------------------------ token lifecycle
@@ -700,7 +732,7 @@ def test_reset_day_restores_routes_and_removes_links(
     load_all(client, route, at("07:05"))
     post_events(client, [{"routeId": route["routeId"], "kind": "departed", "at": iso(at("07:30"))}])
     result = reset_operating_day(db, DAY)
-    assert result["courierRoutes"] == 8 + 4  # Budimír and Žilina
+    assert result["courierRoutes"] == 8 + 4 + 3  # Budimír, Žilina and Ivanka
     assert db.execute(select(TrackingToken)).first() is None
     assert db.execute(select(CustomerNotification)).first() is None
     r = db.get(CourierRoute, route["routeId"])

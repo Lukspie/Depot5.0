@@ -29,7 +29,12 @@ from depotrack.seed import (
 )
 from depotrack.seed.depots import data_version
 from depotrack.seed.geo import seed_depot_layouts, seed_geo
-from depotrack.seed.operations import ZIL_OPS, seed_depot_operations
+from depotrack.seed.operations import (
+    BAH_OPS,
+    ZIL_OPS,
+    seed_depot_operations,
+    seed_parked_vans,
+)
 from depotrack.services.alerts import close_stale_alerts
 from depotrack.services.couriers import build_courier_routes, replan_routes, reset_routes
 from depotrack.services.gate import close_stale_events, delete_day
@@ -55,8 +60,8 @@ def ensure_operating_day(db: Session, settings: Settings, day: date) -> None:
     # depots added in phase 7c on a day that was planned before them
     step(
         db,
-        f"couriers-depots:{day.isoformat()}:v1",
-        lambda: build_courier_routes(db, day, only=("ZIL",)),
+        f"couriers-depots:{day.isoformat()}:v2",
+        lambda: build_courier_routes(db, day, only=("ZIL", "BAH")),
     )
     step(db, f"courier-windows:{day.isoformat()}", lambda: replan_routes(db, day))
     if close_stale_alerts(db, day) + close_stale_events(db, day):
@@ -72,6 +77,8 @@ def run_seed(db: Session, settings: Settings, day: date | None = None) -> None:
     step(db, "gate-plates:v1", lambda: seed_gate_plates(db))
     step(db, f"depot-layouts:{data_version()}", lambda: seed_depot_layouts(db))
     step(db, "depot-ops:ZIL:v1", lambda: seed_depot_operations(db, settings, ZIL_OPS))
+    step(db, "depot-ops:BAH:v1", lambda: seed_depot_operations(db, settings, BAH_OPS))
+    step(db, "depot-fleet:DS-TN:v1", lambda: seed_parked_vans(db))
     ensure_operating_day(db, settings, day)
 
 

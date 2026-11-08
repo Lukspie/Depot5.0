@@ -21,6 +21,7 @@ function PrimitiveVan() {
  * Courier vans of the depot (ADR-041, phases 7b and 7c): parked on the yard's van parking
  * overnight and after the round, from 06:30 loading in front of their staging bay (KE-0N -> SB-0N),
  * until they leave. Places come from the layout, states from the telematics "vehicles" channel.
+ * Depots without operations send their parked vans with the layout (`parked`, ADR-066).
  */
 export function CourierVans({ layout }: { layout: DepotLayout }) {
   const vans = useShadowStore((s) => s.vans);
@@ -43,6 +44,14 @@ export function CourierVans({ layout }: { layout: DepotLayout }) {
           </group>
         );
       })}
+      {(layout.parked ?? []).map((v) => (
+        // a depot without simulated operations (Dunajská Streda, Trenčín): its vans stand parked
+        <group key={v.plate} position={[v.x, 0, v.y]} rotation-y={facingRotation(v.heading)}>
+          <WithModel fallback={<PrimitiveVan />}>
+            <Van />
+          </WithModel>
+        </group>
+      ))}
     </>
   );
 }

@@ -178,6 +178,8 @@ class VehicleOut(CamelModel):
     capacity_kg: int
     capacity_parcels: int
     trip: TripBrief | None
+    # [lat, lon] of the parking spot of a van in a depot without simulated operations (ADR-066)
+    parked_at: tuple[float, float] | None = None
 
 
 class VehicleDetail(VehicleOut):
@@ -263,10 +265,19 @@ class LayoutDoor(CamelModel):
     dock_equipment: DockEquipment
 
 
+class ParkedVehicle(CamelModel):
+    plate: str
+    x: float
+    y: float
+    heading: float
+
+
 class LayoutOut(CamelModel):
     depot: DepotOut
     layout: dict[str, object]
     doors: list[LayoutDoor]
+    # vans of a depot without simulated operations, standing on their parking spot (ADR-066)
+    parked: list[ParkedVehicle] = Field(default_factory=list)
 
 
 class OccupiedDoor(CamelModel):
