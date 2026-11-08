@@ -24,6 +24,27 @@ DATA = Path(__file__).resolve().parent / "data" / "depots_osm.json"
 COMPASS = {"N": (0.0, -1.0), "S": (0.0, 1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}  # east, south
 STAND = (17.0, 4.0)  # semi-trailer stand: length, width (m)
 VAN = (6.0, 2.8)
+CAR = (5.0, 2.5)
+
+
+@dataclass(frozen=True)
+class Doors:
+    """A group of doors on one wall: `part` is the share of the wall (0..1 from its low end)."""
+
+    side: str  # compass
+    kind: str  # loading_dock | staging_bay
+    codes: tuple[str, ...]
+    equipment: tuple[str, str] = ("electric", "dock_leveler")
+    part: tuple[float, float] = (0.0, 1.0)
+
+
+@dataclass(frozen=True)
+class Slots:
+    """Parking slots in the yard beyond a side of the hall, optionally only near one end."""
+
+    side: str  # compass
+    count: int
+    end: str | None = None  # compass of the hall end the slots keep to
 
 
 @dataclass(frozen=True)
@@ -32,41 +53,47 @@ class Spec:
     name: str
     kind: str  # depot | hub
     height: float
-    ramp_side: str
-    ramps: tuple[str, ...]
-    ramp_equipment: tuple[tuple[str, str], ...]  # (door drive, dock equipment) per ramp
-    courier_side: str | None  # staging bays inside along this wall
-    courier_bays: tuple[str, ...]
-    reserved_end: tuple[str, float] | None  # e.g. offices at the south end
+    doors: tuple[Doors, ...]
+    reserved_end: tuple[str, float] | None  # offices at an end of the hall: no doors there
     gate: tuple[str, float]  # side of the site and position along the hall (-1 .. 1)
     gate_code: str | None
-    stands: tuple[str, int]  # side of the yard for trailers, count
-    vans: tuple[str, int]  # side of the yard for the courier vans, count
+    stands: tuple[Slots, ...]
+    vans: tuple[Slots, ...]
     belt: bool
     assumed: tuple[str, ...]
+    cars: tuple[Slots, ...] = ()  # staff car park
+    gatehouse: bool = False
     # no plot of the depot in OSM: the yard is the hall plus these margins (compass -> metres)
     yard_margins: tuple[tuple[str, float], ...] = ()
 
 
+MANUAL = ("manual", "none")
+
 # Budimír: ramps to the east (52-57 m of yard), courier bays along the west wall, the large south
-# yard (122 m) holds the trailers and the vans. Codes and equipment as before (ADR-050).
+# yard (122 m) holds the trailers and the vans. Codes and equipment as before (ADR-050). Satellite
+# pictures and a description of the real depot follow (plan 7c), until then an assumption.
 BUD = Spec(
     code="BUD",
     name="Budimír",
     kind="depot",
     height=10,
-    ramp_side="E",
-    ramps=tuple(f"LD-{i:02d}" for i in range(1, 9)),
-    ramp_equipment=(("electric", "dock_leveler"),) * 2
-    + (("electric", "telescopic_conveyor"),) * 3
-    + (("electric", "none"),) * 3,
-    courier_side="W",
-    courier_bays=tuple(f"SB-{i:02d}" for i in range(1, 9)),
+    doors=(
+        Doors("E", "loading_dock", ("LD-01", "LD-02"), ("electric", "dock_leveler"), (0.0, 0.25)),
+        Doors(
+            "E",
+            "loading_dock",
+            ("LD-03", "LD-04", "LD-05"),
+            ("electric", "telescopic_conveyor"),
+            (0.25, 0.625),
+        ),
+        Doors("E", "loading_dock", ("LD-06", "LD-07", "LD-08"), ("electric", "none"), (0.625, 1.0)),
+        Doors("W", "staging_bay", tuple(f"SB-{i:02d}" for i in range(1, 9)), MANUAL),
+    ),
     reserved_end=None,
     gate=("S", 0.0),
     gate_code="GATE-01",
-    stands=("S", 8),
-    vans=("S", 8),
+    stands=(Slots("S", 8, None),),
+    vans=(Slots("S", 8, None),),
     belt=True,
     assumed=("ramps side and count", "gate", "trailer stands", "van parking"),
 )
@@ -77,72 +104,95 @@ BAH = Spec(
     name="Ivanka pri Dunaji",
     kind="hub",
     height=12,
-    ramp_side="W",
-    ramps=tuple(f"BA-R{i:02d}" for i in range(1, 7)),
-    ramp_equipment=(("electric", "dock_leveler"),) * 6,
-    courier_side="E",
-    courier_bays=(),
+    doors=(Doors("W", "loading_dock", tuple(f"BA-R{i:02d}" for i in range(1, 7))),),
     reserved_end=None,
     gate=("W", 0.6),
     gate_code=None,
-    stands=("W", 8),
-    vans=("N", 6),
+    stands=(Slots("W", 8),),
+    vans=(Slots("N", 6),),
     belt=False,
     assumed=("ramps side and count", "gate", "trailer stands", "van parking"),
 )
 
-# Žilina (team): ramps on the west long side towards the SNP street, offices at the south end,
-# trailers park on the east side. Counts of ramps and courier doors are an assumption.
+# Žilina (team + satelit-zilina.png): ~12 ramps on the west long side towards the SNP street,
+# offices at the south end, trailers on the east, the entrance from SNP with the gatehouse on an
+# island, cars and vans in the south-west corner. Courier doors are not visible: north end wall.
 ZIL = Spec(
     code="ZIL",
     name="Žilina",
     kind="depot",
     height=10,
-    ramp_side="W",
-    ramps=tuple(f"ZI-R{i:02d}" for i in range(1, 7)),
-    ramp_equipment=(("electric", "dock_leveler"),) * 6,
-    courier_side="W",
-    courier_bays=tuple(f"ZI-SB{i:02d}" for i in range(1, 5)),
+    doors=(
+        Doors("W", "loading_dock", tuple(f"ZI-R{i:02d}" for i in range(1, 13))),
+        Doors("N", "staging_bay", tuple(f"ZI-SB{i:02d}" for i in range(1, 5)), MANUAL),
+    ),
     reserved_end=("S", 20.0),
-    gate=("W", -0.75),
+    gate=("W", -0.55),
     gate_code="ZI-GATE",
-    stands=("E", 6),
-    vans=("N", 4),
+    stands=(Slots("E", 8),),
+    vans=(Slots("W", 4, "S"),),
+    cars=(Slots("W", 10, "S"),),
+    gatehouse=True,
     belt=True,
-    assumed=("ramp and courier door counts", "gate", "van parking"),
+    assumed=("courier doors on the north end", "exact ramp count"),
 )
 
-# Dunajská Streda (Malé Dvorníky 610): a small depot fed from Ivanka. OSM has the hall (way
-# 388660269, 30 x 15.6 m) but no plot of its own, only a shared industrial zone of 512 x 429 m:
-# the yard is a rectangle around the hall until the team's satellite picture is checked.
+# Dunajská Streda (Malé Dvorníky 610, team + satelit-dunajska-streda.png): a small depot fed from
+# Ivanka, hall NE-SW with a yard around it. Courier doors and vans (3 + 3) on both long sides,
+# the entrance from the south-west (Obchodná street), the trailer from Ivanka stops at the SW end.
+# OSM has only part of the hall (way 388660269, 30 x 15.6 m) and no plot: see ADR-064.
 DS = Spec(
     code="DS",
     name="Dunajská Streda",
     kind="depot",
     height=7,
-    ramp_side="W",
-    ramps=("DS-R01", "DS-R02"),
-    ramp_equipment=(("electric", "dock_leveler"),) * 2,
-    courier_side="E",
-    courier_bays=("DS-SB01", "DS-SB02", "DS-SB03"),
-    reserved_end=None,
-    gate=("W", 0.0),
-    gate_code="DS-GATE",
-    stands=("S", 2),
-    vans=("E", 3),
-    belt=False,
-    assumed=(
-        "yard outline",
-        "ramps side and count",
-        "courier doors",
-        "gate",
-        "trailer stands",
-        "van parking",
+    doors=(
+        Doors("S", "loading_dock", ("DS-R01",)),
+        Doors("W", "staging_bay", ("DS-SB01", "DS-SB02", "DS-SB03"), MANUAL),
+        Doors("E", "staging_bay", ("DS-SB04", "DS-SB05", "DS-SB06"), MANUAL),
     ),
-    yard_margins=(("W", 32.0), ("E", 18.0), ("N", 8.0), ("S", 26.0)),
+    reserved_end=None,
+    gate=("S", 0.0),
+    gate_code="DS-GATE",
+    stands=(Slots("S", 1),),
+    vans=(Slots("W", 3), Slots("E", 3)),
+    belt=False,
+    assumed=("hall size (OSM has one part)", "yard outline", "door counts"),
+    yard_margins=(("W", 16.0), ("E", 16.0), ("N", 10.0), ("S", 34.0)),
 )
 
-SPECS = (BUD, BAH, ZIL, DS)
+# Trenčín (Záblatie 785, way 1195263485 "Slovak Parcel Service"): a long narrow hall with the
+# offices (also UPS) at one end. In OSM the hall runs WSW-ENE (long side 23° from east), the
+# team's satellite picture shows it upright, so it is turned: sides are taken relative to the hall
+# (offices at the WSW end, ramps with the trailer row on the SSE long side).
+TN = Spec(
+    code="TN",
+    name="Trenčín",
+    kind="depot",
+    height=9,
+    doors=(
+        Doors("S", "loading_dock", tuple(f"TN-R{i:02d}" for i in range(1, 7)), part=(0.3, 1.0)),
+        Doors(
+            "S", "staging_bay", tuple(f"TN-SB{i:02d}" for i in range(1, 5)), MANUAL, part=(0.0, 0.3)
+        ),
+    ),
+    reserved_end=("W", 28.0),
+    gate=("W", 0.0),
+    gate_code="TN-GATE",
+    stands=(Slots("S", 8),),
+    vans=(Slots("N", 4),),
+    cars=(Slots("W", 10),),
+    belt=True,
+    assumed=(
+        "orientation of the satellite picture",
+        "ramp and courier door counts",
+        "yard outline",
+        "gate",
+    ),
+    yard_margins=(("S", 48.0), ("N", 16.0), ("W", 34.0), ("E", 16.0)),
+)
+
+SPECS = (BUD, BAH, ZIL, DS, TN)
 
 
 @dataclass(frozen=True)
@@ -222,30 +272,45 @@ def _slots(
     axis: str,
     sign: int,
     wall: float,
-    span: float,
+    along_range: tuple[float, float],
     count: int,
     size: tuple[float, float],
     site: list[tuple[float, float]],
+    taken: list[tuple[float, float, float, float]],
     gap: float,
 ) -> list[dict[str, float]]:
-    """`count` parking slots in rows perpendicular to the wall (axis, sign), inside the site."""
+    """`count` parking slots in rows beyond the wall (axis, sign), inside the site and not on
+    a slot placed before (`taken`, rectangles x0, y0, x1, y1 that this call extends)."""
     length, width = size
     pitch = width + 0.6
     heading = (0.0 if axis == "x" else 90.0) if sign > 0 else (180.0 if axis == "x" else 270.0)
+    a0, a1 = along_range
     out: list[dict[str, float]] = []
     row = 0
-    while len(out) < count and row < 6:
+    while len(out) < count and row < 8:
         dist = wall + gap + length / 2 + row * (length + 7)
-        n = max(1, int(span // pitch))
-        # from the middle of the row outwards, so a short row is centred on the hall
-        alongs = sorted((-span / 2 + pitch / 2 + i * pitch for i in range(n)), key=abs)
+        n = max(1, int((a1 - a0) // pitch))
+        mid = (a0 + a1) / 2
+        # from the middle of the range outwards, so a short row is centred
+        alongs = sorted((a0 + pitch / 2 + i * pitch for i in range(n)), key=lambda a: abs(a - mid))
         fits: list[tuple[float, float, float]] = []
         for along in alongs:
             x, y = _pt(axis, sign, along, dist)
             hx, hy = (length / 2, width / 2) if axis == "x" else (width / 2, length / 2)
-            corners = [(x - hx, y - hy), (x + hx, y - hy), (x + hx, y + hy), (x - hx, y + hy)]
-            if all(inside(c, site) for c in corners):
+            rect = (x - hx, y - hy, x + hx, y + hy)
+            corners = [
+                (rect[0], rect[1]),
+                (rect[2], rect[1]),
+                (rect[2], rect[3]),
+                (rect[0], rect[3]),
+            ]
+            overlap = any(
+                rect[0] < t[2] and t[0] < rect[2] and rect[1] < t[3] and t[1] < rect[3]
+                for t in taken
+            )
+            if all(inside(c, site) for c in corners) and not overlap:
                 fits.append((along, x, y))
+                taken.append(rect)
                 if len(out) + len(fits) == count:
                     break
         out += [{"x": _r(x), "y": _r(y), "heading": heading} for _, x, y in sorted(fits)]
@@ -261,6 +326,9 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
     frame = Frame(origin, rotation)
     w, d = float(hall["width"]), float(hall["depth"])
     half = {"x": w / 2, "y": d / 2}
+    hall_ring = osm["hallRing"]
+    assert isinstance(hall_ring, list)
+    footprint = [frame.local(float(p[0]), float(p[1])) for p in hall_ring]
     site_ring = osm.get("siteRing")
     if site_ring:
         assert isinstance(site_ring, list)
@@ -271,7 +339,39 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
         y0, y1 = -d / 2 - m.get(("y", -1), 5.0), d / 2 + m.get(("y", 1), 5.0)
         site = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
 
-    # usable length of a long wall: minus offices at one end
+    # middle line of the real outline at x = 0 (rays start inside the hall and go out)
+    y_mid = (_ray(footprint, (0.0, 0.0), (0.0, 1.0)) - _ray(footprint, (0.0, 0.0), (0.0, -1.0))) / 2
+
+    def inner(axis: str, along: float) -> tuple[float, float]:
+        return (0.0, along) if axis == "x" else (along, y_mid)
+
+    def wall(axis: str, sign: int, along: float) -> float | None:
+        """Outer wall of the real outline (not the bounding box) at `along` on that side, None
+        where that line does not cross the hall (e.g. beside a narrower part)."""
+        start = inner(axis, along)
+        if not inside(start, footprint):
+            return None
+        t = _ray(footprint, start, (float(sign), 0.0) if axis == "x" else (0.0, float(sign)))
+        base = start[0] if axis == "x" else start[1]
+        return base + sign * t if math.isfinite(t) else None
+
+    def spread(axis: str, sign: int, p0: float, p1: float, n: int) -> list[float]:
+        """n positions along [p0, p1], only on the longest stretch where the wall exists."""
+        steps = 200
+        ok = [p0 + (p1 - p0) * i / steps for i in range(steps + 1)]
+        runs: list[list[float]] = [[]]
+        for a in ok:
+            if wall(axis, sign, a) is not None:
+                runs[-1].append(a)
+            elif runs[-1]:
+                runs.append([])
+        run = max(runs, key=len)
+        assert run, f"{spec.code}: no wall on side {axis}{sign}"
+        q0, q1 = run[0], run[-1]
+        pitch = (q1 - q0) / n
+        return [q0 + pitch / 2 + i * pitch for i in range(n)]
+
+    # usable length of the long walls: minus offices at one end
     lo, hi = -w / 2 + 4, w / 2 - 4
     if spec.reserved_end:
         axis, sign = frame.side(spec.reserved_end[0])
@@ -282,68 +382,55 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
             lo = -w / 2 + spec.reserved_end[1]
 
     doors: list[DoorPlace] = []
-    ramp_axis, ramp_sign = frame.side(spec.ramp_side)
-    assert ramp_axis == "y", "ramps are expected on a long side"
-    same_wall = spec.courier_side == spec.ramp_side
-    n_wall = len(spec.ramps) + (len(spec.courier_bays) if same_wall else 0)
-    pitch = (hi - lo) / max(1, n_wall)
-    xs = [lo + pitch / 2 + i * pitch for i in range(n_wall)]
-    # on a shared wall the courier doors take the end away from the offices, then the ramps
-    courier_xs = xs[: len(spec.courier_bays)] if same_wall else []
-    ramp_xs = xs[len(courier_xs) :]
-    for code, x, (drive, eq) in zip(spec.ramps, ramp_xs, spec.ramp_equipment, strict=True):
-        doors.append(DoorPlace(code, "loading_dock", _r(x), _r(ramp_sign * d / 2), drive, eq))
     van_loading: list[dict[str, object]] = []
-    if spec.courier_bays:
-        assert spec.courier_side is not None
-        _c_axis, c_sign = frame.side(spec.courier_side)
-        if not same_wall:
-            cp = (hi - lo) / len(spec.courier_bays)
-            courier_xs = [lo + cp / 2 + i * cp for i in range(len(spec.courier_bays))]
-        for code, x in zip(spec.courier_bays, courier_xs, strict=True):
-            # the bay is the floor area inside the courier door, the van loads just outside it
-            doors.append(
-                DoorPlace(code, "staging_bay", _r(x), _r(c_sign * (d / 2 - 4)), "manual", "none")
-            )
-            van_loading.append(
-                {
-                    "bay": code,
-                    "x": _r(x),
-                    "y": _r(c_sign * (d / 2 + 4)),
-                    "heading": 90.0 if c_sign > 0 else 270.0,
-                }
-            )
+    ramp_sides: set[tuple[str, int]] = set()
+    for g in spec.doors:
+        axis, sign = frame.side(g.side)
+        a0, a1 = (lo, hi) if axis == "y" else (-d / 2 + 2, d / 2 - 2)
+        p0, p1 = a0 + (a1 - a0) * g.part[0], a0 + (a1 - a0) * g.part[1]
+        heading = (0.0 if axis == "x" else 90.0) if sign > 0 else (180.0 if axis == "x" else 270.0)
+        for code, along in zip(g.codes, spread(axis, sign, p0, p1, len(g.codes)), strict=True):
+            found = wall(axis, sign, along)
+            assert found is not None
+            wc = found
+            if g.kind == "loading_dock":
+                ramp_sides.add((axis, sign))
+                x, y = _pt(axis, sign, along, sign * wc)
+            else:
+                # the bay is the floor inside the courier door, the van loads just outside it
+                x, y = _pt(axis, sign, along, sign * wc - 4)
+                vx, vy = _pt(axis, sign, along, sign * wc + 4)
+                van_loading.append({"bay": code, "x": _r(vx), "y": _r(vy), "heading": heading})
+            doors.append(DoorPlace(code, g.kind, _r(x), _r(y), *g.equipment))
 
     # gate: where a line from the hall side meets the site boundary
     g_axis, g_sign = frame.side(spec.gate[0])
     along = spec.gate[1] * (w / 2 if g_axis == "y" else d / 2)
     start = _pt(g_axis, g_sign, along, half[g_axis])
-    direction = (g_sign, 0.0) if g_axis == "x" else (0.0, float(g_sign))
-    reach = _ray(site, start, direction)
-    gate = _pt(g_axis, g_sign, along, half[g_axis] + (reach - 2 if math.isfinite(reach) else 20))
-    gate = (_r(gate[0]), _r(gate[1]))
+    reach = _ray(site, start, (g_sign, 0.0) if g_axis == "x" else (0.0, float(g_sign)))
+    gate_pt = _pt(g_axis, g_sign, along, half[g_axis] + (reach - 2 if math.isfinite(reach) else 20))
+    gate = (_r(gate_pt[0]), _r(gate_pt[1]))
     if spec.gate_code:
         doors.append(DoorPlace(spec.gate_code, "yard_gate", gate[0], gate[1], "electric", "none"))
 
-    s_axis, s_sign = frame.side(spec.stands[0])
-    stands = _slots(
-        s_axis, s_sign, half[s_axis], w - 8 if s_axis == "y" else d, spec.stands[1], STAND, site,
-        gap=18 if (s_axis, s_sign) == (ramp_axis, ramp_sign) else 4,
-    )  # fmt: skip
-    v_axis, v_sign = frame.side(spec.vans[0])
-    van_span = (w - 8 if v_axis == "y" else d) / (2 if (v_axis, v_sign) == (s_axis, s_sign) else 1)
-    vans = _slots(v_axis, v_sign, half[v_axis], van_span, spec.vans[1], VAN, site, gap=4)
-    if (v_axis, v_sign) == (s_axis, s_sign):
-        # one yard for both: the vans take the other half of it
-        shift = van_span / 2
-        stands = [
-            s | ({"y": _r(s["y"] + shift)} if s_axis == "x" else {"x": _r(s["x"] + shift)})
-            for s in stands
-        ]
-        vans = [
-            v | ({"y": _r(v["y"] - shift)} if v_axis == "x" else {"x": _r(v["x"] - shift)})
-            for v in vans
-        ]
+    taken: list[tuple[float, float, float, float]] = []
+
+    def place(groups: tuple[Slots, ...], size: tuple[float, float]) -> list[dict[str, float]]:
+        out: list[dict[str, float]] = []
+        for s in groups:
+            axis, sign = frame.side(s.side)
+            a0, a1 = (-w / 2 + 2, w / 2 - 2) if axis == "y" else (-d / 2, d / 2)
+            if s.end and axis == "y":
+                _e_axis, e_sign = frame.side(s.end)
+                a0, a1 = (w / 6, w / 2 + 10) if e_sign > 0 else (-w / 2 - 10, -w / 6)
+            # in front of ramps keep the apron free for the trucks
+            gap = 18.0 if (axis, sign) in ramp_sides and not s.end else 4.0
+            out += _slots(axis, sign, half[axis], (a0, a1), s.count, size, site, taken, gap)
+        return out
+
+    stands = place(spec.stands, STAND)
+    vans = place(spec.vans, VAN)
+    cars = place(spec.cars, CAR)
 
     # driving lane: a ring around the hall with room in front of the ramps, joined to the gate
     def room(axis: str, sign: int, want: float) -> float:
@@ -352,37 +439,40 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
             _pt(axis, sign, 0.0, half[axis]),
             (sign, 0.0) if axis == "x" else (0.0, float(sign)),
         )
-        return min(want, free - 3) if math.isfinite(free) else want
+        return max(2.0, min(want, free - 3)) if math.isfinite(free) else want
 
-    oy_ramp = room("y", ramp_sign, 22)
-    oy_back = room("y", -ramp_sign, 6)
-    ox_pos, ox_neg = room("x", 1, 6), room("x", -1, 6)
-    y_ramp = ramp_sign * (d / 2 + oy_ramp)
-    y_back = -ramp_sign * (d / 2 + oy_back)
-    ring = [
-        (-w / 2 - ox_neg, y_ramp),
-        (w / 2 + ox_pos, y_ramp),
-        (w / 2 + ox_pos, y_back),
-        (-w / 2 - ox_neg, y_back),
-    ]
-    ring = [(_r(x), _r(y)) for x, y in ring]
+    off = {
+        k: room(*k, 22.0 if k in ramp_sides else 6.0)
+        for k in (("x", 1), ("x", -1), ("y", 1), ("y", -1))
+    }
+    xa, xb = -w / 2 - off[("x", -1)], w / 2 + off[("x", 1)]
+    ya, yb = -d / 2 - off[("y", -1)], d / 2 + off[("y", 1)]
+    ring = [(_r(xa), _r(ya)), (_r(xb), _r(ya)), (_r(xb), _r(yb)), (_r(xa), _r(yb))]
     nearest = min(ring, key=lambda p: math.dist(p, gate))
     lanes = [[list(p) for p in [*ring, ring[0]]], [list(gate), list(nearest)]]
 
+    yard: dict[str, object] = {
+        "gate": list(gate),
+        "truckStands": [{"code": f"{spec.code}-T{i + 1:02d}"} | s for i, s in enumerate(stands)],
+        "vanParking": [{"code": f"{spec.code}-P{i + 1:02d}"} | v for i, v in enumerate(vans)],
+        "vanLoading": van_loading,
+        "carParking": [{"code": f"{spec.code}-C{i + 1:02d}"} | c for i, c in enumerate(cars)],
+        "lanes": lanes,
+    }
+    if spec.gatehouse:
+        # the guard house on an island just inside the gate
+        inward = -g_sign * 9.0
+        gx, gy = (
+            (gate[0] + inward, gate[1] + 6) if g_axis == "x" else (gate[0] + 6, gate[1] + inward)
+        )
+        yard["gatehouse"] = [_r(gx), _r(gy)]
     layout: dict[str, object] = {
         "origin": [round(origin[0], 6), round(origin[1], 6)],
         "hall": {"width": w, "depth": d, "height": spec.height, "rotationDeg": round(rotation, 1)},
+        "footprint": [[_r(x), _r(y)] for x, y in footprint],
         "site": [[_r(x), _r(y)] for x, y in site],
         "yardGate": list(gate),
-        "yard": {
-            "gate": list(gate),
-            "truckStands": [
-                {"code": f"{spec.code}-T{i + 1:02d}"} | s for i, s in enumerate(stands)
-            ],
-            "vanParking": [{"code": f"{spec.code}-P{i + 1:02d}"} | v for i, v in enumerate(vans)],
-            "vanLoading": van_loading,
-            "lanes": lanes,
-        },
+        "yard": yard,
         "source": {
             "hallWay": osm["hallWay"],
             "siteWay": osm.get("siteWay"),
@@ -390,7 +480,10 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
         },
     }
     if spec.belt:
-        by = _r(ramp_sign * d / 4)
+        # along the middle of the real outline, a quarter of its width towards the ramps
+        y_pos, y_neg = wall("y", 1, 0.0) or d / 2, wall("y", -1, 0.0) or -d / 2
+        toward = next((sign for axis, sign in ramp_sides if axis == "y"), 0)
+        by = _r((y_pos + y_neg) / 2 + toward * (y_pos - y_neg) / 4)
         layout["belt"] = [[_r(-w / 2 + 8), by], [_r(w / 2 - 8), by]]
         layout["lineScanner"] = [0.0, by]
         layout["sensors"] = [[_r(-w / 3), by], [0.0, by], [_r(w / 3), by]]

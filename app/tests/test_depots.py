@@ -66,54 +66,65 @@ def test_layout_drives_the_shadow_and_the_map(user: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("seeded")
-@pytest.mark.parametrize("code", ["BUD", "BAH", "ZIL", "DS"])
+@pytest.mark.parametrize("code", ["BUD", "BAH", "ZIL", "DS", "TN"])
 def test_every_depot_layout_is_inside_its_site(user: TestClient, code: str) -> None:
     body = user.get(f"/api/layout?depot={code}").json()
     layout = body["layout"]
     site = [tuple(p) for p in layout["site"]]
     yard = layout["yard"]
-    assert yard["truckStands"] and yard["vanParking"] and yard["lanes"]
+    assert yard["truckStands"] or code == "DS"
+    assert yard["vanParking"] and yard["lanes"]
+    slots = yard["truckStands"] + yard["vanParking"] + yard["vanLoading"] + yard["carParking"]
     points = (
         [(d["x"], d["y"]) for d in body["doors"]]
-        + [(s["x"], s["y"]) for s in yard["truckStands"] + yard["vanParking"] + yard["vanLoading"]]
+        + [(s["x"], s["y"]) for s in slots]
         + [tuple(p) for lane in yard["lanes"] for p in lane]
         + [tuple(yard["gate"])]
     )
     assert all(inside(p, site) for p in points), code
-    # the gate is outside the hall, every ramp on a long wall
-    hall = layout["hall"]
-    assert abs(yard["gate"][0]) > hall["width"] / 2 or abs(yard["gate"][1]) > hall["depth"] / 2
-    ramps = [d for d in body["doors"] if d["kind"] == "loading_dock"]
-    assert ramps and all(abs(abs(d["y"]) - hall["depth"] / 2) < 0.1 for d in ramps)
+    # every ramp on the real outline of the hall (OSM), not on its bounding box
+    footprint = [tuple(p) for p in layout["footprint"]]
+    for d in body["doors"]:
+        if d["kind"] == "loading_dock":
+            assert _to_outline((d["x"], d["y"]), footprint) < 0.6, (code, d["code"])
+        if d["kind"] == "staging_bay":
+            assert inside((d["x"], d["y"]), footprint), (code, d["code"])
+    assert not inside(tuple(yard["gate"]), footprint)
     assert layout["source"]["hallWay"].startswith("w") and layout["source"]["assumed"]
 
 
+def _to_outline(p: tuple[float, float], ring: list[tuple[float, float]]) -> float:
+    best = float("inf")
+    for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1], strict=True):
+        dx, dy = x2 - x1, y2 - y1
+        t = max(0.0, min(1.0, ((p[0] - x1) * dx + (p[1] - y1) * dy) / ((dx * dx + dy * dy) or 1)))
+        best = min(best, ((p[0] - x1 - t * dx) ** 2 + (p[1] - y1 - t * dy) ** 2) ** 0.5)
+    return best
+
+
 @pytest.mark.usefixtures("seeded")
-def test_zilina_from_osm_and_the_teams_description(user: TestClient) -> None:
+def test_zilina_from_osm_and_the_satellite_picture(user: TestClient) -> None:
     depots = {d["code"]: d for d in user.get("/api/depots").json()}
     assert depots["ZIL"]["name"] == "Žilina" and depots["ZIL"]["kind"] == "depot"
     zil = user.get("/api/layout?depot=ZIL").json()
     layout = zil["layout"]
-    assert layout["source"] | {"assumed": []} == {
-        "hallWay": "w321455829",
-        "siteWay": "w810621382",
-        "assumed": [],
-    }
-    # 127 x 33 m, long side ~73° counter-clockwise from east -> 107° clockwise
-    assert layout["hall"] | {"height": 0} == {
-        "width": 127.5,
-        "depth": 33.1,
-        "height": 0,
-        "rotationDeg": 107.0,
-    }
-    # rotated by 107°: +y faces west, +x the south end, -y the east
+    assert (
+        layout["source"]["hallWay"] == "w321455829" and layout["source"]["siteWay"] == "w810621382"
+    )
+    hall = layout["hall"]
+    # 127 x 33 m, long side ~73° counter-clockwise from east -> 107° clockwise:
+    # +y faces west, +x the south end, -y the east
+    assert (hall["width"], hall["depth"], hall["rotationDeg"]) == (127.5, 33.1, 107.0)
     ramps = [d for d in zil["doors"] if d["kind"] == "loading_dock"]
     bays = [d for d in zil["doors"] if d["kind"] == "staging_bay"]
-    assert len(ramps) == 6 and len(bays) == 4
-    assert all(d["y"] > 0 for d in ramps + bays)  # the west long side, towards the SNP street
-    # offices at the south end: no door in the last 20 m
-    assert max(d["x"] for d in ramps + bays) < 127.5 / 2 - 20
-    assert all(s["y"] < -33.1 / 2 for s in layout["yard"]["truckStands"])  # trailers to the east
+    assert len(ramps) == 12 and all(d["y"] > 0 for d in ramps)  # west, towards the SNP street
+    assert max(d["x"] for d in ramps) < 127.5 / 2 - 20  # offices at the south end
+    assert len(bays) == 4 and all(d["x"] < -127.5 / 2 + 10 for d in bays)  # north end wall
+    yard = layout["yard"]
+    assert all(s["y"] < -33.1 / 2 for s in yard["truckStands"])  # trailers to the east
+    # cars and vans in the south-west corner, the gate house just inside the gate from SNP
+    assert all(v["x"] > 0 and v["y"] > 0 for v in yard["vanParking"] + yard["carParking"])
+    assert yard["gate"][1] > 0 and "gatehouse" in yard
     assert user.get("/api/depots/ZIL/state").status_code == 200
 
 
@@ -125,9 +136,23 @@ def test_dunajska_streda_small_depot_without_an_osm_plot(user: TestClient) -> No
     assert ds["layout"]["source"]["hallWay"] == "w388660269"
     assert ds["layout"]["source"]["siteWay"] is None
     assert "yard outline" in ds["layout"]["source"]["assumed"]
-    assert ds["layout"]["hall"]["width"] == 30.0 and len(ds["layout"]["site"]) == 4
     kinds = [d["kind"] for d in ds["doors"]]
-    assert kinds.count("loading_dock") == 2 and kinds.count("staging_bay") == 3
+    assert kinds.count("loading_dock") == 1 and kinds.count("staging_bay") == 6
+    vans = ds["layout"]["yard"]["vanParking"]
+    assert len(vans) == 6 and sum(v["y"] > 0 for v in vans) == 3  # along both long sides
+    assert ds["layout"]["yard"]["gate"][0] > 0  # from the south-west end
+
+
+@pytest.mark.usefixtures("seeded")
+def test_trencin_from_osm(user: TestClient) -> None:
+    tn = user.get("/api/layout?depot=TN").json()
+    assert tn["depot"]["name"] == "Trenčín" and tn["depot"]["kind"] == "depot"
+    assert tn["layout"]["source"]["hallWay"] == "w1195263485"
+    ramps = [d for d in tn["doors"] if d["kind"] == "loading_dock"]
+    # ramps on one long side, none at the office end (+x), the trailers beyond them
+    assert len(ramps) == 6 and all(d["y"] < 0 for d in ramps)
+    assert max(d["x"] for d in ramps) < tn["layout"]["hall"]["width"] / 2 - 28
+    assert all(s["y"] < 0 for s in tn["layout"]["yard"]["truckStands"])
 
 
 @pytest.mark.usefixtures("seeded")

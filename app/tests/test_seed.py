@@ -32,9 +32,9 @@ def test_seed_is_idempotent_and_complete(db: Session) -> None:
     assert {m: _count(db, m) for m in counts} == counts
 
     assert counts[Direction] == 3 + 5 + 8
-    # Budimír docks, staging bays, gate, Bratislava hub ramps, Žilina (6 ramps, 4 courier doors,
-    # gate), Dunajská Streda (2 ramps, 3 courier doors, gate)
-    assert counts[Door] == 8 + 8 + 1 + 6 + 6 + 4 + 1 + 2 + 3 + 1
+    # Budimír docks, staging bays, gate; Bratislava hub ramps; Žilina 12 ramps, 4 courier doors,
+    # gate; Dunajská Streda 1 ramp, 6 courier doors, gate; Trenčín 6 ramps, 4 courier doors, gate
+    assert counts[Door] == 8 + 8 + 1 + 6 + (12 + 4 + 1) + (1 + 6 + 1) + (6 + 4 + 1)
     assert counts[Vehicle] == 12 + 8
     assert counts[User] == 6 + 8  # admin, 3 dispatchers (one per shift), operator, security
     assert counts[Wave] == 2

@@ -2,5 +2,6 @@
  {"code": "BUD", "near": [48.79256, 21.3071], "hallAt": [48.79256, 21.3071]},
  {"code": "BAH", "near": [48.19404, 17.22834], "hallWay": 52070792},
  {"code": "ZIL", "near": [49.18727, 18.849], "hallWay": 321455829, "siteWay": 810621382},
- {"code": "DS", "near": [48.0046, 17.6363], "hallWay": 388660269, "siteWay": null}
+ {"code": "DS", "near": [48.0046, 17.6363], "hallWay": 388660269, "siteWay": null},
+ {"code": "TN", "near": [48.890603, 17.998362], "hallWay": 1195263485}
 ]

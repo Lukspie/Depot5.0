@@ -630,5 +630,87 @@
   "siteWay": null,
   "siteTags": null,
   "siteRing": null
+ },
+ {
+  "code": "TN",
+  "hallWay": "w1195263485",
+  "hallTags": {
+   "addr:city": "Trenčín",
+   "addr:conscriptionnumber": "785",
+   "addr:housenumber": "785",
+   "addr:place": "Záblatie",
+   "addr:postcode": "91106",
+   "branch": "Trenčín, Bratislavská",
+   "building": "warehouse",
+   "name": "Slovak Parcel Service",
+   "office": "logistics",
+   "post_office": "post_partner",
+   "post_office:brand": "Slovak parcel service",
+   "post_office:parcel_from": "yes",
+   "post_office:parcel_pickup": "yes",
+   "post_office:parcel_to": "yes",
+   "post_office:service_provider": "Slovak parcel service",
+   "ref:minvskaddress": "7102519039",
+   "shop": "outpost",
+   "source": "Zbgis",
+   "source:addr": "minvskaddress 2023-08",
+   "website": "https://www.sps-sro.sk"
+  },
+  "hall": {
+   "lat": 48.890713,
+   "lon": 17.998729,
+   "width": 116.3,
+   "depth": 41.4,
+   "angleCcw": 23.4
+  },
+  "hallRing": [
+   [
+    48.890693,
+    17.9979486
+   ],
+   [
+    48.8904562,
+    17.9981057
+   ],
+   [
+    48.8904381,
+    17.9980425
+   ],
+   [
+    48.8903325,
+    17.9981126
+   ],
+   [
+    48.8903939,
+    17.9983267
+   ],
+   [
+    48.8904932,
+    17.9982608
+   ],
+   [
+    48.8908503,
+    17.9995051
+   ],
+   [
+    48.8909538,
+    17.9994364
+   ],
+   [
+    48.8905967,
+    17.9981922
+   ],
+   [
+    48.8907363,
+    17.9980995
+   ],
+   [
+    48.890693,
+    17.9979486
+   ]
+  ],
+  "siteWay": null,
+  "siteTags": null,
+  "siteRing": null
  }
 ]
