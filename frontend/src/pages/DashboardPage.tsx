@@ -118,7 +118,10 @@ function tripColumns(now: Date | null, navigate: (to: string) => void): Column<T
               </span>
             </span>
             <span className={`text-[11px] font-semibold whitespace-nowrap ${late ? "text-warn-700" : "text-ink-muted"}`}>
-              {r.missing !== null ? (r.missing ? `${num(r.missing)} nenaložených` : "kompletné") : r.loadingFrom ? `nakládka od ${hhmm(r.loadingFrom)}` : ""}
+              {r.missing !== null ? (r.missing ? `${num(r.missing)} nenaložených` : "kompletné") : r.loadingFrom
+                  ? // a truck stands at its door from then; the couriers start loading at 06:30
+                    `${r.typeLabel === "kuriér" ? "nakládka od" : "pri bráne od"} ${hhmm(r.loadingFrom)}`
+                  : ""}
             </span>
           </span>
         );
