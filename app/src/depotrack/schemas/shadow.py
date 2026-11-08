@@ -65,6 +65,8 @@ class ParcelStep(CamelModel):
     status: ParcelStatus
     at: datetime
     door_code: str | None
+    checkpoint: str | None = None
+    checkpoint_label: str | None = None
 
 
 class ParcelLocate(CamelModel):

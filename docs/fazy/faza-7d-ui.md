@@ -143,3 +143,32 @@ Rozdiely v počtoch (5/8 vs. 3/8 brán, viac kamiónov a návesov v makete) sú 
 ![Po: 1280 px (KPI v dvoch riadkoch)](../screenshots/faza-7d/5-tien-po-1280.png)
 
 ![Telefón 390 px a Žilina (bez prázdnych kariet)](../screenshots/faza-7d/5-tien-390-zilina.png)
+
+## Krok 5d – vnútro skladu (triediaca linka)
+
+Budimír, situácia `evening-peak` (18:56, pauza), dispečer, odkrytá strecha, 1440 px. Cieľ: [tien-maketa-strecha-odkryta.png](../design/maketa-tien/tien-maketa-strecha-odkryta.png) a opis tímu ([náčrt linky](../design/nacrt-linka-budimir.png), ADR-071).
+
+| Položka | Maketa / zadanie | Pred | Čo sa zmenilo | Stav |
+| --- | --- | --- | --- | --- |
+| Pásy v hale | pás, odbočky k bránam, odstavné plochy | jeden rovný pás pri rampách, odbočky ku všetkým bránam | linka z grafu v layoute: zberný pás od K1–K4, slučka, teleskopy na plošine, odbočky k LD-01..03, vetva „Prechody + KE“ do ručného triedenia | ✓ |
+| Skener | líniový skener nad pásom | pin bez konštrukcie | mostík so skenerom nad slučkou (súčasný stav), viacstranný tunel (návrh) | ✓ |
+| Plošina a zóny | – (opis tímu) | – | vyvýšená plošina nočných kamiónov, plocha ručného triedenia, kancelária, dekódovacie miesto (návrh) | ✓ |
+| Kontrolné body | piny zariadení | piny skenerov | piny kontrolných bodov podľa variantu, štítok s priepustnosťou za hodinu, klik otvorí panel (priepustnosť, čítanosť, nečítané, fronta) | ✓ |
+| Balíky po trase | krabice na páse | krabice podľa skenov, rovný pás | balíky idú po svojej trase podľa simulovaného času, čakajú pri ručnej práci, najviac 300 inštancií | ✓ |
+| Varianty | – (opis tímu) | – | prepínač „Súčasný stav / Návrh Depot 5.0“ a porovnanie celého dňa: priepustnosť v špičke, nečítané, čas vstup → odkladacia plocha, ručné manipulácie (rozdiel do 2 % bez farby) | ✓ |
+| Hľadaný balík | sledovanie balíka | značka pri páse | trasa modrou, posledný kontrolný bod s kužeľom, karta „na triediacej linke · …“, krok „Koniec zberného pásu · kontrolný bod“ | ✓ |
+| Kamera | izometria | domov = brány | odkrytie strechy otočí kameru o 90° k linke (stena s rampami ju nezakrýva), zatvorenie vráti domov | ✓ |
+| Ostatné sklady | – | rovný pás (Žilina, Trenčín) | linka podľa haly, len súčasný stav (Žilina: 83 balíkov kamióna ZA) | ✓ |
+| 1280 / 390 px | bez posúvania | – | 1280 bez posúvania. Pri 390 px pretekala karta sledovania balíka (nadpis) a štítky scény, opravené (0 px) | ✓ |
+
+Odchýlka: v makete je na páse veľa krabíc. Simulácia má v špičke ~380 balíkov za hodinu, prechod linkou trvá okolo minúty, takže na linke je naraz len niekoľko balíkov. Zásada „dáta majú prednosť“.
+
+![Pred: maketa vľavo, rovný pás pred krokom 5d vpravo](../screenshots/faza-7d/5d-linka-pred.png)
+
+![Súčasný stav s hľadaným balíkom (1440 px)](../screenshots/faza-7d/5d-linka-sucasny-1440.png)
+
+![Návrh Depot 5.0 a panel kontrolného bodu (1440 px)](../screenshots/faza-7d/5d-linka-navrh-1440.png)
+
+![1280 a 390 px](../screenshots/faza-7d/5d-linka-1280-390.png)
+
+![Žilina: rovný pás so žľabmi, len súčasný stav](../screenshots/faza-7d/5d-linka-zilina.png)

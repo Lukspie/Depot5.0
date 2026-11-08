@@ -57,6 +57,8 @@ class ParcelEvent(Base):
     door_id: Mapped[int | None] = mapped_column(ForeignKey("doors.id"))
     trip_id: Mapped[int | None] = mapped_column(ForeignKey("trips.id"))
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    # checkpoint of the sorting line the parcel passed (db-telemetry device code, ADR-071)
+    checkpoint: Mapped[str | None] = mapped_column(String(32))
 
 
 class LoadingScan(Base):

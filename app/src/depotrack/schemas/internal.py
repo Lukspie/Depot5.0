@@ -111,6 +111,28 @@ class ScanEventsOut(CamelModel):
     results: dict[str, int]
 
 
+class CheckpointPassageIn(CamelModel):
+    checkpoint: str = Field(max_length=32)
+    barcode: str = Field(max_length=64)
+    at: AwareDatetime
+
+
+class CheckpointEventsIn(CamelModel):
+    passages: list[CheckpointPassageIn] = Field(max_length=5000)
+
+
+class CheckpointEventsOut(CamelModel):
+    stored: int
+    skipped: int
+
+
+class LinesOut(CamelModel):
+    """Sorting lines of all depots (layout `line`) and the direction of every door."""
+
+    depots: dict[str, dict[str, object]]
+    door_directions: dict[str, str]
+
+
 class GatePassageIn(CamelModel):
     """A simulated gate camera passage (telematics, ADR-061); `key` makes a resend harmless."""
 

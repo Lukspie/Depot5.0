@@ -6,6 +6,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import Fastify, { type FastifyInstance } from "fastify";
 import { deviceRoutes } from "./api/devices.js";
 import { healthRoutes } from "./api/health.js";
+import { lineRoutes } from "./api/line.js";
 import { internalRoutes } from "./api/internal.js";
 import { simRoutes } from "./api/sim.js";
 import type { SimClock } from "./clock/clock.js";
@@ -69,4 +70,5 @@ export async function registerSimulation(app: FastifyInstance, deps: SimulationD
   await app.register(simRoutes, deps);
   await app.register(deviceRoutes, deps);
   await app.register(internalRoutes, deps);
+  await app.register(lineRoutes, deps);
 }

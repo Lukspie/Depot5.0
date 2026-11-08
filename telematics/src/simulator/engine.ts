@@ -15,7 +15,7 @@
 
 import { addDays, HOUR, localDate, localHhmm, localParts, MINUTE, operatingDay, operatingDayStart, TIME_ZONE, zonedToUtc } from "../clock/time.js";
 import type { SimClock } from "../clock/clock.js";
-import type { AppApi, CourierEventOut, GateForward, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
+import type { AppApi, CheckpointForward, CourierEventOut, GateForward, ManifestParcel, PlanWithLocal, ScanForward, StopEtaOut } from "../app-client.js";
 import { BufferedSink } from "../db/buffered.js";
 import type { DeviceRow, GateRow, GpsRow, HeartbeatRow, MetricRow, ScanRow, SensorRow, TelemetrySink } from "../db/telemetry.js";
 import type { Hub, WsEvent } from "../ws/hub.js";
@@ -34,6 +34,7 @@ import type { RoadRouter } from "./roads.js";
 import type { LatLon, RouteBook } from "./routes.js";
 import { buildScenario, type DayScenario, type TripSchedule } from "./scenario.js";
 import { dayScans } from "./dayevents.js";
+import { checkpointViews, inFlight, lastCheckpoint, lineRuns, variantKpis, type LineParcel, type LinesData, type ParcelRun, type Passage, type Variant } from "./line.js";
 import { DEFAULT_LATE_THRESHOLD_MIN, runWhatIf, validateInterventions, type Intervention, type WhatIfResult } from "./whatif.js";
 import { situationTarget, type Situation } from "./situations.js";
 import { DEFAULT_READ_RATE, type ReadRateModel, type ScanEvent } from "./scanners.js";
@@ -169,6 +170,11 @@ interface DayState {
   couriers: CourierSchedule[];
   courierEvents: CourierEvent[];
   courierIdx: number;
+  /** sorting lines: runs of the parcels per depot and variant (ADR-071) */
+  line: Map<string, Record<Variant, ParcelRun[]>>;
+  /** passages of the current variant for the app, by time */
+  passages: Passage[];
+  passIdx: number;
 }
 
 interface DeviceRuntime {
@@ -234,6 +240,12 @@ export class Engine {
   private courierQueue: CourierEventOut[] = [];
   /** simulated gate passages for the decision rules in the app (ADR-061) */
   private gateQueue: GateForward[] = [];
+  /** passages through the checkpoints of the sorting lines (ADR-071) */
+  private checkpointQueue: CheckpointForward[] = [];
+  /** sorting lines from the app (null until loaded) */
+  private lines: LinesData | null = null;
+  /** real time before which a failed load of the lines is not retried */
+  private linesRetryAt = 0;
   private readonly pendingEtas = new Map<number, StopEtaOut[]>();
   private readonly devices = new Map<string, DeviceRuntime>();
   private readonly vehicles = new Map<string, VehicleState>();
@@ -289,7 +301,8 @@ export class Engine {
   async init(): Promise<void> {
     const rows = await this.deps.store.devices();
     const now = this.realNow();
-    for (const row of rows) {
+    // checkpoints of the sorting line have no heartbeat of their own: the line view counts them
+    for (const row of rows.filter((r) => r.kind !== "checkpoint")) {
       this.devices.set(row.code, {
         row,
         external: this.deps.config.externalDevices.includes(row.code),
@@ -425,6 +438,7 @@ export class Engine {
     this.scanQueue = [];
     this.courierQueue = [];
     this.gateQueue = [];
+    this.checkpointQueue = [];
     this.pendingEtas.clear();
     // maintenance windows are in simulated time: the replayed day starts without them
     this.maintenanceUntil.clear();
@@ -817,6 +831,7 @@ export class Engine {
     if (now >= operatingDayStart(addDays(day, 1)) - 2 * HOUR) void this.ensureDay(addDays(day, 1));
     for (const d of this.days.keys()) if (d < addDays(day, -1)) this.days.delete(d);
 
+    await this.ensureLines(now);
     const scans: ScanEvent[] = [];
     const gate: GateRow[] = [];
     for (const state of this.days.values()) {
@@ -828,6 +843,12 @@ export class Engine {
         const ev = state.gate[state.gateIdx++] as GateRow;
         if (!fastForward && ev.at > from) gate.push(ev);
       }
+      const passed: Passage[] = [];
+      while (state.passIdx < state.passages.length && (state.passages[state.passIdx]?.at ?? Infinity) <= now) {
+        const x = state.passages[state.passIdx++] as Passage;
+        if (!fastForward && x.at > from) passed.push(x);
+      }
+      this.forwardPassages(passed);
     }
     await this.emitScans(scans.filter((s) => this.simulated(s.device) && !this.inMaintenance(s.device, s.at)));
     await this.finishMaintenance(now);
@@ -880,6 +901,7 @@ export class Engine {
         ...plan.localDirections,
       ]);
       for (const dir of [...directions].sort()) manifests.set(dir, await this.deps.app.getManifest(dir, day));
+      await this.loadLines();
       const couriers = buildCourierSchedules(await this.deps.app.getCourierRoutes(day), {
         seed: this.seedValue,
         router: this.deps.router ?? null,
@@ -896,6 +918,9 @@ export class Engine {
         couriers,
         courierEvents: courierEvents(couriers),
         courierIdx: 0,
+        line: new Map(),
+        passages: [],
+        passIdx: 0,
       };
       this.buildDayEvents(state);
       // skip what already happened before the engine got here (restart, prefetch)
@@ -907,6 +932,9 @@ export class Engine {
       // passages before a restart may not have reached the app (the queue is in memory): send them
       // again, the app skips the ones it has (phase 7b review)
       this.forwardGate(state.gate.slice(0, state.gateIdx));
+      state.passIdx = state.passages.findIndex((x) => x.at > now);
+      if (state.passIdx < 0) state.passIdx = state.passages.length;
+      this.forwardPassages(state.passages.slice(0, state.passIdx));
       state.courierIdx = state.courierEvents.findIndex((e) => e.at > now);
       if (state.courierIdx < 0) state.courierIdx = state.courierEvents.length;
       // After a restart in the middle of the courier round the queued events were lost with the
@@ -997,6 +1025,163 @@ export class Engine {
       rows.push(...depotGateMix(code, trucks, state.couriers.filter((c) => c.depotCode === code), plan.day, this.seedValue));
     }
     state.gate = rows.sort((a, b) => a.at - b.at);
+    this.buildLines(state);
+  }
+
+  /**
+   * Parcels through the sorting lines (ADR-071). Budimír: evening linehaul parcels end at their
+   * dock scan, morning parcels pass the line scanner at their line scan. Other depots: the local
+   * parcels from the truck that ends there, from its arrival.
+   */
+  private buildLines(state: DayState): void {
+    state.line = new Map();
+    state.passages = [];
+    if (!this.lines) return;
+    const { plan, scenario } = state;
+    const dirDoor = new Map<string, string>();
+    for (const [door, dir] of Object.entries(this.lines.doorDirections)) if (!dirDoor.has(dir)) dirDoor.set(dir, door);
+    const dirOf = new Map<string, string>();
+    for (const [dir, parcels] of state.manifests) for (const p of parcels) dirOf.set(p.barcode, dir);
+    const arrives = new Map<string, number | null>();
+    for (const parcels of state.manifests.values()) for (const p of parcels) arrives.set(p.barcode, p.arrivesWithTripId);
+    const tripDoor = new Map(plan.trips.map((t) => [t.id, t.doorCode]));
+    const lineDevice = this.lineDevice();
+    const lineRate = this.readRateModel().line;
+    for (const [depot, line] of Object.entries(this.lines.depots).sort(([a], [b]) => a.localeCompare(b))) {
+      const doors = new Set(line.variants.current.nodes.filter((n) => n.kind === "staging").map((n) => n.door));
+      const parcels: LineParcel[] = [];
+      if (depot === "BUD") {
+        const seen = new Set<string>();
+        for (const s of state.scans) {
+          if (s.truth !== "ok" || seen.has(s.parcel)) continue;
+          const row = this.devices.get(s.device)?.row;
+          if (row?.kind === "dock_scanner" && row.doorCode && doors.has(row.doorCode)) {
+            seen.add(s.parcel);
+            parcels.push({ barcode: s.parcel, door: row.doorCode, source: "evening", anchor: { node: "staging", at: s.at } });
+          } else if (s.device === lineDevice) {
+            const door = dirDoor.get(dirOf.get(s.parcel) ?? "");
+            if (!door || !doors.has(door)) continue;
+            seen.add(s.parcel);
+            const trip = arrives.get(s.parcel);
+            parcels.push({
+              barcode: s.parcel,
+              door,
+              source: "night",
+              truckDoor: trip == null ? null : (tripDoor.get(trip) ?? null),
+              anchor: { node: "scanner", at: s.at, readOk: s.readOk },
+            });
+          }
+        }
+      } else {
+        // the linehaul truck that ends in this depot (phase 7c) brings the parcels of its direction;
+        // the plan has no local directions of the other depots, so a parcel goes to one of the
+        // depot's courier districts by its own draw (ADR-071)
+        const ends = plan.destinationDepots ?? {};
+        const bays = [...doors].filter((d): d is string => d !== undefined).sort();
+        for (const s of [...scenario.schedules.values()].sort((x, y) => x.trip.id - y.trip.id)) {
+          if (ends[s.trip.directionCode] !== depot || s.trip.kind !== "outbound" || s.arriveDestination === undefined || bays.length === 0) continue;
+          for (const p of state.manifests.get(s.trip.directionCode) ?? []) {
+            const rng = rngFor(this.seedValue, plan.day, "line-feeder", depot, p.barcode);
+            const door = bays[Math.floor(rng.next() * bays.length)] as string;
+            parcels.push({ barcode: p.barcode, door, source: "feeder", enterAt: s.arriveDestination + Math.round(rng.float(10, 50) * MINUTE) });
+          }
+        }
+      }
+      const runs = lineRuns(line, parcels, { seed: this.seedValue, day: plan.day, depot, lineRate });
+      state.line.set(depot, runs);
+      for (const r of runs.current) for (const x of r.passages) if (x.forward) state.passages.push(x);
+    }
+    state.passages.sort((a, b) => a.at - b.at || a.checkpoint.localeCompare(b.checkpoint) || a.barcode.localeCompare(b.barcode));
+  }
+
+  /** Sorting lines from the app; a day loaded without them gets them later (app started after us). */
+  private async loadLines(): Promise<boolean> {
+    if (!this.deps.app.getLines || this.realNow() < this.linesRetryAt) return false;
+    try {
+      this.lines = await this.deps.app.getLines();
+      return true;
+    } catch (err) {
+      this.linesRetryAt = this.realNow() + 30_000;
+      this.deps.log.warn({ err: String(err) }, "sorting lines not loaded, retry in 30 s");
+      return false;
+    }
+  }
+
+  private async ensureLines(now: number): Promise<void> {
+    if (this.lines || !this.deps.app.getLines || this.realNow() < this.linesRetryAt) return;
+    if (!(await this.loadLines())) return;
+    for (const state of this.days.values()) {
+      this.buildLines(state);
+      const p = state.passages.findIndex((x) => x.at > now);
+      state.passIdx = p < 0 ? state.passages.length : p;
+      this.forwardPassages(state.passages.slice(0, state.passIdx));
+    }
+  }
+
+  private forwardPassages(list: readonly Passage[]): void {
+    for (const x of list) this.checkpointQueue.push({ checkpoint: x.checkpoint, barcode: x.barcode, at: iso(x.at) });
+    if (this.checkpointQueue.length > MAX_SCAN_QUEUE) this.checkpointQueue = this.checkpointQueue.slice(-MAX_SCAN_QUEUE);
+  }
+
+  private async flushCheckpoints(): Promise<void> {
+    const post = this.deps.app.postCheckpoints?.bind(this.deps.app);
+    if (!post) {
+      this.checkpointQueue = [];
+      return;
+    }
+    while (this.checkpointQueue.length > 0) {
+      const batch = this.checkpointQueue.slice(0, 2000);
+      await post(batch);
+      this.checkpointQueue = this.checkpointQueue.slice(batch.length);
+    }
+  }
+
+  /** Runs of a depot line in the operating day of `now` (null: no line or day not loaded). */
+  private lineDay(depot: string, now: number): { runs: Record<Variant, ParcelRun[]>; graph: LinesData["depots"][string] } | null {
+    const graph = this.lines?.depots[depot];
+    const runs = this.days.get(operatingDay(now))?.line.get(depot);
+    return graph && runs ? { runs, graph } : null;
+  }
+
+  /** The line of a depot now: checkpoints, parcels on it, comparison of the variants (ADR-071). */
+  lineView(depot: string, variant: Variant): object | null {
+    const graph = this.lines?.depots[depot];
+    if (!graph) return null;
+    const now = this.deps.clock.now();
+    const g = graph.variants[variant] ?? graph.variants.current;
+    const v: Variant = graph.variants[variant] ? variant : "current";
+    const day = this.lineDay(depot, now);
+    const runs = day?.runs[v] ?? [];
+    const ahead = Math.max(MINUTE, this.deps.clock.speed * 12_000);
+    return {
+      depot,
+      variant: v,
+      variants: Object.keys(graph.variants),
+      simTime: iso(now),
+      checkpoints: checkpointViews(g, runs, now),
+      parcels: inFlight(runs, now, ahead).map((p) => ({ ...p, hops: p.hops.map((h) => ({ node: h.node, at: iso(h.at) })) })),
+      // the whole operating day: the proposal is a what-if over the same parcels (ADR-047)
+      compare: Object.fromEntries(Object.keys(graph.variants).map((k) => [k, variantKpis(day?.runs[k as Variant] ?? [])])),
+    };
+  }
+
+  /** Route of one parcel through the line in a variant, and the checkpoint it passed last. */
+  lineParcel(depot: string, barcode: string, variant: Variant): object | null {
+    const now = this.deps.clock.now();
+    const day = this.lineDay(depot, now);
+    const run = (day?.runs[variant] ?? []).find((r) => r.barcode === barcode);
+    if (!run) return null;
+    const last = lastCheckpoint(run, now);
+    return {
+      barcode,
+      variant,
+      door: run.door,
+      enterAt: iso(run.enterAt),
+      stagedAt: iso(run.stagedAt),
+      hops: run.hops.map((h) => ({ node: h.node, at: iso(h.at) })),
+      passages: run.passages.map((x) => ({ checkpoint: x.checkpoint, at: iso(x.at), read: x.read })),
+      current: last ? { checkpoint: last.checkpoint, at: iso(last.at) } : null,
+    };
   }
 
   /** Recompute future scans after the read-rate model or the plan changed. */
@@ -1007,6 +1192,8 @@ export class Engine {
       state.scanIdx = s < 0 ? state.scans.length : s;
       const g = state.gate.findIndex((x) => x.at > now);
       state.gateIdx = g < 0 ? state.gate.length : g;
+      const p = state.passages.findIndex((x) => x.at > now);
+      state.passIdx = p < 0 ? state.passages.length : p;
     }
   }
 
@@ -1048,6 +1235,7 @@ export class Engine {
       await this.postScansWhere(() => true);
       await this.flushCouriers();
       await this.flushGate();
+      await this.flushCheckpoints();
     } catch (err) {
       this.deps.log.warn(
         { err: String(err), trips: this.pendingTrips.size, scans: this.scanQueue.length },

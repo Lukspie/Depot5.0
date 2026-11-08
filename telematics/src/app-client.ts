@@ -1,6 +1,7 @@
 /** REST client telematics -> app (X-Service-Token). The app owns trips and parcels. */
 
 import type { CourierEventKind, CourierPlan } from "./simulator/couriers.js";
+import type { LinesData } from "./simulator/line.js";
 import type { Plan, TripExecution } from "./simulator/types.js";
 
 export interface AlertPayload {
@@ -72,6 +73,13 @@ export interface StopEtaOut {
   eta: string;
 }
 
+/** A parcel passing a checkpoint of the sorting line (ADR-071). */
+export interface CheckpointForward {
+  checkpoint: string;
+  barcode: string;
+  at: string;
+}
+
 export interface AppApi {
   getPlan(day: string): Promise<PlanWithLocal>;
   getManifest(direction: string, day: string): Promise<ManifestParcel[]>;
@@ -85,6 +93,9 @@ export interface AppApi {
   getCourierRoutes(day: string): Promise<CourierPlan>;
   postCourierEvents(simTime: string, events: CourierEventOut[], etas: StopEtaOut[]): Promise<void>;
   postGatePassages(passages: GateForward[]): Promise<void>;
+  /** sorting lines of the depots (layout graphs); optional, a day runs without them */
+  getLines?(): Promise<LinesData>;
+  postCheckpoints?(passages: CheckpointForward[]): Promise<void>;
 }
 
 export class HttpAppApi implements AppApi {
@@ -147,5 +158,13 @@ export class HttpAppApi implements AppApi {
 
   async postGatePassages(passages: GateForward[]): Promise<void> {
     await this.request("/internal/events/gate", { method: "POST", body: JSON.stringify({ passages }) });
+  }
+
+  getLines(): Promise<LinesData> {
+    return this.request<LinesData>("/internal/lines");
+  }
+
+  async postCheckpoints(passages: CheckpointForward[]): Promise<void> {
+    await this.request("/internal/events/checkpoints", { method: "POST", body: JSON.stringify({ passages }) });
   }
 }

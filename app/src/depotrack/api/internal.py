@@ -30,6 +30,8 @@ from depotrack.models.enums import DirectionType, DoorKind, EventSource, ParcelS
 from depotrack.schemas.internal import (
     AlertIn,
     AlertOut,
+    CheckpointEventsIn,
+    CheckpointEventsOut,
     CourierEventsIn,
     CourierEventsOut,
     CourierPlanOut,
@@ -37,6 +39,7 @@ from depotrack.schemas.internal import (
     CourierPlanStop,
     GateEventsIn,
     GateEventsOut,
+    LinesOut,
     ManifestOut,
     ManifestParcel,
     PlanDepot,
@@ -52,6 +55,7 @@ from depotrack.services import gate as gate_rules
 from depotrack.services import telematics
 from depotrack.services.alerts import AlertChange, alert_event, resolve_alert, upsert_alert
 from depotrack.services.cascade import evaluate_cascade
+from depotrack.services.checkpoints import Passage, record_passages
 from depotrack.services.couriers import (
     complete_stop,
     depot_of_route,
@@ -219,7 +223,8 @@ def scan_events(body: ScanEventsIn, db: DbSession, background: BackgroundTasks) 
     alerts: list[AlertChange] = []
     for scan in body.scans:
         if scan.door_code is None:
-            if line_scan(db, at=scan.at, barcode=scan.barcode if scan.read_ok else None):
+            barcode = scan.barcode if scan.read_ok else None
+            if line_scan(db, at=scan.at, barcode=barcode, device=scan.device):
                 results["sorted"] += 1
             continue
         door = loading_dock(db, scan.door_code)
@@ -247,6 +252,35 @@ def scan_events(body: ScanEventsIn, db: DbSession, background: BackgroundTasks) 
         background.add_task(telematics.broadcast_many, "devices", "loading_scan", events)
     _broadcast_alerts(background, alerts)
     return ScanEventsOut(processed=sum(results.values()), skipped=skipped, results=dict(results))
+
+
+@router.get("/lines", response_model=LinesOut, response_model_by_alias=True)
+def lines(db: DbSession) -> LinesOut:
+    """Sorting lines as graphs for the simulator of passages (ADR-071); the app owns the layout."""
+    depots = {
+        d.code: d.layout["line"]
+        for d in db.execute(select(Depot).order_by(Depot.code)).scalars()
+        if isinstance(d.layout.get("line"), dict)
+    }
+    rows = db.execute(
+        select(Door.code, Direction.code).join(Direction, Door.direction_id == Direction.id)
+    ).tuples()
+    return LinesOut(
+        depots=cast(dict[str, dict[str, object]], depots),
+        door_directions={door: direction for door, direction in rows},
+    )
+
+
+@router.post(
+    "/events/checkpoints", response_model=CheckpointEventsOut, response_model_by_alias=True
+)
+def checkpoint_events(body: CheckpointEventsIn, db: DbSession) -> CheckpointEventsOut:
+    """Passages of parcels through the checkpoints of the line (current variant, ADR-071)."""
+    stored, skipped = record_passages(
+        db, [Passage(checkpoint=p.checkpoint, barcode=p.barcode, at=p.at) for p in body.passages]
+    )
+    db.commit()
+    return CheckpointEventsOut(stored=stored, skipped=skipped)
 
 
 @router.post("/events/gate", response_model=GateEventsOut, response_model_by_alias=True)

@@ -165,6 +165,9 @@ export interface ParcelEvent {
   tripId: number | null;
   vehiclePlate: string | null;
   userName: string | null;
+  /** checkpoint of the sorting line (ADR-071) */
+  checkpoint?: string | null;
+  checkpointLabel?: string | null;
 }
 
 export interface ParcelDetail extends ParcelBrief {

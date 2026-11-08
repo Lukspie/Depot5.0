@@ -21,6 +21,8 @@ from functools import cache
 from itertools import pairwise
 from pathlib import Path
 
+from depotrack.seed.lines import line_of
+
 DATA = Path(__file__).resolve().parent / "data" / "depots_osm.json"
 COMPASS = {"N": (0.0, -1.0), "S": (0.0, 1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}  # east, south
 STAND = (17.0, 4.0)  # semi-trailer stand: length, width (m)
@@ -543,6 +545,8 @@ def build(spec: Spec, osm: dict[str, object]) -> Built:
         layout["belt"] = [[_r(-w / 2 + 8), by], [_r(w / 2 - 8), by]]
         layout["lineScanner"] = [0.0, by]
         layout["sensors"] = [[_r(-w / 3), by], [0.0, by], [_r(w / 3), by]]
+    # the sorting line as a graph (phase 7d step 5d, ADR-071)
+    layout["line"] = line_of(spec.code, doors, facing)
     return Built(spec.code, spec.name, spec.kind, origin, layout, tuple(doors))
 
 

@@ -2,6 +2,7 @@ import { ContactShadows, Html } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import type { LineView } from "../api/line";
 import type { Shadow } from "../api/shadow";
 import { CameraRig, type CameraApi } from "./CameraRig";
 import { Conveyor } from "./Conveyor";
@@ -10,7 +11,8 @@ import { Dock, StagingBay } from "./Dock";
 import { FpsProbe } from "./FpsProbe";
 import { Hall, YardGround } from "./Hall";
 import { Highlight } from "./Highlight";
-import { devicePosition, facingOf, facingRotation, hallOf, inFront, type DepotLayout } from "./layout";
+import { devicePosition, facingOf, facingRotation, hallOf, inFront, lineGraph, type DepotLayout, type LineVariant } from "./layout";
+import { CheckpointPin, LineModel, LineParcels, LineRoute } from "./Line";
 import { ParcelFlow } from "./ParcelFlow";
 import { cssColor } from "./parts";
 import { hhmm } from "../lib/format";
@@ -19,7 +21,16 @@ import { LEAVE_MS, Truck } from "./Truck";
 import { YardCars } from "./YardCars";
 import { CourierVans } from "./CourierVans";
 
-export type Selection = { kind: "dock" | "device"; code: string } | null;
+export type Selection = { kind: "dock" | "device" | "checkpoint"; code: string } | null;
+
+/** The sorting line inside the hall (phase 7d step 5d): variant, live view, searched route. */
+export interface SceneLine {
+  variant: LineVariant;
+  view: LineView | undefined;
+  /** node ids of the route of the searched parcel */
+  route?: string[] | null;
+  found?: string | null;
+}
 
 export interface SceneMarks {
   /** objects touched by a what-if scenario (doors / devices), drawn with a red ring */
@@ -40,6 +51,7 @@ interface Props {
   onCamera?: (api: CameraApi) => void;
   /** roof hidden to see the belt and the staging bays inside */
   roofOpen?: boolean;
+  line?: SceneLine;
 }
 
 /** Re-render on demand: whenever the live store changes and the tab is visible. */
@@ -122,7 +134,7 @@ function useDepartures(current: TruckSpot[]): TruckSpot[] {
   return leaving;
 }
 
-function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: Omit<Props, "onFps" | "onCamera">) {
+function Depot({ layout, live, selection, onSelect, marks, roofOpen = false, line }: Omit<Props, "onFps" | "onCamera">) {
   const brand = useBrand();
   const devices = useShadowStore((s) => s.devices);
   const doorStates = useShadowStore((s) => s.doors);
@@ -131,6 +143,9 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
   const staged = useMemo(() => new Map((live?.staged ?? []).map((s) => [s.doorCode, s.parcels])), [live]);
   const selectDock = (code: string) => onSelect({ kind: "dock", code });
   const selectDevice = (code: string) => onSelect({ kind: "device", code });
+  const selectCheckpoint = (code: string) => onSelect({ kind: "checkpoint", code });
+  const graph = useMemo(() => lineGraph(layout, line?.variant ?? "current"), [layout, line?.variant]);
+  const views = useMemo(() => new Map((line?.view?.checkpoints ?? []).map((c) => [c.code, c])), [line?.view]);
 
   const trucks = useMemo(() => {
   const trucks: TruckSpot[] = [];
@@ -169,7 +184,9 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
     const door = doors.get(code);
     if (door) return door.kind === "loading_dock" ? inFront(layout, door, 3) : [door.x, door.y];
     const dev = devices[code];
-    return dev ? devicePosition(layout, dev) : null;
+    if (dev) return devicePosition(layout, dev);
+    const node = graph?.nodes.find((n) => n.checkpoint === code);
+    return node ? [node.x, node.y] : null;
   };
   // a selected truck gets its outline and label; the ring stays for doors without one and devices
   const selectedTruck = selection?.kind === "dock" ? trucks.find((t) => t.door === selection.code) : undefined;
@@ -178,7 +195,26 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
   return (
     <group>
       <Hall layout={layout} brand={brand} roofOpen={roofOpen} />
-      <Conveyor layout={layout} />
+      {/* the line as a graph replaces the old straight belt (ADR-071); inside only with the roof open */}
+      {!graph && <Conveyor layout={layout} />}
+      {graph && roofOpen && (
+        <>
+          <LineModel graph={graph} brand={brand} />
+          <LineParcels graph={graph} view={line?.view} found={line?.found ?? null} />
+          {line?.route && <LineRoute graph={graph} nodes={line.route} />}
+          {graph.nodes
+            .filter((n) => n.checkpoint && !devices[n.checkpoint])
+            .map((n) => (
+              <CheckpointPin
+                key={n.id}
+                node={n}
+                view={views.get(n.checkpoint ?? "")}
+                selected={selection?.kind === "checkpoint" && selection.code === n.checkpoint}
+                onSelect={selectCheckpoint}
+              />
+            ))}
+        </>
+      )}
       {layout.doors.map((door) =>
         door.kind === "loading_dock" ? (
           <Dock
@@ -215,6 +251,8 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
       {Object.values(devices).map((d) => {
         const p = devicePosition(layout, d);
         if (!p) return null;
+        // the proposal replaces the scanner on the bridge with the tunnel
+        if (d.kind === "line_scanner" && graph && roofOpen && !graph.nodes.some((n) => n.checkpoint === d.code)) return null;
         return (
           <DevicePin
             key={d.code}
@@ -227,7 +265,7 @@ function Depot({ layout, live, selection, onSelect, marks, roofOpen = false }: O
           />
         );
       })}
-      <ParcelFlow layout={layout} />
+      {!graph && <ParcelFlow layout={layout} />}
       <Arriving layout={layout} live={live} />
       <YardCars layout={layout} />
       <CourierVans layout={layout} />

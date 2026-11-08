@@ -1,23 +1,28 @@
 import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import * as THREE from "three";
 import { useLayout } from "../api/depots";
+import { useLine, useLineParcel } from "../api/line";
 import { useDepot } from "../hooks/useDepot";
 import { useParcelLocate, useShadow, type ParcelLocate } from "../api/shadow";
 import { Button, Card, EmptyState, Spinner } from "../components/ui";
 import type { CameraApi } from "../shadow/CameraRig";
 import { CameraControls } from "../shadow/hud/CameraControls";
 import { KpiStack } from "../shadow/hud/KpiStack";
+import { LinePanel } from "../shadow/hud/LinePanel";
 import { ObjectList, type Pick } from "../shadow/hud/ObjectList";
 import { ParcelTrack } from "../shadow/hud/ParcelTrack";
 import { TopBar } from "../shadow/hud/TopBar";
-import { beltZ, devicePosition, type DepotLayout } from "../shadow/layout";
+import { beltZ, devicePosition, lineGraph, type DepotLayout, type LineVariant } from "../shadow/layout";
+import { CheckpointPanel } from "../shadow/panels/CheckpointPanel";
 import { DevicePanel } from "../shadow/panels/DevicePanel";
 import { ScenarioPanel } from "../shadow/panels/ScenarioPanel";
 import { TruckPanel } from "../shadow/panels/TruckPanel";
 import { useCanAct } from "../shadow/permissions";
 import { ShadowScene, type Selection } from "../shadow/ShadowScene";
 import { useShadowStore } from "../shadow/store";
+import { seedSimTime, useSimTimeFeed } from "../shadow/simTime";
 import { useShadowFeed } from "../shadow/useShadowFeed";
 
 /** Slovak plate as used by the depot vehicles, e.g. KE-102LH */
@@ -56,6 +61,7 @@ function ShadowView({ code }: { code: string }) {
   const layout = useLayout(code);
   const live = useShadow(code);
   useShadowFeed(code);
+  useSimTimeFeed();
   const canAct = useCanAct();
   const devices = useShadowStore((s) => s.devices);
   // ?door=LD-02 / ?device=DOCK-SCN-02 open a panel directly (demo, links from other screens)
@@ -113,7 +119,29 @@ function ShadowView({ code }: { code: string }) {
     return () => window.clearTimeout(t);
   }, [cameraReady, layout.data]);
 
-  const found = useMemo(() => (layout.data ? foundAt(layout.data, parcel.data) : null), [layout.data, parcel.data]);
+  // the sorting line (phase 7d step 5d): variant, live view with the roof open, searched route
+  const [variant, setVariant] = useState<LineVariant>("current");
+  const hasLine = Boolean(layout.data?.layout.line);
+  const route = useLineParcel(code, barcode, variant, hasLine);
+  const graph = useMemo(() => (layout.data ? lineGraph(layout.data, variant) : null), [layout.data, variant]);
+  const found = useMemo((): [number, number] | null => {
+    // on the line: the checkpoint the parcel passed last, otherwise where the WMS has it
+    const node = route.data?.current ? graph?.nodes.find((n) => n.checkpoint === route.data.current?.checkpoint) : undefined;
+    if (node) return [node.x, node.y];
+    return layout.data ? foundAt(layout.data, parcel.data) : null;
+  }, [layout.data, parcel.data, route.data, graph]);
+  // the roof opens on request, or by itself when something inside the hall is selected or found
+  const roofOpen = roof || selection?.kind === "device" || selection?.kind === "checkpoint" || found !== null;
+  const line = useLine(code, variant, hasLine && roofOpen);
+  // still on the belts (not yet at its staging place): the name of the last checkpoint
+  const onLine = useMemo(() => {
+    const r = route.data;
+    if (!r?.current || Date.parse(r.hops.at(-1)?.at ?? "") <= Date.parse(r.current.at)) return null;
+    return graph?.nodes.find((n) => n.checkpoint === r.current?.checkpoint)?.label ?? r.current.checkpoint;
+  }, [route.data, graph]);
+  useEffect(() => {
+    if (line.data) seedSimTime(line.data.simTime);
+  }, [line.data]);
 
   if (layout.isPending) return <Spinner label="Načítavam sklad…" className="py-20" />;
   if (layout.isError) {
@@ -148,12 +176,27 @@ function ShadowView({ code }: { code: string }) {
     else setBarcode(q);
   };
 
-  // the roof opens on request, or by itself when something inside the hall is selected or found
-  const roofOpen = roof || selection?.kind === "device" || found !== null;
+  /** the roof button: opening it over a line turns the camera to the line, closing goes home */
+  const toggleRoof = () => {
+    const open = !roofOpen;
+    setRoof(open);
+    if (!open) {
+      if (selection?.kind === "checkpoint" || selection?.kind === "device") setSelection(null);
+      camera.current?.home();
+      return;
+    }
+    const nodes = l.layout.line?.variants.current.nodes ?? [];
+    if (!nodes.length) return;
+    // a short line (Žilina, Dunajská Streda) still shows its part of the hall, not a close-up
+    const box = new THREE.Box3().setFromPoints(nodes.map((n) => new THREE.Vector3(n.x, 0, n.y)));
+    box.expandByVector(new THREE.Vector3(1, 0, 1).multiplyScalar(Math.max(0, 70 - Math.max(...box.getSize(new THREE.Vector3()).toArray())) / 2));
+    camera.current?.interior(box);
+  };
   const panel = "z-10 px-3 md:absolute md:px-0";
   return (
     <div className="bg-canvas relative flex flex-col gap-3 pb-4 md:block md:h-full md:overflow-hidden md:rounded-2xl md:pb-0">
-      <div className="h-[52vh] min-h-[320px] md:absolute md:inset-0 md:h-auto">
+      {/* overflow-hidden: labels in the scene (drei Html) must not widen the page on a phone */}
+      <div className="relative h-[52vh] min-h-[320px] overflow-hidden md:absolute md:inset-0 md:h-auto">
         <ShadowScene
           layout={l}
           live={live.data}
@@ -163,6 +206,7 @@ function ShadowView({ code }: { code: string }) {
           onFps={measuring ? onFps : undefined}
           onCamera={onCamera}
           roofOpen={roofOpen}
+          line={hasLine ? { variant, view: line.data, route: route.data?.hops.map((h) => h.node) ?? null, found: barcode } : undefined}
         />
       </div>
 
@@ -173,6 +217,9 @@ function ShadowView({ code }: { code: string }) {
       {/* KPI row under the top bar, left of the detail panel (maketa-tien) */}
       <div className={`${panel} flex flex-col gap-2 md:top-[76px] md:left-4 ${selection ? "md:right-[452px]" : "md:right-[76px]"}`}>
         <KpiStack data={live.data} />
+        {hasLine && roofOpen && (
+          <LinePanel view={line.data} variant={variant} onVariant={setVariant} hasProposal={Boolean(l.layout.line?.variants.proposal)} />
+        )}
         {measuring && (
           <div data-testid="fps" className="bg-ink w-fit rounded-lg px-2 py-1 font-mono text-xs text-white">
             {fps === null ? "… fps" : `${String(fps)} fps`}
@@ -181,12 +228,19 @@ function ShadowView({ code }: { code: string }) {
       </div>
 
       <div className="absolute top-[76px] right-4 z-10 hidden md:block">
-        <CameraControls api={getCamera} roofOpen={roofOpen} onRoof={() => setRoof(!roof)} />
+        <CameraControls api={getCamera} roofOpen={roofOpen} onRoof={toggleRoof} />
       </div>
 
       {barcode && (
         <div className={`${panel} md:bottom-4 md:left-4 md:w-[min(620px,calc(100%-460px))]`}>
-          <ParcelTrack barcode={barcode} result={parcel.data} error={parcel.error} canOpen={canAct} onClose={() => setBarcode(null)} />
+          <ParcelTrack
+            barcode={barcode}
+            result={parcel.data}
+            error={parcel.error}
+            canOpen={canAct}
+            onClose={() => setBarcode(null)}
+            onLine={onLine}
+          />
         </div>
       )}
 
@@ -214,6 +268,9 @@ function ShadowView({ code }: { code: string }) {
       </div>
 
       {selection?.kind === "device" && <DevicePanel code={selection.code} alerts={live.data?.alerts ?? []} onClose={close} />}
+      {selection?.kind === "checkpoint" && (
+        <CheckpointPanel code={selection.code} view={line.data?.checkpoints.find((c) => c.code === selection.code)} variant={variant} onClose={close} />
+      )}
       {selection?.kind === "dock" && <TruckPanel code={selection.code} layout={l} onClose={close} onMoved={(door) => setSelection({ kind: "dock", code: door })} />}
 
       {scenario && (

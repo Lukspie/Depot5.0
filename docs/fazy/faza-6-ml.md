@@ -43,7 +43,7 @@ Poradie časti zodpovedá priorite zo zadania. Každá má vlastný commit.
 2. Admin: situácia `evening-peak`, potom *Skočiť 21:10, Pretočiť s dátami*. V tieni klik na pin DOCK-SCN-02: riziko 100 % a alarm skontrolovať optiku.
 3. Situácia `calm-night`: dispečing ukáže ETA nočných kamiónov ešte pred odjazdom (z modelu). `GET /api/ml/delay/trips/{id}` vráti príznaky aj predikciu.
 4. Ochranka na `/gate`: nahrať fotku vozidla alebo vytlačenú ŠPZ (napr. `KE-102LH` = vozidlo flotily, `ZA-999XY` = alarm).
-5. Voliteľne IoT skener s krabicami (scenár v [docs/demo.md](../demo.md), krok 11).
+5. Voliteľne IoT skener s krabicami (scenár v [docs/demo.md](../demo.md), krok 12).
 
 ## Kde to je v kóde
 

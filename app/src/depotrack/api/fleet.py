@@ -37,6 +37,7 @@ from depotrack.schemas.wms import (
 )
 from depotrack.seed.depots import to_latlon
 from depotrack.seed.operations import parked_spots
+from depotrack.services.checkpoints import checkpoint_labels
 from depotrack.services.views import Lookup, clock, parcel_brief, scan_out, trip_brief
 
 router = APIRouter(prefix="/api", tags=["fleet"])
@@ -215,6 +216,8 @@ def parcel_detail(parcel_id: int, _: Dispatcher, db: DbSession) -> ParcelDetail:
                 trip_id=e.trip_id,
                 vehicle_plate=look.vehicles[t.vehicle_id].plate if t else None,
                 user_name=u.full_name if u else None,
+                checkpoint=e.checkpoint,
+                checkpoint_label=checkpoint_labels().get(e.checkpoint) if e.checkpoint else None,
             )
             for e, t, u in events
         ],

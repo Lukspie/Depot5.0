@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session
 
 from depotrack.core.clock import TZ
@@ -99,7 +99,8 @@ def reset_operating_day(db: Session, day: date, *, clean: bool = False) -> dict[
     scans = db.execute(delete(LoadingScan).where(LoadingScan.trip_id.in_(trip_ids)))
     events = db.execute(
         delete(ParcelEvent).where(
-            ParcelEvent.parcel_id.in_(parcel_ids), ParcelEvent.status != ParcelStatus.COLLECTED
+            ParcelEvent.parcel_id.in_(parcel_ids),
+            or_(ParcelEvent.status != ParcelStatus.COLLECTED, ParcelEvent.checkpoint.is_not(None)),
         )
     )
     parcels = db.execute(update(Parcel).where(in_day(day)).values(status=ParcelStatus.COLLECTED))

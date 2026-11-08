@@ -8,7 +8,7 @@ import type pg from "pg";
 export interface DeviceRow {
   id: number;
   code: string;
-  kind: "dock_scanner" | "line_scanner" | "gate_camera" | "line_sensor" | "door_sensor";
+  kind: "dock_scanner" | "line_scanner" | "gate_camera" | "line_sensor" | "door_sensor" | "checkpoint";
   doorCode: string | null;
   enabled: boolean;
   depotCode: string;

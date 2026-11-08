@@ -203,6 +203,9 @@ class ParcelEventOut(CamelModel):
     trip_id: int | None
     vehicle_plate: str | None
     user_name: str | None
+    # passage through a checkpoint of the sorting line (ADR-071): device code and what it is
+    checkpoint: str | None = None
+    checkpoint_label: str | None = None
 
 
 class ParcelDetail(ParcelBrief):

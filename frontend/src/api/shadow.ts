@@ -52,7 +52,7 @@ export interface ParcelLocate {
   directionName: string;
   directionType: DirectionType;
   place: { kind: "belt" | "door" | "bay" | "outside"; code: string | null };
-  events: { status: ParcelStatus; at: string; doorCode: string | null }[];
+  events: { status: ParcelStatus; at: string; doorCode: string | null; checkpoint?: string | null; checkpointLabel?: string | null }[];
   weightKg: number | null;
   /** the truck the parcel rides in, and when it leaves (tracking card of the scene) */
   vehiclePlate: string | null;

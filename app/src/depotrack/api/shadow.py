@@ -47,6 +47,7 @@ from depotrack.schemas.shadow import (
     WrongScan,
 )
 from depotrack.schemas.wms import DepotOut
+from depotrack.services.checkpoints import checkpoint_labels
 from depotrack.services.depot_scope import (
     alerts_of_depot,
     can_switch,
@@ -270,6 +271,8 @@ def locate_parcel(barcode: Barcode, user: Viewer, db: DbSession) -> ParcelLocate
                 status=e.status,
                 at=e.at,
                 door_code=look.doors[e.door_id].code if e.door_id else None,
+                checkpoint=e.checkpoint,
+                checkpoint_label=checkpoint_labels().get(e.checkpoint) if e.checkpoint else None,
             )
             for e in events
         ],

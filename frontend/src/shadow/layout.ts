@@ -41,6 +41,41 @@ export interface Yard {
   gatehouse?: [number, number];
 }
 
+export type LineVariant = "current" | "proposal";
+
+/** A part of the sorting line (phase 7d step 5d, ADR-071), in the hall frame. */
+export interface LineNode {
+  id: string;
+  kind: "input" | "merge" | "loop" | "scanner" | "tunnel" | "counter" | "exit" | "staging" | "manual" | "decode";
+  x: number;
+  y: number;
+  label?: string;
+  checkpoint?: string;
+  door?: string;
+  serves?: string[];
+  default?: boolean;
+  reject?: boolean;
+  handling?: [number, number];
+}
+
+/** A belt (length m, speed m/s), a gravity chute or a manual carry between two parts. */
+export interface LineEdge {
+  from: string;
+  to: string;
+  kind: "belt" | "loop" | "feed" | "telescopic" | "chute" | "manual";
+  speed: number;
+  length: number;
+  points: [number, number][];
+  raised?: boolean;
+}
+
+export interface LineGraph {
+  label: string;
+  nodes: LineNode[];
+  edges: LineEdge[];
+  zones: { kind: "platform" | "manual" | "office"; label: string; rect: [number, number, number, number] }[];
+}
+
 export interface DepotLayout {
   depot: { code: string; name: string; kind: "depot" | "hub"; lat: number; lon: number; label?: string | null };
   layout: {
@@ -56,6 +91,8 @@ export interface DepotLayout {
     /** direction every wall door faces, degrees in the hall frame */
     doorFacing?: Record<string, number>;
     yard?: Yard;
+    /** the sorting line as a graph; Budimír also has the Depot 5.0 proposal (ADR-071) */
+    line?: { variants: { current: LineGraph; proposal?: LineGraph } };
   };
   doors: LayoutDoor[];
   /** vans of a depot without simulated operations, on their parking spot (ADR-066) */
@@ -63,6 +100,12 @@ export interface DepotLayout {
 }
 
 export type DeviceStatus = "online" | "degraded" | "offline" | "maintenance";
+
+/** The graph of a line variant (the current one when the depot has no proposal). */
+export function lineGraph(l: DepotLayout, variant: LineVariant): LineGraph | null {
+  const v = l.layout.line?.variants;
+  return v ? (v[variant] ?? v.current) : null;
+}
 
 export const DEFAULT_HALL = { width: 60, depth: 30, height: 9 };
 
@@ -106,7 +149,12 @@ export function devicePosition(
     const d = l.doors.find((x) => x.code === device.doorCode);
     return d ? inFront(l, d, -2.5) : null;
   }
-  if (device.kind === "line_scanner" && l.layout.lineScanner) return l.layout.lineScanner;
+  if (device.kind === "line_scanner") {
+    // the scanner on the bridge of the sorting line, where the line has one (ADR-071)
+    const sc = l.layout.line?.variants.current.nodes.find((n) => n.kind === "scanner");
+    if (sc) return [sc.x, sc.y];
+    if (l.layout.lineScanner) return l.layout.lineScanner;
+  }
   if (device.kind === "gate_camera" && l.layout.yardGate) return [l.layout.yardGate[0] + 2, l.layout.yardGate[1]];
   return null;
 }

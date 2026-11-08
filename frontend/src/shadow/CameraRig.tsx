@@ -20,6 +20,8 @@ export interface CameraApi {
   rotate(radians: number): void;
   home(): void;
   focus(x: number, z: number): void;
+  /** the sorting line with the roof open: turned a quarter from the ramps, the whole box in view */
+  interior(box: THREE.Box3): void;
 }
 
 interface Orbit {
@@ -100,6 +102,20 @@ function CameraBridge({ onReady, homeBox, homeTurn = 0 }: { onReady: (api: Camer
       home() {
         turnHome();
         view(homeBox && shifted(homeBox), HOME_MARGIN);
+      },
+      interior(box) {
+        turnHome();
+        const orbit = get().controls as unknown as Orbit | null;
+        if (orbit) {
+          // from the side: the wall with the ramps does not hide the belts behind it
+          orbit.setAzimuthalAngle(orbit.getAzimuthalAngle() + Math.PI / 2);
+          orbit.update();
+        }
+        // the line panel floats on the left: the line goes right of the centre
+        const right = new THREE.Vector3().setFromMatrixColumn(get().camera.matrixWorld, 0).setY(0).normalize();
+        const size = box.getSize(new THREE.Vector3());
+        const k = Math.max(size.x, size.z);
+        view(box.clone().union(box.clone().translate(right.multiplyScalar(-k * 0.3))), 0.95);
       },
       focus(x, z) {
         // move the view to the object and keep the zoom (maketa-tien: the overview stays); the

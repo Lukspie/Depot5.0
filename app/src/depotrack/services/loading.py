@@ -146,6 +146,7 @@ def process_scan(
                 door_id=door.id,
                 trip_id=trip.id,
                 user_id=user_id,
+                checkpoint=device if source == EventSource.IOT else None,
             )
         )
         if trip.status in (TripStatus.PLANNED, TripStatus.AT_DOOR):
@@ -170,8 +171,11 @@ def process_scan(
     return outcome
 
 
-def line_scan(db: Session, *, at: datetime, barcode: str | None) -> Parcel | None:
-    """Morning wave: a parcel read on the sorting line is on the belt and gets sorted."""
+def line_scan(
+    db: Session, *, at: datetime, barcode: str | None, device: str | None = None
+) -> Parcel | None:
+    """Morning wave: a parcel read on the sorting line is on the belt and gets sorted. The scanner
+    is a checkpoint of the line (ADR-071): the "on belt" event carries its code."""
     if not barcode:
         return None
     parcel = db.execute(select(Parcel).where(Parcel.barcode == barcode)).scalar_one_or_none()
@@ -184,6 +188,7 @@ def line_scan(db: Session, *, at: datetime, barcode: str | None) -> Parcel | Non
                 status=status,
                 at=at + timedelta(seconds=offset),
                 source=EventSource.IOT,
+                checkpoint=device if status == ParcelStatus.ON_BELT else None,
             )
         )
     parcel.status = ParcelStatus.SORTED

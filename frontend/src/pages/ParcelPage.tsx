@@ -18,7 +18,9 @@ const STEPS: { status: ParcelStatus; label: string }[] = [
 ];
 
 function Timeline({ events }: { events: ParcelEvent[] }) {
-  const reached = new Map(events.map((e) => [e.status, e.at]));
+  // the first time a status was reached (passages through checkpoints repeat the status, ADR-071)
+  const reached = new Map<ParcelEvent["status"], string>();
+  for (const e of events) if (!reached.has(e.status)) reached.set(e.status, e.at);
   const lastIndex = Math.max(...STEPS.map((s, i) => (reached.has(s.status) ? i : -1)));
   return (
     <ol className="no-scrollbar flex overflow-x-auto pb-1">
@@ -58,7 +60,7 @@ const EVENT_COLUMNS: Column<ParcelEvent>[] = [
     header: "Kde / kto",
     minWidth: "10rem",
     render: (e) =>
-      [e.doorCode && `brána ${e.doorCode}`, e.vehiclePlate, e.userName].filter(Boolean).join(" · ") || "—",
+      [e.checkpointLabel && `kontrolný bod ${e.checkpointLabel}`, e.doorCode && `brána ${e.doorCode}`, e.vehiclePlate, e.userName].filter(Boolean).join(" · ") || "—",
   },
 ];
 
@@ -116,7 +118,7 @@ export function ParcelPage() {
         </Card>
         <div className="min-w-0 space-y-6">
           <Card flush title="Časová os stavov">
-            <DataTable columns={EVENT_COLUMNS} rows={p.events} rowKey={(e) => `${e.status}-${e.at}`} />
+            <DataTable columns={EVENT_COLUMNS} rows={p.events} rowKey={(e) => `${e.status}-${e.at}-${e.checkpoint ?? ""}`} />
           </Card>
           <Card flush title="Skeny pri nakládke">
             <DataTable columns={SCAN_COLUMNS} rows={p.scans} rowKey={(s) => s.id} empty={<EmptyState title="Balík ešte nebol skenovaný pri bráne" />} />

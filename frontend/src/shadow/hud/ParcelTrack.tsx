@@ -6,7 +6,8 @@ import { Button, cn } from "../../components/ui";
 import { PARCEL_STATUS } from "../../domain/labels";
 import { hhmm, kg } from "../../lib/format";
 
-function placeLabel(p: ParcelLocate): string {
+function placeLabel(p: ParcelLocate, onLine: string | null): string {
+  if (onLine) return `na triediacej linke · ${onLine}`;
   if (p.vehiclePlate && (p.status === "loaded" || p.place.kind === "door")) return `v kamióne ${p.vehiclePlate}`;
   switch (p.place.kind) {
     case "belt":
@@ -26,6 +27,8 @@ interface Props {
   error: unknown;
   canOpen: boolean;
   onClose: () => void;
+  /** the checkpoint of the sorting line the parcel passed last, while it is on the line */
+  onLine?: string | null;
 }
 
 interface Step {
@@ -39,8 +42,12 @@ interface Step {
 function steps(r: ParcelLocate): Step[] {
   const out: Step[] = r.events.map((e, i) => ({
     key: `${e.at}-${String(i)}`,
-    label: `${PARCEL_STATUS[e.status].label}${e.doorCode ? ` · ${e.doorCode}` : ""}`,
-    sub: hhmm(e.at),
+    // a passage through a checkpoint keeps the status: the step is named after the checkpoint
+    label:
+      e.checkpointLabel && r.events[i - 1]?.status === e.status
+        ? e.checkpointLabel
+        : `${PARCEL_STATUS[e.status].label}${e.doorCode ? ` · ${e.doorCode}` : ""}`,
+    sub: e.checkpointLabel ? `${hhmm(e.at)} · kontrolný bod` : hhmm(e.at),
     state: "done",
   }));
   const last = out.at(-1);
@@ -59,7 +66,7 @@ function steps(r: ParcelLocate): Step[] {
  * steps as circles on a line (done with a check, the current one with a ring, the next grey).
  * The scene marks the parcel when it is in the hall; the full history is on /parcels/:id.
  */
-export function ParcelTrack({ barcode, result, error, canOpen, onClose }: Props) {
+export function ParcelTrack({ barcode, result, error, canOpen, onClose, onLine = null }: Props) {
   const list = result ? steps(result) : [];
   return (
     <div className="bg-surface border-line shadow-card rounded-2xl border px-5 py-4">
@@ -67,12 +74,13 @@ export function ParcelTrack({ barcode, result, error, canOpen, onClose }: Props)
         <span className="bg-brand-50 text-brand-700 grid h-9 w-9 shrink-0 place-items-center rounded-[10px]">
           <Package size={18} />
         </span>
-        <span className="text-[15px] font-bold whitespace-nowrap">Sledovanie balíka</span>
+        {/* on a phone the icon and the barcode say it, the title would push the row wider (390 px) */}
+        <span className="hidden text-[15px] font-bold whitespace-nowrap sm:inline">Sledovanie balíka</span>
         <span className="border-line bg-subtle shrink-0 rounded-md border px-2 py-0.5 font-mono text-[13px] font-semibold">{barcode}</span>
         {result && (
           <span className="text-ink-muted hidden truncate text-[13px] sm:inline">
             {result.weightKg !== null ? `${kg(result.weightKg)} · ` : ""}
-            {placeLabel(result)}
+            {placeLabel(result, onLine)}
           </span>
         )}
         <span className="flex-1" />
